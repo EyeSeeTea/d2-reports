@@ -12,18 +12,17 @@ import { ObjectsListProps } from "./ObjectsList";
 
 export interface Config<Row extends ReferenceObject> {
     columns: TableColumn<Row>[];
-    paginationOptions: Partial<PaginationOptions>;
-    initialPagination: Partial<TablePagination>;
+    paginationOptions: PaginationOptions;
     initialSorting: TableSorting<Row>;
     details: ObjectsTableDetailField<Row>[];
     getRows(): Promise<{ objects: Row[]; pager: Partial<TablePagination> }>;
 }
 
+const initialPagination: Partial<TablePagination> = { page: 1, pageSize: 20 };
+
 export function useObjectsTable<T extends ReferenceObject>(config: Config<T>): ObjectsListProps<T> {
     const [rows, setRows] = React.useState<T[] | undefined>(undefined);
-    const [pagination, setPagination] = React.useState<Partial<TablePagination>>(
-        config.initialPagination
-    );
+    const [pagination, setPagination] = React.useState<Partial<TablePagination>>(initialPagination);
     const [sorting, setSorting] = React.useState<TableSorting<T>>(config.initialSorting);
     const [isLoading, setLoading] = React.useState(true);
 
@@ -41,8 +40,8 @@ export function useObjectsTable<T extends ReferenceObject>(config: Config<T>): O
     );
 
     React.useEffect(() => {
-        loadRows(sorting, { ...config.initialPagination, page: 1 });
-    }, [loadRows, sorting, config.initialPagination]);
+        loadRows(sorting, { ...initialPagination, page: 1 });
+    }, [loadRows, sorting]);
 
     const onStateChange = React.useCallback(
         (newState: TableState<T>) => {

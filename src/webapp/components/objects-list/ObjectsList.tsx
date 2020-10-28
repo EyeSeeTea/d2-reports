@@ -18,7 +18,6 @@ export interface ObjectsListProps<Row extends ReferenceObject> {
     columns: TableColumn<Row>[];
     pagination: Partial<TablePagination>;
     paginationOptions: Partial<PaginationOptions>;
-    initialPagination: Partial<TablePagination>;
     initialSorting: TableSorting<Row>;
     onStateChange(newState: TableState<Row>): void;
 }

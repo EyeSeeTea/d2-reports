@@ -1,6 +1,5 @@
 import React from "react";
 import { TableColumn, TableSorting, PaginationOptions } from "d2-ui-components";
-import { TablePagination } from "d2-ui-components";
 
 import i18n from "../../../locales";
 import { ObjectsList } from "../objects-list/ObjectsList";
@@ -24,19 +23,17 @@ interface DataValueView {
 }
 
 function getListConfig(compositionRoot: CompositionRoot): Config<DataValueView> {
-    const paginationOptions: Partial<PaginationOptions> = {
+    const paginationOptions: PaginationOptions = {
         pageSizeOptions: [10, 20, 50],
         pageSizeInitialValue: 20,
     };
 
-    const initialPagination: Partial<TablePagination> = { page: 1, pageSize: 20 };
     const initialSorting: TableSorting<DataValueView> = {
-        field: "id" as const,
+        field: "dataSet" as const,
         order: "asc" as const,
     };
 
     const columns: TableColumn<DataValueView>[] = [
-        { name: "id", text: i18n.t("Id"), sortable: true },
         { name: "period", text: i18n.t("Period"), sortable: true },
         { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
         { name: "dataSet", text: i18n.t("Data set"), sortable: true },
@@ -52,7 +49,6 @@ function getListConfig(compositionRoot: CompositionRoot): Config<DataValueView> 
         columns,
         initialSorting,
         details: columns,
-        initialPagination,
         paginationOptions,
         getRows: () => getRows(compositionRoot),
     };
