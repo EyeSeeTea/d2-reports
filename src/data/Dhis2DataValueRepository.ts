@@ -1,17 +1,21 @@
 import _ from "lodash";
 import { DataValue } from "../domain/entities/DataValue";
-import { DataValueRepository } from "../domain/repositories/DataValueRepository";
+import { DataValueRepository, GetOptions } from "../domain/repositories/DataValueRepository";
 import { D2Api, DataValueSetsDataValue, DataValueSetsGetRequest, Id } from "../types/d2-api";
 import { getId, NamedRef } from "../domain/entities/Base";
 
 export class Dhis2DataValueRepository implements DataValueRepository {
     constructor(private api: D2Api) {}
 
-    async get(): Promise<DataValue[]> {
+    async get(options: GetOptions): Promise<DataValue[]> {
         const { api } = this;
-        const dataSetsIds = ["Tu81BTLUuCT"];
+        const dataSetIds = options.dataSets;
+
         const params: DataValueSetsGetRequest = {
-            dataSet: dataSetsIds,
+            dataSet: _.isEmpty(dataSetIds)
+                ? _.values(options.config.dataSets).map(ds => ds.id)
+                : dataSetIds,
+            period: options.periods,
             orgUnit: ["H8RixfF8ugH"],
             children: true,
             lastUpdated: "1970",
@@ -22,16 +26,14 @@ export class Dhis2DataValueRepository implements DataValueRepository {
         // A data value is not associated to specific data set, but we can still map them
         // using its data element (1 data value -> 1 data element -> N data sets).
 
-        const metadata = await getMetadata(api, d2DataValues);
-
-        const dataSetNameByDataElementId = await getDataSetNameByDataElementId(api, dataSetsIds);
+        const metadata = await getMetadata(api, { dataSetIds, d2DataValues });
 
         const dataValues: Array<DataValue> = d2DataValues.map(
             (dv): DataValue => ({
                 id: getDataValueId(dv),
                 period: dv.period,
                 orgUnit: metadata.organisationUnits.get(dv.orgUnit),
-                dataSets: dataSetNameByDataElementId[dv.dataElement] || { id: "", name: "-" },
+                dataSets: metadata.dataSets.get(dv.dataElement),
                 dataElement: metadata.dataElements.get(dv.dataElement),
                 categoryOptionCombo: metadata.categoryOptionCombos.get(dv.categoryOptionCombo),
                 value: dv.value,
@@ -45,23 +47,8 @@ export class Dhis2DataValueRepository implements DataValueRepository {
     }
 }
 
-async function getDataSetNameByDataElementId(
-    api: D2Api,
-    dataSetIds: Id[]
-): Promise<Record<Id, NamedRef[]>> {
-    const res$ = api.metadata.get({
-        dataSets: {
-            fields: {
-                id: true,
-                displayName: true,
-                dataSetElements: { dataElement: { id: true } },
-            },
-            filter: { id: { in: dataSetIds } },
-        },
-    });
-    const { dataSets } = await res$.getData();
-
-    return _(dataSets)
+function getDataSetNameByDataElementId(dataSetMetadata: DataSetMetadata[]): Record<Id, NamedRef[]> {
+    return _(dataSetMetadata)
         .flatMap(dataSet =>
             dataSet.dataSetElements.map(dse => ({
                 dataSet: { id: dataSet.id, name: dataSet.displayName },
@@ -77,7 +64,25 @@ function getDataValueId(dv: DataValueSetsDataValue) {
     return [dv.dataElement, dv.period, dv.categoryOptionCombo, dv.attributeOptionCombo].join("-");
 }
 
-async function getMetadata(api: D2Api, d2DataValues: DataValueSetsDataValue[]) {
+interface Metadata {
+    organisationUnits: { get(id: string): NamedRef };
+    dataElements: { get(id: string): NamedRef };
+    categoryOptionCombos: { get(id: string): NamedRef };
+    users: { get(id: string): NamedRef };
+    dataSets: { get(dataElementId: string): NamedRef[] };
+}
+
+interface DataSetMetadata {
+    id: Id;
+    displayName: string;
+    dataSetElements: Array<{ dataElement: { id: Id } }>;
+}
+
+async function getMetadata(
+    api: D2Api,
+    options: { dataSetIds: Id[]; d2DataValues: DataValueSetsDataValue[] }
+): Promise<Metadata> {
+    const { dataSetIds, d2DataValues } = options;
     const [orgUnitIds, dataElementIds, cocIds, usernames] = _(d2DataValues)
         .map(dv => [dv.orgUnit, dv.dataElement, dv.categoryOptionCombo, dv.storedBy] as const)
         .unzip()
@@ -104,14 +109,29 @@ async function getMetadata(api: D2Api, d2DataValues: DataValueSetsDataValue[]) {
                 fields: { id: true, displayName: toName, userCredentials: { username: true } },
                 filter: { "userCredentials.username": { in: _.uniq(usernames) } },
             },
+            dataSets: {
+                fields: {
+                    id: true,
+                    displayName: true,
+                    dataSetElements: { dataElement: { id: true } },
+                },
+                filter: { id: { in: dataSetIds } },
+            },
         })
         .getData();
+
+    const dataSetNameByDataElementId = getDataSetNameByDataElementId(objs.dataSets);
 
     return {
         organisationUnits: indexable(objs.organisationUnits, getId),
         dataElements: indexable(objs.dataElements, getId),
         categoryOptionCombos: indexable(objs.categoryOptionCombos, getId),
         users: indexable(objs.users, user => user.userCredentials.username),
+        dataSets: {
+            get(dataElementId: Id) {
+                return dataSetNameByDataElementId[dataElementId] || [];
+            },
+        },
     };
 }
 

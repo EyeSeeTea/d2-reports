@@ -14,7 +14,7 @@ export interface Config<Row extends ReferenceObject> {
     columns: TableColumn<Row>[];
     paginationOptions: PaginationOptions;
     initialSorting: TableSorting<Row>;
-    details: ObjectsTableDetailField<Row>[];
+    details?: ObjectsTableDetailField<Row>[];
     getRows(): Promise<{ objects: Row[]; pager: Partial<TablePagination> }>;
 }
 

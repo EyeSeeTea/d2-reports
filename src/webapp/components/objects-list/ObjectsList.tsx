@@ -1,4 +1,4 @@
-import React from "react";
+import React, { PropsWithChildren } from "react";
 import {
     ObjectsTable,
     TableColumn,
@@ -9,8 +9,8 @@ import {
     TableState,
 } from "d2-ui-components";
 import { LinearProgress } from "material-ui";
-import { Spinner } from "../objects-list/Spinner";
 import { makeStyles } from "@material-ui/core";
+import { Spinner } from "../objects-list/Spinner";
 
 export interface ObjectsListProps<Row extends ReferenceObject> {
     isLoading: boolean;
@@ -23,9 +23,9 @@ export interface ObjectsListProps<Row extends ReferenceObject> {
 }
 
 export function ObjectsList<T extends ReferenceObject>(
-    props: ObjectsListProps<T>
+    props: PropsWithChildren<ObjectsListProps<T>>
 ): React.ReactElement<ObjectsListProps<T>> {
-    const { isLoading, rows, ...tableProps } = props;
+    const { children, isLoading, rows, ...tableProps } = props;
     const classes = useStyles();
 
     return (
@@ -38,11 +38,7 @@ export function ObjectsList<T extends ReferenceObject>(
                     {...tableProps}
                     filterComponents={
                         <React.Fragment key="filters">
-                            {/*<ProjectsListFilters
-                                filter={filter}
-                                filterOptions={filterOptions}
-                                onChange={setFilter}
-                            />*/}
+                            {children}
 
                             <Spinner isVisible={isLoading} />
                         </React.Fragment>

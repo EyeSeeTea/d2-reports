@@ -10,7 +10,6 @@ import OldMuiThemeProvider from "material-ui/styles/MuiThemeProvider";
 //@ts-ignore
 import { HeaderBar } from "@dhis2/ui-widgets";
 import React, { useEffect, useState } from "react";
-import { Config } from "../../../models/Config";
 import { User } from "../../../models/User";
 import { D2Api } from "../../../types/d2-api";
 import { AppContext } from "../../contexts/app-context";
@@ -51,13 +50,13 @@ const App = ({ api, d2 }: { api: D2Api; d2: D2 }) => {
 
     useEffect(() => {
         async function setup() {
+            const compositionRoot = getCompositionRoot(api);
+
             const [d2, config, currentUser] = await Promise.all([
                 init({ baseUrl: baseUrl + "/api", schemas: [] }),
-                Config.build(api),
+                compositionRoot.config.get.execute(),
                 User.getCurrent(api),
             ]);
-
-            const compositionRoot = getCompositionRoot(api);
             const appContext: AppContext = { d2, api, config, currentUser, compositionRoot };
 
             setAppContext(appContext);
