@@ -10,6 +10,7 @@ import {
 } from "d2-ui-components";
 import { LinearProgress } from "material-ui";
 import { Spinner } from "../objects-list/Spinner";
+import { makeStyles } from "@material-ui/core";
 
 export interface ObjectsListProps<Row extends ReferenceObject> {
     isLoading: boolean;
@@ -26,12 +27,12 @@ export function ObjectsList<T extends ReferenceObject>(
     props: ObjectsListProps<T>
 ): React.ReactElement<ObjectsListProps<T>> {
     const { isLoading, rows, ...tableProps } = props;
+    const classes = useStyles();
+
     return (
-        <div style={{ marginTop: 25 }}>
+        <div className={classes.wrapper}>
             {isLoading ? <span data-test-loading /> : <span data-test-loaded />}
-
             {!rows && <LinearProgress />}
-
             {rows && (
                 <ObjectsTable<T>
                     rows={rows}
@@ -52,3 +53,7 @@ export function ObjectsList<T extends ReferenceObject>(
         </div>
     );
 }
+
+const useStyles = makeStyles({
+    wrapper: { marginTop: 25 },
+});
