@@ -1,55 +1,80 @@
 import _ from "lodash";
 import { DataValue } from "../domain/entities/DataValue";
 import { DataValueRepository } from "../domain/repositories/DataValueRepository";
-import { D2Api, DataValueSetsDataValue } from "../types/d2-api";
+import { D2Api, DataValueSetsDataValue, DataValueSetsGetRequest, Id } from "../types/d2-api";
 import { getId, NamedRef } from "../domain/entities/Base";
 
 export class Dhis2DataValueRepository implements DataValueRepository {
     constructor(private api: D2Api) {}
 
     async get(): Promise<DataValue[]> {
-        const { dataValues: d2DataValues } = await this.api.dataValues
-            .getSet({
-                dataSet: ["Tu81BTLUuCT"],
-                orgUnit: ["H8RixfF8ugH"],
-                children: true,
-                lastUpdated: "1970",
-                limit: 5,
-            })
-            .getData();
+        const { api } = this;
+        const dataSetsIds = ["Tu81BTLUuCT"];
+        const params: DataValueSetsGetRequest = {
+            dataSet: dataSetsIds,
+            orgUnit: ["H8RixfF8ugH"],
+            children: true,
+            lastUpdated: "1970",
+            limit: 5,
+        };
+        const { dataValues: d2DataValues } = await api.dataValues.getSet(params).getData();
 
         // A data value is not associated to specific data set, but we can still map them
         // using its data element (1 data value -> 1 data element -> N data sets).
 
-        const metadata = await getMetadata(this.api, d2DataValues);
+        const metadata = await getMetadata(api, d2DataValues);
+
+        const dataSetNameByDataElementId = await getDataSetNameByDataElementId(api, dataSetsIds);
 
         const dataValues: Array<DataValue> = d2DataValues.map(
-            (dv): DataValue => {
-                const dataSet = { id: "todo1", name: "TODO" };
-                const id = [
-                    dv.dataElement,
-                    dv.period,
-                    dv.categoryOptionCombo,
-                    dv.attributeOptionCombo,
-                ].join("-");
-
-                return {
-                    id,
-                    period: dv.period,
-                    orgUnit: metadata.organisationUnits.get(dv.orgUnit),
-                    dataSet,
-                    dataElement: metadata.dataElements.get(dv.dataElement),
-                    categoryOptionCombo: metadata.categoryOptionCombos.get(dv.categoryOptionCombo),
-                    value: dv.value,
-                    comment: dv.comment,
-                    lastUpdated: new Date(dv.lastUpdated),
-                    storedBy: metadata.users.get(dv.storedBy),
-                };
-            }
+            (dv): DataValue => ({
+                id: getDataValueId(dv),
+                period: dv.period,
+                orgUnit: metadata.organisationUnits.get(dv.orgUnit),
+                dataSets: dataSetNameByDataElementId[dv.dataElement] || { id: "", name: "-" },
+                dataElement: metadata.dataElements.get(dv.dataElement),
+                categoryOptionCombo: metadata.categoryOptionCombos.get(dv.categoryOptionCombo),
+                value: dv.value,
+                comment: dv.comment,
+                lastUpdated: new Date(dv.lastUpdated),
+                storedBy: metadata.users.get(dv.storedBy),
+            })
         );
 
-        return _.compact(dataValues);
+        return dataValues;
     }
+}
+
+async function getDataSetNameByDataElementId(
+    api: D2Api,
+    dataSetIds: Id[]
+): Promise<Record<Id, NamedRef[]>> {
+    const res$ = api.metadata.get({
+        dataSets: {
+            fields: {
+                id: true,
+                displayName: true,
+                dataSetElements: { dataElement: { id: true } },
+            },
+            filter: { id: { in: dataSetIds } },
+        },
+    });
+    const { dataSets } = await res$.getData();
+
+    return _(dataSets)
+        .flatMap(dataSet =>
+            dataSet.dataSetElements.map(dse => ({
+                dataSet: { id: dataSet.id, name: dataSet.displayName },
+                dataElement: dse.dataElement,
+            }))
+        )
+        .groupBy(dse => dse.dataElement.id)
+        .mapValues(dses => dses.map(dse => dse.dataSet))
+        .value();
+}
+
+function getDataValueId(dv: DataValueSetsDataValue) {
+    return [dv.dataElement, dv.period, dv.categoryOptionCombo, dv.attributeOptionCombo].join("-");
 }
 
 async function getMetadata(api: D2Api, d2DataValues: DataValueSetsDataValue[]) {

@@ -8,7 +8,6 @@ export type BaseConfig = typeof baseConfig;
 
 export interface ConfigData {
     base: BaseConfig;
-    categoryCombos: CategoryCombo[];
 }
 
 export interface CategoryCombo {
@@ -37,11 +36,8 @@ export class Config {
     }
 
     static async build(api: D2Api): Promise<Config> {
-        const metadata = await api.metadata.get(metadataParams).getData();
-
         const data: ConfigData = {
             base: baseConfig,
-            categoryCombos: metadata.categoryCombos,
         };
 
         return new Config(data);

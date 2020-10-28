@@ -4,7 +4,7 @@ export interface DataValue {
     id: Id;
     period: string;
     orgUnit: NamedRef;
-    dataSet: NamedRef;
+    dataSets: NamedRef[];
     dataElement: NamedRef;
     categoryOptionCombo: NamedRef;
     value: string;

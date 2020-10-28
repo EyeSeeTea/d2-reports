@@ -22,6 +22,14 @@ interface DataValueView {
     storedBy: string;
 }
 
+export const DataValuesList: React.FC = React.memo(() => {
+    const { compositionRoot } = useAppContext();
+    const config = React.useMemo(() => getListConfig(compositionRoot), [compositionRoot]);
+    const tableProps = useObjectsTable(config);
+
+    return <ObjectsList<DataValueView> {...tableProps} />;
+});
+
 function getListConfig(compositionRoot: CompositionRoot): Config<DataValueView> {
     const paginationOptions: PaginationOptions = {
         pageSizeOptions: [10, 20, 50],
@@ -34,9 +42,9 @@ function getListConfig(compositionRoot: CompositionRoot): Config<DataValueView> 
     };
 
     const columns: TableColumn<DataValueView>[] = [
+        { name: "dataSet", text: i18n.t("Data set"), sortable: true },
         { name: "period", text: i18n.t("Period"), sortable: true },
         { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
-        { name: "dataSet", text: i18n.t("Data set"), sortable: true },
         { name: "dataElement", text: i18n.t("Data Element"), sortable: true },
         { name: "categoryOptionCombo", text: i18n.t("Category option combo"), sortable: true },
         { name: "value", text: i18n.t("Value"), sortable: true },
@@ -56,17 +64,17 @@ function getListConfig(compositionRoot: CompositionRoot): Config<DataValueView> 
 
 async function getRows(compositionRoot: CompositionRoot) {
     return {
-        objects: toView(await compositionRoot.dataValues.get.execute()),
+        objects: getDataValueViews(await compositionRoot.dataValues.get.execute()),
         pager: {},
     };
 }
 
-function toView(dataValues: DataValue[]): DataValueView[] {
+function getDataValueViews(dataValues: DataValue[]): DataValueView[] {
     return dataValues.map(dv => ({
         id: dv.id,
         period: dv.period,
         orgUnit: dv.orgUnit.name,
-        dataSet: dv.dataSet.name,
+        dataSet: dv.dataSets.map(dataSet => dataSet.name).join(", "),
         dataElement: dv.dataElement.name,
         categoryOptionCombo: dv.categoryOptionCombo.name,
         value: dv.value,
@@ -75,11 +83,3 @@ function toView(dataValues: DataValue[]): DataValueView[] {
         storedBy: dv.storedBy.name,
     }));
 }
-
-export const DataValuesList: React.FC = React.memo(() => {
-    const { compositionRoot } = useAppContext();
-    const config = React.useMemo(() => getListConfig(compositionRoot), [compositionRoot]);
-    const tableProps = useObjectsTable(config);
-
-    return <ObjectsList<DataValueView> {...tableProps} />;
-});

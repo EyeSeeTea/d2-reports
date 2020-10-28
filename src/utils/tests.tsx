@@ -25,7 +25,6 @@ export function getTestUser() {
 export function getTestConfig() {
     return new Config({
         base: {},
-        categoryCombos: [],
     });
 }
 
