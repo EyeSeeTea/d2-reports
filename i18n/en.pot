@@ -5,10 +5,13 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2020-10-28T18:59:58.002Z\n"
-"PO-Revision-Date: 2020-10-28T18:59:58.002Z\n"
+"POT-Creation-Date: 2020-10-28T19:22:43.382Z\n"
+"PO-Revision-Date: 2020-10-28T19:22:43.382Z\n"
 
 msgid "Periods"
+msgstr ""
+
+msgid "Data sets"
 msgstr ""
 
 msgid "Data set"
