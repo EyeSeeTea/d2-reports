@@ -1,4 +1,5 @@
 import React from "react";
+import _ from "lodash";
 import { TableColumn, TableSorting, PaginationOptions } from "d2-ui-components";
 
 import i18n from "../../../locales";
@@ -6,8 +7,8 @@ import { ObjectsList } from "../objects-list/ObjectsList";
 import { Config, useObjectsTable } from "../objects-list/objects-list-hooks";
 import { Id } from "../../../domain/entities/Base";
 import { useAppContext } from "../../contexts/app-context";
-import { CompositionRoot } from "../../../compositionRoot";
 import { DataValue } from "../../../domain/entities/DataValue";
+import { DataValuesFilters, DataValuesFilter } from "./DataValuesFilters";
 
 interface DataValueView {
     id: Id;
@@ -23,14 +24,36 @@ interface DataValueView {
 }
 
 export const DataValuesList: React.FC = React.memo(() => {
-    const { compositionRoot } = useAppContext();
-    const config = React.useMemo(() => getListConfig(compositionRoot), [compositionRoot]);
-    const tableProps = useObjectsTable(config);
+    const { compositionRoot, config } = useAppContext();
+    const [filters, setFilters] = React.useState<DataValuesFilter>({ periods: [], dataSets: [] });
+    const objectsTableConfig = React.useMemo(() => {
+        return {
+            ...getBaseListConfig(),
+            getRows: async () => {
+                const dataValues = await compositionRoot.dataValues.get.execute({
+                    config,
+                    ...filters,
+                });
+                return { objects: getDataValueViews(dataValues), pager: {} };
+            },
+        };
+    }, [config, filters, compositionRoot]);
+    const tableProps = useObjectsTable(objectsTableConfig);
+    const filterOptions = React.useMemo(() => {
+        return {
+            periods: _.range(2010, new Date().getFullYear()).map(n => n.toString()),
+            dataSets: _.values(config.dataSets),
+        };
+    }, [config]);
 
-    return <ObjectsList<DataValueView> {...tableProps} />;
+    return (
+        <ObjectsList<DataValueView> {...tableProps}>
+            <DataValuesFilters values={filters} options={filterOptions} onChange={setFilters} />
+        </ObjectsList>
+    );
 });
 
-function getListConfig(compositionRoot: CompositionRoot): Config<DataValueView> {
+function getBaseListConfig(): Omit<Config<DataValueView>, "getRows"> {
     const paginationOptions: PaginationOptions = {
         pageSizeOptions: [10, 20, 50],
         pageSizeInitialValue: 20,
@@ -53,33 +76,22 @@ function getListConfig(compositionRoot: CompositionRoot): Config<DataValueView> 
         { name: "storedBy", text: i18n.t("Stored by"), sortable: true },
     ];
 
-    return {
-        columns,
-        initialSorting,
-        details: columns,
-        paginationOptions,
-        getRows: () => getRows(compositionRoot),
-    };
-}
-
-async function getRows(compositionRoot: CompositionRoot) {
-    return {
-        objects: getDataValueViews(await compositionRoot.dataValues.get.execute()),
-        pager: {},
-    };
+    return { columns, initialSorting, paginationOptions };
 }
 
 function getDataValueViews(dataValues: DataValue[]): DataValueView[] {
-    return dataValues.map(dv => ({
-        id: dv.id,
-        period: dv.period,
-        orgUnit: dv.orgUnit.name,
-        dataSet: dv.dataSets.map(dataSet => dataSet.name).join(", "),
-        dataElement: dv.dataElement.name,
-        categoryOptionCombo: dv.categoryOptionCombo.name,
-        value: dv.value,
-        comment: dv.comment || "",
-        lastUpdated: dv.lastUpdated.toISOString(),
-        storedBy: dv.storedBy.name,
-    }));
+    return dataValues.map(dv => {
+        return {
+            id: dv.id,
+            period: dv.period,
+            orgUnit: dv.orgUnit.name,
+            dataSet: dv.dataSets.map(dataSet => dataSet.name).join(", "),
+            dataElement: dv.dataElement.name,
+            categoryOptionCombo: dv.categoryOptionCombo.name,
+            value: dv.value,
+            comment: dv.comment || "",
+            lastUpdated: dv.lastUpdated.toISOString(),
+            storedBy: dv.storedBy.name,
+        };
+    });
 }
