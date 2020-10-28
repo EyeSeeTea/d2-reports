@@ -16,7 +16,7 @@ export interface Config<Row extends ReferenceObject> {
     initialPagination: Partial<TablePagination>;
     initialSorting: TableSorting<Row>;
     details: ObjectsTableDetailField<Row>[];
-    getRows(): { objects: Row[]; pager: Partial<TablePagination> };
+    getRows(): Promise<{ objects: Row[]; pager: Partial<TablePagination> }>;
 }
 
 export function useObjectsTable<T extends ReferenceObject>(config: Config<T>): ObjectsListProps<T> {
@@ -31,7 +31,7 @@ export function useObjectsTable<T extends ReferenceObject>(config: Config<T>): O
         async (sorting: TableSorting<T>, paginationOptions: Partial<TablePagination>) => {
             const listPagination = { ...paginationOptions };
             setLoading(true);
-            const res = config.getRows();
+            const res = await config.getRows();
             setRows(res.objects);
             setPagination({ ...listPagination, ...res.pager });
             setSorting(sorting);
