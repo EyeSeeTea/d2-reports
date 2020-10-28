@@ -5,11 +5,9 @@ interface SpinnerProps {
     isVisible: boolean;
 }
 
-const Spinner_: React.FunctionComponent<SpinnerProps> = ({ isVisible }) => (
+export const Spinner: React.FunctionComponent<SpinnerProps> = React.memo(({ isVisible }) => (
     <React.Fragment>
         <div style={{ flex: "10 1 auto" }}></div>
         {isVisible && <CircularProgress />}
     </React.Fragment>
-);
-
-export const Spinner = React.memo(Spinner_);
+));

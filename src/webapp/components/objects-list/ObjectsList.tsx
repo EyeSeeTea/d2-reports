@@ -9,7 +9,7 @@ import {
     TableState,
 } from "d2-ui-components";
 import { LinearProgress } from "material-ui";
-import { Spinner } from "../data-values-list/Spinner";
+import { Spinner } from "../objects-list/Spinner";
 
 export interface ObjectsListProps<Row extends ReferenceObject> {
     isLoading: boolean;
