@@ -10,12 +10,12 @@ import {
 } from "d2-ui-components";
 import { ObjectsListProps } from "./ObjectsList";
 
-export interface Config<Row extends ReferenceObject> {
-    columns: TableColumn<Row>[];
+export interface Config<Obj extends ReferenceObject> {
+    columns: TableColumn<Obj>[];
     paginationOptions: PaginationOptions;
-    initialSorting: TableSorting<Row>;
-    details?: ObjectsTableDetailField<Row>[];
-    getRows(): Promise<{ objects: Row[]; pager: Partial<TablePagination> }>;
+    initialSorting: TableSorting<Obj>;
+    details?: ObjectsTableDetailField<Obj>[];
+    getRows(): Promise<{ objects: Obj[]; pager: Partial<TablePagination> } | undefined>;
 }
 
 const initialPagination: Partial<TablePagination> = { page: 1, pageSize: 20 };
@@ -31,8 +31,13 @@ export function useObjectsTable<T extends ReferenceObject>(config: Config<T>): O
             const listPagination = { ...paginationOptions };
             setLoading(true);
             const res = await config.getRows();
-            setRows(res.objects);
-            setPagination({ ...listPagination, ...res.pager });
+            if (res) {
+                setRows(res.objects);
+                setPagination({ ...listPagination, ...res.pager });
+            } else {
+                setRows([]);
+                setPagination(initialPagination);
+            }
             setSorting(sorting);
             setLoading(false);
         },

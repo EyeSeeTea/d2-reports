@@ -10,7 +10,6 @@ import OldMuiThemeProvider from "material-ui/styles/MuiThemeProvider";
 //@ts-ignore
 import { HeaderBar } from "@dhis2/ui-widgets";
 import React, { useEffect, useState } from "react";
-import { User } from "../../../models/User";
 import { D2Api } from "../../../types/d2-api";
 import { AppContext } from "../../contexts/app-context";
 import Root from "../../pages/root/RootPage";
@@ -20,24 +19,13 @@ import muiThemeLegacy from "./themes/dhis2-legacy.theme";
 import { muiTheme } from "./themes/dhis2.theme";
 import { getCompositionRoot } from "../../../compositionRoot";
 import { appConfig } from "../../../app-config";
+import { Config } from "../../../domain/entities/Config";
 
 type D2 = object;
 
-type AppWindow = Window & {
-    $: {
-        feedbackDhis2: (d2: D2, appKey: string, feedbackOptions: object) => void;
-    };
-};
-
-function initFeedbackTool(d2: D2, appConfig: AppConfig): void {
-    const appKey = _(appConfig).get("appKey");
-
-    if (appConfig && appConfig.feedback) {
-        const feedbackOptions = {
-            ...appConfig.feedback,
-            i18nPath: "feedback-tool/i18n",
-        };
-        ((window as unknown) as AppWindow).$.feedbackDhis2(d2, appKey, feedbackOptions);
+declare global {
+    interface Window {
+        app: { config: Config };
     }
 }
 
@@ -52,20 +40,15 @@ const App = ({ api, d2 }: { api: D2Api; d2: D2 }) => {
         async function setup() {
             const compositionRoot = getCompositionRoot(api);
 
-            const [d2, config, currentUser] = await Promise.all([
+            const [d2, config] = await Promise.all([
                 init({ baseUrl: baseUrl + "/api", schemas: [] }),
                 compositionRoot.config.get.execute(),
-                User.getCurrent(api),
             ]);
-            const appContext: AppContext = { d2, api, config, currentUser, compositionRoot };
+            const appContext: AppContext = { d2, api, config, compositionRoot };
+            window.app = { config };
 
             setAppContext(appContext);
-
             setShowShareButton(_(appConfig).get("appearance.showShareButton") || false);
-            if (currentUser.canReportFeedback()) {
-                initFeedbackTool(d2, appConfig);
-            }
-
             setLoading(false);
         }
         setup();

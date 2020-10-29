@@ -10,4 +10,5 @@ export interface GetOptions {
     config: Config;
     periods: string[];
     dataSets: Id[];
+    orgUnitIds: Id[];
 }

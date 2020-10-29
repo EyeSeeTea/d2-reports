@@ -7,19 +7,21 @@ import {
     PaginationOptions,
     TablePagination,
     TableState,
+    ObjectsTableProps,
 } from "d2-ui-components";
 import { LinearProgress } from "material-ui";
 import { makeStyles } from "@material-ui/core";
 import { Spinner } from "../objects-list/Spinner";
 
-export interface ObjectsListProps<Row extends ReferenceObject> {
+export interface ObjectsListProps<Obj extends ReferenceObject> {
     isLoading: boolean;
-    rows: Row[] | undefined;
-    columns: TableColumn<Row>[];
+    rows: Obj[] | undefined;
+    columns: TableColumn<Obj>[];
     pagination: Partial<TablePagination>;
     paginationOptions: Partial<PaginationOptions>;
-    initialSorting: TableSorting<Row>;
-    onStateChange(newState: TableState<Row>): void;
+    initialSorting: TableSorting<Obj>;
+    onStateChange(newState: TableState<Obj>): void;
+    sideComponents?: ObjectsTableProps<Obj>["sideComponents"];
 }
 
 export function ObjectsList<T extends ReferenceObject>(
