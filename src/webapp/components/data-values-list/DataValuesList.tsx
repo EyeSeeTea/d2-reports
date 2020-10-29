@@ -4,13 +4,18 @@ import { TableColumn, TableSorting, PaginationOptions, useSnackbar } from "d2-ui
 
 import i18n from "../../../locales";
 import { ObjectsList } from "../objects-list/ObjectsList";
-import { Config, useObjectsTable } from "../objects-list/objects-list-hooks";
+import { TableConfig, useObjectsTable } from "../objects-list/objects-list-hooks";
 import { useAppContext } from "../../contexts/app-context";
 import { DataValue } from "../../../domain/entities/DataValue";
 import { DataValuesFilters, DataValuesFilter } from "./DataValuesFilters";
 import { OrgUnitsFilter } from "./OrgUnitsFilter";
 import { useSnackbarOnError as withSnackbarOnError } from "../../utils/snackbar";
-import { getRootIds, getPath as getMainPath } from "../../../domain/entities/OrgUnit";
+import {
+    getRootIds,
+    getPath as getMainPath,
+    getOrgUnitIdsFromPaths,
+} from "../../../domain/entities/OrgUnit";
+import { Config } from "../../../domain/entities/Config";
 
 interface DataValueView {
     id: string;
@@ -31,37 +36,23 @@ export const DataValuesList: React.FC = React.memo(() => {
     const [filters, setFilters] = React.useState<DataValuesFilter>({ periods: [], dataSets: [] });
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
     const [orgUnitPathsSelected, setOrgUnitPathsSelected] = React.useState(() =>
-        _.compact([getMainPath(config.currentUser.orgUnits)])
+        getMainUserPaths(config)
     );
     const baseConfig = React.useMemo(getBaseListConfig, []);
 
-    const objectsTableConfig = React.useMemo(() => {
-        return {
-            ...baseConfig,
-            getRows: () => {
-                return withSnackbarOnError(snackbar, async () => {
-                    const dataValues = await compositionRoot.dataValues.get.execute({
-                        config,
-                        ...filters,
-                        orgUnitIds: _(orgUnitPathsSelected)
-                            .compact()
-                            .map(path => _.last(path.split("/")))
-                            .compact()
-                            .value(),
-                    });
-                    return { objects: getDataValueViews(dataValues), pager: {} };
-                });
-            },
-        };
-    }, [baseConfig, config, compositionRoot, snackbar, filters, orgUnitPathsSelected]);
+    const getRows = React.useCallback(() => {
+        return withSnackbarOnError(snackbar, async () => {
+            const dataValues = await compositionRoot.dataValues.get.execute({
+                config,
+                orgUnitIds: getOrgUnitIdsFromPaths(orgUnitPathsSelected),
+                ...filters,
+            });
+            return { objects: getDataValueViews(dataValues), pager: {} };
+        });
+    }, [config, compositionRoot, snackbar, filters, orgUnitPathsSelected]);
 
-    const tableProps = useObjectsTable(objectsTableConfig);
-    const filterOptions = React.useMemo(() => {
-        return {
-            periods: _.range(2010, new Date().getFullYear()).map(n => n.toString()),
-            dataSets: _.values(config.dataSets),
-        };
-    }, [config]);
+    const tableProps = useObjectsTable(baseConfig, getRows);
+    const filterOptions = React.useMemo(() => getFilterOptions(config), [config]);
 
     const sideComponents = (
         <OrgUnitsFilter
@@ -79,7 +70,7 @@ export const DataValuesList: React.FC = React.memo(() => {
     );
 });
 
-function getBaseListConfig(): Omit<Config<DataValueView>, "getRows"> {
+function getBaseListConfig(): Omit<TableConfig<DataValueView>, "getRows"> {
     const paginationOptions: PaginationOptions = {
         pageSizeOptions: [10, 20, 50],
         pageSizeInitialValue: 20,
@@ -120,4 +111,15 @@ function getDataValueViews(dataValues: DataValue[]): DataValueView[] {
             storedBy: dv.storedBy,
         };
     });
+}
+
+function getFilterOptions(config: Config) {
+    return {
+        periods: _.range(2010, new Date().getFullYear()).map(n => n.toString()),
+        dataSets: _.values(config.dataSets),
+    };
+}
+
+function getMainUserPaths(config: Config) {
+    return _.compact([getMainPath(config.currentUser.orgUnits)]);
 }
