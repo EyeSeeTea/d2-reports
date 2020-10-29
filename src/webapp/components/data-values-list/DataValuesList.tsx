@@ -1,6 +1,6 @@
 import React from "react";
 import _ from "lodash";
-import { TableColumn, TableSorting, PaginationOptions, useSnackbar } from "d2-ui-components";
+import { TableColumn, TableSorting, PaginationOptions } from "d2-ui-components";
 
 import i18n from "../../../locales";
 import { ObjectsList } from "../objects-list/ObjectsList";
@@ -9,7 +9,7 @@ import { useAppContext } from "../../contexts/app-context";
 import { DataValue } from "../../../domain/entities/DataValue";
 import { DataValuesFilters, DataValuesFilter } from "./DataValuesFilters";
 import { OrgUnitsFilter } from "./OrgUnitsFilter";
-import { useSnackbarOnError as withSnackbarOnError } from "../../utils/snackbar";
+import { useSnackbarOnError } from "../../utils/snackbar";
 import {
     getRootIds,
     getPath as getMainPath,
@@ -32,7 +32,6 @@ interface DataValueView {
 
 export const DataValuesList: React.FC = React.memo(() => {
     const { compositionRoot, config, api } = useAppContext();
-    const snackbar = useSnackbar();
     const [filters, setFilters] = React.useState<DataValuesFilter>({ periods: [], dataSets: [] });
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
     const [orgUnitPathsSelected, setOrgUnitPathsSelected] = React.useState(() =>
@@ -40,16 +39,19 @@ export const DataValuesList: React.FC = React.memo(() => {
     );
     const baseConfig = React.useMemo(getBaseListConfig, []);
 
-    const getRows = React.useCallback(() => {
-        return withSnackbarOnError(snackbar, async () => {
-            const dataValues = await compositionRoot.dataValues.get.execute({
-                config,
-                orgUnitIds: getOrgUnitIdsFromPaths(orgUnitPathsSelected),
-                ...filters,
-            });
-            return { objects: getDataValueViews(dataValues), pager: {} };
-        });
-    }, [config, compositionRoot, snackbar, filters, orgUnitPathsSelected]);
+    const getRows = useSnackbarOnError(
+        React.useMemo(
+            () => async () => {
+                const dataValues = await compositionRoot.dataValues.get.execute({
+                    config,
+                    orgUnitIds: getOrgUnitIdsFromPaths(orgUnitPathsSelected),
+                    ...filters,
+                });
+                return { objects: getDataValueViews(dataValues), pager: {} };
+            },
+            [config, compositionRoot, filters, orgUnitPathsSelected]
+        )
+    );
 
     const tableProps = useObjectsTable(baseConfig, getRows);
     const filterOptions = React.useMemo(() => getFilterOptions(config), [config]);
