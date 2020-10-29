@@ -25,3 +25,10 @@ export function getRootIds(orgUnits: OrgUnit[]): Id[] {
 export function getPath(orgUnits: OrgUnit[]): Path | undefined {
     return getRoots(orgUnits).map(ou => ou.path)[0];
 }
+
+export function getOrgUnitIdsFromPaths(orgUnitPathsSelected: Path[]): Id[] {
+    return _(orgUnitPathsSelected)
+        .map(path => _.last(path.split("/")))
+        .compact()
+        .value();
+}
