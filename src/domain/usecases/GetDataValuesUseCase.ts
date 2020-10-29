@@ -3,16 +3,17 @@ import { DataValue } from "../entities/DataValue";
 import { Id } from "../entities/Base";
 import { Config } from "../entities/Config";
 
-interface Options {
+interface GetDataValuesUseCaseOptions {
+    config: Config;
     periods: string[];
     dataSets: Id[];
-    config: Config;
+    orgUnitIds: Id[];
 }
 
 export class GetDataValuesUseCase {
     constructor(private dataValueRepository: DataValueRepository) {}
 
-    execute(options: Options): Promise<DataValue[]> {
+    execute(options: GetDataValuesUseCaseOptions): Promise<DataValue[]> {
         // TODO: Return Future instead, to allow better error handling and cancellation.
         return this.dataValueRepository.get(options);
     }

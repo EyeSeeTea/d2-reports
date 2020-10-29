@@ -10,5 +10,5 @@ export interface DataValue {
     value: string;
     comment: string | undefined;
     lastUpdated: Date;
-    storedBy: NamedRef;
+    storedBy: string;
 }

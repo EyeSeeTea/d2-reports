@@ -8,23 +8,24 @@ export class Dhis2DataValueRepository implements DataValueRepository {
     constructor(private api: D2Api) {}
 
     async get(options: GetOptions): Promise<DataValue[]> {
+        const { config } = options;
         const { api } = this;
         const dataSetIds = options.dataSets;
 
         const params: DataValueSetsGetRequest = {
             dataSet: _.isEmpty(dataSetIds)
-                ? _.values(options.config.dataSets).map(ds => ds.id)
+                ? _.values(config.dataSets).map(ds => ds.id)
                 : dataSetIds,
             period: options.periods,
-            orgUnit: ["H8RixfF8ugH"],
+            orgUnit: options.orgUnitIds,
             children: true,
             lastUpdated: "1970",
-            limit: 5,
+            limit: 10,
         };
         const { dataValues: d2DataValues } = await api.dataValues.getSet(params).getData();
 
-        // A data value is not associated to specific data set, but we can still map them
-        // using its data element (1 data value -> 1 data element -> N data sets).
+        // A data value is not associated to a specific data set, but we can still map it
+        // through the data element (1 data value -> 1 data element -> N data sets).
 
         const metadata = await getMetadata(api, { dataSetIds, d2DataValues });
 
@@ -39,7 +40,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                 value: dv.value,
                 comment: dv.comment,
                 lastUpdated: new Date(dv.lastUpdated),
-                storedBy: metadata.users.get(dv.storedBy),
+                storedBy: dv.storedBy,
             })
         );
 
@@ -68,7 +69,6 @@ interface Metadata {
     organisationUnits: { get(id: string): NamedRef };
     dataElements: { get(id: string): NamedRef };
     categoryOptionCombos: { get(id: string): NamedRef };
-    users: { get(id: string): NamedRef };
     dataSets: { get(dataElementId: string): NamedRef[] };
 }
 
@@ -83,8 +83,8 @@ async function getMetadata(
     options: { dataSetIds: Id[]; d2DataValues: DataValueSetsDataValue[] }
 ): Promise<Metadata> {
     const { dataSetIds, d2DataValues } = options;
-    const [orgUnitIds, dataElementIds, cocIds, usernames] = _(d2DataValues)
-        .map(dv => [dv.orgUnit, dv.dataElement, dv.categoryOptionCombo, dv.storedBy] as const)
+    const [orgUnitIds, dataElementIds, cocIds] = _(d2DataValues)
+        .map(dv => [dv.orgUnit, dv.dataElement, dv.categoryOptionCombo] as const)
         .unzip()
         .value();
 
@@ -105,10 +105,6 @@ async function getMetadata(
                 fields: { id: true, displayName: toName },
                 filter: { id: { in: _.uniq(cocIds) } },
             },
-            users: {
-                fields: { id: true, displayName: toName, userCredentials: { username: true } },
-                filter: { "userCredentials.username": { in: _.uniq(usernames) } },
-            },
             dataSets: {
                 fields: {
                     id: true,
@@ -126,7 +122,6 @@ async function getMetadata(
         organisationUnits: indexable(objs.organisationUnits, getId),
         dataElements: indexable(objs.dataElements, getId),
         categoryOptionCombos: indexable(objs.categoryOptionCombos, getId),
-        users: indexable(objs.users, user => user.userCredentials.username),
         dataSets: {
             get(dataElementId: Id) {
                 return dataSetNameByDataElementId[dataElementId] || [];
@@ -135,9 +130,9 @@ async function getMetadata(
     };
 }
 
-function indexable<Obj extends NamedRef>(objs: Obj[], getKey: (obj: Obj) => string) {
-    const objsByKey = _.keyBy(objs, getKey);
+function indexable<Obj extends NamedRef>(objs: Obj[], getId: (obj: Obj) => string) {
+    const objsByKey = _.keyBy(objs, getId);
     return {
-        get: (key: string) => objsByKey[key] || { id: key, name: key },
+        get: (id: string) => objsByKey[id] || { id: id, name: id },
     };
 }
