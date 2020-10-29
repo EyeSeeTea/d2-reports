@@ -20,7 +20,7 @@ export interface ObjectsListProps<Obj extends ReferenceObject> {
     pagination: Partial<TablePagination>;
     paginationOptions: Partial<PaginationOptions>;
     initialSorting: TableSorting<Obj>;
-    onStateChange(newState: TableState<Obj>): void;
+    onChange(newState: TableState<Obj>): void;
     sideComponents?: ObjectsTableProps<Obj>["sideComponents"];
 }
 

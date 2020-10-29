@@ -11,7 +11,7 @@ interface DataValuesFiltersProps {
 
 export interface DataValuesFilter {
     periods: string[];
-    dataSets: Id[];
+    dataSetIds: Id[];
 }
 
 interface FilterOptions {
@@ -34,8 +34,8 @@ export const DataValuesFilters: React.FC<DataValuesFiltersProps> = React.memo(pr
             />
             <MultipleDropdown
                 items={dataSetItems}
-                values={filter.dataSets}
-                onChange={dataSets => onChange({ ...filter, dataSets })}
+                values={filter.dataSetIds}
+                onChange={dataSetIds => onChange({ ...filter, dataSetIds })}
                 label={i18n.t("Data sets")}
             />
         </div>

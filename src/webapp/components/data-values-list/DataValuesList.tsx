@@ -6,7 +6,7 @@ import i18n from "../../../locales";
 import { ObjectsList } from "../objects-list/ObjectsList";
 import { TableConfig, useObjectsTable } from "../objects-list/objects-list-hooks";
 import { useAppContext } from "../../contexts/app-context";
-import { DataValue } from "../../../domain/entities/DataValue";
+import { DataValue, getDataValueId } from "../../../domain/entities/DataValue";
 import { DataValuesFilters, DataValuesFilter } from "./DataValuesFilters";
 import { OrgUnitsFilter } from "./OrgUnitsFilter";
 import { useSnackbarOnError } from "../../utils/snackbar";
@@ -16,6 +16,7 @@ import {
     getOrgUnitIdsFromPaths,
 } from "../../../domain/entities/OrgUnit";
 import { Config } from "../../../domain/entities/Config";
+import { Paging } from "../../../domain/entities/PaginatedObjects";
 
 interface DataValueView {
     id: string;
@@ -32,7 +33,7 @@ interface DataValueView {
 
 export const DataValuesList: React.FC = React.memo(() => {
     const { compositionRoot, config, api } = useAppContext();
-    const [filters, setFilters] = React.useState<DataValuesFilter>({ periods: [], dataSets: [] });
+    const [filters, setFilters] = React.useState<DataValuesFilter>({ periods: [], dataSetIds: [] });
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
     const [orgUnitPathsSelected, setOrgUnitPathsSelected] = React.useState(() =>
         getMainUserPaths(config)
@@ -41,13 +42,14 @@ export const DataValuesList: React.FC = React.memo(() => {
 
     const getRows = useSnackbarOnError(
         React.useMemo(
-            () => async () => {
-                const dataValues = await compositionRoot.dataValues.get.execute({
+            () => async (paging: Paging) => {
+                const { pager, objects } = await compositionRoot.dataValues.get.execute({
                     config,
+                    paging,
                     orgUnitIds: getOrgUnitIdsFromPaths(orgUnitPathsSelected),
                     ...filters,
                 });
-                return { objects: getDataValueViews(dataValues), pager: {} };
+                return { pager, objects: getDataValueViews(objects) };
             },
             [config, compositionRoot, filters, orgUnitPathsSelected]
         )
@@ -65,6 +67,7 @@ export const DataValuesList: React.FC = React.memo(() => {
         />
     );
 
+    // TODO: Check if there are unnecessary re-renders
     return (
         <ObjectsList<DataValueView> {...tableProps} sideComponents={sideComponents}>
             <DataValuesFilters values={filters} options={filterOptions} onChange={setFilters} />
@@ -99,18 +102,18 @@ function getBaseListConfig(): Omit<TableConfig<DataValueView>, "getRows"> {
 }
 
 function getDataValueViews(dataValues: DataValue[]): DataValueView[] {
-    return dataValues.map(dv => {
+    return dataValues.map(dataValue => {
         return {
-            id: dv.id,
-            period: dv.period,
-            orgUnit: dv.orgUnit.name,
-            dataSet: dv.dataSets.map(dataSet => dataSet.name).join(", "),
-            dataElement: dv.dataElement.name,
-            categoryOptionCombo: dv.categoryOptionCombo.name,
-            value: dv.value,
-            comment: dv.comment || "",
-            lastUpdated: dv.lastUpdated.toISOString(),
-            storedBy: dv.storedBy,
+            id: getDataValueId(dataValue),
+            period: dataValue.period,
+            orgUnit: dataValue.orgUnit.name,
+            dataSet: dataValue.dataSets.map(dataSet => dataSet.name).join(", "),
+            dataElement: dataValue.dataElement.name,
+            categoryOptionCombo: dataValue.categoryOptionCombo.name,
+            value: dataValue.value,
+            comment: dataValue.comment || "",
+            lastUpdated: dataValue.lastUpdated.toISOString(),
+            storedBy: dataValue.storedBy,
         };
     });
 }

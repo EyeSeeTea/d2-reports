@@ -9,7 +9,7 @@ import _ from "lodash";
 import OldMuiThemeProvider from "material-ui/styles/MuiThemeProvider";
 //@ts-ignore
 import { HeaderBar } from "@dhis2/ui-widgets";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { D2Api } from "../../../types/d2-api";
 import { AppContext } from "../../contexts/app-context";
 import Root from "../../pages/root/RootPage";
@@ -32,11 +32,11 @@ declare global {
 const App = ({ api, d2 }: { api: D2Api; d2: D2 }) => {
     const { baseUrl } = useConfig();
 
-    const [showShareButton, setShowShareButton] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [appContext, setAppContext] = useState<AppContext | null>(null);
+    const [showShareButton, setShowShareButton] = React.useState(false);
+    const [loading, setLoading] = React.useState(true);
+    const [appContext, setAppContext] = React.useState<AppContext | null>(null);
 
-    useEffect(() => {
+    React.useEffect(() => {
         async function setup() {
             const compositionRoot = getCompositionRoot(api);
 
