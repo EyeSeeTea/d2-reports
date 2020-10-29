@@ -6,6 +6,10 @@ export interface Ref {
     id: Id;
 }
 
+export interface Named {
+    name: string;
+}
+
 export interface NamedRef extends Ref {
     name: string;
 }

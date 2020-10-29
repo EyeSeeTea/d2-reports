@@ -1,14 +1,17 @@
-import { Id, NamedRef } from "./Base";
+import { Id, NamedRef, Named } from "./Base";
 
 export interface DataValue {
-    id: Id;
     period: string;
-    orgUnit: NamedRef;
-    dataSets: NamedRef[];
+    orgUnit: Named;
+    dataSets: Named[];
     dataElement: NamedRef;
-    categoryOptionCombo: NamedRef;
+    categoryOptionCombo: Named;
     value: string;
-    comment: string | undefined;
+    comment: string;
     lastUpdated: Date;
     storedBy: string;
+}
+
+export function getDataValueId(dataValue: DataValue): Id {
+    return [dataValue.dataElement, dataValue.period, dataValue.categoryOptionCombo].join("-");
 }
