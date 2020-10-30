@@ -14,3 +14,8 @@ export interface Paging {
     page: number;
     pageSize: number;
 }
+
+export interface Sorting<T> {
+    field: keyof T;
+    direction: "asc" | "desc";
+}

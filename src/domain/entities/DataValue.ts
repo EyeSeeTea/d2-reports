@@ -3,7 +3,7 @@ import { Id, NamedRef, Named } from "./Base";
 export interface DataValue {
     period: string;
     orgUnit: Named;
-    dataSets: Named[];
+    dataSet: Named;
     dataElement: NamedRef;
     categoryOptionCombo: Named;
     value: string;

@@ -9,7 +9,6 @@ import {
     TableState,
 } from "d2-ui-components";
 import { ObjectsListProps } from "./ObjectsList";
-import { Paging } from "../../../domain/entities/PaginatedObjects";
 
 export interface TableConfig<Obj extends ReferenceObject> {
     columns: TableColumn<Obj>[];
@@ -18,11 +17,12 @@ export interface TableConfig<Obj extends ReferenceObject> {
     details?: ObjectsTableDetailField<Obj>[];
 }
 
-type GetRows<Obj> = (
-    paging: Paging
+type GetRows<Obj extends ReferenceObject> = (
+    paging: TablePagination,
+    sorting: TableSorting<Obj>
 ) => Promise<{ objects: Obj[]; pager: Partial<TablePagination> } | undefined>;
 
-const initialPagination: Paging = { page: 1, pageSize: 20 };
+const initialPagination: TablePagination = { page: 1, pageSize: 20, total: 0 };
 
 export function useObjectsTable<Obj extends ReferenceObject>(
     config: TableConfig<Obj>,
@@ -36,7 +36,9 @@ export function useObjectsTable<Obj extends ReferenceObject>(
     const loadRows = React.useCallback(
         async (sorting: TableSorting<Obj>, paginationOptions: Partial<TablePagination>) => {
             setLoading(true);
-            const res = await getRows({ ...initialPagination, ...paginationOptions });
+            const paging = { ...initialPagination, ...paginationOptions };
+            console.log({ paging, sorting });
+            const res = await getRows(paging, sorting);
 
             if (res) {
                 setRows(res.objects);
@@ -55,7 +57,7 @@ export function useObjectsTable<Obj extends ReferenceObject>(
     React.useEffect(() => {
         loadRows(sorting, { ...initialPagination, page: 1 });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [loadRows]);
 
     const onChange = React.useCallback(
         (newState: TableState<Obj>) => {

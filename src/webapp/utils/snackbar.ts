@@ -2,11 +2,11 @@ import React from "react";
 import _ from "lodash";
 import { useSnackbar } from "d2-ui-components";
 
-export function useSnackbarOnError<T>(fn: (...args: any[]) => Promise<T>) {
+export function useSnackbarOnError<T, Args extends any[]>(fn: (...args: Args) => Promise<T>) {
     const snackbar = useSnackbar();
 
     return React.useCallback(
-        async (...args: any[]) => {
+        async (...args: Args) => {
             try {
                 return await fn(...args);
             } catch (err) {
