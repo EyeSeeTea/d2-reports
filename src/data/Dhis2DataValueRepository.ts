@@ -69,3 +69,21 @@ export class Dhis2DataValueRepository implements DataValueRepository {
 function sqlViewJoinIds(ids: Id[]): string {
     return ids.join("-");
 }
+
+const columns = [
+    "dataelement",
+    "period",
+    "orgunit",
+    "categoryoptioncombo",
+    "attributeoptioncombo",
+    "value",
+    "storedby",
+    "lastupdated",
+    "comment",
+    "followup",
+    "deleted",
+] as const;
+
+type Column = typeof columns[number];
+
+type Row = Record<Column, string>;
