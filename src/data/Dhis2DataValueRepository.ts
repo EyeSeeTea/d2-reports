@@ -4,7 +4,14 @@ import { DataValueRepository, GetOptions } from "../domain/repositories/DataValu
 import { D2Api, PaginatedObjects, Id } from "../types/d2-api";
 import { Dhis2SqlViews } from "./Dhis2SqlViews";
 
-type Variables = Record<"dataSetIds" | "orgUnitIds" | "periods", string>;
+interface Variables {
+    dataSetIds: string;
+    orgUnitIds: string;
+    periods: string;
+    orderByColumn: Field;
+    orderByDirection: "asc" | "desc";
+}
+
 type Field =
     | "datasetname"
     | "dataelementid"
@@ -17,6 +24,18 @@ type Field =
     | "orgunit"
     | "lastupdated";
 
+const fieldMapping: Record<keyof DataValue, Field> = {
+    period: "period",
+    orgUnit: "orgunit",
+    dataSet: "datasetname",
+    dataElement: "dataelementname",
+    categoryOptionCombo: "cocname",
+    value: "value",
+    comment: "comment",
+    lastUpdated: "lastupdated",
+    storedBy: "storedby",
+};
+
 const allPeriods = _.range(2010, new Date().getFullYear()).map(n => n.toString());
 
 export class Dhis2DataValueRepository implements DataValueRepository {
@@ -24,7 +43,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
 
     async get(options: GetOptions): Promise<PaginatedObjects<DataValue>> {
         const { api } = this;
-        const { config, dataSetIds, orgUnitIds, periods } = options;
+        const { config, dataSetIds, orgUnitIds, periods, paging, sorting } = options;
         const allDataSetIds = _.values(config.dataSets).map(ds => ds.id);
 
         const sqlViews = new Dhis2SqlViews(api);
@@ -35,8 +54,10 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                     orgUnitIds: sqlViewJoinIds(orgUnitIds),
                     periods: sqlViewJoinIds(_.isEmpty(periods) ? allPeriods : periods),
                     dataSetIds: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
+                    orderByColumn: fieldMapping[sorting.field], // TODO
+                    orderByDirection: sorting.direction,
                 },
-                options.paging
+                paging
             )
             .getData();
 
@@ -47,7 +68,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
             (dv): DataValue => ({
                 period: dv.period.split("-")[0],
                 orgUnit: { name: dv.orgunit },
-                dataSets: [{ name: dv.datasetname }], // TODO
+                dataSet: { name: dv.datasetname },
                 dataElement: { id: dv.dataelementid, name: dv.dataelementname },
                 categoryOptionCombo: { name: dv.cocname },
                 value: dv.value,

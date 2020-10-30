@@ -1,12 +1,13 @@
 import { DataValueRepository } from "../repositories/DataValueRepository";
 import { DataValue } from "../entities/DataValue";
-import { Id } from "../entities/Base";
+import { Id, Ref } from "../entities/Base";
 import { Config } from "../entities/Config";
-import { PaginatedObjects, Paging } from "../entities/PaginatedObjects";
+import { PaginatedObjects, Paging, Sorting } from "../entities/PaginatedObjects";
 
 interface GetDataValuesUseCaseOptions {
     config: Config;
     paging: Paging;
+    sorting: Sorting<DataValue>;
     periods: string[];
     dataSetIds: Id[];
     orgUnitIds: Id[];
@@ -15,7 +16,9 @@ interface GetDataValuesUseCaseOptions {
 export class GetDataValuesUseCase {
     constructor(private dataValueRepository: DataValueRepository) {}
 
-    execute(options: GetDataValuesUseCaseOptions): Promise<PaginatedObjects<DataValue>> {
+    execute<Obj extends Ref>(
+        options: GetDataValuesUseCaseOptions
+    ): Promise<PaginatedObjects<DataValue>> {
         // TODO: Return Future instead, to allow better error handling and cancellation.
         return this.dataValueRepository.get(options);
     }

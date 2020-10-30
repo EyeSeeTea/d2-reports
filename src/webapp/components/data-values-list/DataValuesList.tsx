@@ -1,6 +1,12 @@
 import React from "react";
 import _ from "lodash";
-import { TableColumn, TableSorting, PaginationOptions, TableGlobalAction } from "d2-ui-components";
+import {
+    TableColumn,
+    TableSorting,
+    PaginationOptions,
+    TableGlobalAction,
+    TablePagination,
+} from "d2-ui-components";
 import StorageIcon from "@material-ui/icons/Storage";
 
 import i18n from "../../../locales";
@@ -17,7 +23,6 @@ import {
     getOrgUnitIdsFromPaths,
 } from "../../../domain/entities/OrgUnit";
 import { Config } from "../../../domain/entities/Config";
-import { Paging } from "../../../domain/entities/PaginatedObjects";
 
 interface DataValueView {
     id: string;
@@ -42,23 +47,26 @@ export const DataValuesList: React.FC = React.memo(() => {
     const baseConfig = React.useMemo(getBaseListConfig, []);
     const [dataValues, setDataValues] = React.useState<DataValue[]>([]);
 
-    const getRows = useSnackbarOnError(
-        React.useMemo(
-            () => async (paging: Paging) => {
-                const { pager, objects } = await compositionRoot.dataValues.get.execute({
-                    config,
-                    paging,
-                    orgUnitIds: getOrgUnitIdsFromPaths(orgUnitPathsSelected),
-                    ...filters,
-                });
-                setDataValues(objects);
-                return { pager, objects: getDataValueViews(objects) };
-            },
-            [config, compositionRoot, filters, orgUnitPathsSelected]
-        )
+    const getRows = React.useMemo(
+        () => async (paging: TablePagination, sorting: TableSorting<DataValueView>) => {
+            const { pager, objects } = await compositionRoot.dataValues.get.execute({
+                config,
+                paging,
+                sorting: {
+                    field: sorting.field === "id" ? "period" : sorting.field,
+                    direction: sorting.order,
+                },
+                orgUnitIds: getOrgUnitIdsFromPaths(orgUnitPathsSelected),
+                ...filters,
+            });
+            setDataValues(objects);
+            return { pager, objects: getDataValueViews(objects) };
+        },
+        [config, compositionRoot, filters, orgUnitPathsSelected]
     );
 
-    const tableProps = useObjectsTable(baseConfig, getRows);
+    const getRowsWithSnackbarOrError = useSnackbarOnError(getRows);
+    const tableProps = useObjectsTable(baseConfig, getRowsWithSnackbarOrError);
     const filterOptions = React.useMemo(() => getFilterOptions(config), [config]);
 
     const sideComponents = (
@@ -124,7 +132,7 @@ function getDataValueViews(dataValues: DataValue[]): DataValueView[] {
             id: getDataValueId(dataValue),
             period: dataValue.period,
             orgUnit: dataValue.orgUnit.name,
-            dataSet: dataValue.dataSets.map(dataSet => dataSet.name).join(", "),
+            dataSet: dataValue.dataSet.name,
             dataElement: dataValue.dataElement.name,
             categoryOptionCombo: dataValue.categoryOptionCombo.name,
             value: dataValue.value,
