@@ -1,6 +1,7 @@
 import React from "react";
 import _ from "lodash";
-import { TableColumn, TableSorting, PaginationOptions } from "d2-ui-components";
+import { TableColumn, TableSorting, PaginationOptions, TableGlobalAction } from "d2-ui-components";
+import StorageIcon from "@material-ui/icons/Storage";
 
 import i18n from "../../../locales";
 import { ObjectsList } from "../objects-list/ObjectsList";
@@ -39,6 +40,7 @@ export const DataValuesList: React.FC = React.memo(() => {
         getMainUserPaths(config)
     );
     const baseConfig = React.useMemo(getBaseListConfig, []);
+    const [dataValues, setDataValues] = React.useState<DataValue[]>([]);
 
     const getRows = useSnackbarOnError(
         React.useMemo(
@@ -49,6 +51,7 @@ export const DataValuesList: React.FC = React.memo(() => {
                     orgUnitIds: getOrgUnitIdsFromPaths(orgUnitPathsSelected),
                     ...filters,
                 });
+                setDataValues(objects);
                 return { pager, objects: getDataValueViews(objects) };
             },
             [config, compositionRoot, filters, orgUnitPathsSelected]
@@ -67,9 +70,22 @@ export const DataValuesList: React.FC = React.memo(() => {
         />
     );
 
+    const downloadCsv: TableGlobalAction = {
+        name: "downloadCsv",
+        text: "Download CSV",
+        icon: <StorageIcon />,
+        onClick: () => {
+            compositionRoot.dataValues.saveCsv.execute("data-values.csv", dataValues);
+        },
+    };
+
     // TODO: Check if there are unnecessary re-renders
     return (
-        <ObjectsList<DataValueView> {...tableProps} sideComponents={sideComponents}>
+        <ObjectsList<DataValueView>
+            {...tableProps}
+            sideComponents={sideComponents}
+            globalActions={[downloadCsv]}
+        >
             <DataValuesFilters values={filters} options={filterOptions} onChange={setFilters} />
         </ObjectsList>
     );
@@ -86,6 +102,7 @@ function getBaseListConfig(): Omit<TableConfig<DataValueView>, "getRows"> {
         order: "asc" as const,
     };
 
+    // TODO: Many columns, table does not fit in screen
     const columns: TableColumn<DataValueView>[] = [
         { name: "dataSet", text: i18n.t("Data set"), sortable: true },
         { name: "period", text: i18n.t("Period"), sortable: true },

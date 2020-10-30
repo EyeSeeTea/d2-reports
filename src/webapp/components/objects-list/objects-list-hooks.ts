@@ -54,6 +54,7 @@ export function useObjectsTable<Obj extends ReferenceObject>(
 
     React.useEffect(() => {
         loadRows(sorting, { ...initialPagination, page: 1 });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const onChange = React.useCallback(

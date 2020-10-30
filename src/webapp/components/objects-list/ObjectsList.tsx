@@ -8,6 +8,7 @@ import {
     TablePagination,
     TableState,
     ObjectsTableProps,
+    TableGlobalAction,
 } from "d2-ui-components";
 import { LinearProgress } from "material-ui";
 import { makeStyles } from "@material-ui/core";
@@ -22,6 +23,7 @@ export interface ObjectsListProps<Obj extends ReferenceObject> {
     initialSorting: TableSorting<Obj>;
     onChange(newState: TableState<Obj>): void;
     sideComponents?: ObjectsTableProps<Obj>["sideComponents"];
+    globalActions?: TableGlobalAction[];
 }
 
 export function ObjectsList<T extends ReferenceObject>(
