@@ -31,6 +31,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
         });
         const { dataSets, sqlViews } = await metadata$.getData();
         if (_.isEmpty(sqlViews)) throw new Error(`Cannot find sql view: ${names.sqlView}`);
+        const getDataValuesSqlView = sqlViews[0];
 
         const d2User = await this.api.currentUser
             .get({
@@ -64,7 +65,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             dataSets: keyById(dataSets),
             currentUser,
             // TODO: How to create/update dataView ?
-            getDataValuesSqlView: { id: "gCvQF1yeC9f" }, // TODO: search
+            getDataValuesSqlView,
             pairedDataElementsByDataSet: pairedDataElements,
         };
     }
@@ -75,6 +76,9 @@ function getNameOfDataElementWithValue(name: string): string {
     return "NHWA_" + s.charAt(0).toUpperCase() + s.slice(1).trim();
 }
 
+function getCleanName(name: string): string {
+    return name.replace(/[^\w]$/, "").trim();
+}
 function getMapping(
     dataSets: Array<{ id: Id; dataSetElements: Array<{ dataElement: NamedRef }> }>
 ): Config["pairedDataElementsByDataSet"] {
@@ -86,15 +90,16 @@ function getMapping(
             const mapping = _(dataElements)
                 .filter(de => de.name.startsWith("NHWA_Comment of"))
                 .map(de => {
-                    const valueDataElement =
-                        dataElementsByName[getNameOfDataElementWithValue(de.name)];
+                    const nameC = getCleanName(getNameOfDataElementWithValue(de.name));
+                    const valueDataElement = dataElementsByName[nameC];
                     if (!valueDataElement) {
-                        console.debug(`Value data element not found for comment: ${de.name}`);
-                        return null;
+                        // TODO: Check why not found
+                        console.debug(`Value data element not found for comment:\n  ${nameC}`);
                     } else {
-                        return { dataValueVal: valueDataElement.id, dataValueComment: de.id };
+                        return [valueDataElement.id, de.id] as const;
                     }
                 })
+
                 .compact()
                 .value();
             return [dataSet.id, mapping] as const;
