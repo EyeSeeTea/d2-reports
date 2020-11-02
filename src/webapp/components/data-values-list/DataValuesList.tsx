@@ -23,6 +23,7 @@ import {
     getOrgUnitIdsFromPaths,
 } from "../../../domain/entities/OrgUnit";
 import { Config } from "../../../domain/entities/Config";
+import { Sorting } from "../../../domain/entities/PaginatedObjects";
 
 interface DataValueView {
     id: string;
@@ -45,21 +46,18 @@ export const DataValuesList: React.FC = React.memo(() => {
         getMainUserPaths(config)
     );
     const baseConfig = React.useMemo(getBaseListConfig, []);
-    const [dataValues, setDataValues] = React.useState<DataValue[]>([]);
+    const [sorting, setSorting] = React.useState<TableSorting<DataValueView>>();
 
     const getRows = React.useMemo(
         () => async (paging: TablePagination, sorting: TableSorting<DataValueView>) => {
             const { pager, objects } = await compositionRoot.dataValues.get.execute({
                 config,
                 paging,
-                sorting: {
-                    field: sorting.field === "id" ? "period" : sorting.field,
-                    direction: sorting.order,
-                },
+                sorting: getSortingFromTableSorting(sorting),
                 orgUnitIds: getOrgUnitIdsFromPaths(orgUnitPathsSelected),
                 ...filters,
             });
-            setDataValues(objects);
+            setSorting(sorting);
             return { pager, objects: getDataValueViews(objects) };
         },
         [config, compositionRoot, filters, orgUnitPathsSelected]
@@ -82,7 +80,16 @@ export const DataValuesList: React.FC = React.memo(() => {
         name: "downloadCsv",
         text: "Download CSV",
         icon: <StorageIcon />,
-        onClick: () => {
+        onClick: async () => {
+            if (!sorting) return;
+            // Create a new use case that does everything?
+            const { objects: dataValues } = await compositionRoot.dataValues.get.execute({
+                config,
+                paging: { page: 1, pageSize: 100000 },
+                sorting: getSortingFromTableSorting(sorting),
+                orgUnitIds: getOrgUnitIdsFromPaths(orgUnitPathsSelected),
+                ...filters,
+            });
             compositionRoot.dataValues.saveCsv.execute("data-values.csv", dataValues);
         },
     };
@@ -98,6 +105,13 @@ export const DataValuesList: React.FC = React.memo(() => {
         </ObjectsList>
     );
 });
+
+function getSortingFromTableSorting(sorting: TableSorting<DataValueView>): Sorting<DataValue> {
+    return {
+        field: sorting.field === "id" ? "period" : sorting.field,
+        direction: sorting.order,
+    };
+}
 
 function getBaseListConfig(): Omit<TableConfig<DataValueView>, "getRows"> {
     const paginationOptions: PaginationOptions = {
