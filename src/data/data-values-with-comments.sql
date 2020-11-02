@@ -77,5 +77,6 @@ FROM (
                             INNER JOIN datasetelement ON (datavalue.dataelementid = datasetelement.dataelementid)
                             INNER JOIN dataset USING (datasetid)
                         WHERE
-                            organisationunit.path ~ (replace('${orgUnitIds}', '-', '|'))) AS unionttable;
+                            organisationunit.path ~ (replace('${orgUnitIds}', '-', '|'))) AS unionttable
+                        ORDER BY ${orderByColumn} ${orderByDirection}, period ASC, orgunit ASC, dataelementname ASC, storedby ASC;
 
