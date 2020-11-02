@@ -37,7 +37,6 @@ export function useObjectsTable<Obj extends ReferenceObject>(
         async (sorting: TableSorting<Obj>, paginationOptions: Partial<TablePagination>) => {
             setLoading(true);
             const paging = { ...initialPagination, ...paginationOptions };
-            console.log({ paging, sorting });
             const res = await getRows(paging, sorting);
 
             if (res) {
