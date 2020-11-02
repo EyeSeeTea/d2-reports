@@ -7,6 +7,8 @@ import { CsvWriterCsvRepository } from "./data/CsvWriterCsvRepository";
 import { BrowserFileRepository } from "./data/BrowserFileRepository";
 import { SaveDataValuesCsvUseCase } from "./domain/usecases/SaveDataValuesCsvUseCase";
 
+// TODO: Testing (unit, cypress)
+
 export function getCompositionRoot(api: D2Api) {
     const dataValueRepository = new Dhis2DataValueRepository(api);
     const configRepository = new Dhis2ConfigRepository(api);

@@ -145,7 +145,8 @@ function getDataValueViews(dataValues: DataValue[]): DataValueView[] {
 
 function getFilterOptions(config: Config) {
     return {
-        periods: _.range(2010, new Date().getFullYear()).map(n => n.toString()),
+        // TODO: Check other usages of this range and abstract
+        periods: _.range(2010, new Date().getFullYear() + 1).map(n => n.toString()),
         dataSets: _.values(config.dataSets),
     };
 }

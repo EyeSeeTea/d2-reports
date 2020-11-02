@@ -10,6 +10,7 @@ interface Variables {
     periods: string;
     orderByColumn: Field;
     orderByDirection: "asc" | "desc";
+    commentPairs: string;
 }
 
 type Field =
@@ -36,7 +37,7 @@ const fieldMapping: Record<keyof DataValue, Field> = {
     storedBy: "storedby",
 };
 
-const allPeriods = _.range(2010, new Date().getFullYear()).map(n => n.toString());
+const allPeriods = _.range(2010, new Date().getFullYear() + 1).map(n => n.toString());
 
 export class Dhis2DataValueRepository implements DataValueRepository {
     constructor(private api: D2Api) {}
@@ -45,17 +46,24 @@ export class Dhis2DataValueRepository implements DataValueRepository {
         const { api } = this;
         const { config, dataSetIds, orgUnitIds, periods, paging, sorting } = options;
         const allDataSetIds = _.values(config.dataSets).map(ds => ds.id);
+        const dataSetIds2 = _.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds;
+        const commentPairs = _(config.pairedDataElements)
+            .at(dataSetIds2)
+            .flatten()
+            .map(([id, idC]) => `${id}_${idC}`)
+            .join("-");
 
         const sqlViews = new Dhis2SqlViews(api);
         const { pager, rows } = await sqlViews
             .query<Variables, Field>(
-                "gCvQF1yeC9f", // TODO: from config
+                "gCvQF1yeC9f", // TODO: Get ID from config
                 {
                     orgUnitIds: sqlViewJoinIds(orgUnitIds),
                     periods: sqlViewJoinIds(_.isEmpty(periods) ? allPeriods : periods),
-                    dataSetIds: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
+                    dataSetIds: sqlViewJoinIds(dataSetIds2),
                     orderByColumn: fieldMapping[sorting.field], // TODO
                     orderByDirection: sorting.direction,
+                    commentPairs,
                 },
                 paging
             )
