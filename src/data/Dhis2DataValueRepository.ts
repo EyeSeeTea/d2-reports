@@ -47,21 +47,22 @@ export class Dhis2DataValueRepository implements DataValueRepository {
         const { config, dataSetIds, orgUnitIds, periods, paging, sorting } = options;
         const allDataSetIds = _.values(config.dataSets).map(ds => ds.id);
         const dataSetIds2 = _.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds;
-        const commentPairs = _(config.pairedDataElements)
-            .at(dataSetIds2)
-            .flatten()
-            .map(([id, idC]) => `${id}_${idC}`)
-            .join("-");
+        const commentPairs =
+            _(config.pairedDataElementsByDataSet)
+                .at(dataSetIds2)
+                .flatten()
+                .map(pair => `${pair.dataValueVal}_${pair.dataValueComment}`)
+                .join("-") || "-";
 
         const sqlViews = new Dhis2SqlViews(api);
         const { pager, rows } = await sqlViews
             .query<Variables, Field>(
-                "gCvQF1yeC9f", // TODO: Get ID from config
+                config.getDataValuesSqlView.id,
                 {
                     orgUnitIds: sqlViewJoinIds(orgUnitIds),
                     periods: sqlViewJoinIds(_.isEmpty(periods) ? allPeriods : periods),
                     dataSetIds: sqlViewJoinIds(dataSetIds2),
-                    orderByColumn: fieldMapping[sorting.field], // TODO
+                    orderByColumn: fieldMapping[sorting.field],
                     orderByDirection: sorting.direction,
                     commentPairs,
                 },
