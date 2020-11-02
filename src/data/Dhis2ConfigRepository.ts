@@ -5,22 +5,32 @@ import { D2Api, Id } from "../types/d2-api";
 import { keyById, NamedRef } from "../domain/entities/Base";
 import { User } from "../domain/entities/User";
 
+const names = {
+    dataSets: "NHWA Module",
+    sqlView: "NHWA Data Comments",
+};
+
 export class Dhis2ConfigRepository implements ConfigRepository {
     constructor(private api: D2Api) {}
 
     async get(): Promise<Config> {
         const toName = { $fn: { name: "rename", to: "name" } } as const;
-        const res$ = this.api.metadata.get({
+        const metadata$ = this.api.metadata.get({
             dataSets: {
                 fields: {
                     id: true,
                     displayName: toName,
                     dataSetElements: { dataElement: { id: true, name: true } },
                 },
-                filter: { name: { ilike: "NHWA Module" } },
+                filter: { name: { ilike: names.dataSets } },
+            },
+            sqlViews: {
+                fields: { id: true },
+                filter: { name: { eq: names.sqlView } },
             },
         });
-        const { dataSets } = await res$.getData();
+        const { dataSets, sqlViews } = await metadata$.getData();
+        if (_.isEmpty(sqlViews)) throw new Error(`Cannot find sql view: ${names.sqlView}`);
 
         const d2User = await this.api.currentUser
             .get({
@@ -53,7 +63,9 @@ export class Dhis2ConfigRepository implements ConfigRepository {
         return {
             dataSets: keyById(dataSets),
             currentUser,
-            pairedDataElements,
+            // TODO: How to create/update dataView ?
+            getDataValuesSqlView: { id: "gCvQF1yeC9f" }, // TODO: search
+            pairedDataElementsByDataSet: pairedDataElements,
         };
     }
 }
@@ -65,7 +77,7 @@ function getNameOfDataElementWithValue(name: string): string {
 
 function getMapping(
     dataSets: Array<{ id: Id; dataSetElements: Array<{ dataElement: NamedRef }> }>
-): Record<Id, [Id, Id]> {
+): Config["pairedDataElementsByDataSet"] {
     return _(dataSets)
         .map(dataSet => {
             const dataElements = dataSet.dataSetElements.map(dse => dse.dataElement);
@@ -80,7 +92,7 @@ function getMapping(
                         console.debug(`Value data element not found for comment: ${de.name}`);
                         return null;
                     } else {
-                        return [valueDataElement.id, de.id] as const;
+                        return { dataValueVal: valueDataElement.id, dataValueComment: de.id };
                     }
                 })
                 .compact()
