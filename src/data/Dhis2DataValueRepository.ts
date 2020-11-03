@@ -1,6 +1,9 @@
 import _ from "lodash";
 import { DataValue } from "../domain/entities/DataValue";
-import { DataValueRepository, DataValueRepositoryGetOptions } from "../domain/repositories/DataValueRepository";
+import {
+    DataValueRepository,
+    DataValueRepositoryGetOptions,
+} from "../domain/repositories/DataValueRepository";
 import { D2Api, PaginatedObjects, Id } from "../types/d2-api";
 import { Dhis2SqlViews } from "./Dhis2SqlViews";
 
@@ -11,6 +14,7 @@ interface Variables {
     periods: string;
     orderByColumn: Field;
     orderByDirection: "asc" | "desc";
+    sectionOrderAttributeId: Id;
     commentPairs: string;
 }
 
@@ -46,8 +50,9 @@ export class Dhis2DataValueRepository implements DataValueRepository {
     constructor(private api: D2Api) {}
 
     async get(options: DataValueRepositoryGetOptions): Promise<PaginatedObjects<DataValue>> {
-        const { api } = this;
-        const { config, dataSetIds, dataElementGroupIds, orgUnitIds, periods, paging, sorting } = options;
+        const { config, dataSetIds, dataElementGroupIds, orgUnitIds, periods } = options;
+        const { paging, sorting } = options;
+
         const allDataSetIds = _.values(config.dataSets).map(ds => ds.id);
         const dataSetIds2 = _.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds;
         const commentPairs =
@@ -57,7 +62,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                 .map(pair => `${pair.dataValueVal}_${pair.dataValueComment}`)
                 .join("-") || "-";
 
-        const sqlViews = new Dhis2SqlViews(api);
+        const sqlViews = new Dhis2SqlViews(this.api);
         const { pager, rows } = await sqlViews
             .query<Variables, Field>(
                 config.getDataValuesSqlView.id,
@@ -69,6 +74,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                     orderByColumn: fieldMapping[sorting.field],
                     orderByDirection: sorting.direction,
                     commentPairs,
+                    sectionOrderAttributeId: config.sectionOrderAttribute.id,
                 },
                 paging
             )

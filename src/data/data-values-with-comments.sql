@@ -1,11 +1,28 @@
 SELECT
-    *
+    organisationunitpath,
+    datasetname,
+    dataelementid,
+    dataelementname,
+    dataelementdescription,
+    degname,
+    cocname,
+    value,
+    comment,
+    lastupdated,
+    storedby,
+    orgunit,
+    period,
+    COALESCE((
+        SELECT
+            (regexp_matches(dataelementdescription, 'order:\s*(\d+)'))[1]), '0')::int AS dataelementorder,
+    (degav -> '${sectionOrderAttributeId}' ->> 'value')::int AS degorder
 FROM (
     SELECT
         organisationunit.path AS organisationunitpath,
         dataset.name AS datasetname,
         dataelement.uid AS dataelementid,
         dataelement.name AS dataelementname,
+        dataelement.description AS dataelementdescription,
         dataelementgroup.uid AS degid,
         dataelementgroup.name AS degname,
         categoryoptioncombo.name AS cocname,
@@ -14,7 +31,8 @@ FROM (
         datavalue.lastupdated AS lastupdated,
         datavalue.storedby AS storedby,
         organisationunit.name AS orgunit,
-        _periodstructure.iso AS period
+        _periodstructure.iso AS period,
+        dataelementgroup.attributevalues AS degav
     FROM
         datavalue
         INNER JOIN dataelement USING (dataelementid)
@@ -37,6 +55,7 @@ FROM (
         dataset.name AS datasetname,
         dataelement.uid AS dataelementid,
         dataelement.name AS dataelementname,
+        dataelement.description AS dataelementdescription,
         dataelementgroup.uid AS degid,
         dataelementgroup.name AS degname,
         categoryoptioncombo.name AS cocname,
@@ -45,7 +64,8 @@ FROM (
         datavalue.lastupdated AS lastupdated,
         datavalue.storedby AS storedby,
         organisationunit.name AS orgunit,
-        _periodstructure.iso AS period
+        _periodstructure.iso AS period,
+        dataelementgroup.attributevalues AS degav
     FROM
         datavalue AS datavalue
         INNER JOIN datavalue AS datavalueC ON (datavalue.periodid = datavalueC.periodid
@@ -91,8 +111,11 @@ FROM (
                     OR degid = ANY (string_to_array('${dataElementGroupIds}', '-'))
             ORDER BY
                 $ {orderByColumn} $ {orderByDirection},
+                datasetname ASC,
                 period ASC,
                 orgunit ASC,
+                dataelementorder ASC,
+                degorder ASC,
                 dataelementname ASC,
                 storedby ASC;
 
