@@ -5,13 +5,16 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2020-10-28T19:22:43.382Z\n"
-"PO-Revision-Date: 2020-10-28T19:22:43.382Z\n"
+"POT-Creation-Date: 2020-11-03T08:46:25.143Z\n"
+"PO-Revision-Date: 2020-11-03T08:46:25.143Z\n"
 
 msgid "Periods"
 msgstr ""
 
 msgid "Data sets"
+msgstr ""
+
+msgid "Data element groups"
 msgstr ""
 
 msgid "Data set"
@@ -24,6 +27,9 @@ msgid "Organisation unit"
 msgstr ""
 
 msgid "Data Element"
+msgstr ""
+
+msgid "Data Element Group"
 msgstr ""
 
 msgid "Category option combo"

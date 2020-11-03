@@ -4,14 +4,16 @@ import { Config } from "../entities/Config";
 import { PaginatedObjects, Paging, Sorting } from "../entities/PaginatedObjects";
 
 export interface DataValueRepository {
-    get(options: GetOptions): Promise<PaginatedObjects<DataValue>>;
+    get(options: DataValueRepositoryGetOptions): Promise<PaginatedObjects<DataValue>>;
 }
 
-export interface GetOptions {
+export interface DataValueRepositoryGetOptions {
+    // TODO: Don't pass full config
     config: Config;
     paging: Paging;
     sorting: Sorting<DataValue>;
     periods: string[];
-    dataSetIds: Id[];
     orgUnitIds: Id[];
+    dataSetIds: Id[];
+    dataElementGroupIds: Id[];
 }

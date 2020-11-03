@@ -12,17 +12,20 @@ interface DataValuesFiltersProps {
 export interface DataValuesFilter {
     periods: string[];
     dataSetIds: Id[];
+    dataElementGroupIds: Id[];
 }
 
 interface FilterOptions {
     periods: string[];
     dataSets: NamedRef[];
+    dataElementGroups: NamedRef[];
 }
 
 export const DataValuesFilters: React.FC<DataValuesFiltersProps> = React.memo(props => {
     const { values: filter, options: filterOptions, onChange } = props;
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
     const dataSetItems = useMemoOptionsFromNamedRef(filterOptions.dataSets);
+    const dataElementGroupItems = useMemoOptionsFromNamedRef(filterOptions.dataElementGroups);
 
     return (
         <div>
@@ -37,6 +40,12 @@ export const DataValuesFilters: React.FC<DataValuesFiltersProps> = React.memo(pr
                 values={filter.dataSetIds}
                 onChange={dataSetIds => onChange({ ...filter, dataSetIds })}
                 label={i18n.t("Data sets")}
+            />
+            <MultipleDropdown
+                items={dataElementGroupItems}
+                values={filter.dataElementGroupIds}
+                onChange={dataElementGroupIds => onChange({ ...filter, dataElementGroupIds })}
+                label={i18n.t("Data element groups")}
             />
         </div>
     );
@@ -53,3 +62,9 @@ function useMemoOptionsFromNamedRef(options: NamedRef[]) {
         return options.map(option => ({ value: option.id, text: option.name }));
     }, [options]);
 }
+
+export const emptyDataValuesFilter: DataValuesFilter = {
+    periods: [],
+    dataSetIds: [],
+    dataElementGroupIds: [],
+};
