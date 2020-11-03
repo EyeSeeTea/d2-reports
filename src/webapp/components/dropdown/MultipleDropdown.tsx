@@ -13,6 +13,7 @@ interface MultipleDropdownProps {
 
 const MultipleDropdown: React.FC<MultipleDropdownProps> = props => {
     const { items, values, onChange, label } = props;
+    const notifyChange = React.useCallback(ev => onChange(ev.target.value as string[]), [onChange]);
 
     return (
         <DropdownForm label={label}>
@@ -20,11 +21,8 @@ const MultipleDropdown: React.FC<MultipleDropdownProps> = props => {
                 multiple={true}
                 data-test-multiple-dropdown={label}
                 value={values}
-                onChange={ev => onChange(ev.target.value as string[])}
-                MenuProps={{
-                    getContentAnchorEl: null,
-                    anchorOrigin: { vertical: "bottom", horizontal: "left" },
-                }}
+                onChange={notifyChange}
+                MenuProps={menuPropsBottomLeft}
             >
                 {items.map(item => (
                     <MenuItem key={item.value} value={item.value}>
@@ -35,5 +33,10 @@ const MultipleDropdown: React.FC<MultipleDropdownProps> = props => {
         </DropdownForm>
     );
 };
+
+const menuPropsBottomLeft = {
+    getContentAnchorEl: null,
+    anchorOrigin: { vertical: "bottom", horizontal: "left" },
+} as const;
 
 export default React.memo(MultipleDropdown);

@@ -12,7 +12,7 @@ export class Dhis2SqlViews {
     ): CancelableResponse<SqlViewGetData<Field>> {
         /*
         Example:
-        
+
             GET /api/sqlViews/ID/data
                     ?var=orgUnitId:H8RixfF8ugH
                     ?var=period:2018

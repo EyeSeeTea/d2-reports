@@ -6,7 +6,8 @@ import { keyById, NamedRef } from "../domain/entities/Base";
 import { User } from "../domain/entities/User";
 
 const names = {
-    dataSets: "NHWA Module",
+    dataSetsPrefix: "NHWA Module",
+    dataElementGroupsPrefix: "NHWA Module",
     sqlView: "NHWA Data Comments",
 };
 
@@ -20,16 +21,30 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                 fields: {
                     id: true,
                     displayName: toName,
-                    dataSetElements: { dataElement: { id: true, name: true } },
+                    dataSetElements: {
+                        dataElement: {
+                            id: true,
+                            name: true,
+                            dataElementGroups: { id: true, displayName: toName },
+                        },
+                    },
                 },
-                filter: { name: { ilike: names.dataSets } },
+                filter: { name: { ilike: names.dataSetsPrefix } },
+            },
+            dataElementGroups: {
+                fields: {
+                    id: true,
+                    displayName: toName,
+                },
+                filter: { name: { ilike: names.dataElementGroupsPrefix } },
             },
             sqlViews: {
                 fields: { id: true },
                 filter: { name: { eq: names.sqlView } },
             },
         });
-        const { dataSets, sqlViews } = await metadata$.getData();
+        const { dataSets, dataElementGroups, sqlViews } = await metadata$.getData();
+
         if (_.isEmpty(sqlViews)) throw new Error(`Cannot find sql view: ${names.sqlView}`);
         const getDataValuesSqlView = sqlViews[0];
 
@@ -52,7 +67,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             })
             .getData();
 
-        const pairedDataElements = getMapping(dataSets);
+        const pairedDataElements = getPairedMapping(dataSets);
 
         const currentUser: User = {
             id: d2User.id,
@@ -63,47 +78,71 @@ export class Dhis2ConfigRepository implements ConfigRepository {
 
         return {
             dataSets: keyById(dataSets),
+            dataElementGroups: keyById(dataElementGroups),
             currentUser,
-            // TODO: How to create/update dataView ?
             getDataValuesSqlView,
             pairedDataElementsByDataSet: pairedDataElements,
+            dataElementGroupsByDataSet: getDataElementGroupsByDataSet(dataSets),
         };
     }
 }
 
 function getNameOfDataElementWithValue(name: string): string {
-    const s = name.replace(/NHWA_Comment of /, "");
-    return "NHWA_" + s.charAt(0).toUpperCase() + s.slice(1).trim();
+    const s = "NHWA_" + name.replace(/NHWA_Comment of /, "");
+    return s.replace(" - ", " for ");
 }
 
 function getCleanName(name: string): string {
-    return name.replace(/[^\w]$/, "").trim();
+    return name
+        .replace(/[^\w]$/, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
 }
-function getMapping(
-    dataSets: Array<{ id: Id; dataSetElements: Array<{ dataElement: NamedRef }> }>
-): Config["pairedDataElementsByDataSet"] {
+
+interface DataSet {
+    id: Id;
+    dataSetElements: Array<{ dataElement: NamedRef & { dataElementGroups: NamedRef[] } }>;
+}
+
+function getDataElementGroupsByDataSet(dataSets: DataSet[]): Config["dataElementGroupsByDataSet"] {
     return _(dataSets)
         .map(dataSet => {
-            const dataElements = dataSet.dataSetElements.map(dse => dse.dataElement);
-            const dataElementsByName = _.keyBy(dataElements, de => de.name.trim());
-
-            const mapping = _(dataElements)
-                .filter(de => de.name.startsWith("NHWA_Comment of"))
-                .map(de => {
-                    const nameC = getCleanName(getNameOfDataElementWithValue(de.name));
-                    const valueDataElement = dataElementsByName[nameC];
-                    if (!valueDataElement) {
-                        // TODO: Check why not found
-                        console.debug(`Value data element not found for comment:\n  ${nameC}`);
-                    } else {
-                        return [valueDataElement.id, de.id] as const;
-                    }
-                })
-
-                .compact()
+            const degs = _(dataSet.dataSetElements)
+                .flatMap(dse => dse.dataElement.dataElementGroups)
                 .value();
-            return [dataSet.id, mapping] as const;
+            return [dataSet.id, degs] as [Id, typeof degs];
         })
         .fromPairs()
+        .value();
+}
+
+function getPairedMapping(dataSets: DataSet[]): Config["pairedDataElementsByDataSet"] {
+    return _(dataSets)
+        .map(dataSet => {
+            const mapping = getMappingForDataSet(dataSet);
+            return [dataSet.id, mapping] as [string, typeof mapping];
+        })
+        .fromPairs()
+        .value();
+}
+
+function getMappingForDataSet(dataSet: DataSet) {
+    const dataElements = dataSet.dataSetElements.map(dse => dse.dataElement);
+    const dataElementsByName = _.keyBy(dataElements, de => getCleanName(de.name));
+
+    return _(dataElements)
+        .filter(de => de.name.startsWith("NHWA_Comment of"))
+        .map(de => {
+            const nameC = getCleanName(getNameOfDataElementWithValue(de.name));
+            const valueDataElement = dataElementsByName[nameC];
+            if (!valueDataElement) {
+                console.error(`Value data element not found for comment:\n  ${nameC}`);
+                return null;
+            } else {
+                return { dataValueVal: valueDataElement.id, dataValueComment: de.id };
+            }
+        })
+        .compact()
         .value();
 }

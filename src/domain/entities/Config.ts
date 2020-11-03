@@ -3,9 +3,13 @@ import { User } from "./User";
 
 export interface Config {
     dataSets: Record<Id, NamedRef>;
+    dataElementGroups: Record<Id, NamedRef>;
     currentUser: User;
     getDataValuesSqlView: Ref;
     pairedDataElementsByDataSet: {
-        [dataSetId: string]: { dataValueVal: Id; dataValueComment: Id };
+        [dataSetId: string]: Array<{ dataValueVal: Id; dataValueComment: Id }>;
+    };
+    dataElementGroupsByDataSet: {
+        [dataSetId: string]: NamedRef[];
     };
 }

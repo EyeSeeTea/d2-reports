@@ -6,6 +6,8 @@ FROM (
         dataset.name AS datasetname,
         dataelement.uid AS dataelementid,
         dataelement.name AS dataelementname,
+        dataelementgroup.uid AS degid,
+        dataelementgroup.name AS degname,
         categoryoptioncombo.name AS cocname,
         datavalue.value AS value,
         datavalue.comment AS comment,
@@ -16,6 +18,8 @@ FROM (
     FROM
         datavalue
         INNER JOIN dataelement USING (dataelementid)
+        INNER JOIN dataelementgroupmembers USING (dataelementid)
+        INNER JOIN dataelementgroup USING (dataelementgroupid)
         INNER JOIN categoryoptioncombo USING (categoryoptioncomboid)
         INNER JOIN organisationunit ON (organisationunit.organisationunitid = datavalue.sourceid)
         INNER JOIN _periodstructure USING (periodid)
@@ -33,6 +37,8 @@ FROM (
         dataset.name AS datasetname,
         dataelement.uid AS dataelementid,
         dataelement.name AS dataelementname,
+        dataelementgroup.uid AS degid,
+        dataelementgroup.name AS degname,
         categoryoptioncombo.name AS cocname,
         datavalue.value AS value,
         datavalueC.value AS comment,
@@ -53,7 +59,7 @@ FROM (
                     FROM
                         _periodstructure
                 WHERE
-                    iso = ANY (string_to_array('2019', '-')))
+                    iso = ANY (string_to_array('${periods}', '-')))
                 AND (datavalue.dataelementid IN (
                         SELECT
                             dataelementid
@@ -71,6 +77,8 @@ FROM (
                         INNER JOIN dataelement AS dataelement ON (datavalue.dataelementid = dataelement.dataelementid)
                         INNER JOIN dataelement AS dataelementC ON (datavalueC.dataelementid = dataelementC.dataelementid
                                 AND (dataelement.uid || '_' || dataelementC.uid = ANY (string_to_array('${commentPairs}', '-'))))
+                            INNER JOIN dataelementgroupmembers ON (dataelement.dataelementid = dataelementgroupmembers.dataelementid)
+                            INNER JOIN dataelementgroup USING (dataelementgroupid)
                             INNER JOIN categoryoptioncombo ON (datavalue.categoryoptioncomboid = categoryoptioncombo.categoryoptioncomboid)
                             INNER JOIN organisationunit ON (organisationunit.organisationunitid = datavalue.sourceid)
                             INNER JOIN _periodstructure ON (datavalue.periodid = _periodstructure.periodid)
@@ -78,5 +86,13 @@ FROM (
                             INNER JOIN dataset USING (datasetid)
                         WHERE
                             organisationunit.path ~ (replace('${orgUnitIds}', '-', '|'))) AS unionttable
-                        ORDER BY ${orderByColumn} ${orderByDirection}, period ASC, orgunit ASC, dataelementname ASC, storedby ASC;
+                WHERE
+                    '${dataElementGroupIds}' = '-'
+                    OR degid = ANY (string_to_array('${dataElementGroupIds}', '-'))
+            ORDER BY
+                $ {orderByColumn} $ {orderByDirection},
+                period ASC,
+                orgunit ASC,
+                dataelementname ASC,
+                storedby ASC;
 

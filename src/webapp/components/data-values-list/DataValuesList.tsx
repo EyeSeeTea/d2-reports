@@ -14,7 +14,7 @@ import { ObjectsList } from "../objects-list/ObjectsList";
 import { TableConfig, useObjectsTable } from "../objects-list/objects-list-hooks";
 import { useAppContext } from "../../contexts/app-context";
 import { DataValue, getDataValueId } from "../../../domain/entities/DataValue";
-import { DataValuesFilters, DataValuesFilter } from "./DataValuesFilters";
+import { DataValuesFilters, DataValuesFilter, emptyDataValuesFilter } from "./DataValuesFilters";
 import { OrgUnitsFilter } from "./OrgUnitsFilter";
 import { useSnackbarOnError } from "../../utils/snackbar";
 import {
@@ -24,12 +24,14 @@ import {
 } from "../../../domain/entities/OrgUnit";
 import { Config } from "../../../domain/entities/Config";
 import { Sorting } from "../../../domain/entities/PaginatedObjects";
+import { sortByName } from "../../../domain/entities/Base";
 
 interface DataValueView {
     id: string;
     period: string;
     orgUnit: string;
     dataSet: string;
+    dataElementGroup: string;
     dataElement: string;
     categoryOptionCombo: string;
     value: string;
@@ -40,7 +42,7 @@ interface DataValueView {
 
 export const DataValuesList: React.FC = React.memo(() => {
     const { compositionRoot, config, api } = useAppContext();
-    const [filters, setFilters] = React.useState<DataValuesFilter>({ periods: [], dataSetIds: [] });
+    const [filters, setFilters] = React.useState<DataValuesFilter>(emptyDataValuesFilter);
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
     const [orgUnitPathsSelected, setOrgUnitPathsSelected] = React.useState(() =>
         getMainUserPaths(config)
@@ -65,7 +67,7 @@ export const DataValuesList: React.FC = React.memo(() => {
 
     const getRowsWithSnackbarOrError = useSnackbarOnError(getRows);
     const tableProps = useObjectsTable(baseConfig, getRowsWithSnackbarOrError);
-    const filterOptions = React.useMemo(() => getFilterOptions(config), [config]);
+    const filterOptions = React.useMemo(() => getFilterOptions(config, filters), [config, filters]);
 
     const sideComponents = (
         <OrgUnitsFilter
@@ -130,6 +132,7 @@ function getBaseListConfig(): Omit<TableConfig<DataValueView>, "getRows"> {
         { name: "period", text: i18n.t("Period"), sortable: true },
         { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
         { name: "dataElement", text: i18n.t("Data Element"), sortable: true },
+        { name: "dataElementGroup", text: i18n.t("Data Element Group"), sortable: true },
         { name: "categoryOptionCombo", text: i18n.t("Category option combo"), sortable: true },
         { name: "value", text: i18n.t("Value"), sortable: true },
         { name: "comment", text: i18n.t("Comment"), sortable: true },
@@ -148,6 +151,7 @@ function getDataValueViews(dataValues: DataValue[]): DataValueView[] {
             orgUnit: dataValue.orgUnit.name,
             dataSet: dataValue.dataSet.name,
             dataElement: dataValue.dataElement.name,
+            dataElementGroup: dataValue.dataElementGroup.name,
             categoryOptionCombo: dataValue.categoryOptionCombo.name,
             value: dataValue.value,
             comment: dataValue.comment || "",
@@ -157,11 +161,19 @@ function getDataValueViews(dataValues: DataValue[]): DataValueView[] {
     });
 }
 
-function getFilterOptions(config: Config) {
+function getFilterOptions(config: Config, filters: DataValuesFilter) {
+    const { dataSetIds } = filters;
+    const dataElementGroups = _(config.dataElementGroupsByDataSet)
+        .at(_.isEmpty(dataSetIds) ? _.keys(config.dataElementGroupsByDataSet) : dataSetIds)
+        .flatten()
+        .uniqBy(deg => deg.id)
+        .value();
+
     return {
         // TODO: Check other usages of this range and abstract
         periods: _.range(2010, new Date().getFullYear() + 1).map(n => n.toString()),
-        dataSets: _.values(config.dataSets),
+        dataSets: sortByName(_.values(config.dataSets)),
+        dataElementGroups: sortByName(dataElementGroups),
     };
 }
 

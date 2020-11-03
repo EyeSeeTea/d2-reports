@@ -1,12 +1,13 @@
 import _ from "lodash";
 import { DataValue } from "../domain/entities/DataValue";
-import { DataValueRepository, GetOptions } from "../domain/repositories/DataValueRepository";
+import { DataValueRepository, DataValueRepositoryGetOptions } from "../domain/repositories/DataValueRepository";
 import { D2Api, PaginatedObjects, Id } from "../types/d2-api";
 import { Dhis2SqlViews } from "./Dhis2SqlViews";
 
 interface Variables {
-    dataSetIds: string;
     orgUnitIds: string;
+    dataSetIds: string;
+    dataElementGroupIds: string;
     periods: string;
     orderByColumn: Field;
     orderByDirection: "asc" | "desc";
@@ -17,6 +18,7 @@ type Field =
     | "datasetname"
     | "dataelementid"
     | "dataelementname"
+    | "degname"
     | "cocname"
     | "period"
     | "value"
@@ -30,6 +32,7 @@ const fieldMapping: Record<keyof DataValue, Field> = {
     orgUnit: "orgunit",
     dataSet: "datasetname",
     dataElement: "dataelementname",
+    dataElementGroup: "degname",
     categoryOptionCombo: "cocname",
     value: "value",
     comment: "comment",
@@ -42,9 +45,9 @@ const allPeriods = _.range(2010, new Date().getFullYear() + 1).map(n => n.toStri
 export class Dhis2DataValueRepository implements DataValueRepository {
     constructor(private api: D2Api) {}
 
-    async get(options: GetOptions): Promise<PaginatedObjects<DataValue>> {
+    async get(options: DataValueRepositoryGetOptions): Promise<PaginatedObjects<DataValue>> {
         const { api } = this;
-        const { config, dataSetIds, orgUnitIds, periods, paging, sorting } = options;
+        const { config, dataSetIds, dataElementGroupIds, orgUnitIds, periods, paging, sorting } = options;
         const allDataSetIds = _.values(config.dataSets).map(ds => ds.id);
         const dataSetIds2 = _.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds;
         const commentPairs =
@@ -62,6 +65,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                     orgUnitIds: sqlViewJoinIds(orgUnitIds),
                     periods: sqlViewJoinIds(_.isEmpty(periods) ? allPeriods : periods),
                     dataSetIds: sqlViewJoinIds(dataSetIds2),
+                    dataElementGroupIds: sqlViewJoinIds(dataElementGroupIds),
                     orderByColumn: fieldMapping[sorting.field],
                     orderByDirection: sorting.direction,
                     commentPairs,
@@ -79,6 +83,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                 orgUnit: { name: dv.orgunit },
                 dataSet: { name: dv.datasetname },
                 dataElement: { id: dv.dataelementid, name: dv.dataelementname },
+                dataElementGroup: { name: dv.degname },
                 categoryOptionCombo: { name: dv.cocname },
                 value: dv.value,
                 comment: dv.comment,
@@ -97,7 +102,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
    Use "-" as id separator.
 */
 function sqlViewJoinIds(ids: Id[]): string {
-    return ids.join("-");
+    return ids.join("-") || "-";
 }
 
 const columns = [

@@ -39,7 +39,7 @@ const getMaterialTheme = () =>
                     marginLeft: 10,
                 },
                 formControl: {
-                    minWidth: 150,
+                    minWidth: 200,
                     marginTop: "8px !important",
                 },
                 input: {
