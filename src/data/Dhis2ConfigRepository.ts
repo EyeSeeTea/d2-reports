@@ -5,10 +5,11 @@ import { D2Api, Id } from "../types/d2-api";
 import { keyById, NamedRef } from "../domain/entities/Base";
 import { User } from "../domain/entities/User";
 
-const names = {
-    dataSetsPrefix: "NHWA Module",
-    dataElementGroupsPrefix: "NHWA Module",
-    sqlView: "NHWA Data Comments",
+const baseConfig = {
+    dataSetsNamePrefix: "NHWA Module",
+    dataElementGroupsNamePrefix: "NHWA Module",
+    sqlViewName: "NHWA Data Comments",
+    sectionOrderAttributeCode: "SECTION_ORDER",
 };
 
 export class Dhis2ConfigRepository implements ConfigRepository {
@@ -29,24 +30,33 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                         },
                     },
                 },
-                filter: { name: { ilike: names.dataSetsPrefix } },
+                filter: { name: { ilike: baseConfig.dataSetsNamePrefix } },
             },
             dataElementGroups: {
                 fields: {
                     id: true,
                     displayName: toName,
                 },
-                filter: { name: { ilike: names.dataElementGroupsPrefix } },
+                filter: { name: { ilike: baseConfig.dataElementGroupsNamePrefix } },
             },
             sqlViews: {
                 fields: { id: true },
-                filter: { name: { eq: names.sqlView } },
+                filter: { name: { eq: baseConfig.sqlViewName } },
+            },
+            attributes: {
+                fields: { id: true },
+                filter: { code: { eq: baseConfig.sectionOrderAttributeCode } },
             },
         });
-        const { dataSets, dataElementGroups, sqlViews } = await metadata$.getData();
+        const { dataSets, dataElementGroups, sqlViews, attributes } = await metadata$.getData();
 
-        if (_.isEmpty(sqlViews)) throw new Error(`Cannot find sql view: ${names.sqlView}`);
         const getDataValuesSqlView = sqlViews[0];
+        if (!getDataValuesSqlView)
+            throw new Error(`Cannot find sql view: ${baseConfig.sqlViewName}`);
+
+        const sectionOrderAttribute = attributes[0];
+        if (!sectionOrderAttribute)
+            throw new Error(`Cannot find attribute: ${baseConfig.sectionOrderAttributeCode}`);
 
         const d2User = await this.api.currentUser
             .get({
@@ -81,6 +91,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             dataElementGroups: keyById(dataElementGroups),
             currentUser,
             getDataValuesSqlView,
+            sectionOrderAttribute,
             pairedDataElementsByDataSet: pairedDataElements,
             dataElementGroupsByDataSet: getDataElementGroupsByDataSet(dataSets),
         };
@@ -94,8 +105,8 @@ function getNameOfDataElementWithValue(name: string): string {
 
 function getCleanName(name: string): string {
     return name
-        .replace(/[^\w]$/, "")
-        .replace(/\s+/g, " ")
+        .replace(/[^\w]$/, "") // Remove trailing non-alphanumic characters
+        .replace(/\s+/g, " ") // Replace &nbps (x160) characters by normal spaces
         .trim()
         .toLowerCase();
 }

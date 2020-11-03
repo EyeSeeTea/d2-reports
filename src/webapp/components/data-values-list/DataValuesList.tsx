@@ -115,7 +115,7 @@ function getSortingFromTableSorting(sorting: TableSorting<DataValueView>): Sorti
     };
 }
 
-function getBaseListConfig(): Omit<TableConfig<DataValueView>, "getRows"> {
+function getBaseListConfig(): TableConfig<DataValueView> {
     const paginationOptions: PaginationOptions = {
         pageSizeOptions: [10, 20, 50],
         pageSizeInitialValue: 20,
@@ -126,13 +126,12 @@ function getBaseListConfig(): Omit<TableConfig<DataValueView>, "getRows"> {
         order: "asc" as const,
     };
 
-    // TODO: Many columns, table does not fit in screen
     const columns: TableColumn<DataValueView>[] = [
         { name: "dataSet", text: i18n.t("Data set"), sortable: true },
         { name: "period", text: i18n.t("Period"), sortable: true },
         { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
-        { name: "dataElement", text: i18n.t("Data Element"), sortable: true },
         { name: "dataElementGroup", text: i18n.t("Data Element Group"), sortable: true },
+        { name: "dataElement", text: i18n.t("Data Element"), sortable: true },
         { name: "categoryOptionCombo", text: i18n.t("Category option combo"), sortable: true },
         { name: "value", text: i18n.t("Value"), sortable: true },
         { name: "comment", text: i18n.t("Comment"), sortable: true },
@@ -170,7 +169,7 @@ function getFilterOptions(config: Config, filters: DataValuesFilter) {
         .value();
 
     return {
-        // TODO: Check other usages of this range and abstract
+        // TODO: Check other usages of this range and abstract (use current - 10 years)
         periods: _.range(2010, new Date().getFullYear() + 1).map(n => n.toString()),
         dataSets: sortByName(_.values(config.dataSets)),
         dataElementGroups: sortByName(dataElementGroups),

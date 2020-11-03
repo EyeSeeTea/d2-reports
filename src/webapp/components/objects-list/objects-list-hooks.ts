@@ -28,7 +28,7 @@ export function useObjectsTable<Obj extends ReferenceObject>(
     config: TableConfig<Obj>,
     getRows: GetRows<Obj>
 ): ObjectsListProps<Obj> {
-    const [rows, setRows] = React.useState<Obj[] | undefined>(undefined);
+    const [rows, setRows] = React.useState<Obj[]>([]);
     const [pagination, setPagination] = React.useState<Partial<TablePagination>>(initialPagination);
     const [sorting, setSorting] = React.useState<TableSorting<Obj>>(config.initialSorting);
     const [isLoading, setLoading] = React.useState(true);
