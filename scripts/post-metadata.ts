@@ -1,5 +1,6 @@
 import fs from "fs";
 import { D2Api } from "d2-api/2.32";
+import { ArgumentParser } from "argparse";
 
 export async function postMetadata(baseUrl: string, authString: string): Promise<void> {
     const [username, password] = authString.split(":", 2);
@@ -11,14 +12,26 @@ export async function postMetadata(baseUrl: string, authString: string): Promise
     console.log(res);
 }
 
-const [dhis2Url, auth] = process.argv.slice(2);
+async function main() {
+    const parser = new ArgumentParser({
+        description: "Argparse example",
+    });
 
-if (!dhis2Url || !auth) {
-    console.error("Usage: post-metadata https://@server.org user:password");
-    process.exit(2);
+    parser.add_argument("-u", "--user-auth", {
+        required: true,
+        help: "Use authentication",
+        metavar: "USERNAME:PASSWORD",
+    });
+    parser.add_argument("url", { help: "DHIS2 base URL", metavar: "URL" });
+
+    const args = parser.parse_args();
+
+    try {
+        postMetadata(args.url, args.user_auth);
+    } catch (err) {
+        console.error(err);
+        process.exit(1);
+    }
 }
 
-postMetadata(dhis2Url, auth).catch(err => {
-    console.error(err);
-    process.exit(1);
-});
+main();

@@ -13,12 +13,12 @@ Target DHIS2: 2.34.
 This report shows data values for data sets `NHWA Module ...`. There are two kinds of data values displayed in the report table:
 
 1. Data values that have comments.
-2. Data values related pairs (value/comment), which are rendered as a single row. The criteria to stablish a relationship between data elements is:
+2. Data values related pairs (value/comment), which are rendered as a single row. The pairing criteria is:
 
     - Comment data element: `NHWA_Comment of Abc`.
     - Value data element: `NHWA_Abc`.
 
-The API endpoint `/dataValueSets` does not provide all the features required for this report, so we use a custom SQL View. It will be included in the generated metadata.
+The API endpoint `/dataValueSets` does not provide all the features we need, so we use a custom SQL View. It will be included in the generated metadata.
 
 We use the data element group to put data elements in the same sections together. Note that only data elements belonging to a data element group will be displayed.
 
@@ -41,7 +41,7 @@ $ PORT=8082 REACT_APP_DHIS2_BASE_URL="https://play.dhis2.org/2.34" yarn start
 ```
 $ yarn build-report # Creates dist/public.html
 $ yarn build-metadata # Created dist/metadata.json
-$ yarn post-metadata http://server.org 'user:password'
+$ yarn post-metadata -u 'user:password' http://dhis2-server.org
 ```
 
 Create web-app zip (`dist/d2-reports.zip`):
