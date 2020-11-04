@@ -42,6 +42,7 @@
         "prestart": "yarn localize && d2-manifest package.json manifest.webapp",
         "start": "react-scripts start",
         "prebuild": "yarn localize && yarn test",
+        "test": "yarn jest --passWithNoTests",
         "build": "rm -rf build/ && d2-manifest package.json manifest.webapp && react-scripts build && yarn run manifest && cp -r i18n icon.png build",
         "build-webapp": "yarn build && mkdir -p dist/ && rm -f dist/$npm_package_name.zip && cd build && zip -r ../dist/$npm_package_name.zip *",
         "build-report": "yarn build && gulp build-report",
