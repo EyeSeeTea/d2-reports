@@ -1,12 +1,12 @@
 import React from "react";
 import { HashRouter, Route, Switch } from "react-router-dom";
-import LandingPage from "../landing/LandingPage";
+import { DataValuesList } from "../../components/data-values-list/DataValuesList";
 
 const Root = () => {
     return (
         <HashRouter>
             <Switch>
-                <Route render={() => <LandingPage />} />
+                <Route render={() => <DataValuesList />} />
             </Switch>
         </HashRouter>
     );

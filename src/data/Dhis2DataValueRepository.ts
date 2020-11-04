@@ -103,28 +103,8 @@ export class Dhis2DataValueRepository implements DataValueRepository {
 }
 
 /* From the docs: "The variables must contain alphanumeric, dash, underscore and
-   whitespace characters only."
-
-   Use "-" as id separator.
+   whitespace characters only.". Use "-" as id separator.
 */
 function sqlViewJoinIds(ids: Id[]): string {
     return ids.join("-") || "-";
 }
-
-const columns = [
-    "dataelement",
-    "period",
-    "orgunit",
-    "categoryoptioncombo",
-    "attributeoptioncombo",
-    "value",
-    "storedby",
-    "lastupdated",
-    "comment",
-    "followup",
-    "deleted",
-] as const;
-
-type Column = typeof columns[number];
-
-type Row = Record<Column, string>;
