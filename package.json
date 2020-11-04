@@ -96,7 +96,6 @@
         "gulp-inline-source": "^4.0.0",
         "gulp-replace": "^1.0.0",
         "husky": "4.2.5",
-        "inline-source-cli": "^2.0.0",
         "jest": "26.4.2",
         "prettier": "2.1.1",
         "react-test-renderer": "16.13.1",
