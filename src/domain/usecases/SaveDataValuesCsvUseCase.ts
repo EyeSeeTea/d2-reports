@@ -26,6 +26,7 @@ export class SaveDataValuesCsvUseCase {
 
     async execute(filename: string, dataValues: DataValue[]): Promise<void> {
         const headers = fields.map(field => ({ id: field, text: field }));
+        // TODO: Add also standard DHIS2 Data export fields
         const rows = dataValues.map(
             (dataValue): DataValueRow => ({
                 period: dataValue.period,

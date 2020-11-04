@@ -111,7 +111,7 @@ FROM (
                     '${dataElementGroupIds}' = '-'
                     OR degid = ANY (string_to_array('${dataElementGroupIds}', '-'))
             ORDER BY
-                $ {orderByColumn} $ {orderByDirection},
+                __orderBy,
                 datasetname ASC,
                 period ASC,
                 orgunit ASC,
