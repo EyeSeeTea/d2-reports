@@ -25,6 +25,7 @@ import {
 import { Config } from "../../../domain/entities/Config";
 import { Sorting } from "../../../domain/entities/PaginatedObjects";
 import { sortByName } from "../../../domain/entities/Base";
+import { Typography, makeStyles } from "@material-ui/core";
 
 interface DataValueView {
     id: string;
@@ -68,6 +69,7 @@ export const DataValuesList: React.FC = React.memo(() => {
     const getRowsWithSnackbarOrError = useSnackbarOnError(getRows);
     const tableProps = useObjectsTable(baseConfig, getRowsWithSnackbarOrError);
     const filterOptions = React.useMemo(() => getFilterOptions(config, filters), [config, filters]);
+    const classes = useStyles();
 
     const sideComponents = (
         <OrgUnitsFilter
@@ -98,14 +100,25 @@ export const DataValuesList: React.FC = React.memo(() => {
 
     // TODO: Check if there are unnecessary re-renders
     return (
-        <ObjectsList<DataValueView>
-            {...tableProps}
-            sideComponents={sideComponents}
-            globalActions={[downloadCsv]}
-        >
-            <DataValuesFilters values={filters} options={filterOptions} onChange={setFilters} />
-        </ObjectsList>
+        <div className={classes.wrapper}>
+            <Typography variant="h5" gutterBottom>
+                NHWA Comments Report
+            </Typography>
+            <ObjectsList<DataValueView>
+                {...tableProps}
+                sideComponents={sideComponents}
+                globalActions={[downloadCsv]}
+            >
+                <DataValuesFilters values={filters} options={filterOptions} onChange={setFilters} />
+            </ObjectsList>
+        </div>
     );
+});
+
+const useStyles = makeStyles({
+    wrapper: {
+        padding: 10,
+    },
 });
 
 function getSortingFromTableSorting(sorting: TableSorting<DataValueView>): Sorting<DataValue> {

@@ -10,8 +10,8 @@ export function useSnackbarOnError<T, Args extends any[]>(fn: (...args: Args) =>
             try {
                 return await fn(...args);
             } catch (err) {
-                const bodyMessage = err.response?.data?.message;
                 console.error(err);
+                const bodyMessage = err.response?.data?.message;
                 const message = _([err.message || err?.toString(), bodyMessage])
                     .compact()
                     .join(" - ");

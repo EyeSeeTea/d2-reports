@@ -1,4 +1,5 @@
 SELECT
+    -- TODO: remove repeated?
     organisationunitpath,
     datasetname,
     dataelementid,
