@@ -1,8 +1,9 @@
 import { createObjectCsvStringifier } from "csv-writer";
-import { CsvData, CsvRepository } from "../domain/repositories/CsvRepository";
+import { CsvDataSource, CsvData } from "../data/CsvDataSource";
 
-export class CsvWriterCsvRepository<Field extends string> implements CsvRepository<Field> {
-    toString(data: CsvData<Field>): string {
+//
+export class CsvWriterDataSource implements CsvDataSource {
+    toString<Field extends string>(data: CsvData<Field>): string {
         const csvStringifier = createObjectCsvStringifier({
             header: data.headers.map(headers => ({
                 id: headers.id,

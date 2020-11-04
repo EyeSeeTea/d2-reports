@@ -6,19 +6,22 @@ import {
 } from "../domain/repositories/DataValueRepository";
 import { D2Api, PaginatedObjects, Id } from "../types/d2-api";
 import { Dhis2SqlViews } from "./Dhis2SqlViews";
+import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
+import { downloadFile } from "./utils/download-file";
+import { CsvData } from "../data/CsvDataSource";
 
 interface Variables {
     orgUnitIds: string;
     dataSetIds: string;
     dataElementGroupIds: string;
     periods: string;
-    orderByColumn: Field;
+    orderByColumn: SqlField;
     orderByDirection: "asc" | "desc";
     sectionOrderAttributeId: Id;
     commentPairs: string;
 }
 
-type Field =
+type SqlField =
     | "datasetname"
     | "dataelementid"
     | "dataelementname"
@@ -31,7 +34,7 @@ type Field =
     | "orgunit"
     | "lastupdated";
 
-const fieldMapping: Record<keyof DataValue, Field> = {
+const fieldMapping: Record<keyof DataValue, SqlField> = {
     period: "period",
     orgUnit: "orgunit",
     dataSet: "datasetname",
@@ -64,7 +67,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
 
         const sqlViews = new Dhis2SqlViews(this.api);
         const { pager, rows } = await sqlViews
-            .query<Variables, Field>(
+            .query<Variables, SqlField>(
                 config.getDataValuesSqlView.id,
                 {
                     orgUnitIds: sqlViewJoinIds(orgUnitIds),
@@ -100,7 +103,47 @@ export class Dhis2DataValueRepository implements DataValueRepository {
 
         return { pager, objects: dataValues };
     }
+
+    async save(filename: string, dataValues: DataValue[]): Promise<void> {
+        const headers = csvFields.map(field => ({ id: field, text: field }));
+        // TODO: Add also standard DHIS2 Data export fields
+        const rows = dataValues.map(
+            (dataValue): DataValueRow => ({
+                period: dataValue.period,
+                orgUnit: dataValue.orgUnit.name,
+                dataSet: dataValue.dataSet.name,
+                dataElement: dataValue.dataElement.name,
+                categoryOptionCombo: dataValue.categoryOptionCombo.name,
+                value: dataValue.value,
+                comment: dataValue.comment || "",
+                lastUpdated: dataValue.lastUpdated.toISOString(),
+                storedBy: dataValue.storedBy,
+            })
+        );
+
+        const csvDataSource = new CsvWriterDataSource();
+        const csvData: CsvData<CsvField> = { headers, rows };
+        const csvContents = csvDataSource.toString(csvData);
+
+        await downloadFile(csvContents, filename, "text/csv");
+    }
 }
+
+const csvFields = [
+    "dataSet",
+    "period",
+    "orgUnit",
+    "dataElement",
+    "categoryOptionCombo",
+    "value",
+    "comment",
+    "lastUpdated",
+    "storedBy",
+] as const;
+
+type CsvField = typeof csvFields[number];
+
+type DataValueRow = Record<CsvField, string>;
 
 /* From the docs: "The variables must contain alphanumeric, dash, underscore and
    whitespace characters only.". Use "-" as id separator.

@@ -129,26 +129,31 @@ function getDataElementGroupsByDataSet(dataSets: DataSet[]): Config["dataElement
 }
 
 function getPairedMapping(dataSets: DataSet[]): Config["pairedDataElementsByDataSet"] {
+    const dataElementsByName = _(dataSets)
+        .flatMap(dataSet => dataSet.dataSetElements)
+        .map(dse => dse.dataElement)
+        .keyBy(de => getCleanName(de.name))
+        .value();
+
     return _(dataSets)
         .map(dataSet => {
-            const mapping = getMappingForDataSet(dataSet);
+            const mapping = getMappingForDataSet(dataSet, dataElementsByName);
             return [dataSet.id, mapping] as [string, typeof mapping];
         })
         .fromPairs()
         .value();
 }
 
-function getMappingForDataSet(dataSet: DataSet) {
-    const dataElements = dataSet.dataSetElements.map(dse => dse.dataElement);
-    const dataElementsByName = _.keyBy(dataElements, de => getCleanName(de.name));
-
-    return _(dataElements)
+function getMappingForDataSet(dataSet: DataSet, dataElementsByName: Record<string, NamedRef>) {
+    return _(dataSet.dataSetElements)
+        .map(dse => dse.dataElement)
         .filter(de => de.name.startsWith("NHWA_Comment of"))
         .map(de => {
-            const nameC = getCleanName(getNameOfDataElementWithValue(de.name));
-            const valueDataElement = dataElementsByName[nameC];
+            const name = getNameOfDataElementWithValue(de.name);
+            const cleanName = getCleanName(name);
+            const valueDataElement = dataElementsByName[cleanName];
             if (!valueDataElement) {
-                console.error(`Value data element not found for comment:\n  ${nameC}`);
+                console.error(`Value data element not found for comment:\n  ${name}`);
                 return null;
             } else {
                 return { dataValueVal: valueDataElement.id, dataValueComment: de.id };

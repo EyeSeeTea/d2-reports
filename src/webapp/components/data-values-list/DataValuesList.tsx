@@ -13,7 +13,7 @@ import i18n from "../../../locales";
 import { ObjectsList } from "../objects-list/ObjectsList";
 import { TableConfig, useObjectsTable } from "../objects-list/objects-list-hooks";
 import { useAppContext } from "../../contexts/app-context";
-import { DataValue, getDataValueId } from "../../../domain/entities/DataValue";
+import { DataValue } from "../../../domain/entities/DataValue";
 import { DataValuesFilters, DataValuesFilter, emptyDataValuesFilter } from "./DataValuesFilters";
 import { OrgUnitsFilter } from "./OrgUnitsFilter";
 import { useSnackbarOnError } from "../../utils/snackbar";
@@ -26,20 +26,7 @@ import { Config } from "../../../domain/entities/Config";
 import { Sorting } from "../../../domain/entities/PaginatedObjects";
 import { sortByName } from "../../../domain/entities/Base";
 import { Typography, makeStyles } from "@material-ui/core";
-
-interface DataValueView {
-    id: string;
-    period: string;
-    orgUnit: string;
-    dataSet: string;
-    dataElementGroup: string;
-    dataElement: string;
-    categoryOptionCombo: string;
-    value: string;
-    comment: string;
-    lastUpdated: string;
-    storedBy: string;
-}
+import { DataValueViewModel, getDataValueViews } from "../../view-models/DataValueViewModel";
 
 export const DataValuesList: React.FC = React.memo(() => {
     const { compositionRoot, config, api } = useAppContext();
@@ -49,10 +36,10 @@ export const DataValuesList: React.FC = React.memo(() => {
         getMainUserPaths(config)
     );
     const baseConfig = React.useMemo(getBaseListConfig, []);
-    const [sorting, setSorting] = React.useState<TableSorting<DataValueView>>();
+    const [sorting, setSorting] = React.useState<TableSorting<DataValueViewModel>>();
 
     const getRows = React.useMemo(
-        () => async (paging: TablePagination, sorting: TableSorting<DataValueView>) => {
+        () => async (paging: TablePagination, sorting: TableSorting<DataValueViewModel>) => {
             const { pager, objects } = await compositionRoot.dataValues.get.execute({
                 config,
                 paging,
@@ -94,7 +81,7 @@ export const DataValuesList: React.FC = React.memo(() => {
                 orgUnitIds: getOrgUnitIdsFromPaths(orgUnitPathsSelected),
                 ...filters,
             });
-            compositionRoot.dataValues.saveCsv.execute("data-values.csv", dataValues);
+            compositionRoot.dataValues.save.execute("data-values.csv", dataValues);
         },
     };
 
@@ -104,7 +91,7 @@ export const DataValuesList: React.FC = React.memo(() => {
             <Typography variant="h5" gutterBottom>
                 NHWA Comments Report
             </Typography>
-            <ObjectsList<DataValueView>
+            <ObjectsList<DataValueViewModel>
                 {...tableProps}
                 sideComponents={sideComponents}
                 globalActions={[downloadCsv]}
@@ -121,25 +108,25 @@ const useStyles = makeStyles({
     },
 });
 
-function getSortingFromTableSorting(sorting: TableSorting<DataValueView>): Sorting<DataValue> {
+function getSortingFromTableSorting(sorting: TableSorting<DataValueViewModel>): Sorting<DataValue> {
     return {
         field: sorting.field === "id" ? "period" : sorting.field,
         direction: sorting.order,
     };
 }
 
-function getBaseListConfig(): TableConfig<DataValueView> {
+function getBaseListConfig(): TableConfig<DataValueViewModel> {
     const paginationOptions: PaginationOptions = {
         pageSizeOptions: [10, 20, 50],
         pageSizeInitialValue: 20,
     };
 
-    const initialSorting: TableSorting<DataValueView> = {
+    const initialSorting: TableSorting<DataValueViewModel> = {
         field: "dataSet" as const,
         order: "asc" as const,
     };
 
-    const columns: TableColumn<DataValueView>[] = [
+    const columns: TableColumn<DataValueViewModel>[] = [
         { name: "dataSet", text: i18n.t("Data set"), sortable: true },
         { name: "period", text: i18n.t("Period"), sortable: true },
         { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
@@ -153,24 +140,6 @@ function getBaseListConfig(): TableConfig<DataValueView> {
     ];
 
     return { columns, initialSorting, paginationOptions };
-}
-
-function getDataValueViews(dataValues: DataValue[]): DataValueView[] {
-    return dataValues.map(dataValue => {
-        return {
-            id: getDataValueId(dataValue),
-            period: dataValue.period,
-            orgUnit: dataValue.orgUnit.name,
-            dataSet: dataValue.dataSet.name,
-            dataElement: dataValue.dataElement.name,
-            dataElementGroup: dataValue.dataElementGroup.name,
-            categoryOptionCombo: dataValue.categoryOptionCombo.name,
-            value: dataValue.value,
-            comment: dataValue.comment || "",
-            lastUpdated: dataValue.lastUpdated.toISOString(),
-            storedBy: dataValue.storedBy,
-        };
-    });
 }
 
 function getFilterOptions(config: Config, filters: DataValuesFilter) {

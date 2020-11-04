@@ -1,5 +1,6 @@
 SELECT
     -- TODO: remove repeated?
+    -- TODO: data elements without group are not rendered (bacause of the inner join). Do we need to fix this
     organisationunitpath,
     datasetname,
     dataelementid,

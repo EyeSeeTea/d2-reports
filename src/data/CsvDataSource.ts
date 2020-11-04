@@ -1,5 +1,5 @@
-export interface CsvRepository<Field extends string> {
-    toString(data: CsvData<Field>): string;
+export interface CsvDataSource {
+    toString<Field extends string>(data: CsvData<Field>): string;
 }
 
 export interface CsvData<Field extends string> {

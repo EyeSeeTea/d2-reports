@@ -14,19 +14,18 @@ export async function postMetadata(baseUrl: string, authString: string): Promise
 
 async function main() {
     const parser = new ArgumentParser({
-        description: "Argparse example",
+        description: "Post metadata (report, sql views) to DHIS2 instance",
     });
 
     parser.add_argument("-u", "--user-auth", {
         required: true,
-        help: "Use authentication",
+        help: "DHIS2 authentication",
         metavar: "USERNAME:PASSWORD",
     });
     parser.add_argument("url", { help: "DHIS2 base URL", metavar: "URL" });
 
-    const args = parser.parse_args();
-
     try {
+        const args = parser.parse_args();
         postMetadata(args.url, args.user_auth);
     } catch (err) {
         console.error(err);

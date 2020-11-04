@@ -5,6 +5,7 @@ import { PaginatedObjects, Paging, Sorting } from "../entities/PaginatedObjects"
 
 export interface DataValueRepository {
     get(options: DataValueRepositoryGetOptions): Promise<PaginatedObjects<DataValue>>;
+    save(filename: string, dataValues: DataValue[]): Promise<void>;
 }
 
 export interface DataValueRepositoryGetOptions {
