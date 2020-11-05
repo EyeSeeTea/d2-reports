@@ -4,7 +4,6 @@ import { ArgumentParser } from "argparse";
 
 export async function postMetadata(baseUrl: string, authString: string): Promise<void> {
     const [username, password] = authString.split(":", 2);
-    console.debug({ baseUrl, auth: { username, password } });
     const api = new D2Api({ baseUrl, auth: { username, password } });
     const metadataJson = fs.readFileSync("dist/metadata.json", "utf8");
     const metadata = JSON.parse(metadataJson);

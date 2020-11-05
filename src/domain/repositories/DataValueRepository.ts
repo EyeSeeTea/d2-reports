@@ -9,7 +9,6 @@ export interface DataValueRepository {
 }
 
 export interface DataValueRepositoryGetOptions {
-    // TODO: Don't pass full config
     config: Config;
     paging: Paging;
     sorting: Sorting<DataValue>;

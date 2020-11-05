@@ -11,13 +11,14 @@ SELECT
     value,
     comment,
     lastupdated,
+    created,
     storedby,
     orgunit,
     period,
     COALESCE((
         SELECT
-            (regexp_matches(dataelementdescription, 'order:\s*(\d+)'))[1]), '0')::int AS dataelementorder,
-    (degav -> '${sectionOrderAttributeId}' ->> 'value')::int AS degorder
+            (regexp_matches(dataelementdescription, 'order:\s*(\d+)'))[1]), '999')::int AS dataelementorder,
+    COALESCE(degav -> '${sectionOrderAttributeId}' ->> 'value', '999')::int AS degorder
 FROM (
     SELECT
         organisationunit.path AS organisationunitpath,
@@ -34,7 +35,8 @@ FROM (
         datavalue.storedby AS storedby,
         organisationunit.name AS orgunit,
         _periodstructure.iso AS period,
-        dataelementgroup.attributevalues AS degav
+        dataelementgroup.attributevalues AS degav,
+        datavalue.created AS created
     FROM
         datavalue
         INNER JOIN dataelement USING (dataelementid)
@@ -67,57 +69,46 @@ FROM (
         datavalue.storedby AS storedby,
         organisationunit.name AS orgunit,
         _periodstructure.iso AS period,
-        dataelementgroup.attributevalues AS degav
+        dataelementgroup.attributevalues AS degav,
+        datavalue.created AS created
     FROM
         datavalue AS datavalue
-        INNER JOIN datavalue AS datavalueC ON (datavalue.periodid = datavalueC.periodid
-                AND datavalue.sourceid = datavalueC.sourceid
-                AND datavalue.attributeoptioncomboid = datavalueC.attributeoptioncomboid
-                AND NOT datavalue.deleted
-                AND NOT datavalueC.deleted
-                AND datavalue.periodid IN (
+        INNER JOIN _periodstructure USING (periodid)
+        INNER JOIN dataelement AS dataelement USING (dataelementid)
+        INNER JOIN datavalue AS datavalueC ON datavalue.periodid = datavalueC.periodid
+            AND datavalue.sourceid = datavalueC.sourceid
+            AND datavalue.attributeoptioncomboid = datavalueC.attributeoptioncomboid
+            AND NOT datavalue.deleted
+            AND NOT datavalueC.deleted
+            AND dataelement.uid = ANY (string_to_array(regexp_replace('${commentPairs}', '_\w+', '', 'g'), '-'))
+            AND (datavalueC.dataelementid IN (
                     SELECT
-                        periodid
+                        dataelementid
                     FROM
-                        _periodstructure
+                        dataelement
                 WHERE
-                    iso = ANY (string_to_array('${periods}', '-')))
-                AND (datavalue.dataelementid IN (
-                        SELECT
-                            dataelementid
-                        FROM
-                            dataelement
-                        WHERE
-                            uid = ANY (string_to_array(regexp_replace('${commentPairs}', '_\w+', '', 'g'), '-'))))
-                    AND (datavalueC.dataelementid IN (
-                            SELECT
-                                dataelementid
-                            FROM
-                                dataelement
-                            WHERE
-                                uid = ANY (string_to_array(regexp_replace('${commentPairs}', '\w+_', '', 'g'), '-')))))
-                        INNER JOIN dataelement AS dataelement ON (datavalue.dataelementid = dataelement.dataelementid)
-                        INNER JOIN dataelement AS dataelementC ON (datavalueC.dataelementid = dataelementC.dataelementid
-                                AND (dataelement.uid || '_' || dataelementC.uid = ANY (string_to_array('${commentPairs}', '-'))))
-                            INNER JOIN dataelementgroupmembers ON (dataelement.dataelementid = dataelementgroupmembers.dataelementid)
-                            INNER JOIN dataelementgroup USING (dataelementgroupid)
-                            INNER JOIN categoryoptioncombo ON (datavalue.categoryoptioncomboid = categoryoptioncombo.categoryoptioncomboid)
-                            INNER JOIN organisationunit ON (organisationunit.organisationunitid = datavalue.sourceid)
-                            INNER JOIN _periodstructure ON (datavalue.periodid = _periodstructure.periodid)
-                            INNER JOIN datasetelement ON (datavalue.dataelementid = datasetelement.dataelementid)
-                            INNER JOIN dataset USING (datasetid)
-                        WHERE
-                            organisationunit.path ~ (replace('${orgUnitIds}', '-', '|'))) AS unionttable
+                    uid = ANY (string_to_array(regexp_replace('${commentPairs}', '\w+_', '', 'g'), '-'))))
+                INNER JOIN dataelement AS dataelementC ON (datavalueC.dataelementid = dataelementC.dataelementid
+                        AND (dataelement.uid || '_' || dataelementC.uid = ANY (string_to_array('${commentPairs}', '-'))))
+                    INNER JOIN dataelementgroupmembers ON (dataelement.dataelementid = dataelementgroupmembers.dataelementid)
+                    INNER JOIN dataelementgroup USING (dataelementgroupid)
+                    INNER JOIN categoryoptioncombo ON (datavalue.categoryoptioncomboid = categoryoptioncombo.categoryoptioncomboid)
+                    INNER JOIN organisationunit ON (organisationunit.organisationunitid = datavalue.sourceid)
+                    INNER JOIN datasetelement ON (datavalue.dataelementid = datasetelement.dataelementid)
+                    INNER JOIN dataset USING (datasetid)
                 WHERE
-                    '${dataElementGroupIds}' = '-'
-                    OR degid = ANY (string_to_array('${dataElementGroupIds}', '-'))
-            ORDER BY
-                __orderBy,
-                datasetname ASC,
-                period ASC,
-                orgunit ASC,
-                dataelementorder ASC,
-                degorder ASC,
-                dataelementname ASC,
-                storedby ASC;
+                    _periodstructure.iso ~ ('^' || replace('${periods}', '-', '|') || '$')
+                    AND organisationunit.path ~ (replace('${orgUnitIds}', '-', '|'))) AS unionttable
+        WHERE ('${dataElementGroupIds}' = '-'
+            OR degid = ANY (string_to_array('${dataElementGroupIds}', '-')))
+ORDER BY
+    __orderBy,
+    datasetname ASC,
+    period ASC,
+    orgunit ASC,
+    degorder ASC,
+    dataelementorder ASC,
+    dataelementname ASC,
+    created ASC,
+    storedby ASC;
 
