@@ -18,7 +18,7 @@ This report shows data values for data sets `NHWA Module ...`. There are two kin
     - Comment data element: `NHWA_Comment of Abc`.
     - Value data element: `NHWA_Abc`.
 
-The API endpoint `/dataValueSets` does not provide all the features we need, so we use a custom SQL View. It will be included in the generated metadata.
+The API endpoint `/dataValueSets` does not provide all the features we need, so we use a custom SQL View instead. It will be included in the metadata.
 
 We use the data element group to put data elements in the same sections together. Note that only data elements belonging to a data element group will be displayed.
 
@@ -43,7 +43,7 @@ Create standard report:
 ```
 $ yarn build-report # Creates dist/index.html
 $ yarn build-metadata # Created dist/metadata.json
-$ yarn post-metadata -u 'user:password' http://dhis2-server.org
+$ yarn post-metadata -u 'user:password' http://dhis2-server.org # Posts dist/metadata.json
 ```
 
 Create web-app zip (`dist/d2-reports.zip`):

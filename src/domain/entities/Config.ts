@@ -13,4 +13,5 @@ export interface Config {
     dataElementGroupsByDataSet: {
         [dataSetId: string]: NamedRef[];
     };
+    years: string[];
 }

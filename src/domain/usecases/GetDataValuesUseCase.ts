@@ -11,7 +11,7 @@ export class GetDataValuesUseCase {
     constructor(private dataValueRepository: DataValueRepository) {}
 
     execute(options: GetDataValuesUseCaseOptions): Promise<PaginatedObjects<DataValue>> {
-        // TODO: Return Future instead, to allow better error handling and cancellation.
+        // FUTURE: Return a Future-like instead, to allow better error handling and cancellation.
         return this.dataValueRepository.get(options);
     }
 }

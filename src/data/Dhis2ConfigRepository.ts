@@ -86,6 +86,8 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             ...d2User.userCredentials,
         };
 
+        const currentYear = new Date().getFullYear();
+
         return {
             dataSets: keyById(dataSets),
             dataElementGroups: keyById(dataElementGroups),
@@ -94,6 +96,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             sectionOrderAttribute,
             pairedDataElementsByDataSet: pairedDataElements,
             dataElementGroupsByDataSet: getDataElementGroupsByDataSet(dataSets),
+            years: _.range(currentYear - 10, currentYear + 1).map(n => n.toString()),
         };
     }
 }

@@ -42,7 +42,7 @@ export const DataValuesList: React.FC = React.memo(() => {
         () => async (paging: TablePagination, sorting: TableSorting<DataValueViewModel>) => {
             const { pager, objects } = await compositionRoot.dataValues.get.execute({
                 config,
-                paging,
+                paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
                 orgUnitIds: getOrgUnitIdsFromPaths(orgUnitPathsSelected),
                 ...filters,
@@ -85,7 +85,6 @@ export const DataValuesList: React.FC = React.memo(() => {
         },
     };
 
-    // TODO: Check if there are unnecessary re-renders
     return (
         <div className={classes.wrapper}>
             <Typography variant="h5" gutterBottom>
@@ -151,8 +150,7 @@ function getFilterOptions(config: Config, filters: DataValuesFilter) {
         .value();
 
     return {
-        // TODO: Check other usages of this range and abstract (use current - 10 years)
-        periods: _.range(2010, new Date().getFullYear() + 1).map(n => n.toString()),
+        periods: config.years,
         dataSets: sortByName(_.values(config.dataSets)),
         dataElementGroups: sortByName(dataElementGroups),
     };

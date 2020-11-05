@@ -47,8 +47,6 @@ const fieldMapping: Record<keyof DataValue, SqlField> = {
     storedBy: "storedby",
 };
 
-const allPeriods = _.range(2010, new Date().getFullYear() + 1).map(n => n.toString());
-
 export class Dhis2DataValueRepository implements DataValueRepository {
     constructor(private api: D2Api) {}
 
@@ -71,7 +69,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                 config.getDataValuesSqlView.id,
                 {
                     orgUnitIds: sqlViewJoinIds(orgUnitIds),
-                    periods: sqlViewJoinIds(_.isEmpty(periods) ? allPeriods : periods),
+                    periods: sqlViewJoinIds(_.isEmpty(periods) ? config.years : periods),
                     dataSetIds: sqlViewJoinIds(dataSetIds2),
                     dataElementGroupIds: sqlViewJoinIds(dataElementGroupIds),
                     orderByColumn: fieldMapping[sorting.field],
@@ -106,7 +104,6 @@ export class Dhis2DataValueRepository implements DataValueRepository {
 
     async save(filename: string, dataValues: DataValue[]): Promise<void> {
         const headers = csvFields.map(field => ({ id: field, text: field }));
-        // TODO: Add also standard DHIS2 Data export fields
         const rows = dataValues.map(
             (dataValue): DataValueRow => ({
                 period: dataValue.period,

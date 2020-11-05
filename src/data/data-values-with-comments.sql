@@ -1,6 +1,17 @@
 SELECT
-    -- TODO: remove repeated?
-    -- TODO: data elements without group are not rendered (bacause of the inner join). Do we need to fix this
+    -- Returns UNION of two sets:
+    --   - Data values with comments.
+    --   - Data values with related comment stored in another data value. Pairing criteria:
+    --     `NHWA_Comment of Abc` -> `NHWA_Abc`.
+    --
+    -- Notes:
+    --   - Data elements without group assigned are not rendered.
+    --   - Data elements in multiple data element groups render a separate row.
+    --   - To define order:
+    --     - dataelement.description = "order: N"
+    --     - dataelementgroup.attributeValues.sectionOrder
+    --     - category option combo by name.
+    --
     organisationunitpath,
     datasetname,
     dataelementid,
@@ -109,6 +120,6 @@ ORDER BY
     degorder ASC,
     dataelementorder ASC,
     dataelementname ASC,
-    created ASC,
+    cocname ASC,
     storedby ASC;
 

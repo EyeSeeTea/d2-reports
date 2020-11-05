@@ -17,7 +17,6 @@ export const OrgUnitsFilter: React.FC<OrgUnitsFilterProps> = React.memo(props =>
     const { api, rootIds, selected, setSelected } = props;
     const classes = useStyles();
 
-    // TODO: filter by name takes time with so many orgUnits
     return (
         <div key={"org-unit-selector-filter"} className={classes.orgUnitFilter}>
             <OrgUnitsSelector

@@ -64,12 +64,6 @@ function useMemoOptionsFromNamedRef(options: NamedRef[]) {
 }
 
 export const emptyDataValuesFilter: DataValuesFilter = {
-    // TODO: DEBUG
-    /*
-    periods: ["2019"],
-    dataSetIds: ["pZ3XRBi9gYE"],
-    dataElementGroupIds: [],
-    */
     periods: [],
     dataSetIds: [],
     dataElementGroupIds: [],
