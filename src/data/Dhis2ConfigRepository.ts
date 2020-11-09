@@ -7,9 +7,9 @@ import { User } from "../domain/entities/User";
 
 const baseConfig = {
     dataSetsNamePrefix: "NHWA Module",
-    dataElementGroupsNamePrefix: "NHWA Module",
     sqlViewName: "NHWA Data Comments",
     sectionOrderAttributeCode: "SECTION_ORDER",
+    constantCode: "NHWA_COMMENTS",
 };
 
 export class Dhis2ConfigRepository implements ConfigRepository {
@@ -23,21 +23,14 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                     id: true,
                     displayName: toName,
                     dataSetElements: {
-                        dataElement: {
-                            id: true,
-                            name: true,
-                            dataElementGroups: { id: true, displayName: toName },
-                        },
+                        dataElement: { id: true, name: true },
                     },
                 },
                 filter: { name: { ilike: baseConfig.dataSetsNamePrefix } },
             },
-            dataElementGroups: {
-                fields: {
-                    id: true,
-                    displayName: toName,
-                },
-                filter: { name: { ilike: baseConfig.dataElementGroupsNamePrefix } },
+            constants: {
+                fields: { description: true },
+                filter: { code: { eq: baseConfig.constantCode } },
             },
             sqlViews: {
                 fields: { id: true },
@@ -48,7 +41,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                 filter: { code: { eq: baseConfig.sectionOrderAttributeCode } },
             },
         });
-        const { dataSets, dataElementGroups, sqlViews, attributes } = await metadata$.getData();
+        const { dataSets, constants, sqlViews, attributes } = await metadata$.getData();
 
         const getDataValuesSqlView = sqlViews[0];
         if (!getDataValuesSqlView)
@@ -57,6 +50,9 @@ export class Dhis2ConfigRepository implements ConfigRepository {
         const sectionOrderAttribute = attributes[0];
         if (!sectionOrderAttribute)
             throw new Error(`Cannot find attribute: ${baseConfig.sectionOrderAttributeCode}`);
+
+        const constant = constants[0];
+        if (!constant) throw new Error(`Cannot find constant: ${baseConfig.constantCode}`);
 
         const d2User = await this.api.currentUser
             .get({
@@ -78,6 +74,33 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             .getData();
 
         const pairedDataElements = getPairedMapping(dataSets);
+        const json = JSON.parse(constant.description || "{}") as Constant;
+        const sectionNames = json.sectionNames || {};
+        if (!json.sections) {
+            throw new Error("No sections info in constant");
+        }
+
+        const sections = _(json.sections)
+            .values()
+            .uniq()
+            .sortBy()
+            .map(sectionId => ({ id: sectionId, name: sectionNames[sectionId] || "" }))
+            .value();
+
+        const sectionsByDataSet = _(json.sections)
+            .toPairs()
+            .map(([entryId, sectionId]) => {
+                const [dataSetId] = entryId.split(".");
+                return { dataSetId, sectionId };
+            })
+            .groupBy(obj => obj.dataSetId)
+            .mapValues(objs =>
+                _(objs)
+                    .map(obj => ({ id: obj.sectionId, name: sectionNames[obj.sectionId] || "" }))
+                    .uniqBy(obj => obj.id)
+                    .value()
+            )
+            .value();
 
         const currentUser: User = {
             id: d2User.id,
@@ -90,12 +113,12 @@ export class Dhis2ConfigRepository implements ConfigRepository {
 
         return {
             dataSets: keyById(dataSets),
-            dataElementGroups: keyById(dataElementGroups),
             currentUser,
             getDataValuesSqlView,
             sectionOrderAttribute,
             pairedDataElementsByDataSet: pairedDataElements,
-            dataElementGroupsByDataSet: getDataElementGroupsByDataSet(dataSets),
+            sections: keyById(sections),
+            sectionsByDataSet,
             years: _.range(currentYear - 10, currentYear + 1).map(n => n.toString()),
         };
     }
@@ -116,19 +139,7 @@ function getCleanName(name: string): string {
 
 interface DataSet {
     id: Id;
-    dataSetElements: Array<{ dataElement: NamedRef & { dataElementGroups: NamedRef[] } }>;
-}
-
-function getDataElementGroupsByDataSet(dataSets: DataSet[]): Config["dataElementGroupsByDataSet"] {
-    return _(dataSets)
-        .map(dataSet => {
-            const degs = _(dataSet.dataSetElements)
-                .flatMap(dse => dse.dataElement.dataElementGroups)
-                .value();
-            return [dataSet.id, degs] as [Id, typeof degs];
-        })
-        .fromPairs()
-        .value();
+    dataSetElements: Array<{ dataElement: NamedRef }>;
 }
 
 function getPairedMapping(dataSets: DataSet[]): Config["pairedDataElementsByDataSet"] {
@@ -165,3 +176,8 @@ function getMappingForDataSet(dataSet: DataSet, dataElementsByName: Record<strin
         .compact()
         .value();
 }
+
+type Constant = Partial<{
+    sections?: Record<Id, string>;
+    sectionNames?: Record<string, string>;
+}>;

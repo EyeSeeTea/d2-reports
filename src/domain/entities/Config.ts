@@ -3,14 +3,14 @@ import { User } from "./User";
 
 export interface Config {
     dataSets: Record<Id, NamedRef>;
-    dataElementGroups: Record<Id, NamedRef>;
+    sections: Record<Id, NamedRef>;
     sectionOrderAttribute: Ref;
     currentUser: User;
     getDataValuesSqlView: Ref;
     pairedDataElementsByDataSet: {
         [dataSetId: string]: Array<{ dataValueVal: Id; dataValueComment: Id }>;
     };
-    dataElementGroupsByDataSet: {
+    sectionsByDataSet: {
         [dataSetId: string]: NamedRef[];
     };
     years: string[];

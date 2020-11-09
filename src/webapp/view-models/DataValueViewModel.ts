@@ -1,3 +1,4 @@
+import { Config } from "../../domain/entities/Config";
 import { DataValue, getDataValueId } from "../../domain/entities/DataValue";
 
 export interface DataValueViewModel {
@@ -5,7 +6,7 @@ export interface DataValueViewModel {
     period: string;
     orgUnit: string;
     dataSet: string;
-    dataElementGroup: string;
+    section: string;
     dataElement: string;
     categoryOptionCombo: string;
     value: string;
@@ -14,7 +15,7 @@ export interface DataValueViewModel {
     storedBy: string;
 }
 
-export function getDataValueViews(dataValues: DataValue[]): DataValueViewModel[] {
+export function getDataValueViews(config: Config, dataValues: DataValue[]): DataValueViewModel[] {
     return dataValues.map(dataValue => {
         return {
             id: getDataValueId(dataValue),
@@ -22,7 +23,7 @@ export function getDataValueViews(dataValues: DataValue[]): DataValueViewModel[]
             orgUnit: dataValue.orgUnit.name,
             dataSet: dataValue.dataSet.name,
             dataElement: dataValue.dataElement.name,
-            dataElementGroup: dataValue.dataElementGroup.name,
+            section: config.sections[dataValue.section]?.name || "-",
             categoryOptionCombo: dataValue.categoryOptionCombo.name,
             value: dataValue.value,
             comment: dataValue.comment || "",

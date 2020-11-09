@@ -48,7 +48,7 @@ export const DataValuesList: React.FC = React.memo(() => {
                 ...filters,
             });
             setSorting(sorting);
-            return { pager, objects: getDataValueViews(objects) };
+            return { pager, objects: getDataValueViews(config, objects) };
         },
         [config, compositionRoot, filters, orgUnitPathsSelected]
     );
@@ -129,7 +129,7 @@ function getBaseListConfig(): TableConfig<DataValueViewModel> {
         { name: "dataSet", text: i18n.t("Data set"), sortable: true },
         { name: "period", text: i18n.t("Period"), sortable: true },
         { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
-        { name: "dataElementGroup", text: i18n.t("Data Element Group"), sortable: true },
+        { name: "section", text: i18n.t("Section"), sortable: true },
         { name: "dataElement", text: i18n.t("Data Element"), sortable: true },
         { name: "categoryOptionCombo", text: i18n.t("Category option combo"), sortable: true },
         { name: "value", text: i18n.t("Value"), sortable: true },
@@ -143,8 +143,8 @@ function getBaseListConfig(): TableConfig<DataValueViewModel> {
 
 function getFilterOptions(config: Config, filters: DataValuesFilter) {
     const { dataSetIds } = filters;
-    const dataElementGroups = _(config.dataElementGroupsByDataSet)
-        .at(_.isEmpty(dataSetIds) ? _.keys(config.dataElementGroupsByDataSet) : dataSetIds)
+    const sections = _(config.sectionsByDataSet)
+        .at(_.isEmpty(dataSetIds) ? _.keys(config.sectionsByDataSet) : dataSetIds)
         .flatten()
         .uniqBy(deg => deg.id)
         .value();
@@ -152,7 +152,7 @@ function getFilterOptions(config: Config, filters: DataValuesFilter) {
     return {
         periods: config.years,
         dataSets: sortByName(_.values(config.dataSets)),
-        dataElementGroups: sortByName(dataElementGroups),
+        sections: sortByName(sections),
     };
 }
 

@@ -5,7 +5,7 @@ export interface DataValue {
     orgUnit: Named;
     dataSet: Named;
     dataElement: NamedRef;
-    dataElementGroup: Named;
+    section: string;
     categoryOptionCombo: Named;
     value: string;
     comment: string;

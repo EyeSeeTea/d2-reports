@@ -15,5 +15,5 @@ export interface DataValueRepositoryGetOptions {
     periods: string[];
     orgUnitIds: Id[];
     dataSetIds: Id[];
-    dataElementGroupIds: Id[];
+    sectionIds: Id[];
 }

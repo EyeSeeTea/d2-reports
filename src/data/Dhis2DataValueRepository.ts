@@ -13,7 +13,7 @@ import { CsvData } from "../data/CsvDataSource";
 interface Variables {
     orgUnitIds: string;
     dataSetIds: string;
-    dataElementGroupIds: string;
+    sectionIds: string;
     periods: string;
     orderByColumn: SqlField;
     orderByDirection: "asc" | "desc";
@@ -25,7 +25,7 @@ type SqlField =
     | "datasetname"
     | "dataelementid"
     | "dataelementname"
-    | "degname"
+    | "section"
     | "cocname"
     | "period"
     | "value"
@@ -39,7 +39,7 @@ const fieldMapping: Record<keyof DataValue, SqlField> = {
     orgUnit: "orgunit",
     dataSet: "datasetname",
     dataElement: "dataelementname",
-    dataElementGroup: "degname",
+    section: "section",
     categoryOptionCombo: "cocname",
     value: "value",
     comment: "comment",
@@ -51,7 +51,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
     constructor(private api: D2Api) {}
 
     async get(options: DataValueRepositoryGetOptions): Promise<PaginatedObjects<DataValue>> {
-        const { config, dataSetIds, dataElementGroupIds, orgUnitIds, periods } = options;
+        const { config, dataSetIds, sectionIds, orgUnitIds, periods } = options;
         const { paging, sorting } = options;
 
         const allDataSetIds = _.values(config.dataSets).map(ds => ds.id);
@@ -71,7 +71,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                     orgUnitIds: sqlViewJoinIds(orgUnitIds),
                     periods: sqlViewJoinIds(_.isEmpty(periods) ? config.years : periods),
                     dataSetIds: sqlViewJoinIds(dataSetIds2),
-                    dataElementGroupIds: sqlViewJoinIds(dataElementGroupIds),
+                    sectionIds: sqlViewJoinIds(sectionIds),
                     orderByColumn: fieldMapping[sorting.field],
                     orderByDirection: sorting.direction,
                     commentPairs,
@@ -90,7 +90,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                 orgUnit: { name: dv.orgunit },
                 dataSet: { name: dv.datasetname },
                 dataElement: { id: dv.dataelementid, name: dv.dataelementname },
-                dataElementGroup: { name: dv.degname },
+                section: dv.section,
                 categoryOptionCombo: { name: dv.cocname },
                 value: dv.value,
                 comment: dv.comment,
@@ -143,7 +143,7 @@ type CsvField = typeof csvFields[number];
 type DataValueRow = Record<CsvField, string>;
 
 /* From the docs: "The variables must contain alphanumeric, dash, underscore and
-   whitespace characters only.". Use "-" as id separator.
+   whitespace characters only.". Use "-" as id separator and also "-" as empty value.
 */
 function sqlViewJoinIds(ids: Id[]): string {
     return ids.join("-") || "-";

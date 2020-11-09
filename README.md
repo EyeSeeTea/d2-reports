@@ -41,8 +41,8 @@ $ PORT=8082 REACT_APP_DHIS2_BASE_URL="https://play.dhis2.org/2.34" yarn start
 Create standard report:
 
 ```
-$ yarn build-report # Creates dist/index.html
-$ yarn build-metadata # Created dist/metadata.json
+$ yarn build-report # Create dist/index.html
+$ yarn build-metadata -u 'user:password' http://dhis2-server.org # Creates dist/metadata.json
 $ yarn post-metadata -u 'user:password' http://dhis2-server.org # Posts dist/metadata.json
 ```
 
