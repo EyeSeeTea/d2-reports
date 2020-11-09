@@ -134,8 +134,8 @@ function getBaseListConfig(): TableConfig<DataValueViewModel> {
         { name: "categoryOptionCombo", text: i18n.t("Category option combo"), sortable: true },
         { name: "value", text: i18n.t("Value"), sortable: true },
         { name: "comment", text: i18n.t("Comment"), sortable: true },
-        { name: "lastUpdated", text: i18n.t("Last updated"), sortable: true },
-        { name: "storedBy", text: i18n.t("Stored by"), sortable: true },
+        { name: "lastUpdated", text: i18n.t("Last updated"), sortable: true, hidden: true },
+        { name: "storedBy", text: i18n.t("Stored by"), sortable: true, hidden: true },
     ];
 
     return { columns, initialSorting, paginationOptions };
