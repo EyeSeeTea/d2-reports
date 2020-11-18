@@ -50,7 +50,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                         dataElement: { id: true, name: true },
                     },
                 },
-                filter: { name: { ilike: base.dataSets.namePrefix } },
+                filter: { name: { $ilike: base.dataSets.namePrefix } },
             },
             constants: {
                 fields: { description: true },

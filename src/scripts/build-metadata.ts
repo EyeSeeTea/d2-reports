@@ -2,7 +2,7 @@ import { ArgumentParser } from "argparse";
 import fs from "fs";
 import _ from "lodash";
 import { parse } from "node-html-parser";
-import { D2Api, D2Constant, D2Report, D2SqlView, Id } from "../types/d2-api";
+import { D2Api, D2Constant, D2Report, D2SqlView, Id, Ref } from "../types/d2-api";
 
 /* dataSetId.dataElementId.cocId */
 type EntryId = string;
@@ -16,9 +16,15 @@ interface Mapping {
 interface DataSet {
     id: Id;
     name: string;
+    formType: string;
     dataEntryForm: { htmlCode: string };
+    sections: Array<{ id: Id; name: string; dataElements: DataElement[] }>;
 }
 
+interface DataElement {
+    id: Id;
+    categoryCombo: { categoryOptionCombos: Ref[] };
+}
 interface Entry {
     dataSetId: Id;
     dataElementId: Id;
@@ -37,38 +43,69 @@ function indexEntries<T>(entries: Entry[], fn: (entry: Entry) => T): Record<stri
         .value();
 }
 
+function getCustomFormEntries(dataSet: DataSet): Entry[] {
+    const document = parse(dataSet.dataEntryForm.htmlCode);
+
+    const tabs = document
+        .querySelectorAll("#mod2_tabs ul li a")
+        .map(aTag => ({ selector: aTag.getAttribute("href"), title: aTag.text }));
+
+    const allEntries: Omit<Entry, "index">[] = _.flatMap(tabs, tab => {
+        const inputs = document.querySelectorAll(`${tab.selector} input[name='entryfield']`);
+
+        const entries = inputs.map(input => {
+            // <input id="${dataElementId}-${cocId}-val" name="entryfield" ... />
+            const [dataElementId, cocId, suffix] = (input.id || "").split("-", 3);
+            if (suffix === "val" && dataElementId && cocId) {
+                return {
+                    dataSetId: dataSet.id,
+                    section: { id: cleanString(tab.title), name: tab.title },
+                    dataElementId,
+                    cocId,
+                };
+            } else {
+                return null;
+            }
+        });
+
+        return _.compact(entries);
+    });
+
+    return enumerate(allEntries);
+}
+
+function getSectionEntries(dataSet: DataSet): Entry[] {
+    const entries = _.flatMap(dataSet.sections, section => {
+        return _.flatMap(section.dataElements, dataElement => {
+            // Category option combos are unsorted. For now, this is only used in forms
+            // containing YES/NO data elements, so it's not a problem.
+            return dataElement.categoryCombo.categoryOptionCombos.map(coc => {
+                return {
+                    dataSetId: dataSet.id,
+                    dataElementId: dataElement.id,
+                    cocId: coc.id,
+                    section: { id: cleanString(section.name), name: section.name },
+                };
+            });
+        });
+    });
+
+    return enumerate(entries);
+}
+
 function getMapping(dataSets: DataSet[]): Mapping {
     const entries: Entry[] = _(dataSets)
         .flatMap(dataSet => {
-            const document = parse(dataSet.dataEntryForm.htmlCode);
-
-            const tabs = document
-                .querySelectorAll("#mod2_tabs ul li a")
-                .map(aTag => ({ selector: aTag.getAttribute("href"), title: aTag.text }));
-
-            return _.flatMap(tabs, tab => {
-                const inputs = document.querySelectorAll(
-                    `${tab.selector} input[name='entryfield']`
-                );
-
-                return inputs.map(input => {
-                    // <input id="${dataElementId}-${cocId}-val" name="entryfield" ... />
-                    const [dataElementId, cocId, suffix] = (input.id || "").split("-", 3);
-                    if (suffix === "val" && dataElementId && cocId) {
-                        return {
-                            dataSetId: dataSet.id,
-                            section: { id: cleanString(tab.title), name: tab.title },
-                            dataElementId,
-                            cocId,
-                        };
-                    } else {
-                        return null;
-                    }
-                });
-            });
+            switch (dataSet.formType) {
+                case "CUSTOM":
+                    return getCustomFormEntries(dataSet);
+                case "SECTION":
+                    return getSectionEntries(dataSet);
+                default:
+                    console.error(`Form type not supported: ${dataSet.formType}`);
+                    return [];
+            }
         })
-        .compact()
-        .map((obj, index) => ({ ...obj, index }))
         .value();
 
     const order = indexEntries(entries, entry => entry.index);
@@ -91,11 +128,19 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
             fields: {
                 id: true,
                 name: true,
+                formType: true,
                 dataEntryForm: { htmlCode: true },
+                sections: {
+                    id: true,
+                    name: true,
+                    dataElements: {
+                        id: true,
+                        categoryCombo: { categoryOptionCombos: { id: true } },
+                    },
+                },
             },
             filter: {
-                name: { ilike: "NHWA Module" },
-                formType: { eq: "CUSTOM" },
+                name: { $ilike: "NHWA" },
             },
         },
     });
@@ -151,6 +196,10 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
 
 function cleanString(s: string): string {
     return s.replace(/[^\w]*/g, "");
+}
+
+function enumerate<T>(objs: Array<T>): Array<T & { index: number }> {
+    return objs.map((obj, index) => ({ ...obj, index }));
 }
 
 async function main() {
