@@ -6,7 +6,7 @@ import { keyById, NamedRef } from "../domain/entities/Base";
 import { User } from "../domain/entities/User";
 
 const base = {
-    dataSetsNamePrefix: "NHWA Module",
+    dataSets: { namePrefix: "NHWA", nameExcluded: /old$/ },
     sqlViewName: "NHWA Data Comments",
     sectionOrderAttributeCode: "SECTION_ORDER",
     constantCode: "NHWA_COMMENTS",
@@ -17,18 +17,19 @@ export class Dhis2ConfigRepository implements ConfigRepository {
 
     async get(): Promise<Config> {
         const { dataSets, constants, sqlViews, attributes } = await this.getMetadata();
+        const filteredDataSets = getFilteredDataSets(dataSets);
         const attributeCode = base.sectionOrderAttributeCode;
         const getDataValuesSqlView = getFirst(sqlViews, `Missing sqlView: ${base.sqlViewName}`);
         const sectionOrderAttribute = getFirst(attributes, `Missing attribute: ${attributeCode}`);
         const constant = getFirst(constants, `Missing constant: ${base.constantCode}`);
         const currentUser = await this.getCurrentUser();
-        const pairedDataElements = getPairedMapping(dataSets);
+        const pairedDataElements = getPairedMapping(filteredDataSets);
         const constantData = JSON.parse(constant.description || "{}") as Constant;
         const { sections, sectionsByDataSet } = getSectionsInfo(constantData);
         const currentYear = new Date().getFullYear();
 
         return {
-            dataSets: keyById(dataSets),
+            dataSets: keyById(filteredDataSets),
             currentUser,
             getDataValuesSqlView,
             sectionOrderAttribute,
@@ -49,7 +50,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                         dataElement: { id: true, name: true },
                     },
                 },
-                filter: { name: { ilike: base.dataSetsNamePrefix } },
+                filter: { name: { ilike: base.dataSets.namePrefix } },
             },
             constants: {
                 fields: { description: true },
@@ -188,6 +189,11 @@ function getSectionsInfo(constantData: Constant) {
         .value();
 
     return { sections, sectionsByDataSet };
+}
+
+function getFilteredDataSets<DataSet extends NamedRef>(dataSets: DataSet[]): DataSet[] {
+    const { namePrefix, nameExcluded } = base.dataSets;
+    return dataSets.filter(({ name }) => name.startsWith(namePrefix) && !name.match(nameExcluded));
 }
 
 const toName = { $fn: { name: "rename", to: "name" } } as const;
