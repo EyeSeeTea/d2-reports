@@ -146,7 +146,8 @@ function getFilterOptions(config: Config, filters: DataValuesFilter) {
     const sections = _(config.sectionsByDataSet)
         .at(_.isEmpty(dataSetIds) ? _.keys(config.sectionsByDataSet) : dataSetIds)
         .flatten()
-        .uniqBy(deg => deg.id)
+        .compact()
+        .uniqBy(section => section.id)
         .value();
 
     return {
