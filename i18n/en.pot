@@ -5,20 +5,53 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2020-09-09T10:45:11.228Z\n"
-"PO-Revision-Date: 2020-09-09T10:45:11.228Z\n"
+"POT-Creation-Date: 2020-11-18T10:58:48.575Z\n"
+"PO-Revision-Date: 2020-11-18T10:58:48.575Z\n"
+
+msgid "Periods"
+msgstr ""
+
+msgid "Data sets"
+msgstr ""
+
+msgid "Sections"
+msgstr ""
+
+msgid "Data set"
+msgstr ""
+
+msgid "Period"
+msgstr ""
+
+msgid "Organisation unit"
+msgstr ""
+
+msgid "Section"
+msgstr ""
+
+msgid "Data Element"
+msgstr ""
+
+msgid "Category option combo"
+msgstr ""
+
+msgid "Value"
+msgstr ""
+
+msgid "Comment"
+msgstr ""
+
+msgid "Last updated"
+msgstr ""
+
+msgid "Stored by"
+msgstr ""
+
+msgid "<No value>"
+msgstr ""
 
 msgid "Back"
 msgstr ""
 
 msgid "Help"
-msgstr ""
-
-msgid "Click to show feedback"
-msgstr ""
-
-msgid "Add"
-msgstr ""
-
-msgid "List"
 msgstr ""

@@ -7,9 +7,7 @@ import { SnackbarProvider } from "d2-ui-components";
 import _ from "lodash";
 //@ts-ignore
 import OldMuiThemeProvider from "material-ui/styles/MuiThemeProvider";
-import React, { useEffect, useState } from "react";
-import { Config } from "../../../models/Config";
-import { User } from "../../../models/User";
+import React from "react";
 import { D2Api } from "../../../types/d2-api";
 import { AppContext } from "../../contexts/app-context";
 import Root from "../../pages/root/RootPage";
@@ -17,60 +15,41 @@ import Share from "../share/Share";
 import "./App.css";
 import muiThemeLegacy from "./themes/dhis2-legacy.theme";
 import { muiTheme } from "./themes/dhis2.theme";
+import { getCompositionRoot } from "../../../compositionRoot";
+import { appConfig } from "../../../app-config";
+import { Config } from "../../../domain/entities/Config";
 
 type D2 = object;
 
-type AppWindow = Window & {
-    $: {
-        feedbackDhis2: (
-            d2: D2,
-            appKey: string,
-            feedbackOptions: AppConfig["feedback"]["feedbackOptions"]
-        ) => void;
-    };
-};
-
-function initFeedbackTool(d2: D2, appConfig: AppConfig): void {
-    const appKey = _(appConfig).get("appKey");
-
-    if (appConfig && appConfig.feedback) {
-        const feedbackOptions = {
-            ...appConfig.feedback,
-            i18nPath: "feedback-tool/i18n",
-        };
-        ((window as unknown) as AppWindow).$.feedbackDhis2(d2, appKey, feedbackOptions);
+declare global {
+    interface Window {
+        app: { config: Config };
     }
 }
 
 const App = ({ api, d2 }: { api: D2Api; d2: D2 }) => {
     const { baseUrl } = useConfig();
 
-    const [showShareButton, setShowShareButton] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [appContext, setAppContext] = useState<AppContext | null>(null);
+    const [showShareButton, setShowShareButton] = React.useState(false);
+    const [loading, setLoading] = React.useState(true);
+    const [appContext, setAppContext] = React.useState<AppContext | null>(null);
 
-    useEffect(() => {
-        fetch("app-config.json", {
-            credentials: "same-origin",
-        })
-            .then(res => res.json())
-            .then(async appConfig => {
-                const [d2, config, currentUser] = await Promise.all([
-                    init({ baseUrl: baseUrl + "/api" }),
-                    Config.build(api),
-                    User.getCurrent(api),
-                ]);
+    React.useEffect(() => {
+        async function setup() {
+            const compositionRoot = getCompositionRoot(api);
 
-                const appContext: AppContext = { d2, api, config, currentUser };
-                setAppContext(appContext);
+            const [d2, config] = await Promise.all([
+                init({ baseUrl: baseUrl + "/api", schemas: [] }),
+                compositionRoot.config.get.execute(),
+            ]);
+            const appContext: AppContext = { d2, api, config, compositionRoot };
+            window.app = { config };
 
-                setShowShareButton(_(appConfig).get("appearance.showShareButton") || false);
-                if (currentUser.canReportFeedback()) {
-                    initFeedbackTool(d2, appConfig);
-                }
-
-                setLoading(false);
-            });
+            setAppContext(appContext);
+            setShowShareButton(_(appConfig).get("appearance.showShareButton") || false);
+            setLoading(false);
+        }
+        setup();
     }, [d2, api, baseUrl]);
 
     if (loading) {
@@ -99,12 +78,12 @@ const App = ({ api, d2 }: { api: D2Api; d2: D2 }) => {
     );
 };
 
-interface AppConfig {
+export interface AppConfig {
     appKey: string;
     appearance: {
         showShareButton: boolean;
     };
-    feedback: {
+    feedback?: {
         token: string[];
         createIssue: boolean;
         sendToDhis2UserGroups: string[];
@@ -117,7 +96,7 @@ interface AppConfig {
             repository: string;
             branch: string;
         };
-        feedbackOptions: {};
+        feedbackOptions: object;
     };
 }
 

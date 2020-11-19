@@ -1,4 +1,28 @@
-## Setup
+## Introduction
+
+_d2-report_ provides the infrastructure to create DHIS2 reports with a React frontend.
+
+Those reports developed an an standard webapp, and they can both be used as an standalone DHIS2 webapp or an standard HTML report (App: Reports).
+
+Target DHIS2: 2.34.
+
+## Reports
+
+### NHWA Comments
+
+This report shows data values for data sets `NHWA Module ...`. There are two kinds of data values displayed in the report table:
+
+1. Data values that have comments.
+2. Data values related pairs (value/comment), which are rendered as a single row. The pairing criteria is:
+
+    - Comment data element: `NHWA_Comment of Abc`.
+    - Value data element: `NHWA_Abc`.
+
+The API endpoint `/dataValueSets` does not provide all the features we need, so we use a custom SQL View instead. It will be included in the metadata.
+
+We use the data element group to put data elements in the same sections together. Note that only data elements belonging to a data element group will be displayed.
+
+## Initial setup
 
 ```
 $ yarn install
@@ -6,79 +30,24 @@ $ yarn install
 
 ## Development
 
-Start development server:
+Start development server at `http://localhost:8082` using `https://play.dhis2.org/2.34` as backend:
 
 ```
-$ PORT=8082 REACT_APP_DHIS2_BASE_URL="https://play.dhis2.org/dev" yarn start
+$ PORT=8082 REACT_APP_DHIS2_BASE_URL="https://play.dhis2.org/2.34" yarn start
 ```
 
-Linting:
+## Deploy
+
+Create standard report:
 
 ```
-$ yarn lint
+$ yarn build-report # Create dist/index.html
+$ yarn build-metadata -u 'user:password' http://dhis2-server.org # Creates dist/metadata.json
+$ yarn post-metadata -u 'user:password' http://dhis2-server.org # Posts dist/metadata.json
 ```
 
-## Tests
-
-Run unit tests:
-
-```
-$ yarn test
-```
-
-Run integration tests locally:
-
-```
-$ export CYPRESS_DHIS2_AUTH='admin:district'
-$ export CYPRESS_EXTERNAL_API="http://localhost:8080"
-$ export CYPRESS_ROOT_URL=http://localhost:8081
-
-# non-interactive
-$ yarn cy:e2e:run
-
-# interactive UI
-$ yarn cy:e2e:open
-```
-
-For this to work in Travis CI, you will have to create an environment variable CYPRESS_DHIS2_AUTH (Settings -> Environment Variables) with the password used in your testing DHIS2 instance.
-
-## Build app ZIP
+Create web-app zip (`dist/d2-reports.zip`):
 
 ```
 $ yarn build-webapp
-```
-
-## Some development tips
-
-### Structure
-
--   `i18n/`: Contains literal translations (gettext format)
--   `public/`: Main app folder with a `index.html`, exposes the APP, contains the feedback-tool
--   `src/pages`: Main React components.
--   `src/components`: Reusable React components.
--   `src/models`: Models that encapsulate all the logic of the app (React components should only contain view logic).
--   `src/types`: `.d.ts` file types for modules without TS definitions.
--   `src/utils`: Misc utilities.
--   `src/locales`: Auto-generated, don't change nor add to version control.
--   `cypress/integration/`: Contains the integration Cypress tests.
-
-### i18n
-
-```
-$ yarn update-po
-# ... add/edit translations in i18n/*.po files ...
-$ yarn localize
-```
-
-### App context
-
-File `src/contexts/app-context.ts` holds some general app context so typical infrastructure objects (`api`, `d2`, `currentUser`...) are readily available. Add your own global objects if necessary.
-
-```
-import { useAppContext } from "./path/to/contexts/app-context";
-
-const SomeComponent: React.FunctionComponent = () => {
-    const { d2, api, currentUser } = useAppContext();
-    // ...
-}
 ```

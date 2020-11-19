@@ -1,13 +1,13 @@
 {
-    "name": "dhis2-app-skeleton",
-    "description": "DHIS2 Skeleton App",
-    "version": "0.0.1",
+    "name": "d2-reports",
+    "description": "DHIS2 Reports",
+    "version": "0.0.2",
     "license": "GPL-3.0",
     "author": "EyeSeeTea team",
     "homepage": ".",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/eyeseetea/dhis2-app-skeleton.git"
+        "url": "git+https://github.com/eyeseetea/d2-reports.git"
     },
     "dependencies": {
         "@dhis2/app-runtime": "2.2.2",
@@ -21,14 +21,17 @@
         "@material-ui/core": "4.11.0",
         "@material-ui/icons": "4.9.1",
         "@material-ui/styles": "4.10.0",
+        "argparse": "^2.0.1",
         "axios": "0.20.0",
         "classnames": "2.2.6",
+        "csv-writer": "^1.6.0",
         "d2": "31.8.2",
-        "d2-api": "1.1.0",
+        "d2-api": "1.3.0",
         "d2-manifest": "1.0.0",
-        "d2-ui-components": "2.0.0",
+        "d2-ui-components": "2.1.0",
         "font-awesome": "4.7.0",
         "lodash": "4.17.20",
+        "node-html-parser": "^1.4.9",
         "postcss-rtl": "1.7.3",
         "react": "16.13.1",
         "react-dom": "16.13.1",
@@ -40,14 +43,17 @@
         "prestart": "yarn localize && d2-manifest package.json manifest.webapp",
         "start": "react-scripts start",
         "prebuild": "yarn localize && yarn test",
+        "test": "yarn jest --passWithNoTests",
         "build": "rm -rf build/ && d2-manifest package.json manifest.webapp && react-scripts build && yarn run manifest && cp -r i18n icon.png build",
-        "build-webapp": "yarn build && rm -f $npm_package_name.zip && cd build && zip -r ../$npm_package_name.zip *",
-        "test": "jest --env=jsdom-fourteen",
+        "build-webapp": "yarn build && mkdir -p dist/ && rm -f dist/$npm_package_name.zip && cd build && zip -r ../dist/$npm_package_name.zip *",
+        "build-report": "yarn build && gulp build-report",
+        "build-metadata": "npx ts-node -P tsconfig-cli.json src/scripts/build-metadata.ts",
+        "post-metadata": "npx ts-node -P tsconfig-cli.json src/scripts/post-metadata.ts",
         "lint": "eslint src cypress --ext .js,.jsx,.ts,.tsx",
         "eject": "react-scripts eject",
         "prettify": "prettier \"{src,config,cypress}/**/*.{js,jsx,ts,tsx,json,css}\" --write",
         "extract-pot": "yarn d2-i18n-extract -p src/ -o i18n/",
-        "localize": "yarn update-po && d2-i18n-generate -n dhis2-skeleton-app -p ./i18n/ -o ./src/locales/",
+        "localize": "yarn update-po && d2-i18n-generate -n d2-reports -p ./i18n/ -o ./src/locales/",
         "update-po": "yarn extract-pot && for pofile in i18n/*.po; do msgmerge --backup=off -U $pofile i18n/en.pot; done",
         "manifest": "d2-manifest package.json build/manifest.webapp",
         "cy:verify": "cypress verify",
@@ -56,7 +62,8 @@
     },
     "husky": {
         "hooks": {
-            "pre-push": "yarn prettify && yarn lint && yarn update-po && yarn test"
+            "pre-push": "yarn prettify && yarn lint && yarn update-po && yarn test",
+            "post-merge": "./.githooks/dep-check"
         }
     },
     "devDependencies": {
@@ -64,6 +71,7 @@
         "@babel/preset-typescript": "7.10.4",
         "@testing-library/jest-dom": "5.11.4",
         "@testing-library/react": "10.4.9",
+        "@types/argparse": "^2.0.2",
         "@types/axios-mock-adapter": "1.10.0",
         "@types/classnames": "2.2.10",
         "@types/jest": "26.0.10",
@@ -91,17 +99,21 @@
         "eslint-plugin-prettier": "3.1.4",
         "eslint-plugin-react": "7.20.6",
         "eslint-plugin-react-hooks": "4.1.0",
+        "gulp": "^4.0.2",
+        "gulp-inline-source": "^4.0.0",
+        "gulp-replace": "^1.0.0",
         "husky": "4.2.5",
         "jest": "26.4.2",
         "prettier": "2.1.1",
         "react-test-renderer": "16.13.1",
         "ts-jest": "26.3.0",
+        "ts-node": "^9.0.0",
         "typescript": "4.0.2",
         "wait-on": "5.2.0"
     },
     "manifest.webapp": {
-        "name": "DHIS2 Skeleton App",
-        "description": "DHIS2 Skeleton App",
+        "name": "DHIS2 Reports",
+        "description": "DHIS2 Reports",
         "icons": {
             "48": "icon.png"
         },
