@@ -8,7 +8,6 @@ import { User } from "../domain/entities/User";
 const base = {
     dataSets: { namePrefix: "NHWA", nameExcluded: /old$/ },
     sqlViewName: "NHWA Data Comments",
-    sectionOrderAttributeCode: "SECTION_ORDER",
     constantCode: "NHWA_COMMENTS",
 };
 
@@ -16,11 +15,9 @@ export class Dhis2ConfigRepository implements ConfigRepository {
     constructor(private api: D2Api) {}
 
     async get(): Promise<Config> {
-        const { dataSets, constants, sqlViews, attributes } = await this.getMetadata();
+        const { dataSets, constants, sqlViews } = await this.getMetadata();
         const filteredDataSets = getFilteredDataSets(dataSets);
-        const attributeCode = base.sectionOrderAttributeCode;
         const getDataValuesSqlView = getFirst(sqlViews, `Missing sqlView: ${base.sqlViewName}`);
-        const sectionOrderAttribute = getFirst(attributes, `Missing attribute: ${attributeCode}`);
         const constant = getFirst(constants, `Missing constant: ${base.constantCode}`);
         const currentUser = await this.getCurrentUser();
         const pairedDataElements = getPairedMapping(filteredDataSets);
@@ -32,7 +29,6 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             dataSets: keyById(filteredDataSets),
             currentUser,
             getDataValuesSqlView,
-            sectionOrderAttribute,
             pairedDataElementsByDataSet: pairedDataElements,
             sections: keyById(sections),
             sectionsByDataSet,
@@ -59,10 +55,6 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             sqlViews: {
                 fields: { id: true },
                 filter: { name: { eq: base.sqlViewName } },
-            },
-            attributes: {
-                fields: { id: true },
-                filter: { code: { eq: base.sectionOrderAttributeCode } },
             },
         });
 

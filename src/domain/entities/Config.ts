@@ -4,7 +4,6 @@ import { User } from "./User";
 export interface Config {
     dataSets: Record<Id, NamedRef>;
     sections: Record<Id, NamedRef>;
-    sectionOrderAttribute: Ref;
     currentUser: User;
     getDataValuesSqlView: Ref;
     pairedDataElementsByDataSet: {
