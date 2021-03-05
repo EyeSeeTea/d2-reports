@@ -14,27 +14,19 @@ import { ObjectsList } from "../objects-list/ObjectsList";
 import { TableConfig, useObjectsTable } from "../objects-list/objects-list-hooks";
 import { useAppContext } from "../../contexts/app-context";
 import { DataValue } from "../../../domain/entities/DataValue";
-import { DataValuesFilters, DataValuesFilter, emptyDataValuesFilter } from "./DataValuesFilters";
-import { OrgUnitsFilter } from "./OrgUnitsFilter";
+import { DataValuesFilter } from "./DataValuesFilters";
 import { useSnackbarOnError } from "../../utils/snackbar";
-import {
-    getRootIds,
-    getPath as getMainPath,
-    getOrgUnitIdsFromPaths,
-} from "../../../domain/entities/OrgUnit";
-import { Config } from "../../../domain/entities/Config";
+import { Config, getMainUserPaths } from "../../../domain/entities/Config";
 import { Sorting } from "../../../domain/entities/PaginatedObjects";
 import { sortByName } from "../../../domain/entities/Base";
 import { Typography, makeStyles } from "@material-ui/core";
 import { DataValueViewModel, getDataValueViews } from "../../view-models/DataValueViewModel";
+import { getOrgUnitIdsFromPaths } from "../../../domain/entities/OrgUnit";
+import { FiltersBox } from "./FiltersBox";
 
 export const DataValuesList: React.FC = React.memo(() => {
-    const { compositionRoot, config, api } = useAppContext();
-    const [filters, setFilters] = React.useState<DataValuesFilter>(emptyDataValuesFilter);
-    const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
-    const [orgUnitPathsSelected, setOrgUnitPathsSelected] = React.useState(() =>
-        getMainUserPaths(config)
-    );
+    const { compositionRoot, config } = useAppContext();
+    const [filters, setFilters] = React.useState(() => getEmptyDataValuesFilter(config));
     const baseConfig = React.useMemo(getBaseListConfig, []);
     const [sorting, setSorting] = React.useState<TableSorting<DataValueViewModel>>();
 
@@ -44,13 +36,12 @@ export const DataValuesList: React.FC = React.memo(() => {
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
-                orgUnitIds: getOrgUnitIdsFromPaths(orgUnitPathsSelected),
-                ...filters,
+                ...getUseCaseOptions(filters),
             });
             setSorting(sorting);
             return { pager, objects: getDataValueViews(config, objects) };
         },
-        [config, compositionRoot, filters, orgUnitPathsSelected]
+        [config, compositionRoot, filters]
     );
 
     const getRowsWithSnackbarOrError = useSnackbarOnError(getRows);
@@ -58,28 +49,18 @@ export const DataValuesList: React.FC = React.memo(() => {
     const filterOptions = React.useMemo(() => getFilterOptions(config, filters), [config, filters]);
     const classes = useStyles();
 
-    const sideComponents = (
-        <OrgUnitsFilter
-            api={api}
-            rootIds={rootIds}
-            selected={orgUnitPathsSelected}
-            setSelected={setOrgUnitPathsSelected}
-        />
-    );
-
     const downloadCsv: TableGlobalAction = {
         name: "downloadCsv",
         text: "Download CSV",
         icon: <StorageIcon />,
         onClick: async () => {
             if (!sorting) return;
-            // Create a new use case that does everything?
+            // FUTURE: create a single use case that performs the get+saveCSV
             const { objects: dataValues } = await compositionRoot.dataValues.get.execute({
                 config,
                 paging: { page: 1, pageSize: 100000 },
                 sorting: getSortingFromTableSorting(sorting),
-                orgUnitIds: getOrgUnitIdsFromPaths(orgUnitPathsSelected),
-                ...filters,
+                ...getUseCaseOptions(filters),
             });
             compositionRoot.dataValues.save.execute("data-values.csv", dataValues);
         },
@@ -88,23 +69,30 @@ export const DataValuesList: React.FC = React.memo(() => {
     return (
         <div className={classes.wrapper}>
             <Typography variant="h5" gutterBottom>
-                NHWA Comments Report
+                {i18n.t("NHWA Comments Report")}
             </Typography>
-            <ObjectsList<DataValueViewModel>
-                {...tableProps}
-                sideComponents={sideComponents}
-                globalActions={[downloadCsv]}
-            >
-                <DataValuesFilters values={filters} options={filterOptions} onChange={setFilters} />
+
+            <ObjectsList<DataValueViewModel> {...tableProps} globalActions={[downloadCsv]}>
+                <FiltersBox
+                    showToggleButton={false}
+                    values={filters}
+                    options={filterOptions}
+                    onChange={setFilters}
+                />
             </ObjectsList>
         </div>
     );
 });
 
+function getUseCaseOptions(filter: DataValuesFilter) {
+    return {
+        ...filter,
+        orgUnitIds: getOrgUnitIdsFromPaths(filter.orgUnitPaths),
+    };
+}
+
 const useStyles = makeStyles({
-    wrapper: {
-        padding: 10,
-    },
+    wrapper: { padding: 10 },
 });
 
 function getSortingFromTableSorting(sorting: TableSorting<DataValueViewModel>): Sorting<DataValue> {
@@ -157,6 +145,11 @@ function getFilterOptions(config: Config, filters: DataValuesFilter) {
     };
 }
 
-function getMainUserPaths(config: Config) {
-    return _.compact([getMainPath(config.currentUser.orgUnits)]);
+function getEmptyDataValuesFilter(config: Config): DataValuesFilter {
+    return {
+        orgUnitPaths: getMainUserPaths(config),
+        periods: [],
+        dataSetIds: [],
+        sectionIds: [],
+    };
 }

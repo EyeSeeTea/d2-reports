@@ -1,14 +1,16 @@
 import _ from "lodash";
 import { Id } from "./Base";
 
-type Path = string;
+export type OrgUnitPath = string;
 
 export interface OrgUnit {
-    id: string;
-    path: Path;
+    id: Id;
+    path: OrgUnitPath;
     name: string;
     level: number;
 }
+
+const pathSeparator = "/";
 
 export function getRoots(orgUnits: OrgUnit[]): OrgUnit[] {
     const minLevel = _.min(orgUnits.map(ou => ou.level));
@@ -22,13 +24,17 @@ export function getRootIds(orgUnits: OrgUnit[]): Id[] {
     return getRoots(orgUnits).map(ou => ou.id);
 }
 
-export function getPath(orgUnits: OrgUnit[]): Path | undefined {
+export function getPath(orgUnits: OrgUnit[]): OrgUnitPath | undefined {
     return getRoots(orgUnits).map(ou => ou.path)[0];
 }
 
-export function getOrgUnitIdsFromPaths(orgUnitPathsSelected: Path[]): Id[] {
+export function getOrgUnitIdsFromPaths(orgUnitPathsSelected: OrgUnitPath[]): Id[] {
     return _(orgUnitPathsSelected)
-        .map(path => _.last(path.split("/")))
+        .map(path => _.last(path.split(pathSeparator)))
         .compact()
         .value();
+}
+
+export function getOrgUnitParentPath(path: OrgUnitPath) {
+    return _(path).split(pathSeparator).initial().join(pathSeparator);
 }
