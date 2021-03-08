@@ -26,6 +26,7 @@ export const OrgUnitsFilterButton: React.FC<OrgUnitsFilterButtonProps> = React.m
         <React.Fragment>
             <span onClick={openDialog} style={styles.textField}>
                 <TextField
+                    title={selectedOrgUnits}
                     value={selectedOrgUnits}
                     onChange={closeDialog}
                     floatingLabelText={i18n.t("Organisation unit")}

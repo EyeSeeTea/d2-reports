@@ -1,4 +1,5 @@
 import React from "react";
+import _ from "lodash";
 import { D2Api } from "../../../types/d2-api";
 import { OrgUnitsSelector } from "d2-ui-components";
 import { makeStyles } from "@material-ui/core";
@@ -17,7 +18,9 @@ const orgUnitsSelectorControls = {};
 export const OrgUnitsFilter: React.FC<OrgUnitsFilterProps> = React.memo(props => {
     const { api, rootIds, selected, setSelected } = props;
     const classes = useStyles();
-    const initiallyExpanded = React.useMemo(() => selected.map(getOrgUnitParentPath), [selected]);
+    const initiallyExpanded = React.useMemo(() => _.compact(selected.map(getOrgUnitParentPath)), [
+        selected,
+    ]);
 
     return (
         <div key={"org-unit-selector-filter"} className={classes.orgUnitFilter}>
