@@ -11,3 +11,8 @@ body {
 li {
     line-height: 1.75;
 }
+
+table th,
+table td {
+    border: none !important;
+}

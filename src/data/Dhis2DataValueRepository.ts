@@ -17,7 +17,6 @@ interface Variables {
     periods: string;
     orderByColumn: SqlField;
     orderByDirection: "asc" | "desc";
-    sectionOrderAttributeId: Id;
     commentPairs: string;
 }
 
@@ -75,7 +74,6 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                     orderByColumn: fieldMapping[sorting.field],
                     orderByDirection: sorting.direction,
                     commentPairs,
-                    sectionOrderAttributeId: config.sectionOrderAttribute.id,
                 },
                 paging
             )

@@ -15,7 +15,8 @@ async function getBaseUrl() {
         return baseUrl.replace(/\/*$/, "");
     } else {
         const { data: manifest } = await axios.get("manifest.webapp");
-        return manifest.activities.dhis.href;
+        const href = manifest.activities.dhis.href;
+        return href === "*" ? ".." : href;
     }
 }
 
