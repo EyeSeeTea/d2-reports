@@ -1,4 +1,6 @@
+import _ from "lodash";
 import { Id, NamedRef, Ref } from "./Base";
+import { getPath } from "./OrgUnit";
 import { User } from "./User";
 
 export interface Config {
@@ -13,4 +15,8 @@ export interface Config {
         [dataSetId: string]: NamedRef[];
     };
     years: string[];
+}
+
+export function getMainUserPaths(config: Config) {
+    return _.compact([getPath(config.currentUser.orgUnits)]);
 }

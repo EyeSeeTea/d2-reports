@@ -1,21 +1,26 @@
 import React from "react";
+import _ from "lodash";
 import { D2Api } from "../../../types/d2-api";
 import { OrgUnitsSelector } from "d2-ui-components";
 import { makeStyles } from "@material-ui/core";
 import { Id } from "../../../domain/entities/Base";
+import { getOrgUnitParentPath, OrgUnitPath } from "../../../domain/entities/OrgUnit";
 
-interface OrgUnitsFilterProps {
+export interface OrgUnitsFilterProps {
     api: D2Api;
     rootIds: Id[];
-    selected: Path[];
-    setSelected(newPaths: Path[]): void;
+    selected: OrgUnitPath[];
+    setSelected(newPaths: OrgUnitPath[]): void;
 }
 
-type Path = string;
+const orgUnitsSelectorControls = {};
 
 export const OrgUnitsFilter: React.FC<OrgUnitsFilterProps> = React.memo(props => {
     const { api, rootIds, selected, setSelected } = props;
     const classes = useStyles();
+    const initiallyExpanded = React.useMemo(() => _.compact(selected.map(getOrgUnitParentPath)), [
+        selected,
+    ]);
 
     return (
         <div key={"org-unit-selector-filter"} className={classes.orgUnitFilter}>
@@ -33,13 +38,11 @@ export const OrgUnitsFilter: React.FC<OrgUnitsFilterProps> = React.memo(props =>
                 selected={selected}
                 singleSelection={true}
                 selectOnClick={true}
-                initiallyExpanded={[]}
+                initiallyExpanded={initiallyExpanded}
             />
         </div>
     );
 });
-
-const orgUnitsSelectorControls = {};
 
 const useStyles = makeStyles({
     orgUnitFilter: {
