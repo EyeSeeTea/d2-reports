@@ -26,15 +26,11 @@ export class Dhis2SqlViews {
             .value();
         const params = { var: variableParams, ...paging };
 
-        return this.api
-            .get<SqlViewDataResponse<Field>>(`/sqlViews/${id}/data`, params)
-            .map(({ data }) => {
-                const columns = data.listGrid.headers.map(header => header.column);
-                const rows = data.listGrid.rows.map(
-                    row => _.zipObject(columns, row) as Record<Field, string>
-                );
-                return { pager: data.pager, rows };
-            });
+        return this.api.get<SqlViewDataResponse<Field>>(`/sqlViews/${id}/data`, params).map(({ data }) => {
+            const columns = data.listGrid.headers.map(header => header.column);
+            const rows = data.listGrid.rows.map(row => _.zipObject(columns, row) as Record<Field, string>);
+            return { pager: data.pager, rows };
+        });
     }
 }
 

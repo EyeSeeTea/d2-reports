@@ -122,6 +122,8 @@ function getMapping(dataSets: DataSet[]): Mapping {
 
 export async function buildMetadata(baseUrl: string, authString: string): Promise<void> {
     const [username, password] = authString.split(":", 2);
+    if (!username || !password) return;
+
     const api = new D2Api({ baseUrl, auth: { username, password } });
     const metadata$ = api.metadata.get({
         dataSets: {

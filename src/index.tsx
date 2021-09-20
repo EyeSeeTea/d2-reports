@@ -11,7 +11,7 @@ import { init } from "d2";
 async function getBaseUrl() {
     if (process.env.NODE_ENV === "development") {
         const baseUrl = process.env.REACT_APP_DHIS2_BASE_URL || "http://localhost:8080";
-        console.info(`[DEV] DHIS2 instance: ${baseUrl}`);
+        console.debug(`[DEV] DHIS2 instance: ${baseUrl}`);
         return baseUrl.replace(/\/*$/, "");
     } else {
         const { data: manifest } = await axios.get("manifest.webapp");
@@ -48,7 +48,7 @@ async function main() {
             </Provider>,
             document.getElementById("root")
         );
-    } catch (err) {
+    } catch (err: any) {
         console.error(err);
         const message = err.toString().match("Unable to get schemas") ? (
             <h3 style={{ margin: 20 }}>

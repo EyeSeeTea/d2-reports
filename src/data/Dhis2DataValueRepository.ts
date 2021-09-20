@@ -1,9 +1,6 @@
 import _ from "lodash";
 import { DataValue } from "../domain/entities/DataValue";
-import {
-    DataValueRepository,
-    DataValueRepositoryGetOptions,
-} from "../domain/repositories/DataValueRepository";
+import { DataValueRepository, DataValueRepositoryGetOptions } from "../domain/repositories/DataValueRepository";
 import { D2Api, PaginatedObjects, Id } from "../types/d2-api";
 import { Dhis2SqlViews } from "./Dhis2SqlViews";
 import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
@@ -84,7 +81,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
 
         const dataValues: Array<DataValue> = rows.map(
             (dv): DataValue => ({
-                period: dv.period.split("-")[0],
+                period: dv.period.split("-")[0] ?? "",
                 orgUnit: { name: dv.orgunit },
                 dataSet: { name: dv.datasetname },
                 dataElement: { id: dv.dataelementid, name: dv.dataelementname },

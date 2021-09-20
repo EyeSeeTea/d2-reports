@@ -18,8 +18,7 @@ export interface DropdownProps {
 
 const Dropdown: React.FC<DropdownProps> = props => {
     const { items, value, onChange, label, hideEmpty, id } = props;
-    const selectValue =
-        value === undefined || !items.map(item => item.value).includes(value) ? "" : value;
+    const selectValue = value === undefined || !items.map(item => item.value).includes(value) ? "" : value;
 
     const SelectWrapper = (props: any) =>
         label ? (

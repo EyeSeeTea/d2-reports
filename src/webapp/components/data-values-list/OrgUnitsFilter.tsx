@@ -18,9 +18,7 @@ const orgUnitsSelectorControls = {};
 export const OrgUnitsFilter: React.FC<OrgUnitsFilterProps> = React.memo(props => {
     const { api, rootIds, selected, setSelected } = props;
     const classes = useStyles();
-    const initiallyExpanded = React.useMemo(() => _.compact(selected.map(getOrgUnitParentPath)), [
-        selected,
-    ]);
+    const initiallyExpanded = React.useMemo(() => _.compact(selected.map(getOrgUnitParentPath)), [selected]);
 
     return (
         <div key={"org-unit-selector-filter"} className={classes.orgUnitFilter}>

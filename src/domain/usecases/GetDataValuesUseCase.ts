@@ -1,7 +1,4 @@
-import {
-    DataValueRepository,
-    DataValueRepositoryGetOptions,
-} from "../repositories/DataValueRepository";
+import { DataValueRepository, DataValueRepositoryGetOptions } from "../repositories/DataValueRepository";
 import { DataValue } from "../entities/DataValue";
 import { PaginatedObjects } from "../entities/PaginatedObjects";
 

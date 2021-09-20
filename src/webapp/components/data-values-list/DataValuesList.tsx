@@ -1,12 +1,6 @@
 import React from "react";
 import _ from "lodash";
-import {
-    TableColumn,
-    TableSorting,
-    PaginationOptions,
-    TableGlobalAction,
-    TablePagination,
-} from "d2-ui-components";
+import { TableColumn, TableSorting, PaginationOptions, TableGlobalAction, TablePagination } from "d2-ui-components";
 import StorageIcon from "@material-ui/icons/Storage";
 
 import i18n from "../../../locales";
@@ -19,7 +13,6 @@ import { useSnackbarOnError } from "../../utils/snackbar";
 import { Config, getMainUserPaths } from "../../../domain/entities/Config";
 import { Sorting } from "../../../domain/entities/PaginatedObjects";
 import { sortByName } from "../../../domain/entities/Base";
-import { Typography, makeStyles } from "@material-ui/core";
 import { DataValueViewModel, getDataValueViews } from "../../view-models/DataValueViewModel";
 import { getOrgUnitIdsFromPaths } from "../../../domain/entities/OrgUnit";
 import { FiltersBox } from "./FiltersBox";
@@ -47,7 +40,6 @@ export const DataValuesList: React.FC = React.memo(() => {
     const getRowsWithSnackbarOrError = useSnackbarOnError(getRows);
     const tableProps = useObjectsTable(baseConfig, getRowsWithSnackbarOrError);
     const filterOptions = React.useMemo(() => getFilterOptions(config, filters), [config, filters]);
-    const classes = useStyles();
 
     const downloadCsv: TableGlobalAction = {
         name: "downloadCsv",
@@ -67,20 +59,9 @@ export const DataValuesList: React.FC = React.memo(() => {
     };
 
     return (
-        <div className={classes.wrapper}>
-            <Typography variant="h5" gutterBottom>
-                {i18n.t("NHWA Comments Report")}
-            </Typography>
-
-            <ObjectsList<DataValueViewModel> {...tableProps} globalActions={[downloadCsv]}>
-                <FiltersBox
-                    showToggleButton={false}
-                    values={filters}
-                    options={filterOptions}
-                    onChange={setFilters}
-                />
-            </ObjectsList>
-        </div>
+        <ObjectsList<DataValueViewModel> {...tableProps} globalActions={[downloadCsv]}>
+            <FiltersBox showToggleButton={false} values={filters} options={filterOptions} onChange={setFilters} />
+        </ObjectsList>
     );
 });
 
@@ -90,10 +71,6 @@ function getUseCaseOptions(filter: DataValuesFilter) {
         orgUnitIds: getOrgUnitIdsFromPaths(filter.orgUnitPaths),
     };
 }
-
-const useStyles = makeStyles({
-    wrapper: { padding: 10 },
-});
 
 function getSortingFromTableSorting(sorting: TableSorting<DataValueViewModel>): Sorting<DataValue> {
     return {

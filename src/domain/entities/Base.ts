@@ -28,8 +28,6 @@ export function keyById<T extends Ref>(objs: T[]): Record<Id, T> {
 
 export function sortByName<T extends Named>(strings: T[]): T[] {
     const strings2 = Array.from(strings);
-    strings2.sort((a, b) =>
-        a.name.localeCompare(b.name, undefined, { numeric: true, ignorePunctuation: true })
-    );
+    strings2.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, ignorePunctuation: true }));
     return strings2;
 }
