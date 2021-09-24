@@ -8,37 +8,28 @@ import { ObjectsList } from "../objects-list/ObjectsList";
 import { TableConfig, useObjectsTable } from "../objects-list/objects-list-hooks";
 import { useAppContext } from "../../contexts/app-context";
 import { useSnackbarOnError } from "../../utils/snackbar";
-import { Config } from "../../../domain/entities/Config";
 import { Sorting } from "../../../domain/entities/PaginatedObjects";
-import { sortByName } from "../../../domain/entities/Base";
 import { getMetadataViews, MetadataObjectViewModel } from "../../view-models/MetadataObjectViewModel";
 import { MetadataObject } from "../../../domain/entities/MetadataObject";
-import { FiltersBox } from "../data-values-list/FiltersBox";
-import { MetadataObjectsFilter } from "./MetadataFilters";
 
 export const MetadataList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
-    const [filters, setFilters] = React.useState(() => getEmptyDataValuesFilter(config));
     const baseConfig = React.useMemo(getBaseListConfig, []);
     const [sorting, setSorting] = React.useState<TableSorting<MetadataObjectViewModel>>();
 
     const getRows = React.useMemo(
         () => async (paging: TablePagination, sorting: TableSorting<MetadataObjectViewModel>) => {
-            const { pager, objects } = await compositionRoot.metadata.get.execute({
-                config,
-                paging: { page: paging.page, pageSize: paging.pageSize },
-                sorting: getSortingFromTableSorting(sorting),
-                ...getUseCaseOptions(filters),
-            });
             setSorting(sorting);
-            return { pager, objects: getMetadataViews(config, objects) };
+            debugger;
+            return {
+                objects: getMetadataViews(await compositionRoot.metadata.get.execute()),
+            };
         },
-        [config, compositionRoot, filters]
+        [config, compositionRoot]
     );
 
     const getRowsWithSnackbarOrError = useSnackbarOnError(getRows);
     const tableProps = useObjectsTable(baseConfig, getRowsWithSnackbarOrError);
-    const filterOptions = React.useMemo(() => getFilterOptions(config, filters), [config, filters]);
 
     const downloadCsv: TableGlobalAction = {
         name: "downloadCsv",
@@ -46,29 +37,13 @@ export const MetadataList: React.FC = React.memo(() => {
         icon: <StorageIcon />,
         onClick: async () => {
             if (!sorting) return;
-            // FUTURE: create a single use case that performs the get+saveCSV
-            const { objects: metadataObjects } = await compositionRoot.metadata.get.execute({
-                config,
-                paging: { page: 1, pageSize: 100000 },
-                sorting: getSortingFromTableSorting(sorting),
-                ...getUseCaseOptions(filters),
-            });
-            compositionRoot.metadata.save.execute("metadata-objects.csv", metadataObjects);
+
+            compositionRoot.metadata.save.execute("metadata-objects.csv", await compositionRoot.metadata.get.execute());
         },
     };
 
-    return (
-        <ObjectsList<MetadataObjectViewModel> {...tableProps} globalActions={[downloadCsv]}>
-            <FiltersBox showToggleButton={false} values={filters} options={filterOptions} onChange={setFilters} />
-        </ObjectsList>
-    );
+    return <ObjectsList<MetadataObjectViewModel> {...tableProps} globalActions={[downloadCsv]}></ObjectsList>;
 });
-
-function getUseCaseOptions(filter: MetadataObjectsFilter) {
-    return {
-        ...filter,
-    };
-}
 
 function getSortingFromTableSorting(sorting: TableSorting<MetadataObjectViewModel>): Sorting<MetadataObject> {
     return {
@@ -102,29 +77,4 @@ function getBaseListConfig(): TableConfig<MetadataObjectViewModel> {
     ];
 
     return { columns, initialSorting, paginationOptions };
-}
-
-function getFilterOptions(config: Config, filters: MetadataObjectsFilter) {
-    const { metadataTypes } = filters;
-    const sections = _(config.sectionsByDataSet)
-        .at(_.isEmpty(metadataTypes) ? _.keys(config.sectionsByDataSet) : metadataTypes)
-        .flatten()
-        .compact()
-        .uniqBy(section => section.id)
-        .value();
-
-    return {
-        periods: config.years,
-        dataSets: sortByName(_.values(config.dataSets)),
-        sections: sortByName(sections),
-    };
-}
-
-function getEmptyDataValuesFilter(config: Config): MetadataObjectsFilter {
-    return {
-        metadataTypes: [],
-        publicAccess: [],
-        createdBy: [],
-        lastUpdatedBy: [],
-    };
 }

@@ -1,5 +1,4 @@
 import { Id } from "../../domain/entities/Base";
-import { Config } from "../../domain/entities/Config";
 import { MetadataObject } from "../../domain/entities/MetadataObject";
 
 export interface MetadataObjectViewModel {
@@ -15,19 +14,19 @@ export interface MetadataObjectViewModel {
     lastUpdated: string;
 }
 
-export function getMetadataViews(config: Config, metadataObjects: MetadataObject[]): MetadataObjectViewModel[] {
+export function getMetadataViews(metadataObjects: MetadataObject[]): MetadataObjectViewModel[] {
     return metadataObjects.map(object => {
         return {
             id: object.Id,
             name: object.name,
             metadataType: object.metadataType,
             publicAccess: object.publicAccess,
-            createdBy: object.createdBy,
-            lastUpdatedBy: object.lastUpdatedBy,
-            userGroupAccess: object.userGroupAccess,
-            userAccess: object.userAccess,
-            created: object.created,
-            lastUpdated: object.lastUpdated,
+            createdBy: object.createdBy ?? "-",
+            lastUpdatedBy: object.lastUpdatedBy ?? "-",
+            userGroupAccess: object.userGroupAccess ?? "-",
+            userAccess: object.userAccess ?? "-",
+            created: object.created ?? "-",
+            lastUpdated: object.lastUpdated ?? "-",
         };
     });
 }

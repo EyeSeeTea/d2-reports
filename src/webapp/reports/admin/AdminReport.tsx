@@ -11,6 +11,9 @@ const AdminReport: React.FC = () => {
                 {i18n.t("Metadata Admin Report")}
             </Typography>
 
+            <Typography variant="h4" gutterBottom>
+                {i18n.t("Public Objects")}
+            </Typography>
             <MetadataList />
         </div>
     );

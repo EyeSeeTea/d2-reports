@@ -6,18 +6,20 @@ import { Dhis2ConfigRepository } from "./data/Dhis2ConfigRepository";
 import { SaveDataValuesUseCase } from "./domain/usecases/SaveDataValuesCsvUseCase";
 import { GetOrgUnitsUseCase } from "./domain/usecases/GetOrgUnitsUseCase";
 import { Dhis2OrgUnitsRepository } from "./data/Dhis2OrgUnitsRepository";
-import { Dhis2MetadataRepository } from "./data/Dhis2MetadataRepository";
+import { GetWIDPAdminDefaultUseCase } from "./domain/usecases/GetWIDPAdminDefaultUseCase";
+import { SaveWIDPAdminDefaultCsvUseCase } from "./domain/usecases/SaveWIDPAdminDefaultCsvUseCase";
+import { WIDPAdminDefaultRepository } from "./data/WIDPAdminDefaultRepository";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api);
     const dataValueRepository = new Dhis2DataValueRepository(api);
-    const metadataRepository = new Dhis2MetadataRepository(api);
+    const wIDPAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
 
     return {
         metadata: {
-            get: new GetMetadataUseCase(metadataRepository),
-            save: new SaveMetadataUseCase(metadataRepository),
+            get: new GetWIDPAdminDefaultUseCase(wIDPAdminDefaultRepository),
+            save: new SaveWIDPAdminDefaultCsvUseCase(wIDPAdminDefaultRepository),
         },
         dataValues: {
             get: new GetDataValuesUseCase(dataValueRepository),
