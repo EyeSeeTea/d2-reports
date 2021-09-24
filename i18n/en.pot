@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2021-09-20T10:13:13.631Z\n"
-"PO-Revision-Date: 2021-09-20T10:13:13.631Z\n"
+"POT-Creation-Date: 2021-09-22T18:50:03.903Z\n"
+"PO-Revision-Date: 2021-09-22T18:50:03.903Z\n"
 
 msgid "Periods"
 msgstr ""
@@ -62,16 +62,7 @@ msgstr ""
 msgid "<No value>"
 msgstr ""
 
-msgid "Back"
-msgstr ""
-
-msgid "Help"
-msgstr ""
-
-msgid "Metadata Admin Report"
-msgstr ""
-
-msgid "Metadata Admin Report"
+msgid "Metadata Type"
 msgstr ""
 
 msgid "Public Access"
@@ -83,17 +74,32 @@ msgstr ""
 msgid "Last Updated By"
 msgstr ""
 
-msgid "User Group Access"
+msgid "Id"
 msgstr ""
 
-msgid "User Access"
+msgid "User Group Accesses"
 msgstr ""
 
-msgid "Name"
+msgid "User Accesses"
 msgstr ""
 
-msgid "Last Updated"
+msgid "name"
 msgstr ""
 
-msgid "Created"
+msgid "lastUpdated"
+msgstr ""
+
+msgid "created"
+msgstr ""
+
+msgid "Back"
+msgstr ""
+
+msgid "Help"
+msgstr ""
+
+msgid "Metadata Admin Report"
+msgstr ""
+
+msgid "NHWA Comments Report"
 msgstr ""
