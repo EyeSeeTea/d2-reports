@@ -20,7 +20,7 @@ export interface TableConfig<Obj extends ReferenceObject> {
 type GetRows<Obj extends ReferenceObject> = (
     paging: TablePagination,
     sorting: TableSorting<Obj>
-) => Promise<{ objects: Obj[]; pager: Partial<TablePagination> } | undefined>;
+) => Promise<{ objects: Obj[]; pager?: Partial<TablePagination> } | undefined>;
 
 const initialPagination: TablePagination = { page: 1, pageSize: 20, total: 0 };
 
