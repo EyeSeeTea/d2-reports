@@ -1,13 +1,13 @@
 
 import { MetadataObject } from "../entities/MetadataObject";
-import { WIDPAdminRepository } from "../repositories/WIDPAdminRepository";
+import { WIDPAdminRepository, WIDPAdmiRepositoryGetOptions } from "../repositories/WIDPAdminRepository";
 
 
 export class GetWIDPAdminDefaultUseCase {
     constructor(private metadataRepository: WIDPAdminRepository) { }
 
-    execute(): Promise<Array<MetadataObject>> {
+    execute(options: WIDPAdmiRepositoryGetOptions): Promise<Array<MetadataObject>> {
         // FUTURE: Return a Future-like instead, to allow better error handling and cancellation.
-        return this.metadataRepository.getPublicMetadata();
+        return this.metadataRepository.getPublicMetadata(options);
     }
 }

@@ -20,9 +20,13 @@ export const MetadataList: React.FC = React.memo(() => {
     const getRows = React.useMemo(
         () => async (paging: TablePagination, sorting: TableSorting<MetadataObjectViewModel>) => {
             setSorting(sorting);
-            debugger;
+            console.log(paging);
             return {
-                objects: getMetadataViews(await compositionRoot.metadata.get.execute()),
+                objects: getMetadataViews(
+                    await compositionRoot.metadata.get.execute({
+                        sorting: getSortingFromTableSorting(sorting),
+                    })
+                ),
             };
         },
         [config, compositionRoot]
@@ -38,7 +42,12 @@ export const MetadataList: React.FC = React.memo(() => {
         onClick: async () => {
             if (!sorting) return;
 
-            compositionRoot.metadata.save.execute("metadata-objects.csv", await compositionRoot.metadata.get.execute());
+            compositionRoot.metadata.save.execute(
+                "metadata-objects.csv",
+                await compositionRoot.metadata.get.execute({
+                    sorting: getSortingFromTableSorting(sorting),
+                })
+            );
         },
     };
 

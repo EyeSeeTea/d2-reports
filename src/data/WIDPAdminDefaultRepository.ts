@@ -5,14 +5,13 @@ import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
 import { downloadFile } from "./utils/download-file";
 import { CsvData } from "../data/CsvDataSource";
 import { MetadataObject } from "../domain/entities/MetadataObject";
-import { WIDPAdminRepository } from "../domain/repositories/WIDPAdminRepository";
+import { WIDPAdminRepository, WIDPAdmiRepositoryGetOptions } from "../domain/repositories/WIDPAdminRepository";
 
 export class WIDPAdminDefaultRepository implements WIDPAdminRepository {
     constructor(private api: D2Api) { }
 
-    async getPublicMetadata(): Promise<Array<MetadataObject>> {
+    async getPublicMetadata(sorting: WIDPAdmiRepositoryGetOptions): Promise<Array<MetadataObject>> {
         const sqlView = "RIw9kc7N4g4";
-        debugger;
 
         const result: any = await this.api.metadata.d2Api.get("/sqlViews/" + sqlView + "/data?paging=false").getData()
         const data = result.listGrid.rows.map(
@@ -45,7 +44,10 @@ export class WIDPAdminDefaultRepository implements WIDPAdminRepository {
             return accumulator;
         }, [] as (typeof metadataResult[keyof typeof metadataResult])[]);
 
-        return metadataValues.flat(1)
+        if (sorting.sorting.direction == "desc") {
+            return _.sortBy(metadataValues.flat(1), sorting.sorting.field, sorting.sorting.direction).reverse()
+        }
+        return _.sortBy(metadataValues.flat(1), sorting.sorting.field, sorting.sorting.direction)
     }
 
 
