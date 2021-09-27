@@ -1,5 +1,4 @@
 import React from "react";
-import _ from "lodash";
 import { TableColumn, TableSorting, PaginationOptions, TableGlobalAction, TablePagination } from "d2-ui-components";
 import StorageIcon from "@material-ui/icons/Storage";
 
@@ -12,24 +11,37 @@ import { Sorting } from "../../../domain/entities/PaginatedObjects";
 import { getMetadataViews, MetadataObjectViewModel } from "../../view-models/MetadataObjectViewModel";
 import { MetadataObject } from "../../../domain/entities/MetadataObject";
 
-export const MetadataList: React.FC = React.memo(() => {
-    const { compositionRoot, config } = useAppContext();
+export const MetadataObjectsWithInvalidSSList: React.FC = React.memo(() => {
+    const { compositionRoot } = useAppContext();
     const baseConfig = React.useMemo(getBaseListConfig, []);
     const [sorting, setSorting] = React.useState<TableSorting<MetadataObjectViewModel>>();
 
     const getRows = React.useMemo(
         () => async (paging: TablePagination, sorting: TableSorting<MetadataObjectViewModel>) => {
             setSorting(sorting);
-            console.log(paging);
+            const objects = getMetadataViews(
+                await compositionRoot.metadata.get.execute({
+                    sorting: getSortingFromTableSorting(sorting),
+                    publicObjects: false,
+                    removeTypes: [
+                        "programs",
+                        "dataSets",
+                        "categoryOptions",
+                        "trackedEntityTypes",
+                        "relationshipTypes",
+                        "programStages",
+                    ],
+                })
+            );
+            paging.total = objects.length;
+            paging.page = 1;
+            paging.pageSize = 20;
             return {
-                objects: getMetadataViews(
-                    await compositionRoot.metadata.get.execute({
-                        sorting: getSortingFromTableSorting(sorting),
-                    })
-                ),
+                objects: objects,
+                pager: paging,
             };
         },
-        [config, compositionRoot]
+        [compositionRoot]
     );
 
     const getRowsWithSnackbarOrError = useSnackbarOnError(getRows);
@@ -46,6 +58,15 @@ export const MetadataList: React.FC = React.memo(() => {
                 "metadata-objects.csv",
                 await compositionRoot.metadata.get.execute({
                     sorting: getSortingFromTableSorting(sorting),
+                    publicObjects: false,
+                    removeTypes: [
+                        "programs",
+                        "dataSets",
+                        "categoryOptions",
+                        "trackedEntityTypes",
+                        "relationshipTypes",
+                        "programStages",
+                    ],
                 })
             );
         },

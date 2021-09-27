@@ -1,6 +1,7 @@
 import { Typography, makeStyles } from "@material-ui/core";
 import i18n from "../../../locales";
-import { MetadataList } from "../../components/metadata-list/MetadataList";
+import { MetadataObjectsWithInvalidSSList } from "../../components/metadata-list/MetadataObjectsWithInvalidSSList";
+import { MetadataPublicObjectsList } from "../../components/metadata-list/MetadataPublicObjectsList";
 
 const AdminReport: React.FC = () => {
     const classes = useStyles();
@@ -12,9 +13,14 @@ const AdminReport: React.FC = () => {
             </Typography>
 
             <Typography variant="h6" gutterBottom>
+                {i18n.t("Objects with invalid sharing settings")}
+            </Typography>
+            <MetadataObjectsWithInvalidSSList />
+
+            <Typography variant="h6" gutterBottom>
                 {i18n.t("Public Objects")}
             </Typography>
-            <MetadataList />
+            <MetadataPublicObjectsList />
         </div>
     );
 };

@@ -8,6 +8,11 @@ export class GetWIDPAdminDefaultUseCase {
 
     execute(options: WIDPAdmiRepositoryGetOptions): Promise<Array<MetadataObject>> {
         // FUTURE: Return a Future-like instead, to allow better error handling and cancellation.
-        return this.metadataRepository.getPublicMetadata(options);
+        if (options.publicObjects) {
+            return this.metadataRepository.getPublicMetadata(options);
+        }
+        else {
+            return this.metadataRepository.getInvalidSharingSetting(options);
+        }
     }
 }
