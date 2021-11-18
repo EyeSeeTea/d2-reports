@@ -10,7 +10,7 @@ export async function postMetadata(baseUrl: string, authString: string): Promise
     const metadataJson = fs.readFileSync("dist/metadata.json", "utf8");
     const metadata = JSON.parse(metadataJson);
     const res = await api.metadata.post(metadata).getData();
-    console.log(res);
+    console.debug(res);
 }
 
 async function main() {
