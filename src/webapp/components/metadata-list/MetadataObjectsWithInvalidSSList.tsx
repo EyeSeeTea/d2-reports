@@ -1,15 +1,20 @@
-import React from "react";
-import { TableColumn, TableSorting, PaginationOptions, TableGlobalAction, TablePagination } from "d2-ui-components";
+import {
+    PaginationOptions,
+    TableColumn,
+    TableGlobalAction,
+    TablePagination,
+    TableSorting,
+} from "@eyeseetea/d2-ui-components";
 import StorageIcon from "@material-ui/icons/Storage";
-
+import React from "react";
+import { MetadataObject } from "../../../domain/entities/MetadataObject";
+import { Sorting } from "../../../domain/entities/PaginatedObjects";
 import i18n from "../../../locales";
-import { ObjectsList } from "../objects-list/ObjectsList";
-import { TableConfig, useObjectsTable } from "../objects-list/objects-list-hooks";
 import { useAppContext } from "../../contexts/app-context";
 import { useSnackbarOnError } from "../../utils/snackbar";
-import { Sorting } from "../../../domain/entities/PaginatedObjects";
 import { getMetadataViews, MetadataObjectViewModel } from "../../view-models/MetadataObjectViewModel";
-import { MetadataObject } from "../../../domain/entities/MetadataObject";
+import { TableConfig, useObjectsTable } from "../objects-list/objects-list-hooks";
+import { ObjectsList } from "../objects-list/ObjectsList";
 
 export const MetadataObjectsWithInvalidSSList: React.FC = React.memo(() => {
     const { compositionRoot } = useAppContext();

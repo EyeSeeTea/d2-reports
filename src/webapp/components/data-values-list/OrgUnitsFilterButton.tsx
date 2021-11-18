@@ -1,6 +1,6 @@
 import React from "react";
 import { OrgUnitsFilter, OrgUnitsFilterProps } from "./OrgUnitsFilter";
-import { ConfirmationDialog } from "d2-ui-components";
+import { ConfirmationDialog } from "@eyeseetea/d2-ui-components";
 import i18n from "../../../locales";
 import { TextField } from "material-ui";
 import { useBooleanState } from "../../utils/use-boolean";

@@ -9,7 +9,7 @@ import {
     TableState,
     ObjectsTableProps,
     TableGlobalAction,
-} from "d2-ui-components";
+} from "@eyeseetea/d2-ui-components";
 import { LinearProgress } from "material-ui";
 import { makeStyles } from "@material-ui/core";
 import { Spinner } from "../objects-list/Spinner";

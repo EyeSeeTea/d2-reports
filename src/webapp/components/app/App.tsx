@@ -1,7 +1,7 @@
 //@ts-ignore
 import { useConfig } from "@dhis2/app-runtime";
 import { MuiThemeProvider } from "@material-ui/core/styles";
-import { SnackbarProvider } from "d2-ui-components";
+import { SnackbarProvider } from "@eyeseetea/d2-ui-components";
 import _ from "lodash";
 //@ts-ignore
 import OldMuiThemeProvider from "material-ui/styles/MuiThemeProvider";

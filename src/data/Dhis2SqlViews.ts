@@ -2,7 +2,7 @@ import _ from "lodash";
 import { D2Api, Id, Pager, CancelableResponse } from "../types/d2-api";
 
 export class Dhis2SqlViews {
-    constructor(private api: D2Api) { }
+    constructor(private api: D2Api) {}
 
     query<Variables extends {}, Field extends string>(
         id: Id,

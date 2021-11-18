@@ -1,13 +1,13 @@
-import React from "react";
 import {
-    TableColumn,
-    TableSorting,
-    ReferenceObject,
-    PaginationOptions,
-    TablePagination,
     ObjectsTableDetailField,
+    PaginationOptions,
+    ReferenceObject,
+    TableColumn,
+    TablePagination,
+    TableSorting,
     TableState,
-} from "d2-ui-components";
+} from "@eyeseetea/d2-ui-components";
+import React from "react";
 import { ObjectsListProps } from "./ObjectsList";
 
 export interface TableConfig<Obj extends ReferenceObject> {

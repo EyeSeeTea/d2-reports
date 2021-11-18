@@ -1,6 +1,6 @@
-import fs from "fs";
-import { D2Api } from "d2-api/2.32";
 import { ArgumentParser } from "argparse";
+import fs from "fs";
+import { D2Api } from "../types/d2-api";
 
 export async function postMetadata(baseUrl: string, authString: string): Promise<void> {
     const [username, password] = authString.split(":", 2);
