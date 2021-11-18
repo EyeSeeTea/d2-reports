@@ -24,7 +24,8 @@ async function getBaseUrl() {
         return "/dhis2"; // See src/setupProxy.js
     } else {
         const { data: manifest } = await axios.get("manifest.webapp");
-        return manifest.activities.dhis.href;
+        const href = manifest.activities.dhis.href;
+        return href === "*" ? ".." : href;
     }
 }
 
@@ -59,7 +60,7 @@ async function main() {
         configI18n(userSettings);
 
         ReactDOM.render(
-            <Provider config={{ baseUrl, apiVersion: 37 }}>
+            <Provider config={{ baseUrl, apiVersion: 36 }}>
                 <App api={api} d2={d2} />
             </Provider>,
             document.getElementById("root")
