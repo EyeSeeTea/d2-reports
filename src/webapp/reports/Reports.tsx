@@ -1,5 +1,4 @@
 import React from "react";
-import { HashRouter } from "react-router-dom";
 import AdminReport from "./admin/AdminReport";
 import NHWACommentsReport from "./nhwa-comments/NHWACommentsReport";
 
@@ -20,11 +19,7 @@ const Component: React.FC = () => {
 };
 
 function Reports() {
-    return (
-        <HashRouter>
-            <Component />
-        </HashRouter>
-    );
+    return <Component />;
 }
 
 export default Reports;
