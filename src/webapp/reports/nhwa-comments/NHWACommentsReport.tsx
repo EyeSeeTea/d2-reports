@@ -1,6 +1,6 @@
 import { Typography, makeStyles } from "@material-ui/core";
 import i18n from "../../../locales";
-import { DataValuesList } from "../../components/data-values-list/DataValuesList";
+import { DataValuesList } from "./data-values-list/DataValuesList";
 
 const NHWACommentsReport: React.FC = () => {
     const classes = useStyles();

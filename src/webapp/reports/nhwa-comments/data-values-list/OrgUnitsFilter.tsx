@@ -1,10 +1,10 @@
 import React from "react";
 import _ from "lodash";
-import { D2Api } from "../../../types/d2-api";
+import { D2Api } from "../../../../types/d2-api";
 import { OrgUnitsSelector } from "@eyeseetea/d2-ui-components";
 import { makeStyles } from "@material-ui/core";
-import { Id } from "../../../domain/entities/Base";
-import { getOrgUnitParentPath, OrgUnitPath } from "../../../domain/entities/OrgUnit";
+import { Id } from "../../../../domain/entities/Base";
+import { getOrgUnitParentPath, OrgUnitPath } from "../../../../domain/entities/OrgUnit";
 
 export interface OrgUnitsFilterProps {
     api: D2Api;

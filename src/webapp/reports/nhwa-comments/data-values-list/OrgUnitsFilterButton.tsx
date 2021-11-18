@@ -1,10 +1,10 @@
 import React from "react";
 import { OrgUnitsFilter, OrgUnitsFilterProps } from "./OrgUnitsFilter";
 import { ConfirmationDialog } from "@eyeseetea/d2-ui-components";
-import i18n from "../../../locales";
+import i18n from "../../../../locales";
 import { TextField } from "material-ui";
-import { useBooleanState } from "../../utils/use-boolean";
-import { useAppContext } from "../../contexts/app-context";
+import { useBooleanState } from "../../../utils/use-boolean";
+import { useAppContext } from "../../../contexts/app-context";
 
 export interface OrgUnitsFilterButtonProps extends OrgUnitsFilterProps {}
 

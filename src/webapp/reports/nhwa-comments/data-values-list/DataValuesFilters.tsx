@@ -1,9 +1,9 @@
 import React from "react";
-import i18n from "../../../locales";
-import MultipleDropdown from "../../components/dropdown/MultipleDropdown";
-import { Id, NamedRef } from "../../../domain/entities/Base";
-import { useAppContext } from "../../contexts/app-context";
-import { getRootIds } from "../../../domain/entities/OrgUnit";
+import i18n from "../../../../locales";
+import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
+import { Id, NamedRef } from "../../../../domain/entities/Base";
+import { useAppContext } from "../../../contexts/app-context";
+import { getRootIds } from "../../../../domain/entities/OrgUnit";
 import { OrgUnitsFilterButton } from "./OrgUnitsFilterButton";
 
 export interface DataValuesFiltersProps {
@@ -60,7 +60,14 @@ export const DataValuesFilters: React.FC<DataValuesFiltersProps> = React.memo(pr
                 items={sectionItems}
                 values={filter.sectionIds}
                 onChange={sectionIds => onChange({ ...filter, sectionIds })}
-                label={i18n.t("Sections")}
+                label={i18n.t("Completion status")}
+            />
+
+            <MultipleDropdown
+                items={sectionItems}
+                values={filter.sectionIds}
+                onChange={sectionIds => onChange({ ...filter, sectionIds })}
+                label={i18n.t("Validation status")}
             />
         </div>
     );

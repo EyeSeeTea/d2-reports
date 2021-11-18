@@ -1,26 +1,25 @@
-import React from "react";
-import _ from "lodash";
 import {
-    TableColumn,
-    TableSorting,
     PaginationOptions,
+    TableColumn,
     TableGlobalAction,
     TablePagination,
+    TableSorting,
 } from "@eyeseetea/d2-ui-components";
 import StorageIcon from "@material-ui/icons/Storage";
-
-import i18n from "../../../locales";
-import { ObjectsList } from "../objects-list/ObjectsList";
-import { TableConfig, useObjectsTable } from "../objects-list/objects-list-hooks";
-import { useAppContext } from "../../contexts/app-context";
-import { DataValue } from "../../../domain/entities/DataValue";
+import _ from "lodash";
+import React from "react";
+import { sortByName } from "../../../../domain/entities/Base";
+import { Config, getMainUserPaths } from "../../../../domain/entities/Config";
+import { DataValue } from "../../../../domain/entities/DataValue";
+import { getOrgUnitIdsFromPaths } from "../../../../domain/entities/OrgUnit";
+import { Sorting } from "../../../../domain/entities/PaginatedObjects";
+import i18n from "../../../../locales";
+import { TableConfig, useObjectsTable } from "../../../components/objects-list/objects-list-hooks";
+import { ObjectsList } from "../../../components/objects-list/ObjectsList";
+import { useAppContext } from "../../../contexts/app-context";
+import { useSnackbarOnError } from "../../../utils/snackbar";
+import { DataValueViewModel, getDataValueViews } from "../../../view-models/DataValueViewModel";
 import { DataValuesFilter } from "./DataValuesFilters";
-import { useSnackbarOnError } from "../../utils/snackbar";
-import { Config, getMainUserPaths } from "../../../domain/entities/Config";
-import { Sorting } from "../../../domain/entities/PaginatedObjects";
-import { sortByName } from "../../../domain/entities/Base";
-import { DataValueViewModel, getDataValueViews } from "../../view-models/DataValueViewModel";
-import { getOrgUnitIdsFromPaths } from "../../../domain/entities/OrgUnit";
 import { FiltersBox } from "./FiltersBox";
 
 export const DataValuesList: React.FC = React.memo(() => {
@@ -87,8 +86,8 @@ function getSortingFromTableSorting(sorting: TableSorting<DataValueViewModel>): 
 
 function getBaseListConfig(): TableConfig<DataValueViewModel> {
     const paginationOptions: PaginationOptions = {
-        pageSizeOptions: [10, 20, 50],
-        pageSizeInitialValue: 20,
+        pageSizeOptions: [10, 20, 50, 1000],
+        pageSizeInitialValue: 1000,
     };
 
     const initialSorting: TableSorting<DataValueViewModel> = {
@@ -98,15 +97,29 @@ function getBaseListConfig(): TableConfig<DataValueViewModel> {
 
     const columns: TableColumn<DataValueViewModel>[] = [
         { name: "dataSet", text: i18n.t("Data set"), sortable: true },
-        { name: "period", text: i18n.t("Period"), sortable: true },
         { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
-        { name: "section", text: i18n.t("Section"), sortable: true },
-        { name: "dataElement", text: i18n.t("Data Element"), sortable: true },
-        { name: "categoryOptionCombo", text: i18n.t("Category option combo"), sortable: true },
-        { name: "value", text: i18n.t("Value"), sortable: true },
-        { name: "comment", text: i18n.t("Comment"), sortable: true },
+        { name: "period", text: i18n.t("Period"), sortable: true },
+        { name: "section", text: i18n.t("Section"), sortable: true, hidden: true },
+        { name: "dataElement", text: i18n.t("Data Element"), sortable: true, hidden: true },
+        { name: "categoryOptionCombo", text: i18n.t("Category option combo"), sortable: true, hidden: true },
+        { name: "value", text: i18n.t("Value"), sortable: true, hidden: true },
+        { name: "comment", text: i18n.t("Comment"), sortable: true, hidden: true },
         { name: "lastUpdated", text: i18n.t("Last updated"), sortable: true, hidden: true },
         { name: "storedBy", text: i18n.t("Stored by"), sortable: true, hidden: true },
+        {
+            name: "completed",
+            text: i18n.t("Completed"),
+            sortable: true,
+            hidden: false,
+            getValue: () => (Math.random() > 0.5 ? "Yes" : "No"),
+        },
+        {
+            name: "validated",
+            text: i18n.t("Validated"),
+            sortable: true,
+            hidden: false,
+            getValue: () => (Math.random() > 0.5 ? "Yes" : "No"),
+        },
     ];
 
     return { columns, initialSorting, paginationOptions };

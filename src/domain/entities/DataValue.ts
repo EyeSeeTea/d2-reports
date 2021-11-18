@@ -11,6 +11,8 @@ export interface DataValue {
     comment: string;
     lastUpdated: Date;
     storedBy: string;
+    completed: boolean;
+    validated: boolean;
 }
 
 export function getDataValueId(dataValue: DataValue): Id {

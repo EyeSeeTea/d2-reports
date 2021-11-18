@@ -3,8 +3,8 @@ import _ from "lodash";
 import { IconButton } from "material-ui";
 import { FilterList } from "@material-ui/icons";
 import { DataValuesFilters, DataValuesFiltersProps } from "./DataValuesFilters";
-import { useBooleanState } from "../../utils/use-boolean";
-import i18n from "../../../locales";
+import { useBooleanState } from "../../../utils/use-boolean";
+import i18n from "../../../../locales";
 
 export interface FiltersBoxProps extends DataValuesFiltersProps {
     showToggleButton: boolean;

@@ -28,7 +28,9 @@ type SqlField =
     | "comment"
     | "storedby"
     | "orgunit"
-    | "lastupdated";
+    | "lastupdated"
+    | "completed"
+    | "validated";
 
 const fieldMapping: Record<keyof DataValue, SqlField> = {
     period: "period",
@@ -41,6 +43,8 @@ const fieldMapping: Record<keyof DataValue, SqlField> = {
     comment: "comment",
     lastUpdated: "lastupdated",
     storedBy: "storedby",
+    completed: "completed",
+    validated: "validated",
 };
 
 export class Dhis2DataValueRepository implements DataValueRepository {
@@ -91,6 +95,8 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                 comment: dv.comment,
                 lastUpdated: new Date(dv.lastupdated),
                 storedBy: dv.storedby,
+                completed: Math.random() < 0.5,
+                validated: Math.random() < 0.5,
             })
         );
 
