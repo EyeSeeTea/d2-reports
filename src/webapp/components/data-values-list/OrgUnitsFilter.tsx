@@ -34,7 +34,7 @@ export const OrgUnitsFilter: React.FC<OrgUnitsFilterProps> = React.memo(props =>
                 rootIds={rootIds}
                 onChange={setSelected}
                 selected={selected}
-                singleSelection={true}
+                singleSelection={false}
                 selectOnClick={true}
                 initiallyExpanded={initiallyExpanded}
             />
