@@ -13,6 +13,7 @@ export interface DataValueViewModel {
     comment: string;
     lastUpdated: string;
     storedBy: string;
+    completed: string;
 }
 
 export function getDataValueViews(config: Config, dataValues: DataValue[]): DataValueViewModel[] {
@@ -29,6 +30,7 @@ export function getDataValueViews(config: Config, dataValues: DataValue[]): Data
             comment: dataValue.comment || "",
             lastUpdated: dataValue.lastUpdated.toISOString(),
             storedBy: dataValue.storedBy,
+            completed: dataValue.completed ? "Yes" : "No",
         };
     });
 }

@@ -98,13 +98,14 @@ function getBaseListConfig(): TableConfig<DataValueViewModel> {
 
     const columns: TableColumn<DataValueViewModel>[] = [
         { name: "dataSet", text: i18n.t("Data set"), sortable: true },
-        { name: "period", text: i18n.t("Period"), sortable: true },
         { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
-        { name: "section", text: i18n.t("Section"), sortable: true },
-        { name: "dataElement", text: i18n.t("Data Element"), sortable: true },
-        { name: "categoryOptionCombo", text: i18n.t("Category option combo"), sortable: true },
-        { name: "value", text: i18n.t("Value"), sortable: true },
-        { name: "comment", text: i18n.t("Comment"), sortable: true },
+        { name: "period", text: i18n.t("Period"), sortable: true },
+        { name: "completed", text: i18n.t("Completed"), sortable: true },
+        { name: "section", text: i18n.t("Section"), sortable: true, hidden: true },
+        { name: "dataElement", text: i18n.t("Data Element"), sortable: true, hidden: true },
+        { name: "categoryOptionCombo", text: i18n.t("Category option combo"), sortable: true, hidden: true },
+        { name: "value", text: i18n.t("Value"), sortable: true, hidden: true },
+        { name: "comment", text: i18n.t("Comment"), sortable: true, hidden: true },
         { name: "lastUpdated", text: i18n.t("Last updated"), sortable: true, hidden: true },
         { name: "storedBy", text: i18n.t("Stored by"), sortable: true, hidden: true },
     ];
