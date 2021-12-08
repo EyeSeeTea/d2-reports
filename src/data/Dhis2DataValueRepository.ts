@@ -19,7 +19,6 @@ interface Variables {
 
 type SqlField =
     | "datasetname"
-    | "datasetcompleted"
     | "dataelementid"
     | "dataelementname"
     | "section"
@@ -42,7 +41,6 @@ const fieldMapping: Record<keyof DataValue, SqlField> = {
     comment: "comment",
     lastUpdated: "lastupdated",
     storedBy: "storedby",
-    completed: "datasetcompleted",
 };
 
 export class Dhis2DataValueRepository implements DataValueRepository {
@@ -93,7 +91,6 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                 comment: dv.comment,
                 lastUpdated: new Date(dv.lastupdated),
                 storedBy: dv.storedby,
-                completed: dv.datasetcompleted,
             })
         );
 
@@ -113,7 +110,6 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                 comment: dataValue.comment || "",
                 lastUpdated: dataValue.lastUpdated.toISOString(),
                 storedBy: dataValue.storedBy,
-                completed: dataValue.completed,
             })
         );
 
@@ -135,7 +131,6 @@ const csvFields = [
     "comment",
     "lastUpdated",
     "storedBy",
-    "completed",
 ] as const;
 
 type CsvField = typeof csvFields[number];
