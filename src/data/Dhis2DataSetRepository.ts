@@ -16,13 +16,13 @@ interface Variables {
     orderByDirection: "asc" | "desc";
 }
 
-type SqlField = "datasetname" | "orgunit" | "period" | "datasetcompleted";
+type SqlField = "datasetname" | "orgunit" | "period" | "completed";
 
 const fieldMapping: Record<keyof DataSet, SqlField> = {
     dataSet: "datasetname",
     orgUnit: "orgunit",
     period: "period",
-    completed: "datasetcompleted",
+    completed: "completed",
 };
 
 export class Dhis2DataSetRepository implements DataSetRepository {
@@ -38,7 +38,7 @@ export class Dhis2DataSetRepository implements DataSetRepository {
         const sqlViews = new Dhis2SqlViews(this.api);
         const { pager, rows } = await sqlViews
             .query<Variables, SqlField>(
-                config.getDataValuesSqlView.id,
+                config.getDataSetsSqlView.id,
                 {
                     orgUnitIds: sqlViewJoinIds(orgUnitIds),
                     periods: sqlViewJoinIds(_.isEmpty(periods) ? config.years : periods),
@@ -59,7 +59,7 @@ export class Dhis2DataSetRepository implements DataSetRepository {
                 dataSet: { name: dv.datasetname },
                 orgUnit: { name: dv.orgunit },
                 period: dv.period.split("-")[0] ?? "",
-                completed: dv.datasetcompleted,
+                completed: dv.completed,
             })
         );
 
