@@ -8,6 +8,7 @@ export interface Config {
     sections: Record<Id, NamedRef>;
     currentUser: User;
     getDataValuesSqlView: Ref;
+    getDataSetsSqlView: Ref;
     pairedDataElementsByDataSet: {
         [dataSetId: string]: Array<{ dataValueVal: Id; dataValueComment: Id }>;
     };

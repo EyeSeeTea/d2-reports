@@ -7,7 +7,7 @@ import { User } from "../domain/entities/User";
 
 const base = {
     dataSets: { namePrefix: "NHWA", nameExcluded: /old$/ },
-    sqlViewName: "NHWA Data Comments",
+    sqlViewNames: ["NHWA Data Comments", "NHWA Data Status"],
     constantCode: "NHWA_COMMENTS",
 };
 
@@ -15,10 +15,12 @@ export class Dhis2ConfigRepository implements ConfigRepository {
     constructor(private api: D2Api) {}
 
     async get(): Promise<Config> {
+        const [sqlViewComments, sqlViewStatus] = base.sqlViewNames;
         const { dataSets, constants, sqlViews } = await this.getMetadata();
         const filteredDataSets = getFilteredDataSets(dataSets);
-        const getDataValuesSqlView = getFirst(sqlViews, `Missing sqlView: ${base.sqlViewName}`);
-        const constant = getFirst(constants, `Missing constant: ${base.constantCode}`);
+        const getDataValuesSqlView = getNth(sqlViews, 0, `Missing sqlView: ${sqlViewComments}`);
+        const getDataSetsSqlView = getNth(sqlViews, 1, `Missing sqlView: ${sqlViewStatus}`);
+        const constant = getNth(constants, 0, `Missing constant: ${base.constantCode}`);
         const currentUser = await this.getCurrentUser();
         const pairedDataElements = getPairedMapping(filteredDataSets);
         const constantData = JSON.parse(constant.description || "{}") as Constant;
@@ -29,6 +31,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             dataSets: keyById(filteredDataSets),
             currentUser,
             getDataValuesSqlView,
+            getDataSetsSqlView,
             pairedDataElementsByDataSet: pairedDataElements,
             sections: keyById(sections),
             sectionsByDataSet,
@@ -54,7 +57,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             },
             sqlViews: {
                 fields: { id: true },
-                filter: { name: { eq: base.sqlViewName } },
+                filter: { name: { in: base.sqlViewNames } },
             },
         });
 
@@ -148,8 +151,8 @@ function getMappingForDataSet(dataSet: DataSet, dataElementsByName: Record<strin
         .value();
 }
 
-function getFirst<T>(objs: T[], msg: string): T {
-    const obj = objs[0];
+function getNth<T>(objs: T[], n: number, msg: string): T {
+    const obj = objs[n];
     if (!obj) throw new Error(msg);
     return obj;
 }
