@@ -16,6 +16,7 @@ export interface Config {
         [dataSetId: string]: NamedRef[];
     };
     years: string[];
+    completionStatus: string[];
 }
 
 export function getMainUserPaths(config: Config) {

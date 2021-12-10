@@ -2,11 +2,11 @@ import React from "react";
 import _ from "lodash";
 import { IconButton } from "material-ui";
 import { FilterList } from "@material-ui/icons";
-import { DataValuesFilters, DataValuesFiltersProps } from "./DataValuesFilters";
+import { DataSetsFilters, DataSetsFiltersProps } from "./DataSetsFilters";
 import { useBooleanState } from "../../utils/use-boolean";
 import i18n from "../../../locales";
 
-export interface FiltersBoxProps extends DataValuesFiltersProps {
+export interface FiltersBoxProps extends DataSetsFiltersProps {
     showToggleButton: boolean;
 }
 
@@ -32,7 +32,7 @@ export const FiltersBox: React.FC<FiltersBoxProps> = React.memo(props => {
             )}
 
             <div style={filtersStyle}>
-                <DataValuesFilters {...otherProps} />
+                <DataSetsFilters {...otherProps} />
             </div>
         </React.Fragment>
     );

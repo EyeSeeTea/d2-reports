@@ -6,35 +6,43 @@ import { useAppContext } from "../../contexts/app-context";
 import { getRootIds } from "../../../domain/entities/OrgUnit";
 import { OrgUnitsFilterButton } from "./OrgUnitsFilterButton";
 
-export interface DataValuesFiltersProps {
-    values: DataValuesFilter;
+export interface DataSetsFiltersProps {
+    values: DataSetsFilter;
     options: FilterOptions;
-    onChange(newFilters: DataValuesFilter): void;
+    onChange(newFilters: DataSetsFilter): void;
 }
 
-export interface DataValuesFilter {
+export interface DataSetsFilter {
+    dataSetIds: Id[];
     orgUnitPaths: Id[];
     periods: string[];
-    dataSetIds: Id[];
-    sectionIds: Id[];
+    completionStatus: string[];
 }
 
 interface FilterOptions {
-    periods: string[];
     dataSets: NamedRef[];
-    sections: NamedRef[];
+    periods: string[];
+    completionStatus: string[];
 }
 
-export const DataValuesFilters: React.FC<DataValuesFiltersProps> = React.memo(props => {
+export const DataSetsFilters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { config, api } = useAppContext();
     const { values: filter, options: filterOptions, onChange } = props;
-    const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
+
     const dataSetItems = useMemoOptionsFromNamedRef(filterOptions.dataSets);
-    const sectionItems = useMemoOptionsFromNamedRef(filterOptions.sections);
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
+    const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
+    const completionStatusItems = useMemoOptionsFromStrings(filterOptions.completionStatus);
 
     return (
         <div>
+            <MultipleDropdown
+                items={dataSetItems}
+                values={filter.dataSetIds}
+                onChange={dataSetIds => onChange({ ...filter, dataSetIds })}
+                label={i18n.t("Data sets")}
+            />
+
             <OrgUnitsFilterButton
                 api={api}
                 rootIds={rootIds}
@@ -50,17 +58,10 @@ export const DataValuesFilters: React.FC<DataValuesFiltersProps> = React.memo(pr
             />
 
             <MultipleDropdown
-                items={dataSetItems}
-                values={filter.dataSetIds}
-                onChange={dataSetIds => onChange({ ...filter, dataSetIds })}
-                label={i18n.t("Data sets")}
-            />
-
-            <MultipleDropdown
-                items={sectionItems}
-                values={filter.sectionIds}
-                onChange={sectionIds => onChange({ ...filter, sectionIds })}
-                label={i18n.t("Sections")}
+                items={completionStatusItems}
+                values={filterOptions.completionStatus}
+                onChange={completionStatus => onChange({ ...filter, completionStatus })}
+                label={i18n.t("Completion status")}
             />
         </div>
     );

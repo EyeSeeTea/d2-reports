@@ -14,7 +14,7 @@ import { ObjectsList } from "../objects-list/ObjectsList";
 import { TableConfig, useObjectsTable } from "../objects-list/objects-list-hooks";
 import { useAppContext } from "../../contexts/app-context";
 import { DataSet } from "../../../domain/entities/DataSet";
-import { DataValuesFilter } from "./DataValuesFilters";
+import { DataSetsFilter } from "./DataSetsFilters";
 import { useSnackbarOnError } from "../../utils/snackbar";
 import { Config, getMainUserPaths } from "../../../domain/entities/Config";
 import { Sorting } from "../../../domain/entities/PaginatedObjects";
@@ -45,7 +45,7 @@ export const DataSetList: React.FC = React.memo(() => {
 
     const getRowsWithSnackbarOrError = useSnackbarOnError(getRows);
     const tableProps = useObjectsTable(baseConfig, getRowsWithSnackbarOrError);
-    const filterOptions = React.useMemo(() => getFilterOptions(config, filters), [config, filters]);
+    const filterOptions = React.useMemo(() => getFilterOptions(config), [config]);
 
     const downloadCsv: TableGlobalAction = {
         name: "downloadCsv",
@@ -71,7 +71,7 @@ export const DataSetList: React.FC = React.memo(() => {
     );
 });
 
-function getUseCaseOptions(filter: DataValuesFilter) {
+function getUseCaseOptions(filter: DataSetsFilter) {
     return {
         ...filter,
         orgUnitIds: getOrgUnitIdsFromPaths(filter.orgUnitPaths),
@@ -106,27 +106,20 @@ function getBaseListConfig(): TableConfig<DataSetViewModel> {
     return { columns, initialSorting, paginationOptions };
 }
 
-function getFilterOptions(config: Config, filters: DataValuesFilter) {
-    const { dataSetIds } = filters;
-    const sections = _(config.sectionsByDataSet)
-        .at(_.isEmpty(dataSetIds) ? _.keys(config.sectionsByDataSet) : dataSetIds)
-        .flatten()
-        .compact()
-        .uniqBy(section => section.id)
-        .value();
-
+function getFilterOptions(config: Config) {
+    console.log("GET FILTER OPTIONS", config);
     return {
-        periods: config.years,
         dataSets: sortByName(_.values(config.dataSets)),
-        sections: sortByName(sections),
+        periods: config.years,
+        completionStatus: config.completionStatus,
     };
 }
 
-function getEmptyDataValuesFilter(config: Config): DataValuesFilter {
+function getEmptyDataValuesFilter(config: Config): DataSetsFilter {
     return {
+        dataSetIds: [],
         orgUnitPaths: getMainUserPaths(config),
         periods: [],
-        dataSetIds: [],
-        sectionIds: [],
+        completionStatus: [],
     };
 }

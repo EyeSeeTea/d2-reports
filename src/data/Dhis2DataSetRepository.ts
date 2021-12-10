@@ -10,7 +10,6 @@ import { CsvData } from "../data/CsvDataSource";
 interface Variables {
     orgUnitIds: string;
     dataSetIds: string;
-    sectionIds: string;
     periods: string;
     orderByColumn: SqlField;
     orderByDirection: "asc" | "desc";
@@ -29,7 +28,7 @@ export class Dhis2DataSetRepository implements DataSetRepository {
     constructor(private api: D2Api) {}
 
     async get(options: DataSetRepositoryGetOptions): Promise<PaginatedObjects<DataSet>> {
-        const { config, dataSetIds, sectionIds, orgUnitIds, periods } = options; // ?
+        const { config, dataSetIds, orgUnitIds, periods } = options; // ?
         const { paging, sorting } = options; // ?
 
         const allDataSetIds = _.values(config.dataSets).map(ds => ds.id); // ?
@@ -43,7 +42,6 @@ export class Dhis2DataSetRepository implements DataSetRepository {
                     orgUnitIds: sqlViewJoinIds(orgUnitIds),
                     periods: sqlViewJoinIds(_.isEmpty(periods) ? config.years : periods),
                     dataSetIds: sqlViewJoinIds(dataSetIds2),
-                    sectionIds: sqlViewJoinIds(sectionIds),
                     orderByColumn: fieldMapping[sorting.field],
                     orderByDirection: sorting.direction,
                 },

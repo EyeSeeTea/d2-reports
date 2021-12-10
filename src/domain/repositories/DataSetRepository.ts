@@ -15,5 +15,4 @@ export interface DataSetRepositoryGetOptions {
     periods: string[];
     orgUnitIds: Id[];
     dataSetIds: Id[];
-    sectionIds: Id[];
 }
