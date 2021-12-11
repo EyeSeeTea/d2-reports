@@ -145,6 +145,9 @@ from
                 WHERE
                     _periodstructure.iso ~ ('^' || replace('${periods}', '-', '|') || '$')
                     AND organisationunit.path ~ (replace('${orgUnitIds}', '-', '|'))
+                    /** TODO: Add support for multiple OUs filter. Review with @tokland first
+                    AND organisationunit.uid ~ ('^' || replace('${orgUnitIds}', '-', '|') || '$') 
+                    **/
             ) AS unionttable
     ) as t
 WHERE
