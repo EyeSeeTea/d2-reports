@@ -1,6 +1,6 @@
 import _ from "lodash";
-import { DataValue } from "../domain/entities/DataValue";
-import { DataValueRepository, DataValueRepositoryGetOptions } from "../domain/repositories/DataValueRepository";
+import { DataCommentsItem } from "../domain/nhwa-comments/entities/DataCommentsItem";
+import { NHWADataCommentsRepository, NHWADataCommentsRepositoryGetOptions } from "../domain/nhwa-comments/repositories/NHWADataCommentsRepository";
 import { D2Api, PaginatedObjects, Id } from "../types/d2-api";
 import { Dhis2SqlViews } from "./Dhis2SqlViews";
 import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
@@ -30,7 +30,7 @@ type SqlField =
     | "orgunit"
     | "lastupdated";
 
-const fieldMapping: Record<keyof DataValue, SqlField> = {
+const fieldMapping: Record<keyof DataCommentsItem, SqlField> = {
     period: "period",
     orgUnit: "orgunit",
     dataSet: "datasetname",
@@ -43,10 +43,10 @@ const fieldMapping: Record<keyof DataValue, SqlField> = {
     storedBy: "storedby",
 };
 
-export class Dhis2DataValueRepository implements DataValueRepository {
+export class Dhis2DataValueRepository implements NHWADataCommentsRepository {
     constructor(private api: D2Api) {}
 
-    async get(options: DataValueRepositoryGetOptions): Promise<PaginatedObjects<DataValue>> {
+    async get(options: NHWADataCommentsRepositoryGetOptions): Promise<PaginatedObjects<DataCommentsItem>> {
         const { config, dataSetIds, sectionIds, orgUnitIds, periods } = options;
         const { paging, sorting } = options;
 
@@ -62,7 +62,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
         const sqlViews = new Dhis2SqlViews(this.api);
         const { pager, rows } = await sqlViews
             .query<Variables, SqlField>(
-                config.getDataValuesSqlView.id,
+                config.dataCommentsSqlView.id,
                 {
                     orgUnitIds: sqlViewJoinIds(orgUnitIds),
                     periods: sqlViewJoinIds(_.isEmpty(periods) ? config.years : periods),
@@ -79,8 +79,8 @@ export class Dhis2DataValueRepository implements DataValueRepository {
         // A data value is not associated to a specific data set, but we can still map it
         // through the data element (1 data value -> 1 data element -> N data sets).
 
-        const dataValues: Array<DataValue> = rows.map(
-            (dv): DataValue => ({
+        const dataValues: Array<DataCommentsItem> = rows.map(
+            (dv): DataCommentsItem => ({
                 period: dv.period.split("-")[0] ?? "",
                 orgUnit: { name: dv.orgunit },
                 dataSet: { name: dv.datasetname },
@@ -97,7 +97,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
         return { pager, objects: dataValues };
     }
 
-    async save(filename: string, dataValues: DataValue[]): Promise<void> {
+    async save(filename: string, dataValues: DataCommentsItem[]): Promise<void> {
         const headers = csvFields.map(field => ({ id: field, text: field }));
         const rows = dataValues.map(
             (dataValue): DataValueRow => ({

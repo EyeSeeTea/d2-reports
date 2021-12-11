@@ -1,7 +1,7 @@
 import { Typography, makeStyles } from "@material-ui/core";
 import i18n from "../../../locales";
-import { MetadataObjectsWithInvalidSSList } from "../../components/metadata-list/MetadataObjectsWithInvalidSSList";
-import { MetadataPublicObjectsList } from "../../components/metadata-list/MetadataPublicObjectsList";
+import { MetadataObjectsWithInvalidSSList } from "./metadata-list/MetadataObjectsWithInvalidSSList";
+import { MetadataPublicObjectsList } from "./metadata-list/MetadataPublicObjectsList";
 
 const AdminReport: React.FC = () => {
     const classes = useStyles();

@@ -1,7 +1,7 @@
 import React from "react";
 import AdminReport from "./admin/AdminReport";
 import NHWACommentsReport from "./nhwa-comments/NHWACommentsReport";
-import NHWADataStatusReport from "./nhwa-data-status/NHWADataStatusReport";
+import NHWADataApprovalStatusReport from "./nhwa-approval-status/NHWADataApprovalStatusReport";
 
 const widget = process.env.REACT_APP_REPORT_VARIANT || "";
 
@@ -10,8 +10,8 @@ const Component: React.FC = () => {
         case "nhwa-comments": {
             return <NHWACommentsReport />;
         }
-        case "nhwa-data-status": {
-            return <NHWADataStatusReport />;
+        case "nhwa-approval-status": {
+            return <NHWADataApprovalStatusReport />;
         }
         case "admin": {
             return <AdminReport />;

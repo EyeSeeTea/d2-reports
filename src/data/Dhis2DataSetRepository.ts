@@ -1,6 +1,6 @@
 import _ from "lodash";
-import { DataSet } from "../domain/entities/DataSet";
-import { DataSetRepository, DataSetRepositoryGetOptions } from "../domain/repositories/DataSetRepository";
+import { DataApprovalItem } from "../domain/nhwa-approval-status/entities/DataApprovalItem";
+import { NHWADataApprovalRepository, NHWADataApprovalRepositoryGetOptions } from "../domain/nhwa-approval-status/repositories/NHWADataApprovalRepository";
 import { D2Api, PaginatedObjects, Id } from "../types/d2-api";
 import { Dhis2SqlViews } from "./Dhis2SqlViews";
 import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
@@ -8,26 +8,30 @@ import { downloadFile } from "./utils/download-file";
 import { CsvData } from "../data/CsvDataSource";
 
 interface Variables {
-    orgUnitIds: string;
-    dataSetIds: string;
+    dataSets: string;
+    approvalWorkflows: string;
+    orgUnits: string;
     periods: string;
     orderByColumn: SqlField;
     orderByDirection: "asc" | "desc";
 }
 
-type SqlField = "datasetname" | "orgunit" | "period" | "completed";
+type SqlField = "dataset" | "orgunit" | "period" | "attribute" | "completed" | "validated" | "lastupdatedvalue";
 
-const fieldMapping: Record<keyof DataSet, SqlField> = {
-    dataSet: "datasetname",
+const fieldMapping: Record<keyof DataApprovalItem, SqlField> = {
+    dataSet: "dataset",
     orgUnit: "orgunit",
     period: "period",
+    attribute: "attribute",
     completed: "completed",
+    validated: "validated",
+    lastUpdatedValue: "lastupdatedvalue",
 };
 
-export class Dhis2DataSetRepository implements DataSetRepository {
+export class Dhis2DataSetRepository implements NHWADataApprovalRepository {
     constructor(private api: D2Api) {}
 
-    async get(options: DataSetRepositoryGetOptions): Promise<PaginatedObjects<DataSet>> {
+    async get(options: NHWADataApprovalRepositoryGetOptions): Promise<PaginatedObjects<DataApprovalItem>> {
         const { config, dataSetIds, orgUnitIds, periods } = options; // ?
         const { paging, sorting } = options; // ?
 
@@ -37,11 +41,12 @@ export class Dhis2DataSetRepository implements DataSetRepository {
         const sqlViews = new Dhis2SqlViews(this.api);
         const { pager, rows } = await sqlViews
             .query<Variables, SqlField>(
-                config.getDataSetsSqlView.id,
+                config.dataApprovalSqlView.id,
                 {
-                    orgUnitIds: sqlViewJoinIds(orgUnitIds),
+                    orgUnits: sqlViewJoinIds(orgUnitIds),
                     periods: sqlViewJoinIds(_.isEmpty(periods) ? config.years : periods),
-                    dataSetIds: sqlViewJoinIds(dataSetIds2),
+                    dataSets: sqlViewJoinIds(dataSetIds2),
+                    approvalWorkflows: '-',
                     orderByColumn: fieldMapping[sorting.field],
                     orderByDirection: sorting.direction,
                 },
@@ -52,26 +57,29 @@ export class Dhis2DataSetRepository implements DataSetRepository {
         // A data value is not associated to a specific data set, but we can still map it
         // through the data element (1 data value -> 1 data element -> N data sets).
 
-        const dataValues: Array<DataSet> = rows.map(
-            (dv): DataSet => ({
-                dataSet: { name: dv.datasetname },
-                orgUnit: { name: dv.orgunit },
-                period: dv.period.split("-")[0] ?? "",
-                completed: dv.completed,
+        const dataValues: Array<DataApprovalItem> = rows.map(
+            (dv): DataApprovalItem => ({
+                dataSet: dv.dataset,
+                orgUnit: dv.orgunit,
+                period: dv.period,
+                attribute: dv.attribute,
+                completed: Boolean(dv.completed),
+                validated: Boolean(dv.validated),
+                lastUpdatedValue: dv.lastupdatedvalue,
             })
         );
 
         return { pager, objects: dataValues };
     }
 
-    async save(filename: string, dataSets: DataSet[]): Promise<void> {
+    async save(filename: string, dataSets: DataApprovalItem[]): Promise<void> {
         const headers = csvFields.map(field => ({ id: field, text: field }));
         const rows = dataSets.map(
             (dataSet): DataSetRow => ({
-                dataSet: dataSet.dataSet.name,
-                orgUnit: dataSet.orgUnit.name,
+                dataSet: dataSet.dataSet,
+                orgUnit: dataSet.orgUnit,
                 period: dataSet.period,
-                completed: dataSet.completed,
+                completed: String(dataSet.completed),
             })
         );
 

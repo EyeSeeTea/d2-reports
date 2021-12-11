@@ -1,17 +1,17 @@
 import { Typography, makeStyles } from "@material-ui/core";
 import i18n from "../../../locales";
-import { DataCommentsList } from "./data-comments-list/DataCommentsList";
+import { DataApprovalList } from "./data-approval-list/DataApprovalList";
 
-const NHWACommentsReport: React.FC = () => {
+const NHWADataApprovalStatusReport: React.FC = () => {
     const classes = useStyles();
 
     return (
         <div className={classes.wrapper}>
             <Typography variant="h5" gutterBottom>
-                {i18n.t("NHWA Comments Report")}
+                {i18n.t("NHWA Data Approval Status Report")}
             </Typography>
 
-            <DataCommentsList />
+            <DataApprovalList />
         </div>
     );
 };
@@ -20,4 +20,4 @@ const useStyles = makeStyles({
     wrapper: { padding: 10 },
 });
 
-export default NHWACommentsReport;
+export default NHWADataApprovalStatusReport;

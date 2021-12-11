@@ -1,13 +1,16 @@
 import _ from "lodash";
-import { ConfigRepository } from "../domain/repositories/ConfigRepository";
-import { Config } from "../domain/entities/Config";
+import { ConfigRepository } from "../domain/common/repositories/ConfigRepository";
+import { Config } from "../domain/common/entities/Config";
 import { D2Api, Id } from "../types/d2-api";
-import { keyById, NamedRef } from "../domain/entities/Base";
-import { User } from "../domain/entities/User";
+import { keyById, NamedRef } from "../domain/common/entities/Base";
+import { User } from "../domain/common/entities/User";
+
+const SQL_VIEW_DATA_COMMENTS_NAME = "NHWA Data Comments";
+const SQL_VIEW_DATA_APPROVAL_NAME = "NHWA Data Approval Status";
 
 const base = {
     dataSets: { namePrefix: "NHWA", nameExcluded: /old$/ },
-    sqlViewNames: ["NHWA Data Comments", "NHWA Data Status"],
+    sqlViewNames: [SQL_VIEW_DATA_COMMENTS_NAME, SQL_VIEW_DATA_APPROVAL_NAME],
     constantCode: "NHWA_COMMENTS",
 };
 
@@ -15,11 +18,18 @@ export class Dhis2ConfigRepository implements ConfigRepository {
     constructor(private api: D2Api) {}
 
     async get(): Promise<Config> {
-        const [sqlViewComments, sqlViewStatus] = base.sqlViewNames;
         const { dataSets, constants, sqlViews } = await this.getMetadata();
         const filteredDataSets = getFilteredDataSets(dataSets);
-        const getDataValuesSqlView = getNth(sqlViews, 0, `Missing sqlView: ${sqlViewComments}`);
-        const getDataSetsSqlView = getNth(sqlViews, 1, `Missing sqlView: ${sqlViewStatus}`);
+        const dataCommentsSqlView = sqlViews.find(({ name }) => name === SQL_VIEW_DATA_COMMENTS_NAME);
+        const dataApprovalSqlView = sqlViews.find(({ name }) => name === SQL_VIEW_DATA_APPROVAL_NAME);
+        if (!dataCommentsSqlView) {
+            throw new Error(`Missing SQL views: ${SQL_VIEW_DATA_COMMENTS_NAME}`);
+        }
+
+        if (!dataApprovalSqlView) {
+            throw new Error(`Missing SQL views: ${SQL_VIEW_DATA_APPROVAL_NAME}`);
+        }
+
         const constant = getNth(constants, 0, `Missing constant: ${base.constantCode}`);
         const currentUser = await this.getCurrentUser();
         const pairedDataElements = getPairedMapping(filteredDataSets);
@@ -30,8 +40,8 @@ export class Dhis2ConfigRepository implements ConfigRepository {
         return {
             dataSets: keyById(filteredDataSets),
             currentUser,
-            getDataValuesSqlView,
-            getDataSetsSqlView,
+            dataCommentsSqlView,
+            dataApprovalSqlView,
             pairedDataElementsByDataSet: pairedDataElements,
             sections: keyById(sections),
             sectionsByDataSet,
@@ -57,7 +67,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                 filter: { code: { eq: base.constantCode } },
             },
             sqlViews: {
-                fields: { id: true },
+                fields: { id: true, name: true },
                 filter: { name: { in: base.sqlViewNames } },
             },
         });
