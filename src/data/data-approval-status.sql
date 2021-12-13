@@ -2,15 +2,17 @@ SELECT dataset.name                                      AS dataset,
        organisationunit.name                             AS orgunit,
        _periodstructure.iso                              AS period,
        categoryoptioncombo.name                          AS attribute,
+       entries.workflowname                              AS approvalworkflow,
        entries.lastupdated                               AS lastupdatedvalue,
        completedatasetregistration.completed IS NOT NULL AS completed,
        dataapproval.accepted IS NOT NULL                 AS validated
 FROM ((SELECT datavalue.periodid,
-              datavalue.sourceid         AS organisationunitid,
+              datavalue.sourceid                         AS organisationunitid,
               datavalue.attributeoptioncomboid,
               dataset.datasetid,
-              MAX(datavalue.lastupdated) AS lastupdated,
-              dataapprovalworkflow.workflowid
+              MAX(datavalue.lastupdated)                 AS lastupdated,
+              dataapprovalworkflow.workflowid,
+              dataapprovalworkflow.name                  AS workflowname
        FROM datavalue
                 JOIN datasetelement USING (dataelementid)
                 JOIN dataset USING (datasetid)
@@ -37,4 +39,12 @@ FROM ((SELECT datavalue.periodid,
                                     (dataapproval.dataapprovallevelid = dataapprovallevel.dataapprovallevelid)))
 WHERE organisationunit.uid ~ ('^' || replace('${orgUnits}', '-', '|') || '$')
   AND _periodstructure.iso ~ ('^' || replace('${periods}', '-', '|') || '$')
-ORDER BY ${orderByColumn} ${orderByDirection};
+  AND (completedatasetregistration.completed IS NOT NULL)::text ~ ('^' || replace(${completed}, '-', '|') || '$')
+  AND (dataapproval.accepted IS NOT NULL)::text ~ ('^' || replace(${validated}, '-', '|') || '$')
+ORDER BY
+    ${orderByColumn} ${orderByDirection},
+    dataset ASC,
+    period ASC,
+    orgunit ASC,
+    attribute ASC,
+    approvalWorkflow ASC;

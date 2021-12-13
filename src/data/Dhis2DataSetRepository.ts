@@ -1,6 +1,9 @@
 import _ from "lodash";
 import { DataApprovalItem } from "../domain/nhwa-approval-status/entities/DataApprovalItem";
-import { NHWADataApprovalRepository, NHWADataApprovalRepositoryGetOptions } from "../domain/nhwa-approval-status/repositories/NHWADataApprovalRepository";
+import {
+    NHWADataApprovalRepository,
+    NHWADataApprovalRepositoryGetOptions,
+} from "../domain/nhwa-approval-status/repositories/NHWADataApprovalRepository";
 import { D2Api, PaginatedObjects, Id } from "../types/d2-api";
 import { Dhis2SqlViews } from "./Dhis2SqlViews";
 import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
@@ -12,17 +15,28 @@ interface Variables {
     approvalWorkflows: string;
     orgUnits: string;
     periods: string;
+    completed: string;
+    approved: string;
     orderByColumn: SqlField;
     orderByDirection: "asc" | "desc";
 }
 
-type SqlField = "dataset" | "orgunit" | "period" | "attribute" | "completed" | "validated" | "lastupdatedvalue";
+type SqlField =
+    | "dataset"
+    | "orgunit"
+    | "period"
+    | "attribute"
+    | "approvalworkflow"
+    | "completed"
+    | "validated"
+    | "lastupdatedvalue";
 
 const fieldMapping: Record<keyof DataApprovalItem, SqlField> = {
     dataSet: "dataset",
     orgUnit: "orgunit",
     period: "period",
     attribute: "attribute",
+    approvalWorkflow: "approvalworkflow",
     completed: "completed",
     validated: "validated",
     lastUpdatedValue: "lastupdatedvalue",
@@ -36,17 +50,22 @@ export class Dhis2DataSetRepository implements NHWADataApprovalRepository {
         const { paging, sorting } = options; // ?
 
         const allDataSetIds = _.values(config.dataSets).map(ds => ds.id); // ?
-        const dataSetIds2 = _.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds;
-
         const sqlViews = new Dhis2SqlViews(this.api);
+
         const { pager, rows } = await sqlViews
             .query<Variables, SqlField>(
                 config.dataApprovalSqlView.id,
                 {
                     orgUnits: sqlViewJoinIds(orgUnitIds),
                     periods: sqlViewJoinIds(_.isEmpty(periods) ? config.years : periods),
-                    dataSets: sqlViewJoinIds(dataSetIds2),
-                    approvalWorkflows: sqlViewJoinIds(options.approvalWorkflow),
+                    dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
+                    completed: options.completionStatus ?? "-",
+                    approved: options.approvalStatus ?? "-",
+                    approvalWorkflows: sqlViewJoinIds(
+                        _.isEmpty(options.approvalWorkflow)
+                            ? config.approvalWorkflow.map(({ id }) => id)
+                            : options.approvalWorkflow
+                    ),
                     orderByColumn: fieldMapping[sorting.field],
                     orderByDirection: sorting.direction,
                 },
@@ -57,19 +76,20 @@ export class Dhis2DataSetRepository implements NHWADataApprovalRepository {
         // A data value is not associated to a specific data set, but we can still map it
         // through the data element (1 data value -> 1 data element -> N data sets).
 
-        const dataValues: Array<DataApprovalItem> = rows.map(
-            (dv): DataApprovalItem => ({
-                dataSet: dv.dataset,
-                orgUnit: dv.orgunit,
-                period: dv.period,
-                attribute: dv.attribute,
-                completed: Boolean(dv.completed),
-                validated: Boolean(dv.validated),
-                lastUpdatedValue: dv.lastupdatedvalue,
+        const items: Array<DataApprovalItem> = rows.map(
+            (item): DataApprovalItem => ({
+                dataSet: item.dataset,
+                orgUnit: item.orgunit,
+                period: item.period,
+                attribute: item.attribute,
+                approvalWorkflow: item.approvalworkflow,
+                completed: Boolean(item.completed),
+                validated: Boolean(item.validated),
+                lastUpdatedValue: item.lastupdatedvalue,
             })
         );
 
-        return { pager, objects: dataValues };
+        return { pager, objects: items };
     }
 
     async save(filename: string, dataSets: DataApprovalItem[]): Promise<void> {

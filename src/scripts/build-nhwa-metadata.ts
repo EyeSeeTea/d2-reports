@@ -1,4 +1,6 @@
 import { ArgumentParser } from "argparse";
+import { execSync } from "child_process";
+import "dotenv-flow/config";
 import fs from "fs";
 import _ from "lodash";
 import { parse } from "node-html-parser";
@@ -120,6 +122,11 @@ function getMapping(dataSets: DataSet[]): Mapping {
     return { order, sections, sectionNames };
 }
 
+function run(cmd: string): void {
+    console.debug(`Run: ${cmd}`);
+    execSync(cmd, { stdio: [0, 1, 2] });
+}
+
 export async function buildMetadata(baseUrl: string, authString: string): Promise<void> {
     const [username, password] = authString.split(":", 2);
     if (!username || !password) return;
@@ -178,24 +185,46 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
         },
     ];
 
-    const designContent = fs.readFileSync("dist/index.html", "utf8");
-    const report: Partial<D2Report> = {
-        id: "G2pzXQgTMgw",
-        name: "NHWA Comments",
-        type: "HTML",
-        cacheStrategy: "RESPECT_SYSTEM_SETTING",
-        reportParams: {
-            parentOrganisationUnit: false,
-            reportingPeriod: false,
-            organisationUnit: false,
-            grandParentOrganisationUnit: false,
+    Object.assign(process.env, { REACT_APP_REPORT_VARIANT: "nhwa-comments" });
+    run("yarn build-report");
+    const htmlComments = fs.readFileSync("dist/index.html", "utf8");
+
+    Object.assign(process.env, { REACT_APP_REPORT_VARIANT: "nhwa-approval-status" });
+    run("yarn build-report");
+    const htmlApproval = fs.readFileSync("dist/index.html", "utf8");
+
+    const reports: Partial<D2Report>[] = [
+        {
+            id: "G2pzXQgTMgw",
+            name: "NHWA Comments",
+            type: "HTML",
+            cacheStrategy: "RESPECT_SYSTEM_SETTING",
+            reportParams: {
+                parentOrganisationUnit: false,
+                reportingPeriod: false,
+                organisationUnit: false,
+                grandParentOrganisationUnit: false,
+            },
+            designContent: htmlComments,
         },
-        designContent,
-    };
+        {
+            id: "klA47Z2KS6s",
+            name: "NHWA Data Approval Status",
+            type: "HTML",
+            cacheStrategy: "RESPECT_SYSTEM_SETTING",
+            reportParams: {
+                parentOrganisationUnit: false,
+                reportingPeriod: false,
+                organisationUnit: false,
+                grandParentOrganisationUnit: false,
+            },
+            designContent: htmlApproval,
+        },
+    ];
 
     const metadata = {
         sqlViews,
-        reports: [report],
+        reports,
         constants: [constant],
     };
 
@@ -219,11 +248,16 @@ async function main() {
     });
 
     parser.add_argument("-u", "--user-auth", {
-        required: true,
         help: "DHIS2 authentication",
         metavar: "USERNAME:PASSWORD",
+        default: process.env.REACT_APP_DHIS2_AUTH,
     });
-    parser.add_argument("url", { help: "DHIS2 base URL", metavar: "URL" });
+
+    parser.add_argument("--url", {
+        help: "DHIS2 base URL",
+        metavar: "URL",
+        default: process.env.REACT_APP_DHIS2_BASE_URL,
+    });
 
     try {
         const args = parser.parse_args();

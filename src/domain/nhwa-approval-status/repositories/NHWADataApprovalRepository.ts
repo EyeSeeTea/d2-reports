@@ -16,4 +16,6 @@ export interface NHWADataApprovalRepositoryGetOptions {
     orgUnitIds: Id[];
     dataSetIds: Id[];
     approvalWorkflow: Id[];
+    approvalStatus?: string;
+    completionStatus?: string;
 }

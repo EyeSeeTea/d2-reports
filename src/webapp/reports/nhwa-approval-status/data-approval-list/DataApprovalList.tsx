@@ -4,7 +4,7 @@ import {
     TableGlobalAction,
     TablePagination,
     TableSorting,
-    useObjectsTable
+    useObjectsTable,
 } from "@eyeseetea/d2-ui-components";
 import DoneIcon from "@material-ui/icons/Done";
 import DoneAllIcon from "@material-ui/icons/DoneAll";
@@ -32,17 +32,19 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 { name: "dataSet", text: i18n.t("Data set"), sortable: true },
                 { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
                 { name: "period", text: i18n.t("Period"), sortable: true },
+                { name: "attribute", text: i18n.t("Attribute"), sortable: true, hidden: true },
+                { name: "approvalWorkflow", text: i18n.t("Workflow"), sortable: true, hidden: true },
                 {
                     name: "completed",
-                    text: i18n.t("Completed"),
+                    text: i18n.t("Completion status"),
                     sortable: true,
-                    getValue: row => (row.completed ? "Yes" : "No"),
+                    getValue: row => (row.completed ? "Completed" : "Not completed"),
                 },
                 {
                     name: "validated",
-                    text: i18n.t("Validated"),
+                    text: i18n.t("Approval status"),
                     sortable: true,
-                    getValue: row => (row.validated ? "Yes" : "No"),
+                    getValue: row => (row.validated ? "Approved" : "Ready for approval"),
                 },
                 { name: "lastUpdatedValue", text: i18n.t("Last updated value"), sortable: true },
             ],
@@ -171,7 +173,6 @@ function getFilterOptions(config: Config) {
     return {
         dataSets: sortByName(_.values(config.dataSets)),
         periods: config.years,
-        completionStatus: config.completionStatus,
         approvalWorkflow: config.approvalWorkflow,
     };
 }
@@ -181,7 +182,8 @@ function getEmptyDataValuesFilter(_config: Config): DataSetsFilter {
         dataSetIds: [],
         orgUnitPaths: [],
         periods: [],
-        completionStatus: [],
         approvalWorkflow: [],
+        completionStatus: undefined,
+        approvalStatus: undefined,
     };
 }

@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { MenuItem, Select } from "@material-ui/core";
 import DropdownForm from "./DropdownForm";
+import _ from "lodash";
 
 type Value = string;
 
@@ -10,16 +11,17 @@ interface MultipleDropdownProps {
     onChange: (values: Value[]) => void;
     label: string;
     values: Value[];
+    multiple?: boolean;
 }
 
 const MultipleDropdown: React.FC<MultipleDropdownProps> = props => {
-    const { items, values, onChange, label, className } = props;
-    const notifyChange = React.useCallback(ev => onChange(ev.target.value as string[]), [onChange]);
+    const { items, values, onChange, label, className, multiple = true } = props;
+    const notifyChange = useCallback(ev => onChange(_.flatten([ev.target.value])), [onChange]);
 
     return (
         <DropdownForm label={label} className={className}>
             <Select
-                multiple={true}
+                multiple={multiple}
                 data-test-multiple-dropdown={label}
                 value={values}
                 onChange={notifyChange}

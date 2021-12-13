@@ -1,4 +1,5 @@
 import { ArgumentParser } from "argparse";
+import "dotenv-flow/config";
 import fs from "fs";
 import { D2Api } from "../types/d2-api";
 
@@ -19,11 +20,16 @@ async function main() {
     });
 
     parser.add_argument("-u", "--user-auth", {
-        required: true,
         help: "DHIS2 authentication",
         metavar: "USERNAME:PASSWORD",
+        default: process.env.REACT_APP_DHIS2_AUTH,
     });
-    parser.add_argument("url", { help: "DHIS2 base URL", metavar: "URL" });
+    
+    parser.add_argument("--url", {
+        help: "DHIS2 base URL",
+        metavar: "URL",
+        default: process.env.REACT_APP_DHIS2_BASE_URL,
+    });
 
     try {
         const args = parser.parse_args();

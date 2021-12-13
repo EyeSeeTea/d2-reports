@@ -3,6 +3,7 @@ export interface DataApprovalItem {
     orgUnit: string;
     period: string;
     attribute: string;
+    approvalWorkflow: string;
     completed: boolean;
     validated: boolean;
     lastUpdatedValue: string;
