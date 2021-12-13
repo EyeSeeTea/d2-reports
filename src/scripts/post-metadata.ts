@@ -24,7 +24,7 @@ async function main() {
         metavar: "USERNAME:PASSWORD",
         default: process.env.REACT_APP_DHIS2_AUTH,
     });
-    
+
     parser.add_argument("--url", {
         help: "DHIS2 base URL",
         metavar: "URL",

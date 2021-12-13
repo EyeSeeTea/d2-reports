@@ -38,6 +38,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
     const approvalWorkflowItems = useMemoOptionsFromNamedRef(filterOptions.approvalWorkflow);
     const completionStatusItems = useMemoOptionsFromNamedRef([
+        // Remove deselection
         { id: "-", name: "" },
         { id: "true", name: "Completed" },
         { id: "false", name: "Not completed" },
@@ -46,6 +47,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         { id: "-", name: "" },
         { id: "true", name: "Approved" },
         { id: "false", name: "Ready for approval" },
+        // TODO: Waiting for approval at lower levels
     ]);
 
     return (

@@ -1,18 +1,11 @@
-import {
-    ObjectsList,
-    TableConfig,
-    TableGlobalAction,
-    TablePagination,
-    TableSorting,
-    useObjectsTable,
-} from "@eyeseetea/d2-ui-components";
+import { ObjectsList, TableConfig, TablePagination, TableSorting, useObjectsTable } from "@eyeseetea/d2-ui-components";
 import DoneIcon from "@material-ui/icons/Done";
 import DoneAllIcon from "@material-ui/icons/DoneAll";
 import StorageIcon from "@material-ui/icons/Storage";
 import _ from "lodash";
 import React, { useMemo, useState } from "react";
 import { sortByName } from "../../../../domain/common/entities/Base";
-import { Config } from "../../../../domain/common/entities/Config";
+import { Config, getMainUserPaths } from "../../../../domain/common/entities/Config";
 import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import { DataApprovalItem } from "../../../../domain/nhwa-approval-status/entities/DataApprovalItem";
@@ -24,7 +17,6 @@ import { DataSetsFilter, Filters } from "./Filters";
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
-    const [sorting, setSorting] = useState<TableSorting<DataApprovalViewModel>>();
 
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
@@ -102,6 +94,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     },
                 },
             ],
+            // TODO: To be validated with Nacho
             initialSorting: {
                 field: "dataSet" as const,
                 order: "asc" as const,
@@ -122,7 +115,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 sorting: getSortingFromTableSorting(sorting),
                 ...getUseCaseOptions(filters),
             });
-            setSorting(sorting);
+
             return { pager, objects: getDataApprovalViews(config, objects) };
         },
         [config, compositionRoot, filters]
@@ -131,25 +124,8 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const tableProps = useObjectsTable(baseConfig, getRows);
     const filterOptions = React.useMemo(() => getFilterOptions(config), [config]);
 
-    const downloadCsv: TableGlobalAction = {
-        name: "downloadCsv",
-        text: "Download CSV",
-        icon: <StorageIcon />,
-        onClick: async () => {
-            if (!sorting) return;
-            // FUTURE: create a single use case that performs the get+saveCSV
-            const { objects: dataSets } = await compositionRoot.dataApproval.get.execute({
-                config,
-                paging: { page: 1, pageSize: 100000 },
-                sorting: getSortingFromTableSorting(sorting),
-                ...getUseCaseOptions(filters),
-            });
-            compositionRoot.dataApproval.save.execute("data-sets.csv", dataSets);
-        },
-    };
-
     return (
-        <ObjectsList<DataApprovalViewModel> {...tableProps} globalActions={[downloadCsv]} onChangeSearch={undefined}>
+        <ObjectsList<DataApprovalViewModel> {...tableProps} onChangeSearch={undefined}>
             <Filters values={filters} options={filterOptions} onChange={setFilters} />
         </ObjectsList>
     );
@@ -177,10 +153,10 @@ function getFilterOptions(config: Config) {
     };
 }
 
-function getEmptyDataValuesFilter(_config: Config): DataSetsFilter {
+function getEmptyDataValuesFilter(config: Config): DataSetsFilter {
     return {
         dataSetIds: [],
-        orgUnitPaths: [],
+        orgUnitPaths: getMainUserPaths(config),
         periods: [],
         approvalWorkflow: [],
         completionStatus: undefined,

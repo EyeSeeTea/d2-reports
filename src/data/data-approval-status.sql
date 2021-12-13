@@ -17,6 +17,7 @@ FROM ((SELECT datavalue.periodid,
                 JOIN datasetelement USING (dataelementid)
                 JOIN dataset USING (datasetid)
                 CROSS JOIN dataapprovalworkflow
+       /** TODO: Filter by DEs, remove totals **/
        WHERE dataset.uid ~ ('^' || replace('${dataSets}', '-', '|') || '$')
          AND dataapprovalworkflow.uid ~ ('^' || replace('${approvalWorkflows}', '-', '|') || '$')
        GROUP BY datavalue.periodid, datavalue.sourceid, datavalue.attributeoptioncomboid, dataset.datasetid,
@@ -37,6 +38,7 @@ FROM ((SELECT datavalue.periodid,
                                     (dataapproval.periodid = entries.periodid) AND
                                     (dataapproval.attributeoptioncomboid = entries.attributeoptioncomboid) AND
                                     (dataapproval.dataapprovallevelid = dataapprovallevel.dataapprovallevelid)))
+/** TODO: Filter by OU paths **/
 WHERE organisationunit.uid ~ ('^' || replace('${orgUnits}', '-', '|') || '$')
   AND _periodstructure.iso ~ ('^' || replace('${periods}', '-', '|') || '$')
   AND (completedatasetregistration.completed IS NOT NULL)::text ~ ('^' || replace('${completed}', '-', '|') || '$')

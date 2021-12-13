@@ -1,4 +1,7 @@
-import { NHWADataCommentsRepository, NHWADataCommentsRepositoryGetOptions } from "../repositories/NHWADataCommentsRepository";
+import {
+    NHWADataCommentsRepository,
+    NHWADataCommentsRepositoryGetOptions,
+} from "../repositories/NHWADataCommentsRepository";
 import { DataCommentsItem } from "../entities/DataCommentsItem";
 import { PaginatedObjects } from "../../common/entities/PaginatedObjects";
 

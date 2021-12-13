@@ -1,6 +1,9 @@
 import { PaginatedObjects } from "../../common/entities/PaginatedObjects";
 import { DataApprovalItem } from "../../nhwa-approval-status/entities/DataApprovalItem";
-import { NHWADataApprovalRepository, NHWADataApprovalRepositoryGetOptions } from "../../nhwa-approval-status/repositories/NHWADataApprovalRepository";
+import {
+    NHWADataApprovalRepository,
+    NHWADataApprovalRepositoryGetOptions,
+} from "../../nhwa-approval-status/repositories/NHWADataApprovalRepository";
 
 type GetDataSetsUseCaseOptions = NHWADataApprovalRepositoryGetOptions;
 

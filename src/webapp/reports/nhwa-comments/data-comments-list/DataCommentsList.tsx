@@ -1,6 +1,9 @@
 import {
-    PaginationOptions, TableColumn, TableGlobalAction,
-    TablePagination, TableSorting
+    PaginationOptions,
+    TableColumn,
+    TableGlobalAction,
+    TablePagination,
+    TableSorting,
 } from "@eyeseetea/d2-ui-components";
 import StorageIcon from "@material-ui/icons/Storage";
 import _ from "lodash";

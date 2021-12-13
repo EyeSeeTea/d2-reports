@@ -86,7 +86,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                 fields: {
                     id: true,
                     displayName: true,
-                    organisationUnits: {
+                    dataViewOrganisationUnits: {
                         id: true,
                         displayName: toName,
                         path: true,
@@ -103,7 +103,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
         return {
             id: d2User.id,
             name: d2User.displayName,
-            orgUnits: d2User.organisationUnits,
+            orgUnits: d2User.dataViewOrganisationUnits,
             ...d2User.userCredentials,
         };
     }

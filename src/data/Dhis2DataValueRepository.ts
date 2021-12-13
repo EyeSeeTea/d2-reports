@@ -1,6 +1,9 @@
 import _ from "lodash";
 import { DataCommentsItem } from "../domain/nhwa-comments/entities/DataCommentsItem";
-import { NHWADataCommentsRepository, NHWADataCommentsRepositoryGetOptions } from "../domain/nhwa-comments/repositories/NHWADataCommentsRepository";
+import {
+    NHWADataCommentsRepository,
+    NHWADataCommentsRepositoryGetOptions,
+} from "../domain/nhwa-comments/repositories/NHWADataCommentsRepository";
 import { D2Api, PaginatedObjects, Id } from "../types/d2-api";
 import { Dhis2SqlViews } from "./Dhis2SqlViews";
 import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
