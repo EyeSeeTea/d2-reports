@@ -170,7 +170,7 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
             sqlQuery: sqlDataComments,
         },
         {
-            id: "vEZ8ZO87hh3",
+            id: "QTKlHcbGQRh",
             name: "NHWA Data Approval Status",
             cacheStrategy: "RESPECT_SYSTEM_SETTING",
             type: "QUERY",

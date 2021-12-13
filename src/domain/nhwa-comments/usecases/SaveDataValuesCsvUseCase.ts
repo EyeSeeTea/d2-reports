@@ -1,5 +1,5 @@
-import { DataCommentsItem } from "../../nhwa-comments/entities/DataCommentsItem";
-import { NHWADataCommentsRepository } from "../../nhwa-comments/repositories/NHWADataCommentsRepository";
+import { DataCommentsItem } from "../entities/DataCommentsItem";
+import { NHWADataCommentsRepository } from "../repositories/NHWADataCommentsRepository";
 
 export class SaveDataValuesUseCase {
     constructor(private dataValueRepository: NHWADataCommentsRepository) {}

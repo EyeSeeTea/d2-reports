@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useMemo } from "react";
 import i18n from "../../../../locales";
 import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
 import { Id, NamedRef } from "../../../../domain/common/entities/Base";
 import { useAppContext } from "../../../contexts/app-context";
 import { getRootIds } from "../../../../domain/common/entities/OrgUnit";
 import { OrgUnitsFilterButton } from "../../../components/org-units-filter/OrgUnitsFilterButton";
+import styled from "styled-components";
 
 export interface DataSetsFiltersProps {
     values: DataSetsFilter;
@@ -17,12 +18,14 @@ export interface DataSetsFilter {
     orgUnitPaths: Id[];
     periods: string[];
     completionStatus: string[];
+    approvalWorkflow: string[];
 }
 
 interface FilterOptions {
     dataSets: NamedRef[];
     periods: string[];
     completionStatus: string[];
+    approvalWorkflow: NamedRef[];
 }
 
 export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
@@ -33,9 +36,10 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
     const completionStatusItems = useMemoOptionsFromStrings(filterOptions.completionStatus);
+    const approvalWorkflowItems = useMemoOptionsFromNamedRef(filterOptions.approvalWorkflow);
 
     return (
-        <div>
+        <Container>
             <MultipleDropdown
                 items={dataSetItems}
                 values={filter.dataSetIds}
@@ -50,31 +54,47 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 setSelected={paths => onChange({ ...filter, orgUnitPaths: paths })}
             />
 
-            <MultipleDropdown
+            <Dropdown
                 items={periodItems}
                 values={filter.periods}
                 onChange={periods => onChange({ ...filter, periods })}
                 label={i18n.t("Periods")}
             />
 
-            <MultipleDropdown
+            <Dropdown
+                items={approvalWorkflowItems}
+                values={filter.approvalWorkflow}
+                onChange={approvalWorkflow => onChange({ ...filter, approvalWorkflow })}
+                label={i18n.t("Approval workflow")}
+            />
+
+            <Dropdown
                 items={completionStatusItems}
                 values={filterOptions.completionStatus}
                 onChange={completionStatus => onChange({ ...filter, completionStatus })}
                 label={i18n.t("Completion status")}
             />
-        </div>
+        </Container>
     );
 });
 
 function useMemoOptionsFromStrings(options: string[]) {
-    return React.useMemo(() => {
+    return useMemo(() => {
         return options.map(option => ({ value: option, text: option }));
     }, [options]);
 }
 
 function useMemoOptionsFromNamedRef(options: NamedRef[]) {
-    return React.useMemo(() => {
+    return useMemo(() => {
         return options.map(option => ({ value: option.id, text: option.name }));
     }, [options]);
 }
+
+const Container = styled.div`
+    display: flex;
+    gap: 1rem;
+`;
+
+const Dropdown = styled(MultipleDropdown)`
+    margin-left: -10px;
+`;

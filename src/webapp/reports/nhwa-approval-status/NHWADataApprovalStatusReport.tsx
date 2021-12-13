@@ -17,7 +17,7 @@ const NHWADataApprovalStatusReport: React.FC = () => {
 };
 
 const useStyles = makeStyles({
-    wrapper: { padding: 10 },
+    wrapper: { padding: 20 },
 });
 
 export default NHWADataApprovalStatusReport;

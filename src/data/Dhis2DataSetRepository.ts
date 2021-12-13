@@ -46,7 +46,7 @@ export class Dhis2DataSetRepository implements NHWADataApprovalRepository {
                     orgUnits: sqlViewJoinIds(orgUnitIds),
                     periods: sqlViewJoinIds(_.isEmpty(periods) ? config.years : periods),
                     dataSets: sqlViewJoinIds(dataSetIds2),
-                    approvalWorkflows: '-',
+                    approvalWorkflows: sqlViewJoinIds(options.approvalWorkflow),
                     orderByColumn: fieldMapping[sorting.field],
                     orderByDirection: sorting.direction,
                 },

@@ -17,6 +17,7 @@ export interface Config {
     };
     years: string[];
     completionStatus: string[];
+    approvalWorkflow: NamedRef[];
 }
 
 export function getMainUserPaths(config: Config) {

@@ -5,6 +5,7 @@ import DropdownForm from "./DropdownForm";
 type Value = string;
 
 interface MultipleDropdownProps {
+    className?: string;
     items: Array<{ value: Value; text: string }>;
     onChange: (values: Value[]) => void;
     label: string;
@@ -12,11 +13,11 @@ interface MultipleDropdownProps {
 }
 
 const MultipleDropdown: React.FC<MultipleDropdownProps> = props => {
-    const { items, values, onChange, label } = props;
+    const { items, values, onChange, label, className } = props;
     const notifyChange = React.useCallback(ev => onChange(ev.target.value as string[]), [onChange]);
 
     return (
-        <DropdownForm label={label}>
+        <DropdownForm label={label} className={className}>
             <Select
                 multiple={true}
                 data-test-multiple-dropdown={label}

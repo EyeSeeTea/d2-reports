@@ -1,5 +1,5 @@
-import { MetadataObject } from "../entities/MetadataObject";
-import { WIDPAdminRepository } from "../../admin/repositories/WIDPAdminRepository";
+import { MetadataObject } from "../../common/entities/MetadataObject";
+import { WIDPAdminRepository } from "../repositories/WIDPAdminRepository";
 
 export class SaveWIDPAdminDefaultCsvUseCase {
     constructor(private metadataRepository: WIDPAdminRepository) {}

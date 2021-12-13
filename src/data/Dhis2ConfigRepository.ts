@@ -12,13 +12,14 @@ const base = {
     dataSets: { namePrefix: "NHWA", nameExcluded: /old$/ },
     sqlViewNames: [SQL_VIEW_DATA_COMMENTS_NAME, SQL_VIEW_DATA_APPROVAL_NAME],
     constantCode: "NHWA_COMMENTS",
+    approvalWorkflows: { namePrefix: "HWF" },
 };
 
 export class Dhis2ConfigRepository implements ConfigRepository {
     constructor(private api: D2Api) {}
 
     async get(): Promise<Config> {
-        const { dataSets, constants, sqlViews } = await this.getMetadata();
+        const { dataSets, constants, sqlViews, dataApprovalWorkflows } = await this.getMetadata();
         const filteredDataSets = getFilteredDataSets(dataSets);
         const dataCommentsSqlView = sqlViews.find(({ name }) => name === SQL_VIEW_DATA_COMMENTS_NAME);
         const dataApprovalSqlView = sqlViews.find(({ name }) => name === SQL_VIEW_DATA_APPROVAL_NAME);
@@ -47,6 +48,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             sectionsByDataSet,
             years: _.range(currentYear - 10, currentYear + 1).map(n => n.toString()),
             completionStatus: ["Yes", "No"],
+            approvalWorkflow: dataApprovalWorkflows,
         };
     }
 
@@ -69,6 +71,10 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             sqlViews: {
                 fields: { id: true, name: true },
                 filter: { name: { in: base.sqlViewNames } },
+            },
+            dataApprovalWorkflows: {
+                fields: { id: true, name: true },
+                filter: { name: { $ilike: base.approvalWorkflows.namePrefix } },
             },
         });
 

@@ -1,5 +1,5 @@
-import { MetadataObject } from "../entities/MetadataObject";
-import { WIDPAdminRepository, WIDPAdmiRepositoryGetOptions } from "../../admin/repositories/WIDPAdminRepository";
+import { MetadataObject } from "../../common/entities/MetadataObject";
+import { WIDPAdminRepository, WIDPAdmiRepositoryGetOptions } from "../repositories/WIDPAdminRepository";
 
 export class GetWIDPAdminDefaultUseCase {
     constructor(private metadataRepository: WIDPAdminRepository) {}

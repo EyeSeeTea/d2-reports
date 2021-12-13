@@ -1,5 +1,5 @@
-import { DataApprovalItem } from "../../nhwa-approval-status/entities/DataApprovalItem";
-import { NHWADataApprovalRepository } from "../../nhwa-approval-status/repositories/NHWADataApprovalRepository";
+import { DataApprovalItem } from "../entities/DataApprovalItem";
+import { NHWADataApprovalRepository } from "../repositories/NHWADataApprovalRepository";
 
 export class SaveDataSetsUseCase {
     constructor(private dataSetRepository: NHWADataApprovalRepository) {}

@@ -4,12 +4,12 @@ import { Dhis2DataValueRepository } from "./data/Dhis2DataValueRepository";
 import { Dhis2OrgUnitsRepository } from "./data/Dhis2OrgUnitsRepository";
 import { WIDPAdminDefaultRepository } from "./data/WIDPAdminDefaultRepository";
 import { GetConfig } from "./domain/common/usecases/GetConfig";
-import { GetDataValuesUseCase } from "./domain/common/usecases/GetDataValuesUseCase";
+import { GetDataValuesUseCase } from "./domain/nhwa-comments/usecases/GetDataValuesUseCase";
 import { GetOrgUnitsUseCase } from "./domain/common/usecases/GetOrgUnitsUseCase";
-import { GetWIDPAdminDefaultUseCase } from "./domain/common/usecases/GetWIDPAdminDefaultUseCase";
-import { SaveDataSetsUseCase } from "./domain/common/usecases/SaveDataSetsCsvUseCase";
-import { SaveDataValuesUseCase } from "./domain/common/usecases/SaveDataValuesCsvUseCase";
-import { SaveWIDPAdminDefaultCsvUseCase } from "./domain/common/usecases/SaveWIDPAdminDefaultCsvUseCase";
+import { GetWIDPAdminDefaultUseCase } from "./domain/admin/usecases/GetWIDPAdminDefaultUseCase";
+import { SaveDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/SaveDataSetsCsvUseCase";
+import { SaveDataValuesUseCase } from "./domain/nhwa-comments/usecases/SaveDataValuesCsvUseCase";
+import { SaveWIDPAdminDefaultCsvUseCase } from "./domain/admin/usecases/SaveWIDPAdminDefaultCsvUseCase";
 import { GetDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/GetDataSetsUseCase";
 import { D2Api } from "./types/d2-api";
 

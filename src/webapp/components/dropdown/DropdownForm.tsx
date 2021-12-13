@@ -5,15 +5,16 @@ import cyan from "@material-ui/core/colors/cyan";
 interface DropdownFormProps {
     label: string;
     children: ReactNode;
+    className?: string;
 }
 
 const DropdownForm: React.FC<DropdownFormProps> = props => {
-    const { label, children } = props;
+    const { label, children, className } = props;
     const materialTheme = getMaterialTheme();
 
     return (
         <MuiThemeProvider theme={materialTheme}>
-            <FormControl>
+            <FormControl className={className}>
                 <InputLabel>{label}</InputLabel>
                 {children}
             </FormControl>

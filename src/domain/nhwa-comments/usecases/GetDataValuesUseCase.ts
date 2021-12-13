@@ -1,6 +1,6 @@
-import { NHWADataCommentsRepository, NHWADataCommentsRepositoryGetOptions } from "../../nhwa-comments/repositories/NHWADataCommentsRepository";
-import { DataCommentsItem } from "../../nhwa-comments/entities/DataCommentsItem";
-import { PaginatedObjects } from "../entities/PaginatedObjects";
+import { NHWADataCommentsRepository, NHWADataCommentsRepositoryGetOptions } from "../repositories/NHWADataCommentsRepository";
+import { DataCommentsItem } from "../entities/DataCommentsItem";
+import { PaginatedObjects } from "../../common/entities/PaginatedObjects";
 
 type GetDataValuesUseCaseOptions = NHWADataCommentsRepositoryGetOptions;
 

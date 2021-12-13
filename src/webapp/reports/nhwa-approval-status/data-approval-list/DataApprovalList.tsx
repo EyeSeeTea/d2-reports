@@ -1,32 +1,119 @@
 import {
-    PaginationOptions, TableColumn, TableGlobalAction,
-    TablePagination, TableSorting
+    ObjectsList,
+    TableConfig,
+    TableGlobalAction,
+    TablePagination,
+    TableSorting,
+    useObjectsTable
 } from "@eyeseetea/d2-ui-components";
+import DoneIcon from "@material-ui/icons/Done";
+import DoneAllIcon from "@material-ui/icons/DoneAll";
 import StorageIcon from "@material-ui/icons/Storage";
 import _ from "lodash";
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { sortByName } from "../../../../domain/common/entities/Base";
 import { Config } from "../../../../domain/common/entities/Config";
 import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import { DataApprovalItem } from "../../../../domain/nhwa-approval-status/entities/DataApprovalItem";
 import i18n from "../../../../locales";
-import { TableConfig, useObjectsTable } from "../../../components/objects-list/objects-list-hooks";
-import { ObjectsList } from "../../../components/objects-list/ObjectsList";
 import { useAppContext } from "../../../contexts/app-context";
-import { useSnackbarOnError } from "../../../utils/snackbar";
 import { DataApprovalViewModel, getDataApprovalViews } from "../DataApprovalViewModel";
-import { DataSetsFilter } from "./Filters";
-import { FiltersBox } from "./FiltersBox";
+import { DataSetsFilter, Filters } from "./Filters";
 
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
-    const [filters, setFilters] = React.useState(() => getEmptyDataValuesFilter(config));
-    const baseConfig = React.useMemo(getBaseListConfig, []);
-    const [sorting, setSorting] = React.useState<TableSorting<DataApprovalViewModel>>();
+    const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
+    const [sorting, setSorting] = useState<TableSorting<DataApprovalViewModel>>();
 
-    const getRows = React.useMemo(
-        () => async (paging: TablePagination, sorting: TableSorting<DataApprovalViewModel>) => {
+    const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
+        () => ({
+            columns: [
+                { name: "dataSet", text: i18n.t("Data set"), sortable: true },
+                { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
+                { name: "period", text: i18n.t("Period"), sortable: true },
+                {
+                    name: "completed",
+                    text: i18n.t("Completed"),
+                    sortable: true,
+                    getValue: row => (row.completed ? "Yes" : "No"),
+                },
+                {
+                    name: "validated",
+                    text: i18n.t("Validated"),
+                    sortable: true,
+                    getValue: row => (row.validated ? "Yes" : "No"),
+                },
+                { name: "lastUpdatedValue", text: i18n.t("Last updated value"), sortable: true },
+            ],
+            actions: [
+                {
+                    name: "goToDataEntry",
+                    text: i18n.t("Go to data entry"),
+                    icon: <StorageIcon />,
+                    multiple: false,
+                    primary: true,
+                    onClick: async (selectedIds: string[]) => {
+                        if (selectedIds.length === 0) return;
+                        //const dataApprovalItem = await compositionRoot.dataApproval.get.execute(selectedIds[0]);
+                        //compositionRoot.router.goToDataEntry(dataApprovalItem.dataSetId, dataApprovalItem.period);
+                    },
+                },
+                {
+                    name: "complete",
+                    text: i18n.t("Complete"),
+                    icon: <DoneIcon />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        if (selectedIds.length === 0) return;
+                        //await compositionRoot.dataApproval.complete.execute(selectedIds);
+                    },
+                },
+                {
+                    name: "completeAllBelow",
+                    text: i18n.t("Complete all below"),
+                    icon: <DoneAllIcon />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        if (selectedIds.length === 0) return;
+                        //await compositionRoot.dataApproval.completeAllBelow.execute(selectedIds);
+                    },
+                },
+                {
+                    name: "approve",
+                    text: i18n.t("Approve"),
+                    icon: <DoneIcon />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        if (selectedIds.length === 0) return;
+                        //await compositionRoot.dataApproval.approve.execute(selectedIds);
+                    },
+                },
+                {
+                    name: "approveAllBelow",
+                    text: i18n.t("Approve all below"),
+                    icon: <DoneAllIcon />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        if (selectedIds.length === 0) return;
+                        //await compositionRoot.dataApproval.approveAllBelow.execute(selectedIds);
+                    },
+                },
+            ],
+            initialSorting: {
+                field: "dataSet" as const,
+                order: "asc" as const,
+            },
+            paginationOptions: {
+                pageSizeOptions: [10, 20, 50],
+                pageSizeInitialValue: 20,
+            },
+        }),
+        []
+    );
+
+    const getRows = useMemo(
+        () => async (_search: string, paging: TablePagination, sorting: TableSorting<DataApprovalViewModel>) => {
             const { pager, objects } = await compositionRoot.dataApproval.get.execute({
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
@@ -39,8 +126,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
         [config, compositionRoot, filters]
     );
 
-    const getRowsWithSnackbarOrError = useSnackbarOnError(getRows);
-    const tableProps = useObjectsTable(baseConfig, getRowsWithSnackbarOrError);
+    const tableProps = useObjectsTable(baseConfig, getRows);
     const filterOptions = React.useMemo(() => getFilterOptions(config), [config]);
 
     const downloadCsv: TableGlobalAction = {
@@ -61,8 +147,8 @@ export const DataApprovalList: React.FC = React.memo(() => {
     };
 
     return (
-        <ObjectsList<DataApprovalViewModel> {...tableProps} globalActions={[downloadCsv]}>
-            <FiltersBox showToggleButton={false} values={filters} options={filterOptions} onChange={setFilters} />
+        <ObjectsList<DataApprovalViewModel> {...tableProps} globalActions={[downloadCsv]} onChangeSearch={undefined}>
+            <Filters values={filters} options={filterOptions} onChange={setFilters} />
         </ObjectsList>
     );
 });
@@ -81,43 +167,21 @@ function getSortingFromTableSorting(sorting: TableSorting<DataApprovalViewModel>
     };
 }
 
-function getBaseListConfig(): TableConfig<DataApprovalViewModel> {
-    const paginationOptions: PaginationOptions = {
-        pageSizeOptions: [10, 20, 50],
-        pageSizeInitialValue: 20,
-    };
-
-    const initialSorting: TableSorting<DataApprovalViewModel> = {
-        field: "dataSet" as const,
-        order: "asc" as const,
-    };
-
-    const columns: TableColumn<DataApprovalViewModel>[] = [
-        { name: "dataSet", text: i18n.t("Data set"), sortable: true },
-        { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
-        { name: "period", text: i18n.t("Period"), sortable: true },
-        { name: "completed", text: i18n.t("Completed"), sortable: true, getValue: (row) => row.completed ? "Yes" : "No" },
-        { name: "validated", text: i18n.t("Validated"), sortable: true, getValue: (row) => row.validated ? "Yes" : "No" },
-        { name: "lastUpdatedValue", text: i18n.t("Last updated value"), sortable: true },
-    ];
-
-    return { columns, initialSorting, paginationOptions };
-}
-
 function getFilterOptions(config: Config) {
-    console.log("GET FILTER OPTIONS", config);
     return {
         dataSets: sortByName(_.values(config.dataSets)),
         periods: config.years,
         completionStatus: config.completionStatus,
+        approvalWorkflow: config.approvalWorkflow,
     };
 }
 
-function getEmptyDataValuesFilter(config: Config): DataSetsFilter {
+function getEmptyDataValuesFilter(_config: Config): DataSetsFilter {
     return {
         dataSetIds: [],
         orgUnitPaths: [],
         periods: [],
         completionStatus: [],
+        approvalWorkflow: [],
     };
 }
