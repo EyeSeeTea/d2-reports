@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2021-12-13T11:36:33.180Z\n"
-"PO-Revision-Date: 2021-12-13T11:36:33.180Z\n"
+"POT-Creation-Date: 2021-12-13T11:48:02.817Z\n"
+"PO-Revision-Date: 2021-12-13T11:48:02.817Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -110,10 +110,10 @@ msgstr ""
 msgid "Approve all below"
 msgstr ""
 
-msgid "Data sets"
+msgid "Periods"
 msgstr ""
 
-msgid "Periods"
+msgid "Data sets"
 msgstr ""
 
 msgid "Approval workflow"

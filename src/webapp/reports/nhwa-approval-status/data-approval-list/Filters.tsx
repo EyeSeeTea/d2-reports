@@ -50,13 +50,6 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
 
     return (
         <Container>
-            <Dropdown
-                items={dataSetItems}
-                values={filter.dataSetIds}
-                onChange={dataSetIds => onChange({ ...filter, dataSetIds })}
-                label={i18n.t("Data sets")}
-            />
-
             <OrgUnitsFilterButton
                 api={api}
                 rootIds={rootIds}
@@ -69,6 +62,13 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 values={filter.periods}
                 onChange={periods => onChange({ ...filter, periods })}
                 label={i18n.t("Periods")}
+            />
+
+            <Dropdown
+                items={dataSetItems}
+                values={filter.dataSetIds}
+                onChange={dataSetIds => onChange({ ...filter, dataSetIds })}
+                label={i18n.t("Data sets")}
             />
 
             <Dropdown
