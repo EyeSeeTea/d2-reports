@@ -39,8 +39,8 @@ FROM ((SELECT datavalue.periodid,
                                     (dataapproval.dataapprovallevelid = dataapprovallevel.dataapprovallevelid)))
 WHERE organisationunit.uid ~ ('^' || replace('${orgUnits}', '-', '|') || '$')
   AND _periodstructure.iso ~ ('^' || replace('${periods}', '-', '|') || '$')
-  AND (completedatasetregistration.completed IS NOT NULL)::text ~ ('^' || replace(${completed}, '-', '|') || '$')
-  AND (dataapproval.accepted IS NOT NULL)::text ~ ('^' || replace(${validated}, '-', '|') || '$')
+  AND (completedatasetregistration.completed IS NOT NULL)::text ~ ('^' || replace('${completed}', '-', '|') || '$')
+  AND (dataapproval.accepted IS NOT NULL)::text ~ ('^' || replace('${approved}', '-', '|') || '$')
 ORDER BY
     ${orderByColumn} ${orderByDirection},
     dataset ASC,
