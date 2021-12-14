@@ -1,7 +1,8 @@
-import React, { useCallback } from "react";
 import { MenuItem, Select } from "@material-ui/core";
-import DropdownForm from "./DropdownForm";
 import _ from "lodash";
+import React, { useCallback } from "react";
+import i18n from "../../../locales";
+import DropdownForm from "./DropdownForm";
 
 type Value = string;
 
@@ -12,11 +13,12 @@ interface MultipleDropdownProps {
     label: string;
     values: Value[];
     multiple?: boolean;
+    hideEmpty?: boolean;
 }
 
 const MultipleDropdown: React.FC<MultipleDropdownProps> = props => {
-    const { items, values, onChange, label, className, multiple = true } = props;
-    const notifyChange = useCallback(ev => onChange(_.flatten([ev.target.value])), [onChange]);
+    const { items, values, onChange, label, className, multiple = true, hideEmpty } = props;
+    const notifyChange = useCallback(ev => onChange(_.flatten([ev.target.value || undefined])), [onChange]);
 
     return (
         <DropdownForm label={label} className={className}>
@@ -27,6 +29,7 @@ const MultipleDropdown: React.FC<MultipleDropdownProps> = props => {
                 onChange={notifyChange}
                 MenuProps={menuPropsBottomLeft}
             >
+                {!hideEmpty && <MenuItem value={""}>{i18n.t("- All -")}</MenuItem>}
                 {items.map(item => (
                     <MenuItem key={item.value} value={item.value}>
                         {item.text}

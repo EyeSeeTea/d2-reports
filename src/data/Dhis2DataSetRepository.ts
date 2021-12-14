@@ -12,7 +12,6 @@ import { CsvData } from "../data/CsvDataSource";
 
 interface Variables {
     dataSets: string;
-    approvalWorkflows: string;
     orgUnits: string;
     periods: string;
     completed: string;
@@ -57,15 +56,10 @@ export class Dhis2DataSetRepository implements NHWADataApprovalRepository {
                 config.dataApprovalSqlView.id,
                 {
                     orgUnits: sqlViewJoinIds(orgUnitIds),
-                    periods: sqlViewJoinIds(_.isEmpty(periods) ? config.years : periods),
+                    periods: sqlViewJoinIds(periods),
                     dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
                     completed: options.completionStatus ?? "-",
                     approved: options.approvalStatus ?? "-",
-                    approvalWorkflows: sqlViewJoinIds(
-                        _.isEmpty(options.approvalWorkflow)
-                            ? config.approvalWorkflow.map(({ id }) => id)
-                            : options.approvalWorkflow
-                    ),
                     orderByColumn: fieldMapping[sorting.field],
                     orderByDirection: sorting.direction,
                 },

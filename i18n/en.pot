@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2021-12-13T11:48:02.817Z\n"
-"PO-Revision-Date: 2021-12-13T11:48:02.817Z\n"
+"POT-Creation-Date: 2021-12-14T12:37:23.233Z\n"
+"PO-Revision-Date: 2021-12-14T12:37:23.233Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -74,16 +74,16 @@ msgstr ""
 msgid "NHWA Data Approval Status Report"
 msgstr ""
 
-msgid "Data set"
+msgid "Period"
 msgstr ""
 
-msgid "Period"
+msgid "Data set"
 msgstr ""
 
 msgid "Attribute"
 msgstr ""
 
-msgid "Workflow"
+msgid "Approval Workflow"
 msgstr ""
 
 msgid "Completion status"
@@ -95,28 +95,16 @@ msgstr ""
 msgid "Last updated value"
 msgstr ""
 
-msgid "Go to data entry"
-msgstr ""
-
 msgid "Complete"
-msgstr ""
-
-msgid "Complete all below"
 msgstr ""
 
 msgid "Approve"
 msgstr ""
 
-msgid "Approve all below"
-msgstr ""
-
-msgid "Periods"
-msgstr ""
-
 msgid "Data sets"
 msgstr ""
 
-msgid "Approval workflow"
+msgid "Periods"
 msgstr ""
 
 msgid "NHWA Comments Report"

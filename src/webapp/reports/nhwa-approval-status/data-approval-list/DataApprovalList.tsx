@@ -1,11 +1,10 @@
 import { ObjectsList, TableConfig, TablePagination, TableSorting, useObjectsTable } from "@eyeseetea/d2-ui-components";
 import DoneIcon from "@material-ui/icons/Done";
 import DoneAllIcon from "@material-ui/icons/DoneAll";
-import StorageIcon from "@material-ui/icons/Storage";
 import _ from "lodash";
 import React, { useMemo, useState } from "react";
 import { sortByName } from "../../../../domain/common/entities/Base";
-import { Config, getMainUserPaths } from "../../../../domain/common/entities/Config";
+import { Config } from "../../../../domain/common/entities/Config";
 import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import { DataApprovalItem } from "../../../../domain/nhwa-approval-status/entities/DataApprovalItem";
@@ -21,11 +20,10 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
             columns: [
-                { name: "dataSet", text: i18n.t("Data set"), sortable: true },
                 { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
                 { name: "period", text: i18n.t("Period"), sortable: true },
+                { name: "dataSet", text: i18n.t("Data set"), sortable: true },
                 { name: "attribute", text: i18n.t("Attribute"), sortable: true, hidden: true },
-                { name: "approvalWorkflow", text: i18n.t("Workflow"), sortable: true, hidden: true },
                 {
                     name: "completed",
                     text: i18n.t("Completion status"),
@@ -42,18 +40,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
             ],
             actions: [
                 {
-                    name: "goToDataEntry",
-                    text: i18n.t("Go to data entry"),
-                    icon: <StorageIcon />,
-                    multiple: false,
-                    primary: true,
-                    onClick: async (selectedIds: string[]) => {
-                        if (selectedIds.length === 0) return;
-                        //const dataApprovalItem = await compositionRoot.dataApproval.get.execute(selectedIds[0]);
-                        //compositionRoot.router.goToDataEntry(dataApprovalItem.dataSetId, dataApprovalItem.period);
-                    },
-                },
-                {
                     name: "complete",
                     text: i18n.t("Complete"),
                     icon: <DoneIcon />,
@@ -64,33 +50,13 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     },
                 },
                 {
-                    name: "completeAllBelow",
-                    text: i18n.t("Complete all below"),
-                    icon: <DoneAllIcon />,
-                    multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        if (selectedIds.length === 0) return;
-                        //await compositionRoot.dataApproval.completeAllBelow.execute(selectedIds);
-                    },
-                },
-                {
                     name: "approve",
                     text: i18n.t("Approve"),
-                    icon: <DoneIcon />,
+                    icon: <DoneAllIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
                         if (selectedIds.length === 0) return;
                         //await compositionRoot.dataApproval.approve.execute(selectedIds);
-                    },
-                },
-                {
-                    name: "approveAllBelow",
-                    text: i18n.t("Approve all below"),
-                    icon: <DoneAllIcon />,
-                    multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        if (selectedIds.length === 0) return;
-                        //await compositionRoot.dataApproval.approveAllBelow.execute(selectedIds);
                     },
                 },
             ],
@@ -153,12 +119,11 @@ function getFilterOptions(config: Config) {
     };
 }
 
-function getEmptyDataValuesFilter(config: Config): DataSetsFilter {
+function getEmptyDataValuesFilter(_config: Config): DataSetsFilter {
     return {
         dataSetIds: [],
-        orgUnitPaths: getMainUserPaths(config),
+        orgUnitPaths: [],
         periods: [],
-        approvalWorkflow: [],
         completionStatus: undefined,
         approvalStatus: undefined,
     };
