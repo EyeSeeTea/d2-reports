@@ -22,7 +22,9 @@ interface Variables {
 }
 
 type SqlField =
+    | "datasetuid"
     | "dataset"
+    | "orgunituid"
     | "orgunit"
     | "period"
     | "attribute"
@@ -32,7 +34,9 @@ type SqlField =
     | "lastupdatedvalue";
 
 const fieldMapping: Record<keyof DataApprovalItem, SqlField> = {
+    dataSetUid: "datasetuid",
     dataSet: "dataset",
+    orgUnitUid: "orgunit",
     orgUnit: "orgunit",
     period: "period",
     attribute: "attribute",
@@ -78,7 +82,9 @@ export class Dhis2DataSetRepository implements NHWADataApprovalRepository {
 
         const items: Array<DataApprovalItem> = rows.map(
             (item): DataApprovalItem => ({
+                dataSetUid: item.datasetuid,
                 dataSet: item.dataset,
+                orgUnitUid: item.orgunituid,
                 orgUnit: item.orgunit,
                 period: item.period,
                 attribute: item.attribute,
@@ -108,6 +114,24 @@ export class Dhis2DataSetRepository implements NHWADataApprovalRepository {
         const csvContents = csvDataSource.toString(csvData);
 
         await downloadFile(csvContents, filename, "text/csv");
+    }
+
+    async complete(dataSets: DataApprovalItem[]): Promise<void> {
+        console.debug("COMPLETING...", dataSets);
+
+        const completeDataSetRegistrations = dataSets.map(ds => ({
+            dataSet: ds.dataSetUid,
+            period: ds.period,
+            organisationUnit: ds.orgUnitUid,
+            completed: true,
+        }));
+
+        const result: any = await this.api
+            .post<any>("/completeDataSetRegistrations", {}, { completeDataSetRegistrations })
+            .getData();
+
+        console.debug(result);
+        // TODO see if I can refresh the report after this action
     }
 }
 

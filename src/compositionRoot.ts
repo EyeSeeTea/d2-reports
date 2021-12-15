@@ -8,6 +8,7 @@ import { GetDataValuesUseCase } from "./domain/nhwa-comments/usecases/GetDataVal
 import { GetOrgUnitsUseCase } from "./domain/common/usecases/GetOrgUnitsUseCase";
 import { GetWIDPAdminDefaultUseCase } from "./domain/admin/usecases/GetWIDPAdminDefaultUseCase";
 import { SaveDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/SaveDataSetsCsvUseCase";
+import { CompleteDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/CompleteDataSetsUseCase";
 import { SaveDataValuesUseCase } from "./domain/nhwa-comments/usecases/SaveDataValuesCsvUseCase";
 import { SaveWIDPAdminDefaultCsvUseCase } from "./domain/admin/usecases/SaveWIDPAdminDefaultCsvUseCase";
 import { GetDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/GetDataSetsUseCase";
@@ -32,6 +33,7 @@ export function getCompositionRoot(api: D2Api) {
         dataApproval: {
             get: new GetDataSetsUseCase(dataSetRepository),
             save: new SaveDataSetsUseCase(dataSetRepository),
+            complete: new CompleteDataSetsUseCase(dataSetRepository),
         },
         orgUnits: {
             get: new GetOrgUnitsUseCase(orgUnitsRepository),

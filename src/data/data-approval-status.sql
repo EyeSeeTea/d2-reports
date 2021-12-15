@@ -1,11 +1,14 @@
-SELECT dataset.name                                      AS dataset,
-       organisationunit.name                             AS orgunit,
-       _periodstructure.iso                              AS period,
-       categoryoptioncombo.name                          AS attribute,
-       entries.workflowname                              AS approvalworkflow,
-       entries.lastupdated                               AS lastupdatedvalue,
-       completedatasetregistration.completed IS NOT NULL AS completed,
-       dataapproval.accepted IS NOT NULL                 AS validated
+SELECT
+dataset.uid                                       AS datasetuid,
+dataset.name                                      AS dataset,
+organisationunit.uid                              AS orgunituid,
+organisationunit.name                             AS orgunit,
+_periodstructure.iso                              AS period,
+categoryoptioncombo.name                          AS attribute,
+entries.workflowname                              AS approvalworkflow,
+entries.lastupdated                               AS lastupdatedvalue,
+completedatasetregistration.completed IS NOT NULL AS completed,
+dataapproval.accepted IS NOT NULL                 AS validated
 FROM ((SELECT datavalue.periodid,
               datavalue.sourceid                         AS organisationunitid,
               datavalue.attributeoptioncomboid,

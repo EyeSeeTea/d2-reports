@@ -1,5 +1,7 @@
 export interface DataApprovalItem {
+    dataSetUid: string;
     dataSet: string;
+    orgUnitUid: string;
     orgUnit: string;
     period: string;
     attribute: string;
@@ -10,5 +12,5 @@ export interface DataApprovalItem {
 }
 
 export function getDataApprovalItemId(dataSet: DataApprovalItem): string {
-    return [dataSet.dataSet, dataSet.period, dataSet.orgUnit].join("-");
+    return [dataSet.dataSetUid, dataSet.period, dataSet.orgUnitUid].join("-");
 }

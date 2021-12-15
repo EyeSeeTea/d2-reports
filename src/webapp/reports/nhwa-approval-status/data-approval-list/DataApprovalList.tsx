@@ -21,7 +21,9 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
             columns: [
+                { name: "dataSetUid", text: i18n.t("datasetUid"), sortable: false, hidden: true },
                 { name: "dataSet", text: i18n.t("Data set"), sortable: true },
+                { name: "orgUnitUid", text: i18n.t("orgUnitUid"), sortable: false, hidden: true },
                 { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
                 { name: "period", text: i18n.t("Period"), sortable: true },
                 { name: "attribute", text: i18n.t("Attribute"), sortable: true, hidden: true },
@@ -60,7 +62,32 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
                         if (selectedIds.length === 0) return;
-                        //await compositionRoot.dataApproval.complete.execute(selectedIds);
+
+                        const dataSetIds = [],
+                            periods = [],
+                            orgUnitIds = [];
+                        for (const selectedId of selectedIds) {
+                            const [dataSetUid, period, orgUnitUid] = selectedId.split("-");
+
+                            dataSetIds.push(dataSetUid ?? "");
+                            periods.push(period ?? "");
+                            orgUnitIds.push(orgUnitUid ?? "");
+                        }
+
+                        const dataApprovalItems = (
+                            await compositionRoot.dataApproval.get.execute({
+                                config,
+                                paging: { page: 1, pageSize: selectedIds.length },
+                                sorting: { field: "dataSetUid", direction: "asc" },
+                                ...getUseCaseOptions(filters),
+                                dataSetIds,
+                                periods,
+                                orgUnitIds,
+                            })
+                        ).objects;
+
+                        await compositionRoot.dataApproval.complete.execute(dataApprovalItems);
+                        // TODO: need to refresh when the dataSet is approved
                     },
                 },
                 {
@@ -104,7 +131,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 20,
             },
         }),
-        []
+        [config, compositionRoot, filters]
     );
 
     const getRows = useMemo(
