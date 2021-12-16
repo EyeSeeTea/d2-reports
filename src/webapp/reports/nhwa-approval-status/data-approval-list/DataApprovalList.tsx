@@ -18,6 +18,35 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
 
+    const getDataApprovalItems = React.useCallback(
+        async (selectedIds: string[]): Promise<DataApprovalItem[]> => {
+            const dataSetIds = [],
+                periods = [],
+                orgUnitIds = [];
+
+            for (const selectedId of selectedIds) {
+                const [dataSetUid, period, orgUnitUid] = selectedId.split("-");
+
+                dataSetIds.push(dataSetUid ?? "");
+                periods.push(period ?? "");
+                orgUnitIds.push(orgUnitUid ?? "");
+            }
+
+            return (
+                await compositionRoot.dataApproval.get.execute({
+                    config,
+                    paging: { page: 1, pageSize: selectedIds.length },
+                    sorting: { field: "dataSetUid", direction: "asc" },
+                    ...getUseCaseOptions(filters),
+                    dataSetIds,
+                    periods,
+                    orgUnitIds,
+                })
+            ).objects;
+        },
+        [compositionRoot, config, filters]
+    );
+
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
             columns: [
@@ -63,31 +92,8 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     onClick: async (selectedIds: string[]) => {
                         if (selectedIds.length === 0) return;
 
-                        const dataSetIds = [],
-                            periods = [],
-                            orgUnitIds = [];
-                        for (const selectedId of selectedIds) {
-                            const [dataSetUid, period, orgUnitUid] = selectedId.split("-");
-
-                            dataSetIds.push(dataSetUid ?? "");
-                            periods.push(period ?? "");
-                            orgUnitIds.push(orgUnitUid ?? "");
-                        }
-
-                        const dataApprovalItems = (
-                            await compositionRoot.dataApproval.get.execute({
-                                config,
-                                paging: { page: 1, pageSize: selectedIds.length },
-                                sorting: { field: "dataSetUid", direction: "asc" },
-                                ...getUseCaseOptions(filters),
-                                dataSetIds,
-                                periods,
-                                orgUnitIds,
-                            })
-                        ).objects;
-
-                        await compositionRoot.dataApproval.complete.execute(dataApprovalItems);
-                        // TODO: need to refresh when the dataSet is approved
+                        const dataApprovalItems = await getDataApprovalItems(selectedIds);
+                        const success = await compositionRoot.dataApproval.complete.execute(dataApprovalItems);
                     },
                 },
                 {
@@ -107,7 +113,9 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
                         if (selectedIds.length === 0) return;
-                        //await compositionRoot.dataApproval.approve.execute(selectedIds);
+
+                        const dataApprovalItems = await getDataApprovalItems(selectedIds);
+                        const success = await compositionRoot.dataApproval.approve.execute(dataApprovalItems);
                     },
                 },
                 {
@@ -131,7 +139,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 20,
             },
         }),
-        [config, compositionRoot, filters]
+        [getDataApprovalItems, compositionRoot]
     );
 
     const getRows = useMemo(

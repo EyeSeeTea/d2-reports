@@ -12,6 +12,7 @@ export interface DataApprovalViewModel {
     orgUnit: string;
     period: string;
     attribute: string;
+    approvalWorkflowUid: string;
     approvalWorkflow: string;
     completed: boolean;
     validated: boolean;
@@ -28,6 +29,7 @@ export function getDataApprovalViews(_config: Config, items: DataApprovalItem[])
             orgUnit: item.orgUnit,
             period: item.period,
             attribute: item.attribute,
+            approvalWorkflowUid: item.approvalWorkflowUid,
             approvalWorkflow: item.approvalWorkflow,
             completed: item.completed,
             validated: item.validated,

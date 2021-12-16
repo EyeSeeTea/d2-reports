@@ -28,6 +28,7 @@ type SqlField =
     | "orgunit"
     | "period"
     | "attribute"
+    | "approvalworkflowuid"
     | "approvalworkflow"
     | "completed"
     | "validated"
@@ -40,6 +41,7 @@ const fieldMapping: Record<keyof DataApprovalItem, SqlField> = {
     orgUnit: "orgunit",
     period: "period",
     attribute: "attribute",
+    approvalWorkflowUid: "approvalworkflowuid",
     approvalWorkflow: "approvalworkflow",
     completed: "completed",
     validated: "validated",
@@ -88,6 +90,7 @@ export class Dhis2DataSetRepository implements NHWADataApprovalRepository {
                 orgUnit: item.orgunit,
                 period: item.period,
                 attribute: item.attribute,
+                approvalWorkflowUid: item.approvalworkflowuid,
                 approvalWorkflow: item.approvalworkflow,
                 completed: Boolean(item.completed),
                 validated: Boolean(item.validated),
@@ -116,9 +119,7 @@ export class Dhis2DataSetRepository implements NHWADataApprovalRepository {
         await downloadFile(csvContents, filename, "text/csv");
     }
 
-    async complete(dataSets: DataApprovalItem[]): Promise<void> {
-        console.debug("COMPLETING...", dataSets);
-
+    async complete(dataSets: DataApprovalItem[]): Promise<boolean> {
         const completeDataSetRegistrations = dataSets.map(ds => ({
             dataSet: ds.dataSetUid,
             period: ds.period,
@@ -126,12 +127,27 @@ export class Dhis2DataSetRepository implements NHWADataApprovalRepository {
             completed: true,
         }));
 
-        const result: any = await this.api
+        const response = await this.api
             .post<any>("/completeDataSetRegistrations", {}, { completeDataSetRegistrations })
             .getData();
 
-        console.debug(result);
-        // TODO see if I can refresh the report after this action
+        return response.status === "SUCCESS";
+    }
+
+    async approve(dataSets: DataApprovalItem[]): Promise<boolean> {
+        const wf = [],
+            pe = [],
+            approvals = [];
+
+        for (const dataSet of dataSets) {
+            wf.push(dataSet.approvalWorkflowUid);
+            pe.push(dataSet.period);
+            approvals.push({ ou: dataSet.orgUnitUid });
+        }
+
+        const response = await this.api.post<any>("/dataApprovals/approvals", {}, { wf, pe, approvals }).getData();
+
+        return response.trim() === "";
     }
 }
 

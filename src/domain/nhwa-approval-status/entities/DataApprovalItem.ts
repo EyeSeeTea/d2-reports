@@ -5,6 +5,7 @@ export interface DataApprovalItem {
     orgUnit: string;
     period: string;
     attribute: string;
+    approvalWorkflowUid: string;
     approvalWorkflow: string;
     completed: boolean;
     validated: boolean;

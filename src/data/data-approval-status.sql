@@ -5,6 +5,7 @@ organisationunit.uid                              AS orgunituid,
 organisationunit.name                             AS orgunit,
 _periodstructure.iso                              AS period,
 categoryoptioncombo.name                          AS attribute,
+entries.workflowuid                               AS approvalworkflowuid,
 entries.workflowname                              AS approvalworkflow,
 entries.lastupdated                               AS lastupdatedvalue,
 completedatasetregistration.completed IS NOT NULL AS completed,
@@ -15,6 +16,7 @@ FROM ((SELECT datavalue.periodid,
               dataset.datasetid,
               MAX(datavalue.lastupdated)                 AS lastupdated,
               dataapprovalworkflow.workflowid,
+              dataapprovalworkflow.uid                  AS workflowuid,
               dataapprovalworkflow.name                  AS workflowname
        FROM datavalue
                 JOIN datasetelement USING (dataelementid)
