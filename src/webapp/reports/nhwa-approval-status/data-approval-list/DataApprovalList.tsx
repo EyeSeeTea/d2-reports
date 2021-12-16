@@ -93,7 +93,8 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         if (selectedIds.length === 0) return;
 
                         const dataApprovalItems = await getDataApprovalItems(selectedIds);
-                        const success = await compositionRoot.dataApproval.complete.execute(dataApprovalItems);
+                        await compositionRoot.dataApproval.complete.execute(dataApprovalItems);
+                        // TODO: what happens when there is an error? how to refresh rows?
                     },
                 },
                 {
@@ -115,7 +116,8 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         if (selectedIds.length === 0) return;
 
                         const dataApprovalItems = await getDataApprovalItems(selectedIds);
-                        const success = await compositionRoot.dataApproval.approve.execute(dataApprovalItems);
+                        await compositionRoot.dataApproval.approve.execute(dataApprovalItems);
+                        // TODO: what happens when there is an error? how to refresh rows?
                     },
                 },
                 {
