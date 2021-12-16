@@ -47,7 +47,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
         [compositionRoot, config, filters]
     );
 
-    const getReloadRef = useLatest(() => tableProps.reload)
+    const reloadRef = React.useRef<() => void>()
 
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
@@ -96,8 +96,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         const dataApprovalItems = await getDataApprovalItems(selectedIds);
                         await compositionRoot.dataApproval.complete.execute(dataApprovalItems);
-                        const reload = getReloadRef.current()
-                        reload();
+                        if (reloadRef.current) reloadRef.current();
 
                         // TODO: what happens when there is an error? how to refresh rows?
                     },
@@ -146,7 +145,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 20,
             },
         }),
-        [getDataApprovalItems, compositionRoot, getReloadRef]
+        [getDataApprovalItems, compositionRoot, reloadRef]
     );
 
     const getRows = useMemo(
@@ -164,6 +163,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
     );
 
     const tableProps = useObjectsTable(baseConfig, getRows);
+    React.useEffect(() => { reloadRef.current = tableProps.reload }, [tableProps.reload])
     const filterOptions = React.useMemo(() => getFilterOptions(config), [config]);
 
     return (
@@ -206,10 +206,3 @@ function getEmptyDataValuesFilter(config: Config): DataSetsFilter {
     };
 }
 
-function useLatest<T>(current: T): React.MutableRefObject<T> {
-    const ref = React.useRef(current)
-    React.useEffect(() => {
-        ref.current = current
-    })
-    return ref;
-}
