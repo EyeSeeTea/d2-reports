@@ -67,7 +67,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
             },
             paginationOptions: {
                 pageSizeOptions: [10, 20, 50],
-                pageSizeInitialValue: 20,
+                pageSizeInitialValue: 10,
             },
         }),
         []
