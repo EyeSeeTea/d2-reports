@@ -20,13 +20,11 @@ export interface DataSetsFilter {
     periods: string[];
     completionStatus?: string;
     approvalStatus?: string;
-    approvalWorkflow: string[];
 }
 
 interface FilterOptions {
     dataSets: NamedRef[];
     periods: string[];
-    approvalWorkflow: NamedRef[];
 }
 
 export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
@@ -36,15 +34,11 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const dataSetItems = useMemoOptionsFromNamedRef(filterOptions.dataSets);
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
-    const approvalWorkflowItems = useMemoOptionsFromNamedRef(filterOptions.approvalWorkflow);
     const completionStatusItems = useMemoOptionsFromNamedRef([
-        // Remove deselection
-        { id: "-", name: "" },
         { id: "true", name: "Completed" },
         { id: "false", name: "Not completed" },
     ]);
     const approvalStatusItems = useMemoOptionsFromNamedRef([
-        { id: "-", name: "" },
         { id: "true", name: "Approved" },
         { id: "false", name: "Ready for approval" },
         // TODO: Waiting for approval at lower levels
@@ -60,13 +54,6 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
             />
 
             <Dropdown
-                items={periodItems}
-                values={filter.periods}
-                onChange={periods => onChange({ ...filter, periods })}
-                label={i18n.t("Periods")}
-            />
-
-            <Dropdown
                 items={dataSetItems}
                 values={filter.dataSetIds}
                 onChange={dataSetIds => onChange({ ...filter, dataSetIds })}
@@ -74,10 +61,10 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
             />
 
             <Dropdown
-                items={approvalWorkflowItems}
-                values={filter.approvalWorkflow}
-                onChange={approvalWorkflow => onChange({ ...filter, approvalWorkflow })}
-                label={i18n.t("Approval workflow")}
+                items={periodItems}
+                values={filter.periods}
+                onChange={periods => onChange({ ...filter, periods })}
+                label={i18n.t("Periods")}
             />
 
             <Dropdown

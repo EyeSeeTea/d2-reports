@@ -12,7 +12,7 @@ const base = {
     dataSets: { namePrefix: "NHWA", nameExcluded: /old$/ },
     sqlViewNames: [SQL_VIEW_DATA_COMMENTS_NAME, SQL_VIEW_DATA_APPROVAL_NAME],
     constantCode: "NHWA_COMMENTS",
-    approvalWorkflows: { namePrefix: "HWF" },
+    approvalWorkflows: { namePrefix: "NHWA" },
 };
 
 export class Dhis2ConfigRepository implements ConfigRepository {

@@ -87,7 +87,7 @@ function getSortingFromTableSorting(sorting: TableSorting<DataCommentsViewModel>
 function getBaseListConfig(): TableConfig<DataCommentsViewModel> {
     const paginationOptions: PaginationOptions = {
         pageSizeOptions: [10, 20, 50],
-        pageSizeInitialValue: 20,
+        pageSizeInitialValue: 10,
     };
 
     const initialSorting: TableSorting<DataCommentsViewModel> = {
