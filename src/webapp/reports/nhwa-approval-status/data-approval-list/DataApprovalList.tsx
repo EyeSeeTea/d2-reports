@@ -17,6 +17,7 @@ import { DataSetsFilter, Filters } from "./Filters";
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
+    const reloadRef = React.useRef<() => void>();
 
     const getDataApprovalItems = React.useCallback(
         async (selectedIds: string[]): Promise<DataApprovalItem[]> => {
@@ -94,7 +95,8 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         const dataApprovalItems = await getDataApprovalItems(selectedIds);
                         await compositionRoot.dataApproval.complete.execute(dataApprovalItems);
-                        // TODO: what happens when there is an error? how to refresh rows?
+
+                        if (reloadRef.current) reloadRef.current();
                     },
                 },
                 {
@@ -117,7 +119,8 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         const dataApprovalItems = await getDataApprovalItems(selectedIds);
                         await compositionRoot.dataApproval.approve.execute(dataApprovalItems);
-                        // TODO: what happens when there is an error? how to refresh rows?
+
+                        if (reloadRef.current) reloadRef.current();
                     },
                 },
                 {
@@ -159,6 +162,9 @@ export const DataApprovalList: React.FC = React.memo(() => {
     );
 
     const tableProps = useObjectsTable(baseConfig, getRows);
+    React.useEffect(() => {
+        reloadRef.current = tableProps.reload;
+    }, [tableProps.reload]);
     const filterOptions = React.useMemo(() => getFilterOptions(config), [config]);
 
     return (
