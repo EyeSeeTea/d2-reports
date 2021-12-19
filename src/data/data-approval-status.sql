@@ -1,35 +1,27 @@
-SELECT
-dataset.uid                                       AS datasetuid,
-dataset.name                                      AS dataset,
-organisationunit.uid                              AS orgunituid,
-organisationunit.name                             AS orgunit,
-_periodstructure.iso                              AS period,
-categoryoptioncombo.name                          AS attribute,
-entries.workflowuid                               AS approvalworkflowuid,
-entries.workflowname                              AS approvalworkflow,
-entries.lastupdated                               AS lastupdatedvalue,
-completedatasetregistration.completed IS NOT NULL AS completed,
-dataapproval.accepted IS NOT NULL                 AS validated
+SELECT dataset.name                                      AS dataset,
+       organisationunit.name                             AS orgunit,
+       _periodstructure.iso                              AS period,
+       categoryoptioncombo.name                          AS attribute,
+       dataapprovalworkflow.name                         AS approvalworkflow,
+       entries.lastupdated                               AS lastupdatedvalue,
+       completedatasetregistration.completed IS NOT NULL AS completed,
+       dataapproval.accepted IS NOT NULL                 AS validated
 FROM ((SELECT datavalue.periodid,
               datavalue.sourceid                         AS organisationunitid,
               datavalue.attributeoptioncomboid,
               dataset.datasetid,
-              MAX(datavalue.lastupdated)                 AS lastupdated,
-              dataapprovalworkflow.workflowid,
-              dataapprovalworkflow.uid                  AS workflowuid,
-              dataapprovalworkflow.name                  AS workflowname
+              dataset.workflowid,
+              MAX(datavalue.lastupdated)                 AS lastupdated
        FROM datavalue
                 JOIN datasetelement USING (dataelementid)
                 JOIN dataset USING (datasetid)
-                CROSS JOIN dataapprovalworkflow
        /** TODO: Filter by DEs, remove totals **/
        WHERE dataset.uid ~ ('^' || replace('${dataSets}', '-', '|') || '$')
-         AND dataapprovalworkflow.uid ~ ('^' || replace('${approvalWorkflows}', '-', '|') || '$')
-       GROUP BY datavalue.periodid, datavalue.sourceid, datavalue.attributeoptioncomboid, dataset.datasetid,
-                dataapprovalworkflow.workflowid) AS entries
+       GROUP BY datavalue.periodid, datavalue.sourceid, datavalue.attributeoptioncomboid, dataset.datasetid, dataset.workflowid) AS entries
          INNER JOIN _periodstructure USING (periodid)
          INNER JOIN organisationunit USING (organisationunitid)
          INNER JOIN _orgunitstructure USING (organisationunitid)
+         INNER JOIN dataapprovalworkflow USING (workflowid)
          INNER JOIN dataapprovallevel ON (dataapprovallevel.orgunitlevel = _orgunitstructure.level)
          INNER JOIN dataset USING (datasetid)
          INNER JOIN categoryoptioncombo ON (categoryoptioncombo.categoryoptioncomboid = entries.attributeoptioncomboid)
@@ -38,7 +30,7 @@ FROM ((SELECT datavalue.periodid,
                                                    (completedatasetregistration.sourceid = entries.organisationunitid) AND
                                                    (completedatasetregistration.attributeoptioncomboid =
                                                     entries.attributeoptioncomboid))
-         LEFT JOIN dataapproval ON ((dataapproval.workflowid = entries.workflowid) AND
+         LEFT JOIN dataapproval ON ((dataapproval.workflowid = dataset.workflowid) AND
                                     (dataapproval.organisationunitid = entries.organisationunitid) AND
                                     (dataapproval.periodid = entries.periodid) AND
                                     (dataapproval.attributeoptioncomboid = entries.attributeoptioncomboid) AND
@@ -50,8 +42,10 @@ WHERE organisationunit.uid ~ ('^' || replace('${orgUnits}', '-', '|') || '$')
   AND (dataapproval.accepted IS NOT NULL)::text ~ ('^' || replace('${approved}', '-', '|') || '$')
 ORDER BY
     ${orderByColumn} ${orderByDirection},
-    dataset ASC,
-    period ASC,
     orgunit ASC,
+    period DESC,
+    dataset ASC,
     attribute ASC,
-    approvalWorkflow ASC;
+    completed ASC,
+    validated ASC,
+    lastupdatedvalue DESC;
