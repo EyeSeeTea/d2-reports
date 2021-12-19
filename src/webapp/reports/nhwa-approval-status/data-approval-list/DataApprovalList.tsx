@@ -14,9 +14,19 @@ import { useAppContext } from "../../../contexts/app-context";
 import { DataApprovalViewModel, getDataApprovalViews } from "../DataApprovalViewModel";
 import { DataSetsFilter, Filters } from "./Filters";
 
+const error_styles = {
+    width: "100%",
+    padding: "8px",
+    marginBottom: "10px",
+    background: "rgba(255,0,0,0.6)",
+    color: "#fff",
+    zIndex: 5,
+};
+
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
+    const [contextualError, setContextualError] = useState("");
     const reloadRef = React.useRef<() => void>();
 
     const getDataApprovalItems = React.useCallback(
@@ -94,7 +104,11 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         if (selectedIds.length === 0) return;
 
                         const dataApprovalItems = await getDataApprovalItems(selectedIds);
-                        await compositionRoot.dataApproval.complete.execute(dataApprovalItems);
+                        const completed = await compositionRoot.dataApproval.complete.execute(dataApprovalItems);
+
+                        if (!completed) {
+                            return setContextualError(i18n.t("Error when trying to complete data set"));
+                        }
 
                         if (reloadRef.current) reloadRef.current();
                     },
@@ -118,7 +132,11 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         if (selectedIds.length === 0) return;
 
                         const dataApprovalItems = await getDataApprovalItems(selectedIds);
-                        await compositionRoot.dataApproval.approve.execute(dataApprovalItems);
+                        const approved = await compositionRoot.dataApproval.approve.execute(dataApprovalItems);
+
+                        if (!approved) {
+                            return setContextualError(i18n.t("Error when trying to complete data set"));
+                        }
 
                         if (reloadRef.current) reloadRef.current();
                     },
@@ -169,6 +187,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
     return (
         <ObjectsList<DataApprovalViewModel> {...tableProps} onChangeSearch={undefined}>
+            {contextualError.trim() !== "" && <div style={error_styles}>{contextualError}</div>}
             <Filters values={filters} options={filterOptions} onChange={setFilters} />
         </ObjectsList>
     );
