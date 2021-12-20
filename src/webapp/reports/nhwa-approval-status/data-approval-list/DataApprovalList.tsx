@@ -1,4 +1,11 @@
-import { ObjectsList, TableConfig, TablePagination, TableSorting, useObjectsTable } from "@eyeseetea/d2-ui-components";
+import {
+    ObjectsList,
+    TableConfig,
+    TableColumn,
+    TablePagination,
+    TableSorting,
+    useObjectsTable,
+} from "@eyeseetea/d2-ui-components";
 import DoneIcon from "@material-ui/icons/Done";
 import DoneAllIcon from "@material-ui/icons/DoneAll";
 import _ from "lodash";
@@ -13,31 +20,37 @@ import { useAppContext } from "../../../contexts/app-context";
 import { DataApprovalViewModel, getDataApprovalViews } from "../DataApprovalViewModel";
 import { DataSetsFilter, Filters } from "./Filters";
 
+const allColumns: TableColumn<DataApprovalViewModel>[] = [
+    { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
+    { name: "period", text: i18n.t("Period"), sortable: true },
+    { name: "dataSet", text: i18n.t("Data set"), sortable: true },
+    { name: "attribute", text: i18n.t("Attribute"), sortable: true, hidden: true },
+    {
+        name: "completed",
+        text: i18n.t("Completion status"),
+        sortable: true,
+        getValue: (row: DataApprovalViewModel) => (row.completed ? "Completed" : "Not completed"),
+    },
+    {
+        name: "validated",
+        text: i18n.t("Approval status"),
+        sortable: true,
+        getValue: (row: DataApprovalViewModel) => (row.validated ? "Approved" : "Ready for approval"),
+    },
+    { name: "lastUpdatedValue", text: i18n.t("Last updated value"), sortable: true },
+];
+
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
 
+    const getTableConfigColumns = () => {
+        return allColumns;
+    };
+
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
-            columns: [
-                { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
-                { name: "period", text: i18n.t("Period"), sortable: true },
-                { name: "dataSet", text: i18n.t("Data set"), sortable: true },
-                { name: "attribute", text: i18n.t("Attribute"), sortable: true, hidden: true },
-                {
-                    name: "completed",
-                    text: i18n.t("Completion status"),
-                    sortable: true,
-                    getValue: row => (row.completed ? "Completed" : "Not completed"),
-                },
-                {
-                    name: "validated",
-                    text: i18n.t("Approval status"),
-                    sortable: true,
-                    getValue: row => (row.validated ? "Approved" : "Ready for approval"),
-                },
-                { name: "lastUpdatedValue", text: i18n.t("Last updated value"), sortable: true },
-            ],
+            columns: getTableConfigColumns(),
             actions: [
                 {
                     name: "complete",
@@ -87,11 +100,21 @@ export const DataApprovalList: React.FC = React.memo(() => {
         [config, compositionRoot, filters]
     );
 
+    const saveoReorderedColumns = (columnNames: Array<keyof DataApprovalViewModel>) => {
+        const selectedColumns = columnNames.map(name => allColumns.find(column => name === column.name));
+
+        console.debug(JSON.stringify(selectedColumns));
+    };
+
     const tableProps = useObjectsTable(baseConfig, getRows);
     const filterOptions = React.useMemo(() => getFilterOptions(config), [config]);
 
     return (
-        <ObjectsList<DataApprovalViewModel> {...tableProps} onChangeSearch={undefined}>
+        <ObjectsList<DataApprovalViewModel>
+            {...tableProps}
+            onChangeSearch={undefined}
+            onReorderColumns={saveoReorderedColumns}
+        >
             <Filters values={filters} options={filterOptions} onChange={setFilters} />
         </ObjectsList>
     );
