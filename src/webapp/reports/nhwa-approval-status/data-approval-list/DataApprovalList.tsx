@@ -100,6 +100,10 @@ export const DataApprovalList: React.FC = React.memo(() => {
         [config, compositionRoot, filters]
     );
 
+    /*
+    MUST always save all the columns, but the ones selected in columnNames
+    are the only visible ones
+    */
     const saveoReorderedColumns = (columnNames: Array<keyof DataApprovalViewModel>) => {
         const selectedColumns = columnNames.map(name => allColumns.find(column => name === column.name));
 
