@@ -19,6 +19,7 @@ import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
 import { DataApprovalViewModel, getDataApprovalViews } from "../DataApprovalViewModel";
 import { DataSetsFilter, Filters } from "./Filters";
+import { Namespaces } from "../../../../data/clients/storage/Namespaces";
 
 const allColumns: TableColumn<DataApprovalViewModel>[] = [
     { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
@@ -43,9 +44,31 @@ const allColumns: TableColumn<DataApprovalViewModel>[] = [
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
+    const [visibleColumns, setVisibleColumns] = useState([] as string[]);
+
+    React.useEffect(() => {
+        (async () => {
+            const savedColumns = await compositionRoot.config.getReportColumns.execute(Namespaces.NHWA_APPROVAL_STATUS);
+            console.log("GET COLUMNS", savedColumns);
+            setVisibleColumns(savedColumns);
+        })();
+    }, []);
 
     const getTableConfigColumns = () => {
-        return allColumns;
+        if (visibleColumns.length === 0) {
+            console.debug("getTableConfigColumns all");
+            return allColumns;
+        }
+
+        const subset = visibleColumns.map(vc => {
+            const column = allColumns.find(c => c.name === vc);
+
+            return { ...column, hidden: false };
+        }) as TableColumn<DataApprovalViewModel>[];
+
+        console.debug("getTableConfigColumns subset", subset);
+
+        return subset;
     };
 
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
@@ -83,7 +106,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        []
+        [visibleColumns]
     );
 
     const getRows = useMemo(
@@ -100,14 +123,10 @@ export const DataApprovalList: React.FC = React.memo(() => {
         [config, compositionRoot, filters]
     );
 
-    /*
-    MUST always save all the columns, but the ones selected in columnNames
-    are the only visible ones
-    */
-    const saveoReorderedColumns = (columnNames: Array<keyof DataApprovalViewModel>) => {
-        const selectedColumns = columnNames.map(name => allColumns.find(column => name === column.name));
+    const saveoReorderedColumns = async (columnKeys: Array<keyof DataApprovalViewModel>) => {
+        console.debug("SAVE COLUMNS", columnKeys);
 
-        console.debug(JSON.stringify(selectedColumns));
+        await compositionRoot.config.saveReportColumns.execute(Namespaces.NHWA_APPROVAL_STATUS, columnKeys);
     };
 
     const tableProps = useObjectsTable(baseConfig, getRows);

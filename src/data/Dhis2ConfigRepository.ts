@@ -1,9 +1,14 @@
 import _ from "lodash";
+//import { useConfig } from "@dhis2/app-runtime";
 import { ConfigRepository } from "../domain/common/repositories/ConfigRepository";
 import { Config } from "../domain/common/entities/Config";
 import { D2Api, Id } from "../types/d2-api";
 import { keyById, NamedRef } from "../domain/common/entities/Base";
 import { User } from "../domain/common/entities/User";
+import { Instance } from "./entities/Instance";
+import { DataStoreStorageClient } from "./clients/storage/DataStoreStorageClient";
+// import { Namespaces } from "./clients/storage/Namespaces";
+import { StorageClient } from "./clients/storage/StorageClient";
 
 const SQL_VIEW_DATA_COMMENTS_NAME = "NHWA Data Comments";
 const SQL_VIEW_DATA_APPROVAL_NAME = "NHWA Data Approval Status";
@@ -16,7 +21,13 @@ const base = {
 };
 
 export class Dhis2ConfigRepository implements ConfigRepository {
-    constructor(private api: D2Api) {}
+    private instance: Instance;
+    private storageClient: StorageClient;
+
+    constructor(private api: D2Api) {
+        this.instance = new Instance({ url: this.api.baseUrl });
+        this.storageClient = new DataStoreStorageClient("global", this.instance);
+    }
 
     async get(): Promise<Config> {
         const { dataSets, constants, sqlViews, dataApprovalWorkflows } = await this.getMetadata();
@@ -106,6 +117,16 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             orgUnits: d2User.dataViewOrganisationUnits,
             ...d2User.userCredentials,
         };
+    }
+
+    async getReportColumns(report: string): Promise<string[]> {
+        const columns = await this.storageClient.getObject<string[]>(report);
+
+        return columns ?? [];
+    }
+
+    async saveReportColumns(report: string, columns: string[]): Promise<void> {
+        return this.storageClient.saveObject<string[]>(report, columns);
     }
 }
 

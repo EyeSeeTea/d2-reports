@@ -4,6 +4,8 @@ import { Dhis2DataValueRepository } from "./data/Dhis2DataValueRepository";
 import { Dhis2OrgUnitsRepository } from "./data/Dhis2OrgUnitsRepository";
 import { WIDPAdminDefaultRepository } from "./data/WIDPAdminDefaultRepository";
 import { GetConfig } from "./domain/common/usecases/GetConfig";
+import { GetReportColumnsUseCase } from "./domain/common/usecases/GetReportColumnsUseCase";
+import { SaveReportColumnsUseCase } from "./domain/common/usecases/SaveReportColumnsUseCase";
 import { GetDataValuesUseCase } from "./domain/nhwa-comments/usecases/GetDataValuesUseCase";
 import { GetOrgUnitsUseCase } from "./domain/common/usecases/GetOrgUnitsUseCase";
 import { GetWIDPAdminDefaultUseCase } from "./domain/admin/usecases/GetWIDPAdminDefaultUseCase";
@@ -38,6 +40,8 @@ export function getCompositionRoot(api: D2Api) {
         },
         config: {
             get: new GetConfig(configRepository),
+            getReportColumns: new GetReportColumnsUseCase(configRepository),
+            saveReportColumns: new SaveReportColumnsUseCase(configRepository),
         },
     };
 }
