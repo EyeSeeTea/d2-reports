@@ -21,59 +21,40 @@ import { DataApprovalViewModel, getDataApprovalViews } from "../DataApprovalView
 import { DataSetsFilter, Filters } from "./Filters";
 import { Namespaces } from "../../../../data/clients/storage/Namespaces";
 
-const allColumns: TableColumn<DataApprovalViewModel>[] = [
-    { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
-    { name: "period", text: i18n.t("Period"), sortable: true },
-    { name: "dataSet", text: i18n.t("Data set"), sortable: true },
-    { name: "attribute", text: i18n.t("Attribute"), sortable: true, hidden: true },
-    {
-        name: "completed",
-        text: i18n.t("Completion status"),
-        sortable: true,
-        getValue: (row: DataApprovalViewModel) => (row.completed ? "Completed" : "Not completed"),
-    },
-    {
-        name: "validated",
-        text: i18n.t("Approval status"),
-        sortable: true,
-        getValue: (row: DataApprovalViewModel) => (row.validated ? "Approved" : "Ready for approval"),
-    },
-    { name: "lastUpdatedValue", text: i18n.t("Last updated value"), sortable: true },
-];
-
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
-    const [visibleColumns, setVisibleColumns] = useState([] as string[]);
+    const [visibleColumns, setVisibleColumns] = useState<string[]>();
 
     React.useEffect(() => {
         (async () => {
             const savedColumns = await compositionRoot.config.getReportColumns.execute(Namespaces.NHWA_APPROVAL_STATUS);
-            console.log("GET COLUMNS", savedColumns);
+            console.debug("GET COLUMNS", savedColumns);
             setVisibleColumns(savedColumns);
         })();
-    }, []);
-
-    const getTableConfigColumns = () => {
-        if (visibleColumns.length === 0) {
-            console.debug("getTableConfigColumns all");
-            return allColumns;
-        }
-
-        const subset = visibleColumns.map(vc => {
-            const column = allColumns.find(c => c.name === vc);
-
-            return { ...column, hidden: false };
-        }) as TableColumn<DataApprovalViewModel>[];
-
-        console.debug("getTableConfigColumns subset", subset);
-
-        return subset;
-    };
+    }, [compositionRoot]);
 
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
-            columns: getTableConfigColumns(),
+            columns: [
+                { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
+                { name: "period", text: i18n.t("Period"), sortable: true },
+                { name: "dataSet", text: i18n.t("Data set"), sortable: true },
+                { name: "attribute", text: i18n.t("Attribute"), sortable: true, hidden: true },
+                {
+                    name: "completed",
+                    text: i18n.t("Completion status"),
+                    sortable: true,
+                    getValue: (row: DataApprovalViewModel) => (row.completed ? "Completed" : "Not completed"),
+                },
+                {
+                    name: "validated",
+                    text: i18n.t("Approval status"),
+                    sortable: true,
+                    getValue: (row: DataApprovalViewModel) => (row.validated ? "Approved" : "Ready for approval"),
+                },
+                { name: "lastUpdatedValue", text: i18n.t("Last updated value"), sortable: true },
+            ],
             actions: [
                 {
                     name: "complete",
@@ -106,7 +87,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [visibleColumns]
+        []
     );
 
     const getRows = useMemo(
@@ -123,20 +104,36 @@ export const DataApprovalList: React.FC = React.memo(() => {
         [config, compositionRoot, filters]
     );
 
-    const saveoReorderedColumns = async (columnKeys: Array<keyof DataApprovalViewModel>) => {
-        console.debug("SAVE COLUMNS", columnKeys);
+    const saveonReorderedColumns = React.useCallback(
+        async (columnKeys: Array<keyof DataApprovalViewModel>) => {
+            if (!visibleColumns) return;
 
-        await compositionRoot.config.saveReportColumns.execute(Namespaces.NHWA_APPROVAL_STATUS, columnKeys);
-    };
+            console.debug("SAVE COLUMNS", columnKeys);
+
+            await compositionRoot.config.saveReportColumns.execute(Namespaces.NHWA_APPROVAL_STATUS, columnKeys);
+        },
+        [compositionRoot, visibleColumns]
+    );
 
     const tableProps = useObjectsTable(baseConfig, getRows);
+    const columnsToShow = React.useMemo(
+        () =>
+            tableProps.columns.map(
+                (column): TableColumn<DataApprovalViewModel> => ({
+                    ...column,
+                    hidden: !visibleColumns ? false : !visibleColumns.includes(column.name),
+                })
+            ),
+        [tableProps.columns, visibleColumns]
+    );
     const filterOptions = React.useMemo(() => getFilterOptions(config), [config]);
 
     return (
         <ObjectsList<DataApprovalViewModel>
             {...tableProps}
+            columns={columnsToShow}
             onChangeSearch={undefined}
-            onReorderColumns={saveoReorderedColumns}
+            onReorderColumns={saveonReorderedColumns}
         >
             <Filters values={filters} options={filterOptions} onChange={setFilters} />
         </ObjectsList>
