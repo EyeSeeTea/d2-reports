@@ -29,7 +29,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
     React.useEffect(() => {
         (async () => {
             const savedColumns = await compositionRoot.config.getReportColumns.execute(Namespaces.NHWA_APPROVAL_STATUS);
-            console.debug("GET COLUMNS", savedColumns);
             setVisibleColumns(savedColumns);
         })();
     }, [compositionRoot]);
@@ -107,8 +106,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const saveonReorderedColumns = React.useCallback(
         async (columnKeys: Array<keyof DataApprovalViewModel>) => {
             if (!visibleColumns) return;
-
-            console.debug("SAVE COLUMNS", columnKeys);
 
             await compositionRoot.config.saveReportColumns.execute(Namespaces.NHWA_APPROVAL_STATUS, columnKeys);
         },
