@@ -116,17 +116,21 @@ export const DataApprovalList: React.FC = React.memo(() => {
     );
 
     const tableProps = useObjectsTable(baseConfig, getRows);
-    const columnsToShow = React.useMemo(
-        () =>
-            tableProps.columns.map(
-                (column): TableColumn<DataApprovalViewModel> => ({
-                    ...column,
-                    hidden:
-                        !visibleColumns || _.isEmpty(visibleColumns) ? false : !visibleColumns.includes(column.name),
-                })
-            ),
-        [tableProps.columns, visibleColumns]
-    );
+
+    const columnsToShow = React.useMemo<TableColumn<DataApprovalViewModel>[]>(() => {
+        if (!visibleColumns || _.isEmpty(visibleColumns)) return tableProps.columns;
+
+        const indexes = _(visibleColumns)
+            .map((columnName, idx) => [columnName, idx] as [string, number])
+            .fromPairs()
+            .value();
+
+        return _(tableProps.columns)
+            .map(column => ({ ...column, hidden: !visibleColumns.includes(column.name) }))
+            .sortBy(column => indexes[column.name] || 0)
+            .value();
+    }, [tableProps.columns, visibleColumns]);
+
     const filterOptions = React.useMemo(() => getFilterOptions(config), [config]);
 
     return (
