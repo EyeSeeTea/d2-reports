@@ -121,7 +121,8 @@ export const DataApprovalList: React.FC = React.memo(() => {
             tableProps.columns.map(
                 (column): TableColumn<DataApprovalViewModel> => ({
                     ...column,
-                    hidden: !visibleColumns ? false : !visibleColumns.includes(column.name),
+                    hidden:
+                        !visibleColumns || _.isEmpty(visibleColumns) ? false : !visibleColumns.includes(column.name),
                 })
             ),
         [tableProps.columns, visibleColumns]
