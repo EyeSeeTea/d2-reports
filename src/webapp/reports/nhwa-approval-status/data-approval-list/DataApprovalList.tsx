@@ -9,7 +9,7 @@ import {
 import DoneIcon from "@material-ui/icons/Done";
 import DoneAllIcon from "@material-ui/icons/DoneAll";
 import _ from "lodash";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { sortByName } from "../../../../domain/common/entities/Base";
 import { Config } from "../../../../domain/common/entities/Config";
 import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
@@ -25,13 +25,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
 
-    React.useEffect(() => {
-        (async () => {
-            const savedColumns = await compositionRoot.dataApproval.getColumns();
-            setVisibleColumns(savedColumns);
-        })();
-    }, [compositionRoot]);
-
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
             columns: [
@@ -43,13 +36,13 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     name: "completed",
                     text: i18n.t("Completion status"),
                     sortable: true,
-                    getValue: (row: DataApprovalViewModel) => (row.completed ? "Completed" : "Not completed"),
+                    getValue: row => (row.completed ? "Completed" : "Not completed"),
                 },
                 {
                     name: "validated",
                     text: i18n.t("Approval status"),
                     sortable: true,
-                    getValue: (row: DataApprovalViewModel) => (row.validated ? "Approved" : "Ready for approval"),
+                    getValue: row => (row.validated ? "Approved" : "Ready for approval"),
                 },
                 { name: "lastUpdatedValue", text: i18n.t("Last updated value"), sortable: true },
             ],
@@ -102,7 +95,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
         [config, compositionRoot, filters]
     );
 
-    const saveonReorderedColumns = React.useCallback(
+    const saveonReorderedColumns = useCallback(
         async (columnKeys: Array<keyof DataApprovalViewModel>) => {
             if (!visibleColumns) return;
 
@@ -113,7 +106,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
     const tableProps = useObjectsTable(baseConfig, getRows);
 
-    const columnsToShow = React.useMemo<TableColumn<DataApprovalViewModel>[]>(() => {
+    const columnsToShow = useMemo<TableColumn<DataApprovalViewModel>[]>(() => {
         if (!visibleColumns || _.isEmpty(visibleColumns)) return tableProps.columns;
 
         const indexes = _(visibleColumns)
@@ -127,7 +120,11 @@ export const DataApprovalList: React.FC = React.memo(() => {
             .value();
     }, [tableProps.columns, visibleColumns]);
 
-    const filterOptions = React.useMemo(() => getFilterOptions(config), [config]);
+    const filterOptions = useMemo(() => getFilterOptions(config), [config]);
+
+    useEffect(() => {
+        compositionRoot.dataApproval.getColumns().then(columns => setVisibleColumns(columns));
+    }, [compositionRoot]);
 
     return (
         <ObjectsList<DataApprovalViewModel>
