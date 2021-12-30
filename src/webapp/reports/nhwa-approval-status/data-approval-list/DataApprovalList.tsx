@@ -95,7 +95,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
         [config, compositionRoot, filters]
     );
 
-    const saveonReorderedColumns = useCallback(
+    const saveReorderedColumns = useCallback(
         async (columnKeys: Array<keyof DataApprovalViewModel>) => {
             if (!visibleColumns) return;
 
@@ -131,7 +131,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
             {...tableProps}
             columns={columnsToShow}
             onChangeSearch={undefined}
-            onReorderColumns={saveonReorderedColumns}
+            onReorderColumns={saveReorderedColumns}
         >
             <Filters values={filters} options={filterOptions} onChange={setFilters} />
         </ObjectsList>
