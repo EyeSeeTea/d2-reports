@@ -17,6 +17,7 @@ import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import { DataApprovalItem } from "../../../../domain/nhwa-approval-status/entities/DataApprovalItem";
 import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
+import { useReload } from "../../../utils/use-reload";
 import { DataApprovalViewModel, getDataApprovalViews } from "../DataApprovalViewModel";
 import { DataSetsFilter, Filters } from "./Filters";
 
@@ -34,7 +35,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
     const [contextualError, setContextualError] = useState("");
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
-    const reloadRef = React.useRef<() => void>();
+    const [reloadKey, reload] = useReload();
 
     const getDataApprovalItems = React.useCallback(
         async (selectedIds: string[]): Promise<DataApprovalItem[]> => {
@@ -105,7 +106,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                             return setContextualError(i18n.t("Error when trying to complete data set"));
                         }
 
-                        if (reloadRef.current) reloadRef.current();
+                        reload();
                     },
                 },
                 {
@@ -123,7 +124,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                             return setContextualError(i18n.t("Error when trying to complete data set"));
                         }
 
-                        if (reloadRef.current) reloadRef.current();
+                        reload();
                     },
                 },
             ],
@@ -136,7 +137,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [getDataApprovalItems, compositionRoot]
+        [getDataApprovalItems, compositionRoot, reload]
     );
 
     const getRows = useMemo(
@@ -148,9 +149,11 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 ...getUseCaseOptions(filters),
             });
 
+            console.debug("Reloading", reloadKey);
+
             return { pager, objects: getDataApprovalViews(config, objects) };
         },
-        [config, compositionRoot, filters]
+        [config, compositionRoot, filters, reloadKey]
     );
 
     const saveReorderedColumns = useCallback(
@@ -163,10 +166,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
     );
 
     const tableProps = useObjectsTable(baseConfig, getRows);
-
-    useEffect(() => {
-        reloadRef.current = tableProps.reload;
-    }, [tableProps.reload]);
 
     const columnsToShow = useMemo<TableColumn<DataApprovalViewModel>[]>(() => {
         if (!visibleColumns || _.isEmpty(visibleColumns)) return tableProps.columns;
