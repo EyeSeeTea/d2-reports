@@ -8,7 +8,7 @@ import { D2Api, PaginatedObjects, Id } from "../types/d2-api";
 import { Dhis2SqlViews } from "./Dhis2SqlViews";
 import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
 import { downloadFile } from "./utils/download-file";
-import { CsvData } from "../data/CsvDataSource";
+import { CsvData } from "./CsvDataSource";
 
 interface Variables {
     orgUnitIds: string;
@@ -46,7 +46,7 @@ const fieldMapping: Record<keyof DataCommentsItem, SqlField> = {
     storedBy: "storedby",
 };
 
-export class Dhis2DataValueRepository implements NHWADataCommentsRepository {
+export class NHWADataCommentsDefaultRepository implements NHWADataCommentsRepository {
     constructor(private api: D2Api) {}
 
     async get(options: NHWADataCommentsRepositoryGetOptions): Promise<PaginatedObjects<DataCommentsItem>> {

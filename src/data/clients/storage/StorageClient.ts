@@ -1,6 +1,6 @@
-//import _ from "lodash";
-//import { Ref } from "../../../domain/entities/Ref";
-//import { Namespace, NamespaceProperties } from "./Namespaces";
+import _ from "lodash";
+import { Ref } from "../../../domain/entities/Ref";
+import { Namespace, NamespaceProperties } from "./Namespaces";
 
 export abstract class StorageClient {
     // Object operations
@@ -9,7 +9,6 @@ export abstract class StorageClient {
     public abstract saveObject<T extends object>(key: string, value: T): Promise<void>;
     public abstract removeObject(key: string): Promise<void>;
 
-    /*
     public async listObjectsInCollection<T extends Ref>(key: string): Promise<T[]> {
         return (await this.getObject<T[]>(key)) ?? [];
     }
@@ -88,5 +87,4 @@ export abstract class StorageClient {
             }
         }
     }
-    */
 }

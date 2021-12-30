@@ -8,6 +8,8 @@ export interface NHWADataApprovalRepository {
     save(filename: string, dataSets: DataApprovalItem[]): Promise<void>;
     complete(dataSets: DataApprovalItem[]): Promise<boolean>;
     approve(dataSets: DataApprovalItem[]): Promise<boolean>;
+    getColumns(): Promise<string[]>;
+    saveColumns(columns: string[]): Promise<void>;
 }
 
 export interface NHWADataApprovalRepositoryGetOptions {

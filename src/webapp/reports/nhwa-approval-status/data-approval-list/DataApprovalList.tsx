@@ -1,7 +1,7 @@
 import {
     ObjectsList,
-    TableConfig,
     TableColumn,
+    TableConfig,
     TablePagination,
     TableSorting,
     useObjectsTable,
@@ -9,7 +9,7 @@ import {
 import DoneIcon from "@material-ui/icons/Done";
 import DoneAllIcon from "@material-ui/icons/DoneAll";
 import _ from "lodash";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { sortByName } from "../../../../domain/common/entities/Base";
 import { Config } from "../../../../domain/common/entities/Config";
 import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
@@ -19,7 +19,6 @@ import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
 import { DataApprovalViewModel, getDataApprovalViews } from "../DataApprovalViewModel";
 import { DataSetsFilter, Filters } from "./Filters";
-import { Namespaces } from "../../../../data/clients/storage/Namespaces";
 
 const error_styles = {
     width: "100%",
@@ -52,7 +51,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
             }
 
             return (
-                await compositionRoot.dataApproval.get.execute({
+                await compositionRoot.dataApproval.get({
                     config,
                     paging: { page: 1, pageSize: selectedIds.length },
                     sorting: { field: "dataSetUid", direction: "asc" },
@@ -65,13 +64,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
         },
         [compositionRoot, config, filters]
     );
-
-    React.useEffect(() => {
-        (async () => {
-            const savedColumns = await compositionRoot.config.getReportColumns.execute(Namespaces.NHWA_APPROVAL_STATUS);
-            setVisibleColumns(savedColumns);
-        })();
-    }, [compositionRoot]);
 
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
@@ -87,13 +79,13 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     name: "completed",
                     text: i18n.t("Completion status"),
                     sortable: true,
-                    getValue: (row: DataApprovalViewModel) => (row.completed ? "Completed" : "Not completed"),
+                    getValue: row => (row.completed ? "Completed" : "Not completed"),
                 },
                 {
                     name: "validated",
                     text: i18n.t("Approval status"),
                     sortable: true,
-                    getValue: (row: DataApprovalViewModel) => (row.validated ? "Approved" : "Ready for approval"),
+                    getValue: row => (row.validated ? "Approved" : "Ready for approval"),
                 },
                 { name: "lastUpdatedValue", text: i18n.t("Last updated value"), sortable: true },
             ],
@@ -107,7 +99,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         if (selectedIds.length === 0) return;
 
                         const dataApprovalItems = await getDataApprovalItems(selectedIds);
-                        const completed = await compositionRoot.dataApproval.complete.execute(dataApprovalItems);
+                        const completed = await compositionRoot.dataApproval.complete(dataApprovalItems);
 
                         if (!completed) {
                             return setContextualError(i18n.t("Error when trying to complete data set"));
@@ -125,7 +117,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         if (selectedIds.length === 0) return;
 
                         const dataApprovalItems = await getDataApprovalItems(selectedIds);
-                        const approved = await compositionRoot.dataApproval.approve.execute(dataApprovalItems);
+                        const approved = await compositionRoot.dataApproval.approve(dataApprovalItems);
 
                         if (!approved) {
                             return setContextualError(i18n.t("Error when trying to complete data set"));
@@ -160,7 +152,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
     const getRows = useMemo(
         () => async (_search: string, paging: TablePagination, sorting: TableSorting<DataApprovalViewModel>) => {
-            const { pager, objects } = await compositionRoot.dataApproval.get.execute({
+            const { pager, objects } = await compositionRoot.dataApproval.get({
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
@@ -172,22 +164,22 @@ export const DataApprovalList: React.FC = React.memo(() => {
         [config, compositionRoot, filters]
     );
 
-    const saveonReorderedColumns = React.useCallback(
+    const saveReorderedColumns = useCallback(
         async (columnKeys: Array<keyof DataApprovalViewModel>) => {
             if (!visibleColumns) return;
 
-            await compositionRoot.config.saveReportColumns.execute(Namespaces.NHWA_APPROVAL_STATUS, columnKeys);
+            await compositionRoot.dataApproval.saveColumns(columnKeys);
         },
         [compositionRoot, visibleColumns]
     );
 
     const tableProps = useObjectsTable(baseConfig, getRows);
 
-    React.useEffect(() => {
+    useEffect(() => {
         reloadRef.current = tableProps.reload;
     }, [tableProps.reload]);
-    
-    const columnsToShow = React.useMemo<TableColumn<DataApprovalViewModel>[]>(() => {
+
+    const columnsToShow = useMemo<TableColumn<DataApprovalViewModel>[]>(() => {
         if (!visibleColumns || _.isEmpty(visibleColumns)) return tableProps.columns;
 
         const indexes = _(visibleColumns)
@@ -201,14 +193,18 @@ export const DataApprovalList: React.FC = React.memo(() => {
             .value();
     }, [tableProps.columns, visibleColumns]);
 
-    const filterOptions = React.useMemo(() => getFilterOptions(config), [config]);
+    const filterOptions = useMemo(() => getFilterOptions(config), [config]);
+
+    useEffect(() => {
+        compositionRoot.dataApproval.getColumns().then(columns => setVisibleColumns(columns));
+    }, [compositionRoot]);
 
     return (
         <ObjectsList<DataApprovalViewModel>
             {...tableProps}
             columns={columnsToShow}
             onChangeSearch={undefined}
-            onReorderColumns={saveonReorderedColumns}
+            onReorderColumns={saveReorderedColumns}
         >
             {contextualError.trim() !== "" && <div style={error_styles}>{contextualError}</div>}
             <Filters values={filters} options={filterOptions} onChange={setFilters} />

@@ -20,8 +20,8 @@ export const OrgUnitsFilterButton: React.FC<OrgUnitsFilterButtonProps> = React.m
 
     useEffect(() => {
         setSelectedOrgUnits(loadingMessage);
-        compositionRoot.orgUnits.get
-            .execute({ paths: props.selected })
+        compositionRoot.orgUnits
+            .get({ paths: props.selected })
             .then(orgUnits => setSelectedOrgUnits(orgUnits.map(ou => ou.name).join(", ")))
             .catch(() => setSelectedOrgUnits(props.selected.join(", ")));
     }, [compositionRoot, props.selected, loadingMessage]);

@@ -25,7 +25,7 @@ export const MetadataPublicObjectsList: React.FC = React.memo(() => {
         () => async (paging: TablePagination, sorting: TableSorting<AdminReportViewModel>) => {
             setSorting(sorting);
             const objects = getAdminReportViews(
-                await compositionRoot.admin.get.execute({
+                await compositionRoot.admin.get({
                     sorting: getSortingFromTableSorting(sorting),
                     publicObjects: true,
                     removeTypes: [],
@@ -52,9 +52,9 @@ export const MetadataPublicObjectsList: React.FC = React.memo(() => {
         onClick: async () => {
             if (!sorting) return;
 
-            compositionRoot.admin.save.execute(
+            compositionRoot.admin.save(
                 "metadata-objects.csv",
-                await compositionRoot.admin.get.execute({
+                await compositionRoot.admin.get({
                     sorting: getSortingFromTableSorting(sorting),
                     publicObjects: true,
                     removeTypes: [],

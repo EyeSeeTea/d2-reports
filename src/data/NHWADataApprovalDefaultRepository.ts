@@ -4,11 +4,15 @@ import {
     NHWADataApprovalRepository,
     NHWADataApprovalRepositoryGetOptions,
 } from "../domain/nhwa-approval-status/repositories/NHWADataApprovalRepository";
-import { D2Api, PaginatedObjects, Id } from "../types/d2-api";
-import { Dhis2SqlViews } from "./Dhis2SqlViews";
+import { D2Api, Id, PaginatedObjects } from "../types/d2-api";
+import { DataStoreStorageClient } from "./clients/storage/DataStoreStorageClient";
+import { Namespaces } from "./clients/storage/Namespaces";
+import { StorageClient } from "./clients/storage/StorageClient";
+import { CsvData } from "./CsvDataSource";
 import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
+import { Dhis2SqlViews } from "./Dhis2SqlViews";
+import { Instance } from "./entities/Instance";
 import { downloadFile } from "./utils/download-file";
-import { CsvData } from "../data/CsvDataSource";
 
 interface Variables {
     dataSets: string;
@@ -47,8 +51,13 @@ const fieldMapping: Record<keyof DataApprovalItem, SqlField> = {
     lastUpdatedValue: "lastupdatedvalue",
 };
 
-export class Dhis2DataSetRepository implements NHWADataApprovalRepository {
-    constructor(private api: D2Api) {}
+export class NHWADataApprovalDefaultRepository implements NHWADataApprovalRepository {
+    private storageClient: StorageClient;
+
+    constructor(private api: D2Api) {
+        const instance = new Instance({ url: this.api.baseUrl });
+        this.storageClient = new DataStoreStorageClient("user", instance);
+    }
 
     async get(options: NHWADataApprovalRepositoryGetOptions): Promise<PaginatedObjects<DataApprovalItem>> {
         const { config, dataSetIds, orgUnitIds, periods } = options; // ?
@@ -142,6 +151,16 @@ export class Dhis2DataSetRepository implements NHWADataApprovalRepository {
         const response = await this.api.post<any>("/dataApprovals/approvals", {}, { wf, pe, approvals }).getData();
 
         return response.trim() === "";
+    }
+
+    async getColumns(): Promise<string[]> {
+        const columns = await this.storageClient.getObject<string[]>(Namespaces.NHWA_APPROVAL_STATUS_USER_COLUMNS);
+
+        return columns ?? [];
+    }
+
+    async saveColumns(columns: string[]): Promise<void> {
+        return this.storageClient.saveObject<string[]>(Namespaces.NHWA_APPROVAL_STATUS_USER_COLUMNS, columns);
     }
 }
 
