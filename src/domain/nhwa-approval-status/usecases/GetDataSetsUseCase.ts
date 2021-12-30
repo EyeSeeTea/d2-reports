@@ -1,3 +1,4 @@
+import { UseCase } from "../../../compositionRoot";
 import { PaginatedObjects } from "../../common/entities/PaginatedObjects";
 import { DataApprovalItem } from "../../nhwa-approval-status/entities/DataApprovalItem";
 import {
@@ -7,7 +8,7 @@ import {
 
 type GetDataSetsUseCaseOptions = NHWADataApprovalRepositoryGetOptions;
 
-export class GetDataSetsUseCase {
+export class GetDataSetsUseCase implements UseCase {
     constructor(private dataSetRepository: NHWADataApprovalRepository) {}
 
     execute(options: GetDataSetsUseCaseOptions): Promise<PaginatedObjects<DataApprovalItem>> {

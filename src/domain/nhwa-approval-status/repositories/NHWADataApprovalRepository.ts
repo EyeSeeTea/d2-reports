@@ -6,6 +6,8 @@ import { PaginatedObjects, Paging, Sorting } from "../../common/entities/Paginat
 export interface NHWADataApprovalRepository {
     get(options: NHWADataApprovalRepositoryGetOptions): Promise<PaginatedObjects<DataApprovalItem>>;
     save(filename: string, dataSets: DataApprovalItem[]): Promise<void>;
+    getColumns(): Promise<string[]>;
+    saveColumns(columns: string[]): Promise<void>;
 }
 
 export interface NHWADataApprovalRepositoryGetOptions {

@@ -1,8 +1,15 @@
-import { ObjectsList, TableConfig, TablePagination, TableSorting, useObjectsTable } from "@eyeseetea/d2-ui-components";
+import {
+    ObjectsList,
+    TableColumn,
+    TableConfig,
+    TablePagination,
+    TableSorting,
+    useObjectsTable,
+} from "@eyeseetea/d2-ui-components";
 import DoneIcon from "@material-ui/icons/Done";
 import DoneAllIcon from "@material-ui/icons/DoneAll";
 import _ from "lodash";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { sortByName } from "../../../../domain/common/entities/Base";
 import { Config } from "../../../../domain/common/entities/Config";
 import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
@@ -16,6 +23,7 @@ import { DataSetsFilter, Filters } from "./Filters";
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
+    const [visibleColumns, setVisibleColumns] = useState<string[]>();
 
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
@@ -75,7 +83,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
     const getRows = useMemo(
         () => async (_search: string, paging: TablePagination, sorting: TableSorting<DataApprovalViewModel>) => {
-            const { pager, objects } = await compositionRoot.dataApproval.get.execute({
+            const { pager, objects } = await compositionRoot.dataApproval.get({
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
@@ -87,11 +95,44 @@ export const DataApprovalList: React.FC = React.memo(() => {
         [config, compositionRoot, filters]
     );
 
+    const saveReorderedColumns = useCallback(
+        async (columnKeys: Array<keyof DataApprovalViewModel>) => {
+            if (!visibleColumns) return;
+
+            await compositionRoot.dataApproval.saveColumns(columnKeys);
+        },
+        [compositionRoot, visibleColumns]
+    );
+
     const tableProps = useObjectsTable(baseConfig, getRows);
-    const filterOptions = React.useMemo(() => getFilterOptions(config), [config]);
+
+    const columnsToShow = useMemo<TableColumn<DataApprovalViewModel>[]>(() => {
+        if (!visibleColumns || _.isEmpty(visibleColumns)) return tableProps.columns;
+
+        const indexes = _(visibleColumns)
+            .map((columnName, idx) => [columnName, idx] as [string, number])
+            .fromPairs()
+            .value();
+
+        return _(tableProps.columns)
+            .map(column => ({ ...column, hidden: !visibleColumns.includes(column.name) }))
+            .sortBy(column => indexes[column.name] || 0)
+            .value();
+    }, [tableProps.columns, visibleColumns]);
+
+    const filterOptions = useMemo(() => getFilterOptions(config), [config]);
+
+    useEffect(() => {
+        compositionRoot.dataApproval.getColumns().then(columns => setVisibleColumns(columns));
+    }, [compositionRoot]);
 
     return (
-        <ObjectsList<DataApprovalViewModel> {...tableProps} onChangeSearch={undefined}>
+        <ObjectsList<DataApprovalViewModel>
+            {...tableProps}
+            columns={columnsToShow}
+            onChangeSearch={undefined}
+            onReorderColumns={saveReorderedColumns}
+        >
             <Filters values={filters} options={filterOptions} onChange={setFilters} />
         </ObjectsList>
     );

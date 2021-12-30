@@ -35,7 +35,7 @@ const App = ({ api, d2 }: { api: D2Api; d2: D2 }) => {
     React.useEffect(() => {
         async function setup() {
             const compositionRoot = getCompositionRoot(api);
-            const config = await compositionRoot.config.get.execute();
+            const config = await compositionRoot.config.get();
             window.app = { config };
 
             setAppContext({ api, config, compositionRoot });
