@@ -2,9 +2,9 @@ import { DataApprovalItem } from "../entities/DataApprovalItem";
 import { NHWADataApprovalRepository } from "../repositories/NHWADataApprovalRepository";
 
 export class CompleteDataSetsUseCase {
-    constructor(private dataSetRepository: NHWADataApprovalRepository) {}
+    constructor(private approvalRepository: NHWADataApprovalRepository) {}
 
     async execute(dataSets: DataApprovalItem[]): Promise<boolean> {
-        return this.dataSetRepository.complete(dataSets);
+        return this.approvalRepository.complete(dataSets);
     }
 }
