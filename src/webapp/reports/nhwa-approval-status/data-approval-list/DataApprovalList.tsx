@@ -1,7 +1,7 @@
 import {
     ObjectsList,
-    TableConfig,
     TableColumn,
+    TableConfig,
     TablePagination,
     TableSorting,
     useObjectsTable,
@@ -19,7 +19,6 @@ import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
 import { DataApprovalViewModel, getDataApprovalViews } from "../DataApprovalViewModel";
 import { DataSetsFilter, Filters } from "./Filters";
-import { Namespaces } from "../../../../data/clients/storage/Namespaces";
 
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
@@ -28,7 +27,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
     React.useEffect(() => {
         (async () => {
-            const savedColumns = await compositionRoot.config.getReportColumns.execute(Namespaces.NHWA_APPROVAL_STATUS);
+            const savedColumns = await compositionRoot.dataApproval.getColumns();
             setVisibleColumns(savedColumns);
         })();
     }, [compositionRoot]);
@@ -91,7 +90,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
     const getRows = useMemo(
         () => async (_search: string, paging: TablePagination, sorting: TableSorting<DataApprovalViewModel>) => {
-            const { pager, objects } = await compositionRoot.dataApproval.get.execute({
+            const { pager, objects } = await compositionRoot.dataApproval.get({
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
@@ -107,7 +106,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
         async (columnKeys: Array<keyof DataApprovalViewModel>) => {
             if (!visibleColumns) return;
 
-            await compositionRoot.config.saveReportColumns.execute(Namespaces.NHWA_APPROVAL_STATUS, columnKeys);
+            await compositionRoot.dataApproval.saveColumns(columnKeys);
         },
         [compositionRoot, visibleColumns]
     );
