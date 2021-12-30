@@ -1,4 +1,11 @@
-import { ObjectsList, TableConfig, TablePagination, TableSorting, useObjectsTable } from "@eyeseetea/d2-ui-components";
+import {
+    ObjectsList,
+    TableConfig,
+    TableColumn,
+    TablePagination,
+    TableSorting,
+    useObjectsTable,
+} from "@eyeseetea/d2-ui-components";
 import DoneIcon from "@material-ui/icons/Done";
 import DoneAllIcon from "@material-ui/icons/DoneAll";
 import _ from "lodash";
@@ -12,6 +19,7 @@ import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
 import { DataApprovalViewModel, getDataApprovalViews } from "../DataApprovalViewModel";
 import { DataSetsFilter, Filters } from "./Filters";
+import { Namespaces } from "../../../../data/clients/storage/Namespaces";
 
 const error_styles = {
     width: "100%",
@@ -26,6 +34,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
     const [contextualError, setContextualError] = useState("");
+    const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const reloadRef = React.useRef<() => void>();
 
     const getDataApprovalItems = React.useCallback(
@@ -57,6 +66,13 @@ export const DataApprovalList: React.FC = React.memo(() => {
         [compositionRoot, config, filters]
     );
 
+    React.useEffect(() => {
+        (async () => {
+            const savedColumns = await compositionRoot.config.getReportColumns.execute(Namespaces.NHWA_APPROVAL_STATUS);
+            setVisibleColumns(savedColumns);
+        })();
+    }, [compositionRoot]);
+
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
             columns: [
@@ -71,13 +87,13 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     name: "completed",
                     text: i18n.t("Completion status"),
                     sortable: true,
-                    getValue: row => (row.completed ? "Completed" : "Not completed"),
+                    getValue: (row: DataApprovalViewModel) => (row.completed ? "Completed" : "Not completed"),
                 },
                 {
                     name: "validated",
                     text: i18n.t("Approval status"),
                     sortable: true,
-                    getValue: row => (row.validated ? "Approved" : "Ready for approval"),
+                    getValue: (row: DataApprovalViewModel) => (row.validated ? "Approved" : "Ready for approval"),
                 },
                 { name: "lastUpdatedValue", text: i18n.t("Last updated value"), sortable: true },
             ],
@@ -156,14 +172,44 @@ export const DataApprovalList: React.FC = React.memo(() => {
         [config, compositionRoot, filters]
     );
 
+    const saveonReorderedColumns = React.useCallback(
+        async (columnKeys: Array<keyof DataApprovalViewModel>) => {
+            if (!visibleColumns) return;
+
+            await compositionRoot.config.saveReportColumns.execute(Namespaces.NHWA_APPROVAL_STATUS, columnKeys);
+        },
+        [compositionRoot, visibleColumns]
+    );
+
     const tableProps = useObjectsTable(baseConfig, getRows);
+
     React.useEffect(() => {
         reloadRef.current = tableProps.reload;
     }, [tableProps.reload]);
+    
+    const columnsToShow = React.useMemo<TableColumn<DataApprovalViewModel>[]>(() => {
+        if (!visibleColumns || _.isEmpty(visibleColumns)) return tableProps.columns;
+
+        const indexes = _(visibleColumns)
+            .map((columnName, idx) => [columnName, idx] as [string, number])
+            .fromPairs()
+            .value();
+
+        return _(tableProps.columns)
+            .map(column => ({ ...column, hidden: !visibleColumns.includes(column.name) }))
+            .sortBy(column => indexes[column.name] || 0)
+            .value();
+    }, [tableProps.columns, visibleColumns]);
+
     const filterOptions = React.useMemo(() => getFilterOptions(config), [config]);
 
     return (
-        <ObjectsList<DataApprovalViewModel> {...tableProps} onChangeSearch={undefined}>
+        <ObjectsList<DataApprovalViewModel>
+            {...tableProps}
+            columns={columnsToShow}
+            onChangeSearch={undefined}
+            onReorderColumns={saveonReorderedColumns}
+        >
             {contextualError.trim() !== "" && <div style={error_styles}>{contextualError}</div>}
             <Filters values={filters} options={filterOptions} onChange={setFilters} />
         </ObjectsList>
