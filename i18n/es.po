@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2021-12-30T11:10:12.423Z\n"
+"POT-Creation-Date: 2021-12-30T11:15:01.707Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -77,22 +77,13 @@ msgstr ""
 msgid "NHWA Data Approval Status Report"
 msgstr ""
 
-msgid "datasetUid"
-msgstr ""
-
 msgid "Data set"
-msgstr ""
-
-msgid "orgUnitUid"
 msgstr ""
 
 msgid "Period"
 msgstr ""
 
 msgid "Attribute"
-msgstr ""
-
-msgid "Workflow"
 msgstr ""
 
 msgid "Completion status"

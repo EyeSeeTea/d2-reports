@@ -5,6 +5,7 @@ import {
     TablePagination,
     TableSorting,
     useObjectsTable,
+    useSnackbar,
 } from "@eyeseetea/d2-ui-components";
 import DoneIcon from "@material-ui/icons/Done";
 import DoneAllIcon from "@material-ui/icons/DoneAll";
@@ -21,23 +22,15 @@ import { useReload } from "../../../utils/use-reload";
 import { DataApprovalViewModel, getDataApprovalViews } from "../DataApprovalViewModel";
 import { DataSetsFilter, Filters } from "./Filters";
 
-const error_styles = {
-    width: "100%",
-    padding: "8px",
-    marginBottom: "10px",
-    background: "rgba(255,0,0,0.6)",
-    color: "#fff",
-    zIndex: 5,
-};
-
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
+    const snackbar = useSnackbar();
+
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
-    const [contextualError, setContextualError] = useState("");
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [reloadKey, reload] = useReload();
 
-    const getDataApprovalItems = React.useCallback(
+    const getDataApprovalItems = useCallback(
         async (selectedIds: string[]): Promise<DataApprovalItem[]> => {
             const dataSetIds = [],
                 periods = [],
@@ -69,13 +62,11 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
             columns: [
-                { name: "dataSetUid", text: i18n.t("datasetUid"), sortable: false, hidden: true },
                 { name: "dataSet", text: i18n.t("Data set"), sortable: true },
-                { name: "orgUnitUid", text: i18n.t("orgUnitUid"), sortable: false, hidden: true },
                 { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
                 { name: "period", text: i18n.t("Period"), sortable: true },
+                { name: "dataSet", text: i18n.t("Data set"), sortable: true },
                 { name: "attribute", text: i18n.t("Attribute"), sortable: true, hidden: true },
-                { name: "approvalWorkflow", text: i18n.t("Workflow"), sortable: true, hidden: true },
                 {
                     name: "completed",
                     text: i18n.t("Completion status"),
@@ -103,7 +94,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         const completed = await compositionRoot.dataApproval.complete(dataApprovalItems);
 
                         if (!completed) {
-                            return setContextualError(i18n.t("Error when trying to complete data set"));
+                            return snackbar.error(i18n.t("Error when trying to complete data set"));
                         }
 
                         reload();
@@ -121,7 +112,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         const approved = await compositionRoot.dataApproval.approve(dataApprovalItems);
 
                         if (!approved) {
-                            return setContextualError(i18n.t("Error when trying to complete data set"));
+                            return snackbar.error(i18n.t("Error when trying to complete data set"));
                         }
 
                         reload();
@@ -137,7 +128,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [getDataApprovalItems, compositionRoot, reload]
+        [getDataApprovalItems, compositionRoot, reload, snackbar]
     );
 
     const getRows = useMemo(
@@ -194,7 +185,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
             onChangeSearch={undefined}
             onReorderColumns={saveReorderedColumns}
         >
-            {contextualError.trim() !== "" && <div style={error_styles}>{contextualError}</div>}
             <Filters values={filters} options={filterOptions} onChange={setFilters} />
         </ObjectsList>
     );
