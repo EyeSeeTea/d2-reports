@@ -12,6 +12,20 @@ export interface DataApprovalItem {
     lastUpdatedValue: string;
 }
 
+export interface DataApprovalItemIdentifier {
+    dataSet: string;
+    orgUnit: string;
+    period: string;
+    workflow: string;
+}
+
 export function getDataApprovalItemId(dataSet: DataApprovalItem): string {
-    return [dataSet.dataSetUid, dataSet.period, dataSet.orgUnitUid].join("-");
+    return [dataSet.dataSetUid, dataSet.approvalWorkflowUid, dataSet.period, dataSet.orgUnitUid].join("-");
+}
+
+export function parseDataApprovalItemId(string: string): DataApprovalItemIdentifier | undefined {
+    const [dataSet, workflow, period, orgUnit] = string.split("-");
+    if (!dataSet || !workflow || !period || !orgUnit) return undefined;
+
+    return { dataSet, workflow, period, orgUnit };
 }

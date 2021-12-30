@@ -1,13 +1,13 @@
-import { DataApprovalItem } from "../entities/DataApprovalItem";
 import { Id } from "../../common/entities/Base";
 import { Config } from "../../common/entities/Config";
 import { PaginatedObjects, Paging, Sorting } from "../../common/entities/PaginatedObjects";
+import { DataApprovalItem, DataApprovalItemIdentifier } from "../entities/DataApprovalItem";
 
 export interface NHWADataApprovalRepository {
     get(options: NHWADataApprovalRepositoryGetOptions): Promise<PaginatedObjects<DataApprovalItem>>;
     save(filename: string, dataSets: DataApprovalItem[]): Promise<void>;
-    complete(dataSets: DataApprovalItem[]): Promise<boolean>;
-    approve(dataSets: DataApprovalItem[]): Promise<boolean>;
+    complete(dataSets: DataApprovalItemIdentifier[]): Promise<boolean>;
+    approve(dataSets: DataApprovalItemIdentifier[]): Promise<boolean>;
     getColumns(): Promise<string[]>;
     saveColumns(columns: string[]): Promise<void>;
 }

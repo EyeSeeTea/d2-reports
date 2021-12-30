@@ -1,10 +1,11 @@
 import _ from "lodash";
-import { DataApprovalItem } from "../domain/nhwa-approval-status/entities/DataApprovalItem";
+import { DataApprovalItem, DataApprovalItemIdentifier } from "../domain/nhwa-approval-status/entities/DataApprovalItem";
 import {
     NHWADataApprovalRepository,
     NHWADataApprovalRepositoryGetOptions,
 } from "../domain/nhwa-approval-status/repositories/NHWADataApprovalRepository";
 import { D2Api, Id, PaginatedObjects } from "../types/d2-api";
+import { promiseMap } from "../utils/promises";
 import { DataStoreStorageClient } from "./clients/storage/DataStoreStorageClient";
 import { Namespaces } from "./clients/storage/Namespaces";
 import { StorageClient } from "./clients/storage/StorageClient";
@@ -122,11 +123,11 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
         await downloadFile(csvContents, filename, "text/csv");
     }
 
-    async complete(dataSets: DataApprovalItem[]): Promise<boolean> {
+    async complete(dataSets: DataApprovalItemIdentifier[]): Promise<boolean> {
         const completeDataSetRegistrations = dataSets.map(ds => ({
-            dataSet: ds.dataSetUid,
+            dataSet: ds.dataSet,
             period: ds.period,
-            organisationUnit: ds.orgUnitUid,
+            organisationUnit: ds.orgUnit,
             completed: true,
         }));
 
@@ -137,20 +138,14 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
         return response.status === "SUCCESS";
     }
 
-    async approve(dataSets: DataApprovalItem[]): Promise<boolean> {
-        const wf = [],
-            pe = [],
-            approvals = [];
+    async approve(dataSets: DataApprovalItemIdentifier[]): Promise<boolean> {
+        const response = await promiseMap(dataSets, async approval =>
+            this.api
+                .post<any>("/dataApprovals", { wf: approval.workflow, pe: approval.period, ou: approval.orgUnit }, {})
+                .getData()
+        );
 
-        for (const dataSet of dataSets) {
-            wf.push(dataSet.approvalWorkflowUid);
-            pe.push(dataSet.period);
-            approvals.push({ ou: dataSet.orgUnitUid });
-        }
-
-        const response = await this.api.post<any>("/dataApprovals/approvals", {}, { wf, pe, approvals }).getData();
-
-        return response.trim() === "";
+        return _.every(response, item => item === "");
     }
 
     async getColumns(): Promise<string[]> {

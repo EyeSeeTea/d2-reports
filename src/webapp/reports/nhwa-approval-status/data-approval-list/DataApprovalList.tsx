@@ -15,7 +15,10 @@ import { sortByName } from "../../../../domain/common/entities/Base";
 import { Config } from "../../../../domain/common/entities/Config";
 import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
-import { DataApprovalItem } from "../../../../domain/nhwa-approval-status/entities/DataApprovalItem";
+import {
+    DataApprovalItem,
+    parseDataApprovalItemId,
+} from "../../../../domain/nhwa-approval-status/entities/DataApprovalItem";
 import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
 import { useReload } from "../../../utils/use-reload";
@@ -29,35 +32,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [reloadKey, reload] = useReload();
-
-    const getDataApprovalItems = useCallback(
-        async (selectedIds: string[]): Promise<DataApprovalItem[]> => {
-            const dataSetIds = [],
-                periods = [],
-                orgUnitIds = [];
-
-            for (const selectedId of selectedIds) {
-                const [dataSetUid, period, orgUnitUid] = selectedId.split("-");
-
-                dataSetIds.push(dataSetUid ?? "");
-                periods.push(period ?? "");
-                orgUnitIds.push(orgUnitUid ?? "");
-            }
-
-            return (
-                await compositionRoot.dataApproval.get({
-                    config,
-                    paging: { page: 1, pageSize: selectedIds.length },
-                    sorting: { field: "dataSetUid", direction: "asc" },
-                    ...getUseCaseOptions(filters),
-                    dataSetIds,
-                    periods,
-                    orgUnitIds,
-                })
-            ).objects;
-        },
-        [compositionRoot, config, filters]
-    );
 
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
@@ -88,14 +62,11 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     icon: <DoneIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
-                        if (selectedIds.length === 0) return;
+                        const dataApprovalItems = _.compact(selectedIds.map(item => parseDataApprovalItemId(item)));
+                        if (dataApprovalItems.length === 0) return;
 
-                        const dataApprovalItems = await getDataApprovalItems(selectedIds);
                         const completed = await compositionRoot.dataApproval.complete(dataApprovalItems);
-
-                        if (!completed) {
-                            return snackbar.error(i18n.t("Error when trying to complete data set"));
-                        }
+                        if (!completed) snackbar.error(i18n.t("Error when trying to complete data set"));
 
                         reload();
                     },
@@ -106,14 +77,11 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     icon: <DoneAllIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
-                        if (selectedIds.length === 0) return;
+                        const dataApprovalItems = _.compact(selectedIds.map(item => parseDataApprovalItemId(item)));
+                        if (dataApprovalItems.length === 0) return;
 
-                        const dataApprovalItems = await getDataApprovalItems(selectedIds);
                         const approved = await compositionRoot.dataApproval.approve(dataApprovalItems);
-
-                        if (!approved) {
-                            return snackbar.error(i18n.t("Error when trying to complete data set"));
-                        }
+                        if (!approved) snackbar.error(i18n.t("Error when trying to approve data set"));
 
                         reload();
                     },
@@ -128,7 +96,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [getDataApprovalItems, compositionRoot, reload, snackbar]
+        [compositionRoot, reload, snackbar]
     );
 
     const getRows = useMemo(
