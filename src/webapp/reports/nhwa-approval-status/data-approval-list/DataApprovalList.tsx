@@ -111,7 +111,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 {
                     name: "approve",
                     text: i18n.t("Approve"),
-                    icon: <DoneIcon />,
+                    icon: <DoneAllIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
                         if (selectedIds.length === 0) return;
@@ -126,18 +126,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         if (reloadRef.current) reloadRef.current();
                     },
                 },
-                {
-                    name: "approveAllBelow",
-                    text: i18n.t("Approve all below"),
-                    icon: <DoneAllIcon />,
-                    multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        if (selectedIds.length === 0) return;
-                        //await compositionRoot.dataApproval.approveAllBelow.execute(selectedIds);
-                    },
-                },
             ],
-            // TODO: To be validated with Nacho
             initialSorting: {
                 field: "dataSet" as const,
                 order: "asc" as const,
