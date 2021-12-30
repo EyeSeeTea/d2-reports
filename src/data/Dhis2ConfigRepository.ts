@@ -1,14 +1,12 @@
 import _ from "lodash";
-//import { useConfig } from "@dhis2/app-runtime";
-import { ConfigRepository } from "../domain/common/repositories/ConfigRepository";
-import { Config } from "../domain/common/entities/Config";
-import { D2Api, Id } from "../types/d2-api";
 import { keyById, NamedRef } from "../domain/common/entities/Base";
+import { Config } from "../domain/common/entities/Config";
 import { User } from "../domain/common/entities/User";
-import { Instance } from "./entities/Instance";
+import { ConfigRepository } from "../domain/common/repositories/ConfigRepository";
+import { D2Api, Id } from "../types/d2-api";
 import { DataStoreStorageClient } from "./clients/storage/DataStoreStorageClient";
-// import { Namespaces } from "./clients/storage/Namespaces";
 import { StorageClient } from "./clients/storage/StorageClient";
+import { Instance } from "./entities/Instance";
 
 const SQL_VIEW_DATA_COMMENTS_NAME = "NHWA Data Comments";
 const SQL_VIEW_DATA_APPROVAL_NAME = "NHWA Data Approval Status";
@@ -26,7 +24,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
 
     constructor(private api: D2Api) {
         this.instance = new Instance({ url: this.api.baseUrl });
-        this.storageClient = new DataStoreStorageClient("global", this.instance);
+        this.storageClient = new DataStoreStorageClient("user", this.instance);
     }
 
     async get(): Promise<Config> {
