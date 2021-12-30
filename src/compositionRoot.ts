@@ -1,18 +1,20 @@
 import { Dhis2ConfigRepository } from "./data/Dhis2ConfigRepository";
+import { Dhis2OrgUnitsRepository } from "./data/Dhis2OrgUnitsRepository";
 import { NHWADataApprovalDefaultRepository } from "./data/NHWADataApprovalDefaultRepository";
 import { NHWADataCommentsDefaultRepository } from "./data/NHWADataCommentsDefaultRepository";
-import { Dhis2OrgUnitsRepository } from "./data/Dhis2OrgUnitsRepository";
 import { WIDPAdminDefaultRepository } from "./data/WIDPAdminDefaultRepository";
-import { GetConfig } from "./domain/common/usecases/GetConfig";
-import { GetApprovalColumnsUseCase } from "./domain/nhwa-approval-status/usecases/GetApprovalColumnsUseCase";
-import { SaveApprovalColumnsUseCase } from "./domain/nhwa-approval-status/usecases/SaveApprovalColumnsUseCase";
-import { GetDataValuesUseCase } from "./domain/nhwa-comments/usecases/GetDataValuesUseCase";
-import { GetOrgUnitsUseCase } from "./domain/common/usecases/GetOrgUnitsUseCase";
 import { GetWIDPAdminDefaultUseCase } from "./domain/admin/usecases/GetWIDPAdminDefaultUseCase";
-import { SaveDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/SaveDataSetsCsvUseCase";
-import { SaveDataValuesUseCase } from "./domain/nhwa-comments/usecases/SaveDataValuesCsvUseCase";
 import { SaveWIDPAdminDefaultCsvUseCase } from "./domain/admin/usecases/SaveWIDPAdminDefaultCsvUseCase";
+import { GetConfig } from "./domain/common/usecases/GetConfig";
+import { GetOrgUnitsUseCase } from "./domain/common/usecases/GetOrgUnitsUseCase";
+import { ApproveDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/ApproveDataSetsUseCase";
+import { CompleteDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/CompleteDataSetsUseCase";
+import { GetApprovalColumnsUseCase } from "./domain/nhwa-approval-status/usecases/GetApprovalColumnsUseCase";
 import { GetDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/GetDataSetsUseCase";
+import { SaveApprovalColumnsUseCase } from "./domain/nhwa-approval-status/usecases/SaveApprovalColumnsUseCase";
+import { SaveDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/SaveDataSetsCsvUseCase";
+import { GetDataValuesUseCase } from "./domain/nhwa-comments/usecases/GetDataValuesUseCase";
+import { SaveDataValuesUseCase } from "./domain/nhwa-comments/usecases/SaveDataValuesCsvUseCase";
 import { D2Api } from "./types/d2-api";
 
 export function getCompositionRoot(api: D2Api) {
@@ -36,6 +38,8 @@ export function getCompositionRoot(api: D2Api) {
             save: new SaveDataSetsUseCase(dataApprovalRepository),
             getColumns: new GetApprovalColumnsUseCase(dataApprovalRepository),
             saveColumns: new SaveApprovalColumnsUseCase(dataApprovalRepository),
+            complete: new CompleteDataSetsUseCase(dataApprovalRepository),
+            approve: new ApproveDataSetsUseCase(dataApprovalRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),

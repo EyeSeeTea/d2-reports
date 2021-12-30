@@ -5,6 +5,7 @@ import {
     TablePagination,
     TableSorting,
     useObjectsTable,
+    useSnackbar,
 } from "@eyeseetea/d2-ui-components";
 import DoneIcon from "@material-ui/icons/Done";
 import DoneAllIcon from "@material-ui/icons/DoneAll";
@@ -14,20 +15,28 @@ import { sortByName } from "../../../../domain/common/entities/Base";
 import { Config } from "../../../../domain/common/entities/Config";
 import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
-import { DataApprovalItem } from "../../../../domain/nhwa-approval-status/entities/DataApprovalItem";
+import {
+    DataApprovalItem,
+    parseDataApprovalItemId,
+} from "../../../../domain/nhwa-approval-status/entities/DataApprovalItem";
 import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
+import { useReload } from "../../../utils/use-reload";
 import { DataApprovalViewModel, getDataApprovalViews } from "../DataApprovalViewModel";
 import { DataSetsFilter, Filters } from "./Filters";
 
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
+    const snackbar = useSnackbar();
+
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
+    const [reloadKey, reload] = useReload();
 
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
             columns: [
+                { name: "dataSet", text: i18n.t("Data set"), sortable: true },
                 { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
                 { name: "period", text: i18n.t("Period"), sortable: true },
                 { name: "dataSet", text: i18n.t("Data set"), sortable: true },
@@ -53,8 +62,13 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     icon: <DoneIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
-                        if (selectedIds.length === 0) return;
-                        //await compositionRoot.dataApproval.complete.execute(selectedIds);
+                        const dataApprovalItems = _.compact(selectedIds.map(item => parseDataApprovalItemId(item)));
+                        if (dataApprovalItems.length === 0) return;
+
+                        const completed = await compositionRoot.dataApproval.complete(dataApprovalItems);
+                        if (!completed) snackbar.error(i18n.t("Error when trying to complete data set"));
+
+                        reload();
                     },
                 },
                 {
@@ -63,12 +77,16 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     icon: <DoneAllIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
-                        if (selectedIds.length === 0) return;
-                        //await compositionRoot.dataApproval.approve.execute(selectedIds);
+                        const dataApprovalItems = _.compact(selectedIds.map(item => parseDataApprovalItemId(item)));
+                        if (dataApprovalItems.length === 0) return;
+
+                        const approved = await compositionRoot.dataApproval.approve(dataApprovalItems);
+                        if (!approved) snackbar.error(i18n.t("Error when trying to approve data set"));
+
+                        reload();
                     },
                 },
             ],
-            // TODO: To be validated with Nacho
             initialSorting: {
                 field: "dataSet" as const,
                 order: "asc" as const,
@@ -78,7 +96,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        []
+        [compositionRoot, reload, snackbar]
     );
 
     const getRows = useMemo(
@@ -90,9 +108,11 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 ...getUseCaseOptions(filters),
             });
 
+            console.debug("Reloading", reloadKey);
+
             return { pager, objects: getDataApprovalViews(config, objects) };
         },
-        [config, compositionRoot, filters]
+        [config, compositionRoot, filters, reloadKey]
     );
 
     const saveReorderedColumns = useCallback(

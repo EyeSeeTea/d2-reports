@@ -1,10 +1,11 @@
 import _ from "lodash";
-import { DataApprovalItem } from "../domain/nhwa-approval-status/entities/DataApprovalItem";
+import { DataApprovalItem, DataApprovalItemIdentifier } from "../domain/nhwa-approval-status/entities/DataApprovalItem";
 import {
     NHWADataApprovalRepository,
     NHWADataApprovalRepositoryGetOptions,
 } from "../domain/nhwa-approval-status/repositories/NHWADataApprovalRepository";
 import { D2Api, Id, PaginatedObjects } from "../types/d2-api";
+import { promiseMap } from "../utils/promises";
 import { DataStoreStorageClient } from "./clients/storage/DataStoreStorageClient";
 import { Namespaces } from "./clients/storage/Namespaces";
 import { StorageClient } from "./clients/storage/StorageClient";
@@ -25,20 +26,26 @@ interface Variables {
 }
 
 type SqlField =
+    | "datasetuid"
     | "dataset"
+    | "orgunituid"
     | "orgunit"
     | "period"
     | "attribute"
+    | "approvalworkflowuid"
     | "approvalworkflow"
     | "completed"
     | "validated"
     | "lastupdatedvalue";
 
 const fieldMapping: Record<keyof DataApprovalItem, SqlField> = {
+    dataSetUid: "datasetuid",
     dataSet: "dataset",
+    orgUnitUid: "orgunit",
     orgUnit: "orgunit",
     period: "period",
     attribute: "attribute",
+    approvalWorkflowUid: "approvalworkflowuid",
     approvalWorkflow: "approvalworkflow",
     completed: "completed",
     validated: "validated",
@@ -81,10 +88,13 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
 
         const items: Array<DataApprovalItem> = rows.map(
             (item): DataApprovalItem => ({
+                dataSetUid: item.datasetuid,
                 dataSet: item.dataset,
+                orgUnitUid: item.orgunituid,
                 orgUnit: item.orgunit,
                 period: item.period,
                 attribute: item.attribute,
+                approvalWorkflowUid: item.approvalworkflowuid,
                 approvalWorkflow: item.approvalworkflow,
                 completed: Boolean(item.completed),
                 validated: Boolean(item.validated),
@@ -111,6 +121,31 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
         const csvContents = csvDataSource.toString(csvData);
 
         await downloadFile(csvContents, filename, "text/csv");
+    }
+
+    async complete(dataSets: DataApprovalItemIdentifier[]): Promise<boolean> {
+        const completeDataSetRegistrations = dataSets.map(ds => ({
+            dataSet: ds.dataSet,
+            period: ds.period,
+            organisationUnit: ds.orgUnit,
+            completed: true,
+        }));
+
+        const response = await this.api
+            .post<any>("/completeDataSetRegistrations", {}, { completeDataSetRegistrations })
+            .getData();
+
+        return response.status === "SUCCESS";
+    }
+
+    async approve(dataSets: DataApprovalItemIdentifier[]): Promise<boolean> {
+        const response = await promiseMap(dataSets, async approval =>
+            this.api
+                .post<any>("/dataApprovals", { wf: approval.workflow, pe: approval.period, ou: approval.orgUnit }, {})
+                .getData()
+        );
+
+        return _.every(response, item => item === "");
     }
 
     async getColumns(): Promise<string[]> {

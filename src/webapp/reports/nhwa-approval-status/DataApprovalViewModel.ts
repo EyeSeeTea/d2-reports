@@ -6,10 +6,13 @@ import {
 
 export interface DataApprovalViewModel {
     id: string;
+    dataSetUid: string;
     dataSet: string;
+    orgUnitUid: string;
     orgUnit: string;
     period: string;
     attribute: string;
+    approvalWorkflowUid: string;
     approvalWorkflow: string;
     completed: boolean;
     validated: boolean;
@@ -20,10 +23,13 @@ export function getDataApprovalViews(_config: Config, items: DataApprovalItem[])
     return items.map(item => {
         return {
             id: getDataApprovalItemId(item),
+            dataSetUid: item.dataSetUid,
             dataSet: item.dataSet,
+            orgUnitUid: item.orgUnitUid,
             orgUnit: item.orgUnit,
             period: item.period,
             attribute: item.attribute,
+            approvalWorkflowUid: item.approvalWorkflowUid,
             approvalWorkflow: item.approvalWorkflow,
             completed: item.completed,
             validated: item.validated,
