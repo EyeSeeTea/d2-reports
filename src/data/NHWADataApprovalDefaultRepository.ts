@@ -16,6 +16,7 @@ import { Instance } from "./entities/Instance";
 import { downloadFile } from "./utils/download-file";
 
 interface Variables {
+    orgUnitRoot: string;
     dataSets: string;
     orgUnits: string;
     periods: string;
@@ -71,6 +72,7 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
             .query<Variables, SqlField>(
                 config.dataApprovalSqlView.id,
                 {
+                    orgUnitRoot: sqlViewJoinIds(config.currentUser.orgUnits.map(({ id }) => id)),
                     orgUnits: sqlViewJoinIds(orgUnitIds),
                     periods: sqlViewJoinIds(periods),
                     dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),

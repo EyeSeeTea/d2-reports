@@ -38,8 +38,8 @@ FROM ((SELECT datavalue.periodid,
                                     (dataapproval.periodid = entries.periodid) AND
                                     (dataapproval.attributeoptioncomboid = entries.attributeoptioncomboid) AND
                                     (dataapproval.dataapprovallevelid = dataapprovallevel.dataapprovallevelid)))
-/** TODO: Filter by OU paths **/
-WHERE organisationunit.uid ~ ('^' || replace('${orgUnits}', '-', '|') || '$')
+WHERE organisationunit.path SIMILAR TO ('%(' || replace('${orgUnitRoot}', '-', '|') || ')%')
+  AND organisationunit.uid ~ ('^' || replace('${orgUnits}', '-', '|') || '$')
   AND _periodstructure.iso ~ ('^' || replace('${periods}', '-', '|') || '$')
   AND (completedatasetregistration.completed IS NOT NULL)::text ~ ('^' || replace('${completed}', '-', '|') || '$')
   AND (dataapproval.accepted IS NOT NULL)::text ~ ('^' || replace('${approved}', '-', '|') || '$')
