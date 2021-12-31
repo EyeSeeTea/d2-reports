@@ -10,7 +10,7 @@ export async function postMetadata(baseUrl: string, authString: string): Promise
     const api = new D2Api({ baseUrl, auth: { username, password } });
     const metadataJson = fs.readFileSync("dist/metadata.json", "utf8");
     const metadata = JSON.parse(metadataJson);
-    const res = await api.metadata.post(metadata).getData();
+    const res = await api.metadata.post(metadata, { mergeMode: "MERGE" }).getData();
     console.debug(res);
 }
 

@@ -38,7 +38,7 @@ FROM ((SELECT datavalue.periodid,
                                     (dataapproval.periodid = entries.periodid) AND
                                     (dataapproval.attributeoptioncomboid = entries.attributeoptioncomboid) AND
                                     (dataapproval.dataapprovallevelid = dataapprovallevel.dataapprovallevelid)))
-WHERE organisationunit.path SIMILAR TO ('%(' || replace('${orgUnitRoot}', '-', '|') || ')%')
+WHERE organisationunit.path ~ (replace('${orgUnitRoot}', '-', '|'))
   AND organisationunit.uid ~ ('^' || replace('${orgUnits}', '-', '|') || '$')
   AND _periodstructure.iso ~ ('^' || replace('${periods}', '-', '|') || '$')
   AND (completedatasetregistration.completed IS NOT NULL)::text ~ ('^' || replace('${completed}', '-', '|') || '$')

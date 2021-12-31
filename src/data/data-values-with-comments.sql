@@ -144,7 +144,7 @@ from
                     INNER JOIN dataset USING (datasetid)
                 WHERE
                     _periodstructure.iso ~ ('^' || replace('${periods}', '-', '|') || '$')
-                    AND organisationunit.uid ~ ('^' || replace('${orgUnitIds}', '-', '|') || '$')
+                    AND organisationunit.path ~ (replace('${orgUnitIds}', '-', '|'))
             ) AS unionttable
     ) as t
 WHERE
