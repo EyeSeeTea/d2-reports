@@ -51,7 +51,7 @@
         "build": "yarn build-folder && rm -f $npm_package_name.zip && cd build && zip --quiet -r ../$npm_package_name.zip *",
         "build-report": "yarn build && gulp build-report",
         "build-nhwa-metadata": "npx ts-node -P tsconfig-cli.json src/scripts/build-nhwa-metadata.ts",
-        "post-metadata": "npx ts-node -P tsconfig-cli.json src/scripts/post-metadata.ts",
+        "post-nhwa-metadata": "npx ts-node -P tsconfig-cli.json src/scripts/post-metadata.ts",
         "test": "jest --passWithNoTests",
         "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
         "eject": "react-scripts eject",
