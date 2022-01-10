@@ -175,6 +175,7 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
             cacheStrategy: "RESPECT_SYSTEM_SETTING",
             type: "QUERY",
             sqlQuery: sqlDataComments,
+            publicAccess: "--------",
         },
         {
             id: "QTKlHcbGQRh",
@@ -182,6 +183,7 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
             cacheStrategy: "RESPECT_SYSTEM_SETTING",
             type: "QUERY",
             sqlQuery: sqlDataApproval,
+            publicAccess: "--------",
         },
     ];
 
@@ -206,6 +208,7 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
                 grandParentOrganisationUnit: false,
             },
             designContent: htmlComments,
+            publicAccess: "--------",
         },
         {
             id: "klA47Z2KS6s",
