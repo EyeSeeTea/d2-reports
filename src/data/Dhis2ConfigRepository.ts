@@ -1,24 +1,37 @@
 import _ from "lodash";
-import { ConfigRepository } from "../domain/repositories/ConfigRepository";
-import { Config } from "../domain/entities/Config";
+import { keyById, NamedRef } from "../domain/common/entities/Base";
+import { Config } from "../domain/common/entities/Config";
+import { User } from "../domain/common/entities/User";
+import { ConfigRepository } from "../domain/common/repositories/ConfigRepository";
 import { D2Api, Id } from "../types/d2-api";
-import { keyById, NamedRef } from "../domain/entities/Base";
-import { User } from "../domain/entities/User";
+
+const SQL_VIEW_DATA_COMMENTS_NAME = "NHWA Data Comments";
+const SQL_VIEW_DATA_APPROVAL_NAME = "NHWA Data Approval Status";
 
 const base = {
     dataSets: { namePrefix: "NHWA", nameExcluded: /old$/ },
-    sqlViewName: "NHWA Data Comments",
+    sqlViewNames: [SQL_VIEW_DATA_COMMENTS_NAME, SQL_VIEW_DATA_APPROVAL_NAME],
     constantCode: "NHWA_COMMENTS",
+    approvalWorkflows: { namePrefix: "NHWA" },
 };
 
 export class Dhis2ConfigRepository implements ConfigRepository {
     constructor(private api: D2Api) {}
 
     async get(): Promise<Config> {
-        const { dataSets, constants, sqlViews } = await this.getMetadata();
+        const { dataSets, constants, sqlViews, dataApprovalWorkflows } = await this.getMetadata();
         const filteredDataSets = getFilteredDataSets(dataSets);
-        const getDataValuesSqlView = getFirst(sqlViews, `Missing sqlView: ${base.sqlViewName}`);
-        const constant = getFirst(constants, `Missing constant: ${base.constantCode}`);
+        const dataCommentsSqlView = sqlViews.find(({ name }) => name === SQL_VIEW_DATA_COMMENTS_NAME);
+        const dataApprovalSqlView = sqlViews.find(({ name }) => name === SQL_VIEW_DATA_APPROVAL_NAME);
+        if (!dataCommentsSqlView) {
+            throw new Error(`Missing SQL views: ${SQL_VIEW_DATA_COMMENTS_NAME}`);
+        }
+
+        if (!dataApprovalSqlView) {
+            throw new Error(`Missing SQL views: ${SQL_VIEW_DATA_APPROVAL_NAME}`);
+        }
+
+        const constant = getNth(constants, 0, `Missing constant: ${base.constantCode}`);
         const currentUser = await this.getCurrentUser();
         const pairedDataElements = getPairedMapping(filteredDataSets);
         const constantData = JSON.parse(constant.description || "{}") as Constant;
@@ -28,11 +41,13 @@ export class Dhis2ConfigRepository implements ConfigRepository {
         return {
             dataSets: keyById(filteredDataSets),
             currentUser,
-            getDataValuesSqlView,
+            dataCommentsSqlView,
+            dataApprovalSqlView,
             pairedDataElementsByDataSet: pairedDataElements,
             sections: keyById(sections),
             sectionsByDataSet,
             years: _.range(currentYear - 10, currentYear + 1).map(n => n.toString()),
+            approvalWorkflow: dataApprovalWorkflows,
         };
     }
 
@@ -53,8 +68,12 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                 filter: { code: { eq: base.constantCode } },
             },
             sqlViews: {
-                fields: { id: true },
-                filter: { name: { eq: base.sqlViewName } },
+                fields: { id: true, name: true },
+                filter: { name: { in: base.sqlViewNames } },
+            },
+            dataApprovalWorkflows: {
+                fields: { id: true, name: true },
+                filter: { name: { $ilike: base.approvalWorkflows.namePrefix } },
             },
         });
 
@@ -67,7 +86,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                 fields: {
                     id: true,
                     displayName: true,
-                    organisationUnits: {
+                    dataViewOrganisationUnits: {
                         id: true,
                         displayName: toName,
                         path: true,
@@ -84,7 +103,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
         return {
             id: d2User.id,
             name: d2User.displayName,
-            orgUnits: d2User.organisationUnits,
+            orgUnits: d2User.dataViewOrganisationUnits,
             ...d2User.userCredentials,
         };
     }
@@ -148,8 +167,8 @@ function getMappingForDataSet(dataSet: DataSet, dataElementsByName: Record<strin
         .value();
 }
 
-function getFirst<T>(objs: T[], msg: string): T {
-    const obj = objs[0];
+function getNth<T>(objs: T[], n: number, msg: string): T {
+    const obj = objs[n];
     if (!obj) throw new Error(msg);
     return obj;
 }

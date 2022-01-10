@@ -36,8 +36,8 @@ Create an standard report:
 
 ```
 $ yarn build-report # Creates dist/index.html
-$ yarn build-metadata -u 'user:pass' http://dhis2-server.org # Creates dist/metadata.json
-$ yarn post-metadata -u 'user:pass' http://dhis2-server.org # Posts dist/metadata.json
+$ yarn build-<key>-metadata -u 'user:pass' http://dhis2-server.org # Creates dist/metadata.json (key is a particular report group, e.g. nhwa)
+$ yarn post-<key>-metadata -u 'user:pass' http://dhis2-server.org # Posts dist/metadata.json (key is a particular report group, e.g. nhwa)
 ```
 
 Create an standalone DHIS2 webapp app:

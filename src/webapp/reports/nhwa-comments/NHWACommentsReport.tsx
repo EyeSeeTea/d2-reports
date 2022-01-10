@@ -1,6 +1,6 @@
 import { Typography, makeStyles } from "@material-ui/core";
 import i18n from "../../../locales";
-import { DataValuesList } from "../../components/data-values-list/DataValuesList";
+import { DataCommentsList } from "./data-comments-list/DataCommentsList";
 
 const NHWACommentsReport: React.FC = () => {
     const classes = useStyles();
@@ -11,13 +11,13 @@ const NHWACommentsReport: React.FC = () => {
                 {i18n.t("NHWA Comments Report")}
             </Typography>
 
-            <DataValuesList />
+            <DataCommentsList />
         </div>
     );
 };
 
 const useStyles = makeStyles({
-    wrapper: { padding: 10 },
+    wrapper: { padding: 20 },
 });
 
 export default NHWACommentsReport;

@@ -5,52 +5,19 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2021-09-27T07:54:17.558Z\n"
-"PO-Revision-Date: 2021-09-27T07:54:17.559Z\n"
+"POT-Creation-Date: 2021-12-30T11:33:53.389Z\n"
+"PO-Revision-Date: 2021-12-30T11:33:53.389Z\n"
 
-msgid "Periods"
+msgid "<No value>"
 msgstr ""
 
-msgid "Data sets"
-msgstr ""
-
-msgid "Sections"
-msgstr ""
-
-msgid "Data set"
-msgstr ""
-
-msgid "Period"
-msgstr ""
-
-msgid "Organisation unit"
-msgstr ""
-
-msgid "Section"
-msgstr ""
-
-msgid "Data Element"
-msgstr ""
-
-msgid "Category option combo"
-msgstr ""
-
-msgid "Value"
-msgstr ""
-
-msgid "Comment"
-msgstr ""
-
-msgid "Last updated"
-msgstr ""
-
-msgid "Stored by"
-msgstr ""
-
-msgid "Toggle filters"
+msgid "- All -"
 msgstr ""
 
 msgid "Loading..."
+msgstr ""
+
+msgid "Organisation unit"
 msgstr ""
 
 msgid "Select parent organisation unit"
@@ -59,7 +26,22 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
-msgid "<No value>"
+msgid "Clear"
+msgstr ""
+
+msgid "Back"
+msgstr ""
+
+msgid "Help"
+msgstr ""
+
+msgid "Metadata Admin Report"
+msgstr ""
+
+msgid "Objects with invalid sharing settings"
+msgstr ""
+
+msgid "Public Objects"
 msgstr ""
 
 msgid "Id"
@@ -92,20 +74,71 @@ msgstr ""
 msgid "created"
 msgstr ""
 
-msgid "Back"
+msgid "NHWA Data Approval Status Report"
 msgstr ""
 
-msgid "Help"
+msgid "Data set"
 msgstr ""
 
-msgid "Metadata Admin Report"
+msgid "Period"
 msgstr ""
 
-msgid "Objects with invalid sharing settings"
+msgid "Attribute"
 msgstr ""
 
-msgid "Public Objects"
+msgid "Completion status"
+msgstr ""
+
+msgid "Approval status"
+msgstr ""
+
+msgid "Last updated value"
+msgstr ""
+
+msgid "Complete"
+msgstr ""
+
+msgid "Error when trying to complete data set"
+msgstr ""
+
+msgid "Approve"
+msgstr ""
+
+msgid "Error when trying to approve data set"
+msgstr ""
+
+msgid "Data sets"
+msgstr ""
+
+msgid "Periods"
 msgstr ""
 
 msgid "NHWA Comments Report"
+msgstr ""
+
+msgid "Section"
+msgstr ""
+
+msgid "Data Element"
+msgstr ""
+
+msgid "Category option combo"
+msgstr ""
+
+msgid "Value"
+msgstr ""
+
+msgid "Comment"
+msgstr ""
+
+msgid "Last updated"
+msgstr ""
+
+msgid "Stored by"
+msgstr ""
+
+msgid "Sections"
+msgstr ""
+
+msgid "Toggle filters"
 msgstr ""

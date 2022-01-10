@@ -2,8 +2,8 @@ import { D2Api } from "../types/d2-api";
 import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
 import { downloadFile } from "./utils/download-file";
 import { CsvData } from "../data/CsvDataSource";
-import { MetadataObject } from "../domain/entities/MetadataObject";
-import { WIDPAdminRepository, WIDPAdmiRepositoryGetOptions } from "../domain/repositories/WIDPAdminRepository";
+import { MetadataObject } from "../domain/common/entities/MetadataObject";
+import { WIDPAdminRepository, WIDPAdmiRepositoryGetOptions } from "../domain/admin/repositories/WIDPAdminRepository";
 import _ from "lodash";
 
 export class WIDPAdminDefaultRepository implements WIDPAdminRepository {

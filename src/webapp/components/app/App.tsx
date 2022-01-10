@@ -8,7 +8,7 @@ import OldMuiThemeProvider from "material-ui/styles/MuiThemeProvider";
 import React from "react";
 import { appConfig } from "../../../app-config";
 import { getCompositionRoot } from "../../../compositionRoot";
-import { Config } from "../../../domain/entities/Config";
+import { Config } from "../../../domain/common/entities/Config";
 import { D2Api } from "../../../types/d2-api";
 import { AppContext, AppContextState } from "../../contexts/app-context";
 import Report from "../../reports/Reports";
@@ -35,7 +35,7 @@ const App = ({ api, d2 }: { api: D2Api; d2: D2 }) => {
     React.useEffect(() => {
         async function setup() {
             const compositionRoot = getCompositionRoot(api);
-            const config = await compositionRoot.config.get.execute();
+            const config = await compositionRoot.config.get();
             window.app = { config };
 
             setAppContext({ api, config, compositionRoot });
