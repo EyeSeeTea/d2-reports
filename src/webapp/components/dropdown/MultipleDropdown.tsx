@@ -18,7 +18,14 @@ interface MultipleDropdownProps {
 
 const MultipleDropdown: React.FC<MultipleDropdownProps> = props => {
     const { items, values, onChange, label, className, multiple = true, hideEmpty } = props;
-    const notifyChange = useCallback(ev => onChange(_.flatten([ev.target.value || undefined])), [onChange]);
+    const notifyChange = useCallback(
+        ev => {
+            const items = _.flatten([ev.target.value || undefined]);
+            const clear = multiple && items.includes("");
+            onChange(clear ? [] : items);
+        },
+        [onChange]
+    );
 
     return (
         <DropdownForm label={label} className={className}>
