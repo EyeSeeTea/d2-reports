@@ -24,7 +24,7 @@ const MultipleDropdown: React.FC<MultipleDropdownProps> = props => {
             const clear = multiple && items.includes("");
             onChange(clear ? [] : items);
         },
-        [onChange]
+        [onChange, multiple]
     );
 
     return (
