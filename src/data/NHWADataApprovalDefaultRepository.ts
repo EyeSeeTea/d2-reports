@@ -133,21 +133,65 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
             completed: true,
         }));
 
-        const response = await this.api
-            .post<any>("/completeDataSetRegistrations", {}, { completeDataSetRegistrations })
-            .getData();
+        try {
+            const response = await this.api
+                .post<any>("/completeDataSetRegistrations", {}, { completeDataSetRegistrations })
+                .getData();
 
-        return response.status === "SUCCESS";
+            return response.status === "SUCCESS";
+        } catch (error: any) {
+            return false;
+        }
     }
 
     async approve(dataSets: DataApprovalItemIdentifier[]): Promise<boolean> {
-        const response = await promiseMap(dataSets, async approval =>
-            this.api
-                .post<any>("/dataApprovals", { wf: approval.workflow, pe: approval.period, ou: approval.orgUnit }, {})
-                .getData()
-        );
+        try {
+            const response = await promiseMap(dataSets, async approval =>
+                this.api
+                    .post<any>(
+                        "/dataApprovals",
+                        { wf: approval.workflow, pe: approval.period, ou: approval.orgUnit },
+                        {}
+                    )
+                    .getData()
+            );
 
-        return _.every(response, item => item === "");
+            return _.every(response, item => item === "");
+        } catch (error: any) {
+            return false;
+        }
+    }
+
+    async incomplete(dataSets: DataApprovalItemIdentifier[]): Promise<boolean> {
+        try {
+            const response = await promiseMap(dataSets, item =>
+                this.api
+                    .delete<any>("/completeDataSetRegistrations", {
+                        ds: item.dataSet,
+                        pe: item.period,
+                        ou: item.orgUnit,
+                    })
+                    .getData()
+            );
+
+            return _.every(response, item => item === "");
+        } catch (error: any) {
+            return false;
+        }
+    }
+
+    async unapprove(dataSets: DataApprovalItemIdentifier[]): Promise<boolean> {
+        try {
+            const response = await promiseMap(dataSets, async approval =>
+                this.api
+                    .delete<any>("/dataApprovals", { wf: approval.workflow, pe: approval.period, ou: approval.orgUnit })
+                    .getData()
+            );
+
+            return _.every(response, item => item === "");
+        } catch (error: any) {
+            return false;
+        }
     }
 
     async getColumns(): Promise<string[]> {

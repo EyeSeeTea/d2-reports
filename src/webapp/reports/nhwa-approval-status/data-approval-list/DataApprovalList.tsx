@@ -7,8 +7,10 @@ import {
     useObjectsTable,
     useSnackbar,
 } from "@eyeseetea/d2-ui-components";
+import ClearAllIcon from "@material-ui/icons/ClearAll";
 import DoneIcon from "@material-ui/icons/Done";
 import DoneAllIcon from "@material-ui/icons/DoneAll";
+import RemoveIcon from "@material-ui/icons/Remove";
 import _ from "lodash";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { sortByName } from "../../../../domain/common/entities/Base";
@@ -36,7 +38,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
             columns: [
-                { name: "dataSet", text: i18n.t("Data set"), sortable: true },
                 { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
                 { name: "period", text: i18n.t("Period"), sortable: true },
                 { name: "dataSet", text: i18n.t("Data set"), sortable: true },
@@ -62,14 +63,31 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     icon: <DoneIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
-                        const dataApprovalItems = _.compact(selectedIds.map(item => parseDataApprovalItemId(item)));
-                        if (dataApprovalItems.length === 0) return;
+                        const items = _.compact(selectedIds.map(item => parseDataApprovalItemId(item)));
+                        if (items.length === 0) return;
 
-                        const completed = await compositionRoot.dataApproval.complete(dataApprovalItems);
-                        if (!completed) snackbar.error(i18n.t("Error when trying to complete data set"));
+                        const result = await compositionRoot.dataApproval.updateStatus(items, "complete");
+                        if (!result) snackbar.error(i18n.t("Error when trying to complete data set"));
 
                         reload();
                     },
+                    isActive: rows => _.every(rows, row => row.completed === false),
+                },
+                {
+                    name: "incomplete",
+                    text: i18n.t("Incomplete"),
+                    icon: <RemoveIcon />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseDataApprovalItemId(item)));
+                        if (items.length === 0) return;
+
+                        const result = await compositionRoot.dataApproval.updateStatus(items, "incomplete");
+                        if (!result) snackbar.error(i18n.t("Error when trying to incomplete data set"));
+
+                        reload();
+                    },
+                    isActive: rows => _.every(rows, row => row.completed === true),
                 },
                 {
                     name: "approve",
@@ -77,14 +95,31 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     icon: <DoneAllIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
-                        const dataApprovalItems = _.compact(selectedIds.map(item => parseDataApprovalItemId(item)));
-                        if (dataApprovalItems.length === 0) return;
+                        const items = _.compact(selectedIds.map(item => parseDataApprovalItemId(item)));
+                        if (items.length === 0) return;
 
-                        const approved = await compositionRoot.dataApproval.approve(dataApprovalItems);
-                        if (!approved) snackbar.error(i18n.t("Error when trying to approve data set"));
+                        const result = await compositionRoot.dataApproval.updateStatus(items, "approve");
+                        if (!result) snackbar.error(i18n.t("Error when trying to approve data set"));
 
                         reload();
                     },
+                    isActive: rows => _.every(rows, row => row.validated === false),
+                },
+                {
+                    name: "unapprove",
+                    text: i18n.t("Unapprove"),
+                    icon: <ClearAllIcon />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseDataApprovalItemId(item)));
+                        if (items.length === 0) return;
+
+                        const result = await compositionRoot.dataApproval.updateStatus(items, "unapprove");
+                        if (!result) snackbar.error(i18n.t("Error when trying to unapprove data set"));
+
+                        reload();
+                    },
+                    isActive: rows => _.every(rows, row => row.validated === true),
                 },
             ],
             initialSorting: {

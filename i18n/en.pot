@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2021-12-30T11:33:53.389Z\n"
-"PO-Revision-Date: 2021-12-30T11:33:53.389Z\n"
+"POT-Creation-Date: 2022-01-10T08:43:46.954Z\n"
+"PO-Revision-Date: 2022-01-10T08:43:46.954Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -101,10 +101,22 @@ msgstr ""
 msgid "Error when trying to complete data set"
 msgstr ""
 
+msgid "Incomplete"
+msgstr ""
+
+msgid "Error when trying to incomplete data set"
+msgstr ""
+
 msgid "Approve"
 msgstr ""
 
 msgid "Error when trying to approve data set"
+msgstr ""
+
+msgid "Unapprove"
+msgstr ""
+
+msgid "Error when trying to unapprove data set"
 msgstr ""
 
 msgid "Data sets"

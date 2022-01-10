@@ -34,7 +34,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const dataSetItems = useMemoOptionsFromNamedRef(filterOptions.dataSets);
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
-    
+
     const completionStatusItems = useMemoOptionsFromNamedRef([
         { id: "true", name: "Completed" },
         { id: "false", name: "Not completed" },

@@ -7,8 +7,7 @@ import { GetWIDPAdminDefaultUseCase } from "./domain/admin/usecases/GetWIDPAdmin
 import { SaveWIDPAdminDefaultCsvUseCase } from "./domain/admin/usecases/SaveWIDPAdminDefaultCsvUseCase";
 import { GetConfig } from "./domain/common/usecases/GetConfig";
 import { GetOrgUnitsUseCase } from "./domain/common/usecases/GetOrgUnitsUseCase";
-import { ApproveDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/ApproveDataSetsUseCase";
-import { CompleteDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/CompleteDataSetsUseCase";
+import { UpdateStatusUseCase } from "./domain/nhwa-approval-status/usecases/CompleteDataSetsUseCase";
 import { GetApprovalColumnsUseCase } from "./domain/nhwa-approval-status/usecases/GetApprovalColumnsUseCase";
 import { GetDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/GetDataSetsUseCase";
 import { SaveApprovalColumnsUseCase } from "./domain/nhwa-approval-status/usecases/SaveApprovalColumnsUseCase";
@@ -38,8 +37,7 @@ export function getCompositionRoot(api: D2Api) {
             save: new SaveDataSetsUseCase(dataApprovalRepository),
             getColumns: new GetApprovalColumnsUseCase(dataApprovalRepository),
             saveColumns: new SaveApprovalColumnsUseCase(dataApprovalRepository),
-            complete: new CompleteDataSetsUseCase(dataApprovalRepository),
-            approve: new ApproveDataSetsUseCase(dataApprovalRepository),
+            updateStatus: new UpdateStatusUseCase(dataApprovalRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),
