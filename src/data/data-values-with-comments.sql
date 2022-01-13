@@ -151,7 +151,7 @@ WHERE
     '${sectionIds}' = '-'
     OR section ~ ('^' || replace('${sectionIds}', '-', '|') || '$')
 ORDER BY
-    __orderBy,
+    ${orderByColumn} ${orderByDirection},
     datasetname ASC,
     period ASC,
     orgunit ASC,

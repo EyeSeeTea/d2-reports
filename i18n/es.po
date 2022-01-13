@@ -1,23 +1,80 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2021-03-05T08:55:57.149Z\n"
+"POT-Creation-Date: 2022-01-10T08:43:46.954Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
 
-msgid "Periods"
+msgid "<No value>"
 msgstr ""
 
-msgid "Data sets"
+msgid "- All -"
 msgstr ""
 
-msgid "Sections"
+msgid "Loading..."
 msgstr ""
 
-msgid "NHWA Comments Report"
+msgid "Organisation unit"
+msgstr ""
+
+msgid "Select parent organisation unit"
+msgstr ""
+
+msgid "Close"
+msgstr ""
+
+msgid "Clear"
+msgstr ""
+
+msgid "Back"
+msgstr "Volver"
+
+msgid "Help"
+msgstr "Ayuda"
+
+msgid "Metadata Admin Report"
+msgstr ""
+
+msgid "Objects with invalid sharing settings"
+msgstr ""
+
+msgid "Public Objects"
+msgstr ""
+
+msgid "Id"
+msgstr ""
+
+msgid "Metadata Type"
+msgstr ""
+
+msgid "Public Access"
+msgstr ""
+
+msgid "Created By"
+msgstr ""
+
+msgid "Last Updated By"
+msgstr ""
+
+msgid "User Group Accesses"
+msgstr ""
+
+msgid "User Accesses"
+msgstr ""
+
+msgid "name"
+msgstr ""
+
+msgid "lastUpdated"
+msgstr ""
+
+msgid "created"
+msgstr ""
+
+msgid "NHWA Data Approval Status Report"
 msgstr ""
 
 msgid "Data set"
@@ -26,7 +83,49 @@ msgstr ""
 msgid "Period"
 msgstr ""
 
-msgid "Organisation unit"
+msgid "Attribute"
+msgstr ""
+
+msgid "Completion status"
+msgstr ""
+
+msgid "Approval status"
+msgstr ""
+
+msgid "Last updated value"
+msgstr ""
+
+msgid "Complete"
+msgstr ""
+
+msgid "Error when trying to complete data set"
+msgstr ""
+
+msgid "Incomplete"
+msgstr ""
+
+msgid "Error when trying to incomplete data set"
+msgstr ""
+
+msgid "Approve"
+msgstr ""
+
+msgid "Error when trying to approve data set"
+msgstr ""
+
+msgid "Unapprove"
+msgstr ""
+
+msgid "Error when trying to unapprove data set"
+msgstr ""
+
+msgid "Data sets"
+msgstr ""
+
+msgid "Periods"
+msgstr ""
+
+msgid "NHWA Comments Report"
 msgstr ""
 
 msgid "Section"
@@ -50,26 +149,11 @@ msgstr ""
 msgid "Stored by"
 msgstr ""
 
+msgid "Sections"
+msgstr ""
+
 msgid "Toggle filters"
 msgstr ""
-
-msgid "Loading..."
-msgstr ""
-
-msgid "Select parent organisation unit"
-msgstr ""
-
-msgid "Close"
-msgstr ""
-
-msgid "<No value>"
-msgstr ""
-
-msgid "Back"
-msgstr "Volver"
-
-msgid "Help"
-msgstr "Ayuda"
 
 #~ msgid "Add"
 #~ msgstr "Añadir"
