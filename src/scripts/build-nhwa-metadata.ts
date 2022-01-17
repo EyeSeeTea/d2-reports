@@ -122,6 +122,36 @@ function getMapping(dataSets: DataSet[]): Mapping {
     return { order, sections, sectionNames };
 }
 
+const totals = [
+    "fEck0UnAFaV",
+    "yrP0fOB2Yxv",
+    "l1mCEuDf2ZI",
+    "h6VJJu0W8U7",
+    "MdkO4mttohH",
+    "sYJkQfzW1BG",
+    "ixpABERkob0",
+    "t5jOlOCqSr3",
+    "U20BELNfToU",
+    "GFfMM55sVzg",
+    "v2CCdaKGum8",
+    "wrceD1un08Y",
+    "o1HqfAPcWtK",
+    "MazllecOrQC",
+    "ZPgTreSg9Xd",
+    "ifKISqV6PJh",
+    "P7NeDYkZMDT",
+    "HmD6AHanlbO",
+    "qfVp6vFGOpZ",
+    "qE7bXo1gdhI",
+    "Xw3tkU97nlR",
+    "WsVBFxzWhi1",
+    "nLbuvx5jioD",
+    "KGnMzMLw9z0",
+    "GuIr410uu6E",
+    "qCRmLPzIMfA",
+    "iLowQAmnmZK",
+];
+
 function run(cmd: string): void {
     console.debug(`Run: ${cmd}`);
     execSync(cmd, { stdio: [0, 1, 2] });
@@ -157,13 +187,22 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
 
     const mapping = getMapping(dataSets);
 
-    const constant: Partial<D2Constant> = {
-        id: "Du5EM4vlYmp",
-        code: "NHWA_COMMENTS",
-        name: "NHWA Comments",
-        description: JSON.stringify(mapping, null, 2),
-        value: 0,
-    };
+    const constants: Partial<D2Constant>[] = [
+        {
+            id: "Du5EM4vlYmp",
+            code: "NHWA_COMMENTS",
+            name: "NHWA Comments",
+            description: JSON.stringify(mapping, null, 2),
+            value: 0,
+        },
+        {
+            id: "UPQZeigaTg1",
+            code: "NHWA_TOTALS",
+            name: "NHWA Totals",
+            description: JSON.stringify(totals, null, 2),
+            value: 0,
+        },
+    ];
 
     const sqlDataComments = fs.readFileSync("src/data/data-values-with-comments.sql", "utf8");
     const sqlDataApproval = fs.readFileSync("src/data/data-approval-status.sql", "utf8");
@@ -228,7 +267,7 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
     const metadata = {
         sqlViews,
         reports,
-        constants: [constant],
+        constants,
     };
 
     const metadataPath = "dist/metadata.json";

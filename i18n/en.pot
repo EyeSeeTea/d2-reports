@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2022-01-10T08:43:46.954Z\n"
-"PO-Revision-Date: 2022-01-10T08:43:46.954Z\n"
+"POT-Creation-Date: 2022-01-10T15:10:22.978Z\n"
+"PO-Revision-Date: 2022-01-10T15:10:22.978Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -77,10 +77,10 @@ msgstr ""
 msgid "NHWA Data Approval Status Report"
 msgstr ""
 
-msgid "Data set"
+msgid "Period"
 msgstr ""
 
-msgid "Period"
+msgid "Data set"
 msgstr ""
 
 msgid "Attribute"
