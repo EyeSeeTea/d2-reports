@@ -194,6 +194,26 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
             name: "NHWA Comments",
             description: JSON.stringify(mapping, null, 2),
             value: 0,
+            userGroupAccesses: [
+                {
+                    access: "r-------",
+                    userGroupUid: "DWWxlpQi9M8",
+                    displayName: "NHWA Data Clerk",
+                    id: "DWWxlpQi9M8",
+                },
+                {
+                    access: "rw------",
+                    userGroupUid: "EX00r2JNlQo",
+                    displayName: "NHWA administrators",
+                    id: "EX00r2JNlQo",
+                },
+                {
+                    access: "r-------",
+                    userGroupUid: "xcDZeClzdse",
+                    displayName: "NHWA Data Managers",
+                    id: "xcDZeClzdse",
+                },
+            ],
         },
         {
             id: "UPQZeigaTg1",
@@ -201,6 +221,26 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
             name: "NHWA Totals",
             description: JSON.stringify(totals, null, 2),
             value: 0,
+            userGroupAccesses: [
+                {
+                    access: "r-------",
+                    userGroupUid: "DWWxlpQi9M8",
+                    displayName: "NHWA Data Clerk",
+                    id: "DWWxlpQi9M8",
+                },
+                {
+                    access: "rw------",
+                    userGroupUid: "EX00r2JNlQo",
+                    displayName: "NHWA administrators",
+                    id: "EX00r2JNlQo",
+                },
+                {
+                    access: "r-------",
+                    userGroupUid: "xcDZeClzdse",
+                    displayName: "NHWA Data Managers",
+                    id: "xcDZeClzdse",
+                },
+            ],
         },
     ];
 
@@ -215,6 +255,26 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
             type: "QUERY",
             sqlQuery: sqlDataComments,
             publicAccess: "--------",
+            userGroupAccesses: [
+                {
+                    access: "r-r-----",
+                    userGroupUid: "xcDZeClzdse",
+                    displayName: "NHWA Data Managers",
+                    id: "xcDZeClzdse",
+                },
+                {
+                    access: "rwrw----",
+                    userGroupUid: "EX00r2JNlQo",
+                    displayName: "NHWA administrators",
+                    id: "EX00r2JNlQo",
+                },
+                {
+                    access: "r-r-----",
+                    userGroupUid: "DWWxlpQi9M8",
+                    displayName: "NHWA Data Clerk",
+                    id: "DWWxlpQi9M8",
+                },
+            ],
         },
         {
             id: "QTKlHcbGQRh",
@@ -223,6 +283,26 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
             type: "QUERY",
             sqlQuery: sqlDataApproval,
             publicAccess: "--------",
+            userGroupAccesses: [
+                {
+                    access: "r-r-----",
+                    userGroupUid: "xcDZeClzdse",
+                    displayName: "NHWA Data Managers",
+                    id: "xcDZeClzdse",
+                },
+                {
+                    access: "rwrw----",
+                    userGroupUid: "EX00r2JNlQo",
+                    displayName: "NHWA administrators",
+                    id: "EX00r2JNlQo",
+                },
+                {
+                    access: "r-r-----",
+                    userGroupUid: "DWWxlpQi9M8",
+                    displayName: "NHWA Data Clerk",
+                    id: "DWWxlpQi9M8",
+                },
+            ],
         },
     ];
 
@@ -248,6 +328,26 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
             },
             designContent: htmlComments,
             publicAccess: "--------",
+            userGroupAccesses: [
+                {
+                    access: "r-------",
+                    userGroupUid: "DWWxlpQi9M8",
+                    displayName: "NHWA Data Clerk",
+                    id: "DWWxlpQi9M8",
+                },
+                {
+                    access: "rw------",
+                    userGroupUid: "EX00r2JNlQo",
+                    displayName: "NHWA administrators",
+                    id: "EX00r2JNlQo",
+                },
+                {
+                    access: "r-------",
+                    userGroupUid: "xcDZeClzdse",
+                    displayName: "NHWA Data Managers",
+                    id: "xcDZeClzdse",
+                },
+            ],
         },
         {
             id: "klA47Z2KS6s",
@@ -261,6 +361,27 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
                 grandParentOrganisationUnit: false,
             },
             designContent: htmlApproval,
+            publicAccess: "--------",
+            userGroupAccesses: [
+                {
+                    access: "r-------",
+                    userGroupUid: "DWWxlpQi9M8",
+                    displayName: "NHWA Data Clerk",
+                    id: "DWWxlpQi9M8",
+                },
+                {
+                    access: "rw------",
+                    userGroupUid: "EX00r2JNlQo",
+                    displayName: "NHWA administrators",
+                    id: "EX00r2JNlQo",
+                },
+                {
+                    access: "r-------",
+                    userGroupUid: "xcDZeClzdse",
+                    displayName: "NHWA Data Managers",
+                    id: "xcDZeClzdse",
+                },
+            ],
         },
     ];
 
