@@ -30,7 +30,7 @@ export const DataCommentsList: React.FC = React.memo(() => {
 
     const getRows = React.useMemo(
         () => async (paging: TablePagination, sorting: TableSorting<DataCommentsViewModel>) => {
-            const { pager, objects } = await compositionRoot.dataComments.get({
+            const { pager, objects } = await compositionRoot.nhwa.dataComments.get({
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
@@ -53,13 +53,13 @@ export const DataCommentsList: React.FC = React.memo(() => {
         onClick: async () => {
             if (!sorting) return;
             // FUTURE: create a single use case that performs the get+saveCSV
-            const { objects: dataValues } = await compositionRoot.dataComments.get({
+            const { objects: dataValues } = await compositionRoot.nhwa.dataComments.get({
                 config,
                 paging: { page: 1, pageSize: 100000 },
                 sorting: getSortingFromTableSorting(sorting),
                 ...getUseCaseOptions(filters),
             });
-            compositionRoot.dataComments.save("data-values.csv", dataValues);
+            compositionRoot.nhwa.dataComments.save("data-values.csv", dataValues);
         },
     };
 

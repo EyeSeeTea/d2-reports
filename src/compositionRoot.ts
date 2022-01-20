@@ -3,10 +3,12 @@ import { Dhis2OrgUnitsRepository } from "./data/Dhis2OrgUnitsRepository";
 import { NHWADataApprovalDefaultRepository } from "./data/NHWADataApprovalDefaultRepository";
 import { NHWADataCommentsDefaultRepository } from "./data/NHWADataCommentsDefaultRepository";
 import { WIDPAdminDefaultRepository } from "./data/WIDPAdminDefaultRepository";
+import { WMRDataApprovalDefaultRepository } from "./data/WMRDataApprovalDefaultRepository";
 import { GetWIDPAdminDefaultUseCase } from "./domain/admin/usecases/GetWIDPAdminDefaultUseCase";
 import { SaveWIDPAdminDefaultCsvUseCase } from "./domain/admin/usecases/SaveWIDPAdminDefaultCsvUseCase";
 import { GetConfig } from "./domain/common/usecases/GetConfig";
 import { GetOrgUnitsUseCase } from "./domain/common/usecases/GetOrgUnitsUseCase";
+import { GetWMRDataApprovalUseCase } from "./domain/mal-wmr-approval-status/usecases/GetWMRDataApprovalUseCase";
 import { UpdateStatusUseCase } from "./domain/nhwa-approval-status/usecases/CompleteDataSetsUseCase";
 import { GetApprovalColumnsUseCase } from "./domain/nhwa-approval-status/usecases/GetApprovalColumnsUseCase";
 import { GetDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/GetDataSetsUseCase";
@@ -22,22 +24,28 @@ export function getCompositionRoot(api: D2Api) {
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
+    const wmrDataApprovalRepository = new WMRDataApprovalDefaultRepository(api);
 
     return {
         admin: getExecute({
             get: new GetWIDPAdminDefaultUseCase(widpAdminDefaultRepository),
             save: new SaveWIDPAdminDefaultCsvUseCase(widpAdminDefaultRepository),
         }),
-        dataComments: getExecute({
-            get: new GetDataValuesUseCase(dataCommentsRepository),
-            save: new SaveDataValuesUseCase(dataCommentsRepository),
-        }),
-        dataApproval: getExecute({
-            get: new GetDataSetsUseCase(dataApprovalRepository),
-            save: new SaveDataSetsUseCase(dataApprovalRepository),
-            getColumns: new GetApprovalColumnsUseCase(dataApprovalRepository),
-            saveColumns: new SaveApprovalColumnsUseCase(dataApprovalRepository),
-            updateStatus: new UpdateStatusUseCase(dataApprovalRepository),
+        nhwa: {
+            dataComments: getExecute({
+                get: new GetDataValuesUseCase(dataCommentsRepository),
+                save: new SaveDataValuesUseCase(dataCommentsRepository),
+            }),
+            dataApproval: getExecute({
+                get: new GetDataSetsUseCase(dataApprovalRepository),
+                save: new SaveDataSetsUseCase(dataApprovalRepository),
+                getColumns: new GetApprovalColumnsUseCase(dataApprovalRepository),
+                saveColumns: new SaveApprovalColumnsUseCase(dataApprovalRepository),
+                updateStatus: new UpdateStatusUseCase(dataApprovalRepository),
+            }),
+        },
+        mal: getExecute({
+            getWMRDataApproval: new GetWMRDataApprovalUseCase(wmrDataApprovalRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),

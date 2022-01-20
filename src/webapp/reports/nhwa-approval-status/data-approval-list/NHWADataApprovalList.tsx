@@ -66,7 +66,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         const items = _.compact(selectedIds.map(item => parseDataApprovalItemId(item)));
                         if (items.length === 0) return;
 
-                        const result = await compositionRoot.dataApproval.updateStatus(items, "complete");
+                        const result = await compositionRoot.nhwa.dataApproval.updateStatus(items, "complete");
                         if (!result) snackbar.error(i18n.t("Error when trying to complete data set"));
 
                         reload();
@@ -82,7 +82,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         const items = _.compact(selectedIds.map(item => parseDataApprovalItemId(item)));
                         if (items.length === 0) return;
 
-                        const result = await compositionRoot.dataApproval.updateStatus(items, "incomplete");
+                        const result = await compositionRoot.nhwa.dataApproval.updateStatus(items, "incomplete");
                         if (!result) snackbar.error(i18n.t("Error when trying to incomplete data set"));
 
                         reload();
@@ -98,7 +98,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         const items = _.compact(selectedIds.map(item => parseDataApprovalItemId(item)));
                         if (items.length === 0) return;
 
-                        const result = await compositionRoot.dataApproval.updateStatus(items, "approve");
+                        const result = await compositionRoot.nhwa.dataApproval.updateStatus(items, "approve");
                         if (!result) snackbar.error(i18n.t("Error when trying to approve data set"));
 
                         reload();
@@ -114,7 +114,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         const items = _.compact(selectedIds.map(item => parseDataApprovalItemId(item)));
                         if (items.length === 0) return;
 
-                        const result = await compositionRoot.dataApproval.updateStatus(items, "unapprove");
+                        const result = await compositionRoot.nhwa.dataApproval.updateStatus(items, "unapprove");
                         if (!result) snackbar.error(i18n.t("Error when trying to unapprove data set"));
 
                         reload();
@@ -136,7 +136,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
     const getRows = useMemo(
         () => async (_search: string, paging: TablePagination, sorting: TableSorting<DataApprovalViewModel>) => {
-            const { pager, objects } = await compositionRoot.dataApproval.get({
+            const { pager, objects } = await compositionRoot.nhwa.dataApproval.get({
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
@@ -154,7 +154,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
         async (columnKeys: Array<keyof DataApprovalViewModel>) => {
             if (!visibleColumns) return;
 
-            await compositionRoot.dataApproval.saveColumns(columnKeys);
+            await compositionRoot.nhwa.dataApproval.saveColumns(columnKeys);
         },
         [compositionRoot, visibleColumns]
     );
@@ -178,7 +178,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const filterOptions = useMemo(() => getFilterOptions(config), [config]);
 
     useEffect(() => {
-        compositionRoot.dataApproval.getColumns().then(columns => setVisibleColumns(columns));
+        compositionRoot.nhwa.dataApproval.getColumns().then(columns => setVisibleColumns(columns));
     }, [compositionRoot]);
 
     return (
