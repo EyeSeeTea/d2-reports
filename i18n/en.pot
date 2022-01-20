@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2022-01-10T15:10:22.978Z\n"
-"PO-Revision-Date: 2022-01-10T15:10:22.978Z\n"
+"POT-Creation-Date: 2022-01-20T10:12:50.894Z\n"
+"PO-Revision-Date: 2022-01-20T10:12:50.894Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -74,7 +74,16 @@ msgstr ""
 msgid "created"
 msgstr ""
 
-msgid "NHWA Data Approval Status Report"
+msgid "WMR Data Approval Status Report"
+msgstr ""
+
+msgid "Periods"
+msgstr ""
+
+msgid "Completion status"
+msgstr ""
+
+msgid "Approval status"
 msgstr ""
 
 msgid "Period"
@@ -86,10 +95,16 @@ msgstr ""
 msgid "Attribute"
 msgstr ""
 
-msgid "Completion status"
+msgid "Status"
 msgstr ""
 
-msgid "Approval status"
+msgid "Approved"
+msgstr ""
+
+msgid "Waiting for approval"
+msgstr ""
+
+msgid "Incomplete"
 msgstr ""
 
 msgid "Last updated value"
@@ -99,9 +114,6 @@ msgid "Complete"
 msgstr ""
 
 msgid "Error when trying to complete data set"
-msgstr ""
-
-msgid "Incomplete"
 msgstr ""
 
 msgid "Error when trying to incomplete data set"
@@ -119,10 +131,10 @@ msgstr ""
 msgid "Error when trying to unapprove data set"
 msgstr ""
 
-msgid "Data sets"
+msgid "NHWA Data Approval Status Report"
 msgstr ""
 
-msgid "Periods"
+msgid "Data sets"
 msgstr ""
 
 msgid "NHWA Comments Report"
