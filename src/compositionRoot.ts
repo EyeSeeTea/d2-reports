@@ -1,3 +1,4 @@
+import { DataQualityDefaultRepository } from "./data/DataQualityDefaultRepository";
 import { Dhis2ConfigRepository } from "./data/Dhis2ConfigRepository";
 import { Dhis2OrgUnitsRepository } from "./data/Dhis2OrgUnitsRepository";
 import { NHWADataApprovalDefaultRepository } from "./data/NHWADataApprovalDefaultRepository";
@@ -7,6 +8,7 @@ import { GetWIDPAdminDefaultUseCase } from "./domain/admin/usecases/GetWIDPAdmin
 import { SaveWIDPAdminDefaultCsvUseCase } from "./domain/admin/usecases/SaveWIDPAdminDefaultCsvUseCase";
 import { GetConfig } from "./domain/common/usecases/GetConfig";
 import { GetOrgUnitsUseCase } from "./domain/common/usecases/GetOrgUnitsUseCase";
+import { GetDataQualityDefaultUseCase } from "./domain/data-quality/usecases/GetDataQualityDefaultUseCase";
 import { UpdateStatusUseCase } from "./domain/nhwa-approval-status/usecases/CompleteDataSetsUseCase";
 import { GetApprovalColumnsUseCase } from "./domain/nhwa-approval-status/usecases/GetApprovalColumnsUseCase";
 import { GetDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/GetDataSetsUseCase";
@@ -21,9 +23,18 @@ export function getCompositionRoot(api: D2Api) {
     const dataCommentsRepository = new NHWADataCommentsDefaultRepository(api);
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
+    const dataQualityRepository = new DataQualityDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
 
     return {
+        dataQuality: getExecute({
+            getIndicators: new GetDataQualityDefaultUseCase({
+                indicators: true
+            }, dataQualityRepository),
+            getProgramIndicators: new GetProgramIndicatorstUseCase(dataQualityRepository),
+            saveIndicators: new SaveIndicatorsUseCase(dataQualityRepository),
+            saveProgramIndicators: new SaveProgramIndicatorsUseCase(dataQualityRepository),
+        }),
         admin: getExecute({
             get: new GetWIDPAdminDefaultUseCase(widpAdminDefaultRepository),
             save: new SaveWIDPAdminDefaultCsvUseCase(widpAdminDefaultRepository),

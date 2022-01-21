@@ -1,5 +1,5 @@
 import React from "react";
-import i18n from "../../../../locales";
+import i18n from "@eyeseetea/d2-ui-components/locales";
 import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
 import { Id, NamedRef } from "../../../../domain/common/entities/Base";
 import { useAppContext } from "../../../contexts/app-context";

@@ -7,35 +7,27 @@ import {
 } from "@eyeseetea/d2-ui-components";
 import StorageIcon from "@material-ui/icons/Storage";
 import React from "react";
-import { MetadataObject } from "../../../../domain/common/entities/MetadataObject";
+import { ProgramIndicator } from "../../../../domain/common/entities/ProgramIndicator";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
-import i18n from "@eyeseetea/d2-ui-components/locales";
 import { useAppContext } from "../../../contexts/app-context";
 import { useSnackbarOnError } from "../../../utils/snackbar";
-import { getAdminReportViews, AdminReportViewModel } from "../AdminReportViewModel";
+import { getDataQualityReportViews, DataQualityReportViewModel } from "../DataQualityReportViewModel";
 import { TableConfig, useObjectsTable } from "../../../components/objects-list/objects-list-hooks";
 import { ObjectsList } from "../../../components/objects-list/ObjectsList";
+import i18n from "@eyeseetea/d2-ui-components/locales";
 
-export const MetadataObjectsWithInvalidSSList: React.FC = React.memo(() => {
+export const InvalidProgramIndicatorsList: React.FC = React.memo(() => {
     const { compositionRoot } = useAppContext();
     const baseConfig = React.useMemo(getBaseListConfig, []);
-    const [sorting, setSorting] = React.useState<TableSorting<AdminReportViewModel>>();
+    const [sorting, setSorting] = React.useState<TableSorting<DataQualityReportViewModel>>();
 
     const getRows = React.useMemo(
-        () => async (paging: TablePagination, sorting: TableSorting<AdminReportViewModel>) => {
+        () => async (paging: TablePagination, sorting: TableSorting<DataQualityReportViewModel>) => {
             setSorting(sorting);
-            const objects = getAdminReportViews(
-                await compositionRoot.admin.get({
-                    sorting: getSortingFromTableSorting(sorting),
-                    publicObjects: false,
-                    removeTypes: [
-                        "programs",
-                        "dataSets",
-                        "categoryOptions",
-                        "trackedEntityTypes",
-                        "relationshipTypes",
-                        "programStages",
-                    ],
+            const objects = getDataQualityReportViews(
+                await compositionRoot.dataQuality.getProgramIndicators({
+                    publicObjects: true,
+                    removeTypes: [],
                 })
             );
             paging.total = objects.length;
@@ -59,46 +51,31 @@ export const MetadataObjectsWithInvalidSSList: React.FC = React.memo(() => {
         onClick: async () => {
             if (!sorting) return;
 
-            compositionRoot.admin.save(
+            compositionRoot.dataQuality.saveProgramIndicators(
                 "metadata-objects.csv",
-                await compositionRoot.admin.get({
-                    sorting: getSortingFromTableSorting(sorting),
-                    publicObjects: false,
-                    removeTypes: [
-                        "programs",
-                        "dataSets",
-                        "categoryOptions",
-                        "trackedEntityTypes",
-                        "relationshipTypes",
-                        "programStages",
-                    ],
+                await compositionRoot.dataQuality.getProgramIndicators({
+                    publicObjects: true,
+                    removeTypes: [],
                 })
             );
         },
     };
 
-    return <ObjectsList<AdminReportViewModel> {...tableProps} globalActions={[downloadCsv]}></ObjectsList>;
+    return <ObjectsList<DataQualityReportViewModel> {...tableProps} globalActions={[downloadCsv]}></ObjectsList>;
 });
 
-function getSortingFromTableSorting(sorting: TableSorting<AdminReportViewModel>): Sorting<MetadataObject> {
-    return {
-        field: sorting.field === "id" ? "metadataType" : sorting.field,
-        direction: sorting.order,
-    };
-}
-
-function getBaseListConfig(): TableConfig<AdminReportViewModel> {
+function getBaseListConfig(): TableConfig<DataQualityReportViewModel> {
     const paginationOptions: PaginationOptions = {
         pageSizeOptions: [10, 20, 50],
         pageSizeInitialValue: 20,
     };
 
-    const initialSorting: TableSorting<AdminReportViewModel> = {
+    const initialSorting: TableSorting<DataQualityReportViewModel> = {
         field: "metadataType" as const,
         order: "asc" as const,
     };
 
-    const columns: TableColumn<AdminReportViewModel>[] = [
+    const columns: TableColumn<DataQualityReportViewModel>[] = [
         { name: "id", text: i18n.t("Id"), sortable: true },
         { name: "metadataType", text: i18n.t("Metadata Type"), sortable: true },
         { name: "publicAccess", text: i18n.t("Public Access"), sortable: true },

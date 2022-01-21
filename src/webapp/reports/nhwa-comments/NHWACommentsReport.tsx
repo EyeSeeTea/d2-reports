@@ -1,5 +1,5 @@
 import { Typography, makeStyles } from "@material-ui/core";
-import i18n from "../../../locales";
+import i18n from "@eyeseetea/d2-ui-components/locales";
 import { DataCommentsList } from "./data-comments-list/DataCommentsList";
 
 const NHWACommentsReport: React.FC = () => {

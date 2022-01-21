@@ -35,6 +35,15 @@ msgstr ""
 msgid "Help"
 msgstr ""
 
+msgid "Data quality"
+msgstr ""
+
+msgid "Indicators"
+msgstr ""
+
+msgid "ProgramIndicators"
+msgstr ""
+
 msgid "Metadata Admin Report"
 msgstr ""
 

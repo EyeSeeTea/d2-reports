@@ -1,7 +1,7 @@
 import React from "react";
 import { MenuItem, Select } from "@material-ui/core";
 import DropdownForm from "./DropdownForm";
-import i18n from "../../../locales";
+import i18n from "@eyeseetea/d2-ui-components/locales";
 
 type Value = string;
 

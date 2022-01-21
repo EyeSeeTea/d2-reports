@@ -3,7 +3,7 @@ import { ButtonProps, Icon, IconButton, Tooltip } from "@material-ui/core";
 import { Variant } from "@material-ui/core/styles/createTypography";
 import Typography from "@material-ui/core/Typography";
 import React from "react";
-import i18n from "../../../locales";
+import i18n from "@eyeseetea/d2-ui-components/locales";
 
 const PageHeader: React.FC<PageHeaderProps> = ({ variant = "h5", title, onBackClick, helpText, children }) => {
     return (

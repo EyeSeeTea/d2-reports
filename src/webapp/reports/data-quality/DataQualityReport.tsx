@@ -1,26 +1,26 @@
 import { Typography, makeStyles } from "@material-ui/core";
 import i18n from "@eyeseetea/d2-ui-components/locales";
-import { MetadataObjectsWithInvalidSSList } from "./metadata-list/MetadataObjectsWithInvalidSSList";
-import { MetadataPublicObjectsList } from "./metadata-list/MetadataPublicObjectsList";
+import { InvalidProgramIndicatorsList } from "./metadata-list/InvalidProgramIndicatorsList";
+import { InvalidIndicatorsList } from "./metadata-list/InvalidIndicatorsList";
 
-const DataQualityReport: React.FC = () => {
+const AdminReport: React.FC = () => {
     const classes = useStyles();
 
     return (
         <div className={classes.wrapper}>
             <Typography variant="h5" gutterBottom>
-                {i18n.t("Metadata Admin Report")}
+                {i18n.t("Data quality")}
             </Typography>
 
             <Typography variant="h6" gutterBottom>
-                {i18n.t("Objects with invalid sharing settings")}
+                {i18n.t("Indicators")}
             </Typography>
-            <MetadataObjectsWithInvalidSSList />
+            <InvalidIndicatorsList />
 
             <Typography variant="h6" gutterBottom>
-                {i18n.t("Public Objects")}
+                {i18n.t("ProgramIndicators")}
             </Typography>
-            <MetadataPublicObjectsList />
+            <InvalidProgramIndicatorsList />
         </div>
     );
 };
@@ -29,4 +29,4 @@ const useStyles = makeStyles({
     wrapper: { padding: 10 },
 });
 
-export default DataQualityReport;
+export default AdminReport;
