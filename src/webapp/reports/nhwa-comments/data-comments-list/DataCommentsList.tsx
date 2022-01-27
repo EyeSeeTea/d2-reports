@@ -13,7 +13,7 @@ import { Config, getMainUserPaths } from "../../../../domain/common/entities/Con
 import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import { DataCommentsItem } from "../../../../domain/nhwa-comments/entities/DataCommentsItem";
-import i18n from "@eyeseetea/d2-ui-components/locales";
+import i18n from "../../../../locales";
 import { TableConfig, useObjectsTable } from "../../../components/objects-list/objects-list-hooks";
 import { ObjectsList } from "../../../components/objects-list/ObjectsList";
 import { useAppContext } from "../../../contexts/app-context";

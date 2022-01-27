@@ -14,7 +14,7 @@ import { useSnackbarOnError } from "../../../utils/snackbar";
 import { getDataQualityReportViews, DataQualityReportViewModel } from "../DataQualityReportViewModel";
 import { TableConfig, useObjectsTable } from "../../../components/objects-list/objects-list-hooks";
 import { ObjectsList } from "../../../components/objects-list/ObjectsList";
-import i18n from "@eyeseetea/d2-ui-components/locales";
+import i18n from "../../../locales";
 
 export const InvalidProgramIndicatorsList: React.FC = React.memo(() => {
     const { compositionRoot } = useAppContext();

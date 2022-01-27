@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { OrgUnitsFilter, OrgUnitsFilterProps } from "./OrgUnitsFilter";
 import { ConfirmationDialog } from "@eyeseetea/d2-ui-components";
 import { useAppContext } from "../../contexts/app-context";
-import i18n from "@eyeseetea/d2-ui-components/locales";
+import i18n from "../../../locales";
 import { useBooleanState } from "../../utils/use-boolean";
 import { TextField } from "material-ui";
 

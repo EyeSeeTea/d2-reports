@@ -4,7 +4,7 @@ import { IconButton } from "material-ui";
 import { FilterList } from "@material-ui/icons";
 import { Filters, DataValuesFiltersProps } from "./Filters";
 import { useBooleanState } from "../../../utils/use-boolean";
-import i18n from "@eyeseetea/d2-ui-components/locales";
+import i18n from "../../../../locales";
 
 export interface FiltersBoxProps extends DataValuesFiltersProps {
     showToggleButton: boolean;

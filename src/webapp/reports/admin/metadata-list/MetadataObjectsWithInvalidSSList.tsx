@@ -9,7 +9,7 @@ import StorageIcon from "@material-ui/icons/Storage";
 import React from "react";
 import { MetadataObject } from "../../../../domain/common/entities/MetadataObject";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
-import i18n from "@eyeseetea/d2-ui-components/locales";
+import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
 import { useSnackbarOnError } from "../../../utils/snackbar";
 import { getAdminReportViews, AdminReportViewModel } from "../AdminReportViewModel";

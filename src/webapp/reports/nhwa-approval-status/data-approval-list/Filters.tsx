@@ -3,7 +3,7 @@ import React, { useMemo } from "react";
 import styled from "styled-components";
 import { Id, NamedRef } from "../../../../domain/common/entities/Base";
 import { getRootIds } from "../../../../domain/common/entities/OrgUnit";
-import i18n from "@eyeseetea/d2-ui-components/locales";
+import i18n from "../../../../locales";
 import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
 import { OrgUnitsFilterButton } from "../../../components/org-units-filter/OrgUnitsFilterButton";
 import { useAppContext } from "../../../contexts/app-context";

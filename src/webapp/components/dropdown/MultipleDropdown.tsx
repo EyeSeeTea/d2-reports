@@ -1,7 +1,7 @@
 import { MenuItem, Select } from "@material-ui/core";
 import _ from "lodash";
 import React, { useCallback } from "react";
-import i18n from "@eyeseetea/d2-ui-components/locales";
+import i18n from "../../../locales";
 import DropdownForm from "./DropdownForm";
 
 type Value = string;
