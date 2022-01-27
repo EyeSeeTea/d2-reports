@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2022-01-10T15:10:22.978Z\n"
-"PO-Revision-Date: 2022-01-10T15:10:22.978Z\n"
+"POT-Creation-Date: 2022-01-27T19:38:56.903Z\n"
+"PO-Revision-Date: 2022-01-27T19:38:56.903Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -33,15 +33,6 @@ msgid "Back"
 msgstr ""
 
 msgid "Help"
-msgstr ""
-
-msgid "Data quality"
-msgstr ""
-
-msgid "Indicators"
-msgstr ""
-
-msgid "ProgramIndicators"
 msgstr ""
 
 msgid "Metadata Admin Report"
@@ -81,6 +72,15 @@ msgid "lastUpdated"
 msgstr ""
 
 msgid "created"
+msgstr ""
+
+msgid "Data quality"
+msgstr ""
+
+msgid "Indicators"
+msgstr ""
+
+msgid "ProgramIndicators"
 msgstr ""
 
 msgid "NHWA Data Approval Status Report"
