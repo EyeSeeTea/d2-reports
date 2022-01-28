@@ -1,6 +1,3 @@
-
-import { IndicatorsByExpression } from "../../common/entities/IndicatorsByExpression";
-import { ProgramIndicatorsByExpression } from "../../common/entities/ProgramIndicatorsByExpression";
 import { DataQualityRepository, DataQualityRepositorySaveOptions } from "../repositories/DataQualityRepository";
 
 export class SaveDataQualityDefaultCsvUseCase {

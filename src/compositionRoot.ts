@@ -28,12 +28,7 @@ export function getCompositionRoot(api: D2Api) {
 
     return {
         dataQuality: getExecute({
-            getIndicators: new GetDataQualityDefaultUseCase({
-                indicators: true
-            }, dataQualityRepository),
-            getProgramIndicators: new GetProgramIndicatorstUseCase(dataQualityRepository),
-            saveIndicators: new SaveIndicatorsUseCase(dataQualityRepository),
-            saveProgramIndicators: new SaveProgramIndicatorsUseCase(dataQualityRepository),
+            getValidations: new GetDataQualityDefaultUseCase(dataQualityRepository),
         }),
         admin: getExecute({
             get: new GetWIDPAdminDefaultUseCase(widpAdminDefaultRepository),
