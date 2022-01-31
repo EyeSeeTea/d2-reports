@@ -10,7 +10,6 @@ import { ValidationResults } from "../domain/common/entities/ValidationResults";
 import { DataQualityRepository } from "../domain/data-quality/repositories/DataQualityRepository";
 import { GetOptionGeneric } from "@eyeseetea/d2-api/api/common";
 import { PaginatedObjects } from "../domain/common/entities/PaginatedObjects";
-import { promiseMap } from "../utils/promises";
 import { Namespaces } from "./clients/storage/Namespaces";
 import { PersistedConfig } from "./entities/PersistedConfig";
 import { InvalidIndicators } from "./entities/InvalidIndicators";
@@ -21,31 +20,36 @@ import { Instance } from "./entities/Instance";
 
 const filter = "filter=lastUpdated:gt:"
 
+export async function promiseMap<T, S>(inputValues: T[], mapper: (value: T) => Promise<S>): Promise<S[]> {
+    const output: S[] = [];
+    for (const value of inputValues) {
+        const res = await mapper(value);
+        output.push(res);
+    }
+    return output;
+}
 export class DataQualityDefaultRepository implements DataQualityRepository {
     private storageClient: StorageClient;
 
     constructor(private api: D2Api) {
         const instance = new Instance({ url: this.api.baseUrl });
         this.storageClient = new DataStoreStorageClient("global", instance);
-     }
-     
+    }
+
     getValidations(): Promise<ValidationResults> {
         const indicatorsValidationsResult = this.getValidatedIndicators()
         const programIndicatorsvalidationsResult = this.getValidatedProgramIndicators()
         return _.merge(indicatorsValidationsResult, programIndicatorsvalidationsResult)
     }
-        
+
 
     getValidatedIndicators(): Promise<ValidationResults> {
-        
+
         const startDate = this.getIndicatorsLastUpdated();
 
-        const filters={
-            paging = false,
-            startDate: startDate
-        }
-        const optionsTest=({
-            fields:{
+        const date = this.getParsedDate(new Date())
+        const indicatorsResult = await this.api.models.indicators.get({
+            fields: {
                 id: true,
                 filter: true,
                 numerator: true,
@@ -53,47 +57,47 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
                 name: true,
                 createdBy: true,
                 lastUpdated: true,
-            },filters
+            },
+            filters: {
+                startDate: startDate
+            },
+            paging: false,
         })
-        const date = this.getParsedDate(new Date())
-        const indicatorsResult = await this.api.models.indicators.get(optionsTest)
             .getData()
 
         const d2api = this.api
-        const results: any = promiseMap(indicatorsResult.objects, indicator => {
+        const results = await promiseMap(indicatorsResult.objects, async indicator => {
             const numeratorResult = await d2api.expressions.validate("indicator", indicator.numerator).getData();
             const numerator = numeratorResult.message === "Valid";
             const denominatorResult = await d2api.expressions.validate("indicator", indicator.denominator).getData();
             const denominator = denominatorResult.message === "Valid";
-            const filterResult = await d2api.expressions.validate("indicator", indicator.filter).getData();
-            const filter = filterResult.message === "Valid";
 
-            return { numerator, denominator, filter, indicator };
+            return { numerator, denominator, indicator };
         }
         this.saveIndicators(date, results);
         return results
     }
 
     getValidatedProgramIndicators(): Promise<ValidationResults> {
-        
+
         const startDate = this.getProgramIndicatorsLastUpdated()
 
-        const filters={
+        const filters = {
             paging = false,
             startDate: startDate
         }
-        const optionsTest=({
-            fields:{
+        const optionsTest = ({
+            fields: {
                 id: true,
                 filter: true,
                 expression: true,
                 name: true,
                 createdBy: true,
                 lastUpdated: true,
-            },filters
+            }, filters
         })
         const date = this.getParsedDate(new Date())
-        const programIndicatorsResult:PaginatedObjects<any> = await this.api.models.programIndicators.get(optionsTest)
+        const programIndicatorsResult: PaginatedObjects<any> = await this.api.models.programIndicators.get(optionsTest)
             .getData()
 
         const d2api = this.api
@@ -106,12 +110,12 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
             return { expression, filter, programIndicator };
         }
 
-        this.saveProgramIndicators(date,results);
+        this.saveProgramIndicators(date, results);
         return results
     }
-    
-    private getParsedDate(strDate: Date){
-        return strDate.getFullYear()+'-'+("0"+(new Date().getMonth()+1)).slice(-2)+'-'+("0"+new Date().getDate()).slice(-2)
+
+    private getParsedDate(strDate: Date) {
+        return strDate.getFullYear() + '-' + ("0" + (new Date().getMonth() + 1)).slice(-2) + '-' + ("0" + new Date().getDate()).slice(-2)
     }
 
     private getIndicatorsLastUpdated(): string {
@@ -124,7 +128,7 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         return programIndicatorsLastUpdated;
     }
 
-    private async setIndicatorsLastUpdated(indicators:InvalidIndicators, indicatorsLastUpdated: string): Promise<void> {
+    private async setIndicatorsLastUpdated(indicators: InvalidIndicators, indicatorsLastUpdated: string): Promise<void> {
         const config = await this.getConfig();
 
         await this.storageClient.saveObject<PersistedConfig>(Namespaces.DATA_QUALITY_CONFIG, {
@@ -154,24 +158,23 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         const config = await this.storageClient.getObject<PersistedConfig>(Namespaces.DATA_QUALITY_CONFIG);
         return config ?? {};
     }
-    
+
     private saveIndicators(lastUpdated: string, indicators: ValidationResults[]): Promise<void> {
         this.setIndicatorsLastUpdated(indicators, lastUpdated)
         //this.saveIndicators(indicators)
-    const sections = _.mapValues(indexedSections, section => section.id);
+        const sections = _.mapValues(indexedSections, section => section.id);
     }
 
     private saveProgramIndicators(lastUpdated: string, programIndicators: ValidationResults[]): Promise<void> {
-        const invalidProgramIndicators: InvalidProgramIndicators = _.map(programIndicators, programIndicator =>{
-            if (programIndicator === undefined)
-            {
+        const invalidProgramIndicators: InvalidProgramIndicators = _.map(programIndicators, programIndicator => {
+            if (programIndicator === undefined) {
                 return
-            }else{
+            } else {
                 return {
-                    name: programIndicator.name?? "-",
-                    expression: programIndicator.expression?? "-",
-                    filter: programIndicator.filter?? "-",
-                    id: programIndicator.id?? "-",
+                    name: programIndicator.name ?? "-",
+                    expression: programIndicator.expression ?? "-",
+                    filter: programIndicator.filter ?? "-",
+                    id: programIndicator.id ?? "-",
                 }
             }
         })
@@ -182,7 +185,7 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
     async exportToCsv(filename: string, metadataObjects: ValidationResults[]): Promise<void> {
         const headers = csvFields.map(field => ({ id: field, text: field }));
         const rows = metadataObjects.map(
-            (ValidationResults):MetadataRow => ({
+            (ValidationResults): MetadataRow => ({
                 metadataType: ValidationResults.metadataType,
                 id: ValidationResults.id,
                 name: ValidationResults.name,
