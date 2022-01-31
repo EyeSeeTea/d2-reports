@@ -1,10 +1,8 @@
-import { InvalidIndicators } from "./InvalidIndicators";
-import { InvalidProgramIndicators } from "./InvalidProgramIndicators";
+import { ValidationResults } from "../../domain/common/entities/ValidationResults";
 
 
 export interface PersistedConfig {
     indicatorsLastUpdated?: string;
     programIndicatorsLastUpdated?: string;
-    indicators?: InvalidIndicators[];
-    programIndicators?: InvalidProgramIndicators[];
+    validationResults?: ValidationResults[];
 }

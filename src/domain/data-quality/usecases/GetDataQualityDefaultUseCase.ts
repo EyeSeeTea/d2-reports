@@ -4,7 +4,7 @@ import { DataQualityRepository } from "../repositories/DataQualityRepository";
 export class GetDataQualityDefaultUseCase {
     constructor(private dataQualityRepository: DataQualityRepository) { }
 
-    execute(): Promise<ValidationResults> {
+    execute(): Promise<ValidationResults[]> {
         return this.dataQualityRepository.getValidations();
     }
 }

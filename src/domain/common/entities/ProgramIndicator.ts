@@ -1,16 +1,10 @@
-import { Id } from "./Base";
+import { Ref } from "./Base";
 
 export interface ProgramIndicator {
-    Id: Id;
-    name: string;
-    metadataType: string;
-    publicAccess: string;
-    expression: string
+    id: string;
+    expression: string;
     filter: string;
-    createdBy?: string;
-    lastUpdatedBy?: string;
-    userGroupAccess?: string;
-    userAccess?: string;
-    lastUpdated?: string;
-    created?: string;
+    name: string;
+    user: Ref;
+    lastUpdated: string;
 }

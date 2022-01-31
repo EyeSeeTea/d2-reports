@@ -3,7 +3,7 @@ import i18n from "../../../locales";
 import { InvalidProgramIndicatorsList } from "./metadata-list/InvalidProgramIndicatorsList";
 import { InvalidIndicatorsList } from "./metadata-list/InvalidIndicatorsList";
 
-const AdminReport: React.FC = () => {
+const DataQualityReport: React.FC = () => {
     const classes = useStyles();
 
     return (
@@ -29,4 +29,4 @@ const useStyles = makeStyles({
     wrapper: { padding: 10 },
 });
 
-export default AdminReport;
+export default DataQualityReport;

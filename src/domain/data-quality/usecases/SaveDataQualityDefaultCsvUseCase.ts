@@ -1,13 +1,9 @@
-import { DataQualityRepository, DataQualityRepositorySaveOptions } from "../repositories/DataQualityRepository";
+import { DataQualityRepository} from "../repositories/DataQualityRepository";
 
 export class SaveDataQualityDefaultCsvUseCase {
     constructor(private metadataRepository: DataQualityRepository) { }
 
-    async execute(options: DataQualityRepositorySaveOptions): Promise<void> {
-        if (options.indicators) {
-            this.metadataRepository.saveIndicators(options.indicatorLastUpdated, options.indicators);
-        } else if (options.programIndicators) {
-            this.metadataRepository.saveProgramIndicators(options.programIndicatorsLastUpdated, options.programIndicators);
-        }
+    async execute(): Promise<void> {
+        this.metadataRepository.exportToCsv();
     }
 }

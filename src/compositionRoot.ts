@@ -9,6 +9,7 @@ import { SaveWIDPAdminDefaultCsvUseCase } from "./domain/admin/usecases/SaveWIDP
 import { GetConfig } from "./domain/common/usecases/GetConfig";
 import { GetOrgUnitsUseCase } from "./domain/common/usecases/GetOrgUnitsUseCase";
 import { GetDataQualityDefaultUseCase } from "./domain/data-quality/usecases/GetDataQualityDefaultUseCase";
+import { SaveDataQualityDefaultCsvUseCase } from "./domain/data-quality/usecases/SaveDataQualityDefaultCsvUseCase";
 import { UpdateStatusUseCase } from "./domain/nhwa-approval-status/usecases/CompleteDataSetsUseCase";
 import { GetApprovalColumnsUseCase } from "./domain/nhwa-approval-status/usecases/GetApprovalColumnsUseCase";
 import { GetDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/GetDataSetsUseCase";
@@ -29,6 +30,7 @@ export function getCompositionRoot(api: D2Api) {
     return {
         dataQuality: getExecute({
             getValidations: new GetDataQualityDefaultUseCase(dataQualityRepository),
+            exportToCsv: new SaveDataQualityDefaultCsvUseCase(dataQualityRepository)
         }),
         admin: getExecute({
             get: new GetWIDPAdminDefaultUseCase(widpAdminDefaultRepository),
