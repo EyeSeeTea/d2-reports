@@ -10,8 +10,6 @@ import { DataStoreStorageClient } from "./clients/storage/DataStoreStorageClient
 import { StorageClient } from "./clients/storage/StorageClient";
 import { Instance } from "./entities/Instance";
 
-const filter = "filter=lastUpdated:gt:"
-
 export async function promiseMap<T, S>(inputValues: T[], mapper: (value: T) => Promise<S>): Promise<S[]> {
     const output: S[] = [];
     for (const value of inputValues) {
@@ -29,15 +27,17 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
     }
 
     async getValidations(): Promise<ValidationResults[]> {
-        const indicatorDate = this.getParsedDate(new Date())
-        const indicatorsValidationsResult = await this.getValidatedIndicators()
         const programIndicatorDate = this.getParsedDate(new Date())
         const programIndicatorsvalidationsResult = await this.getValidatedProgramIndicators()
+        const indicatorDate = this.getParsedDate(new Date())
+        const indicatorsValidationsResult = await this.getValidatedIndicators()
         const result:ValidationResults[] = [...indicatorsValidationsResult, ...programIndicatorsvalidationsResult]
         await this.saveResult(result, indicatorDate, programIndicatorDate)
         return result
     }
-
+    timeout(delay: number) {
+        return new Promise( res => setTimeout(res, delay) );
+    }
 
     async getValidatedIndicators(): Promise<ValidationResults[]> {
 
@@ -61,12 +61,13 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
 
         const d2api = this.api
         const results = await promiseMap(indicatorsResult.objects, async indicator => {
-            const numeratorResult = await d2api.expressions.validate("indicator", indicator.numerator).getData();
-            const numerator = numeratorResult.message === "Valid";
-            const denominatorResult = await d2api.expressions.validate("indicator", indicator.denominator).getData();
-            const denominator = denominatorResult.message === "Valid";
-                return { metadataType: "Indicator", id:indicator.id, name:indicator.name, numerator: indicator.numerator, numeratorresult: numerator, 
-                denominator: indicator.denominator, denominatorresult: denominator, user: indicator.user.id, lastUpdated: indicator.lastUpdated };
+            const numeratorResult = (indicator.numerator === "")? undefined :await d2api.expressions.validate("indicator", indicator.numerator).getData();
+            const numerator = (numeratorResult === undefined)? false : numeratorResult.message === "Valid";
+            const denominatorResult = (indicator.denominator === "")? undefined: await d2api.expressions.validate("indicator", indicator.denominator).getData();
+            const denominator = (denominatorResult === undefined)? false : denominatorResult.message === "Valid";
+
+            return { metadataType: "Indicator", id:indicator.id, name:indicator.name, numerator: indicator.numerator, numeratorresult: numerator, 
+            denominator: indicator.denominator, denominatorresult: denominator, user: indicator.user.id, lastUpdated: indicator.lastUpdated };
         });
 
         return results
@@ -94,11 +95,18 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
 
         const d2api = this.api
         const results = await promiseMap(programIndicatorsResult.objects, async programIndicator => {
-            const expressionResult = await d2api.expressions.validate("program-indicator-formula", programIndicator.expression).getData();
-            const expression = expressionResult.message === "Valid";
-            const filterResult = await d2api.expressions.validate("program-indicator-filter", programIndicator.filter).getData();
-            const filter = filterResult.message === "Valid";
-            return { metadataType: "ProgramIndicator", id:programIndicator.id, name:programIndicator.name, expression: programIndicator.expression, expressionresult: expression, filter: programIndicator.filter, filterresult: filter, 
+            try{
+            const expressionResult = (!("expression" in programIndicator) || programIndicator.expression === "" )? undefined: await d2api.expressions.validate("program-indicator-formula", programIndicator.expression).getData();
+            const expression = (expressionResult === undefined)? false : expressionResult.message === "Valid";
+            const filterResult = (!("filter" in programIndicator) || programIndicator.filter === "")? undefined: await d2api.expressions.validate("program-indicator-filter", programIndicator.filter).getData();
+            const filter = (filterResult === undefined)? false: filterResult.message === "Valid";
+            return { metadataType: "ProgramIndicator", id:programIndicator.id, name:programIndicator.name, expression: programIndicator.expression, expressionresult: false, filter: programIndicator.filter, filterresult: false, 
+                user: programIndicator.user.id, lastUpdated: programIndicator.lastUpdated };
+            }
+            catch(e){
+                debugger;
+            }
+            return { metadataType: "ProgramIndicator", id:programIndicator.id, name:programIndicator.name, expression: programIndicator.expression, expressionresult: false, filter: programIndicator.filter, filterresult: false, 
                 user: programIndicator.user.id, lastUpdated: programIndicator.lastUpdated };
         });
         return results

@@ -7,24 +7,22 @@ import {
 } from "@eyeseetea/d2-ui-components";
 import StorageIcon from "@material-ui/icons/Storage";
 import React from "react";
-import { ProgramIndicator } from "../../../../domain/common/entities/ProgramIndicator";
-import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import { useAppContext } from "../../../contexts/app-context";
-import { useSnackbarOnError } from "../../../utils/snackbar";
-import { getDataQualityReportViews, DataQualityReportViewModel } from "../DataQualityReportViewModel";
+import { useSnackbarOnError } from "../../../utils/snackbar"; 
 import { TableConfig, useObjectsTable } from "../../../components/objects-list/objects-list-hooks";
 import { ObjectsList } from "../../../components/objects-list/ObjectsList";
 import i18n from "../../../../locales";
+import { DataQualityReportProgramIndicatorViewModel, getDataQualityReportProgramIndicatorViews } from "../DataQualityReportProgramIndicatorViewModel";
 
 export const InvalidProgramIndicatorsList: React.FC = React.memo(() => {
     const { compositionRoot } = useAppContext();
     const baseConfig = React.useMemo(getBaseListConfig, []);
-    const [sorting, setSorting] = React.useState<TableSorting<DataQualityReportViewModel>>();
+    const [sorting, setSorting] = React.useState<TableSorting<DataQualityReportProgramIndicatorViewModel>>();
 
     const getRows = React.useMemo(
-        () => async (paging: TablePagination, sorting: TableSorting<DataQualityReportViewModel>) => {
+        () => async (paging: TablePagination, sorting: TableSorting<DataQualityReportProgramIndicatorViewModel>) => {
             setSorting(sorting);
-            const objects = getDataQualityReportViews(
+            const objects = getDataQualityReportProgramIndicatorViews(
                 await compositionRoot.dataQuality.getValidations()
             );
             paging.total = objects.length;
@@ -52,21 +50,21 @@ export const InvalidProgramIndicatorsList: React.FC = React.memo(() => {
         },
     };
 
-    return <ObjectsList<DataQualityReportViewModel> {...tableProps} globalActions={[downloadCsv]}></ObjectsList>;
+    return <ObjectsList<DataQualityReportProgramIndicatorViewModel> {...tableProps} globalActions={[downloadCsv]}></ObjectsList>;
 });
 
-function getBaseListConfig(): TableConfig<DataQualityReportViewModel> {
+function getBaseListConfig(): TableConfig<DataQualityReportProgramIndicatorViewModel> {
     const paginationOptions: PaginationOptions = {
         pageSizeOptions: [10, 20, 50],
         pageSizeInitialValue: 20,
     };
 
-    const initialSorting: TableSorting<DataQualityReportViewModel> = {
+    const initialSorting: TableSorting<DataQualityReportProgramIndicatorViewModel> = {
         field: "metadataType" as const,
         order: "asc" as const,
     };
 
-    const columns: TableColumn<DataQualityReportViewModel>[] = [
+    const columns: TableColumn<DataQualityReportProgramIndicatorViewModel>[] = [
         { name: "id", text: i18n.t("Id"), sortable: true },
         { name: "metadataType", text: i18n.t("Metadata Type"), sortable: true },
         { name: "name", text: i18n.t("name"), sortable: true },
@@ -76,10 +74,6 @@ function getBaseListConfig(): TableConfig<DataQualityReportViewModel> {
         { name: "expressionrresult", text: i18n.t("Valid Expression"), sortable: true },
         { name: "filter", text: i18n.t("filter"), sortable: true },
         { name: "filterresult", text: i18n.t("Valid Filter"), sortable: true },
-        { name: "denominator", text: i18n.t("denominator"), sortable: true },
-        { name: "denominatorresult", text: i18n.t("Valid Denominator"), sortable: true },
-        { name: "numerator", text: i18n.t("numerator"), sortable: true },
-        { name: "numeratorresult", text: i18n.t("Valid Numerator"), sortable: true },
     ];
 
     return { columns, initialSorting, paginationOptions };
