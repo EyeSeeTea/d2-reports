@@ -31,12 +31,9 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         const programIndicatorsvalidationsResult = await this.getValidatedProgramIndicators()
         const indicatorDate = this.getParsedDate(new Date())
         const indicatorsValidationsResult = await this.getValidatedIndicators()
-        const result:ValidationResults[] = [...indicatorsValidationsResult, ...programIndicatorsvalidationsResult]
-        await this.saveResult(result, indicatorDate, programIndicatorDate)
-        return result
-    }
-    timeout(delay: number) {
-        return new Promise( res => setTimeout(res, delay) );
+        const result: ValidationResults[] = [...indicatorsValidationsResult, ...programIndicatorsvalidationsResult]
+        const persistedData = await this.saveResult(result, indicatorDate, programIndicatorDate)
+        return persistedData
     }
 
     async getValidatedIndicators(): Promise<ValidationResults[]> {
@@ -53,7 +50,7 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
                 lastUpdated: true,
             },
             filter: {
-                lastUpdated: {"gt": startDate } ,
+                lastUpdated: { "gt": startDate },
             },
             paging: false,
         })
@@ -61,13 +58,15 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
 
         const d2api = this.api
         const results = await promiseMap(indicatorsResult.objects, async indicator => {
-            const numeratorResult = (indicator.numerator === "")? undefined :await d2api.expressions.validate("indicator", indicator.numerator).getData();
-            const numerator = (numeratorResult === undefined)? false : numeratorResult.message === "Valid";
-            const denominatorResult = (indicator.denominator === "")? undefined: await d2api.expressions.validate("indicator", indicator.denominator).getData();
-            const denominator = (denominatorResult === undefined)? false : denominatorResult.message === "Valid";
+            const numeratorResult = (indicator.numerator === "") ? undefined : await d2api.expressions.validate("indicator", indicator.numerator).getData();
+            const numerator = (numeratorResult === undefined) ? false : numeratorResult.message === "Valid";
+            const denominatorResult = (indicator.denominator === "") ? undefined : await d2api.expressions.validate("indicator", indicator.denominator).getData();
+            const denominator = (denominatorResult === undefined) ? false : denominatorResult.message === "Valid";
 
-            return { metadataType: "Indicator", id:indicator.id, name:indicator.name, numerator: indicator.numerator, numeratorresult: numerator, 
-            denominator: indicator.denominator, denominatorresult: denominator, user: indicator.user.id, lastUpdated: indicator.lastUpdated };
+            return {
+                metadataType: "Indicator", id: indicator.id, name: indicator.name, numerator: indicator.numerator, numeratorresult: numerator,
+                denominator: indicator.denominator, denominatorresult: denominator, user: indicator.user.id, lastUpdated: indicator.lastUpdated
+            };
         });
 
         return results
@@ -87,7 +86,7 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
                 lastUpdated: true,
             },
             filter: {
-                lastUpdated: { "gt": startDate,}
+                lastUpdated: { "gt": startDate, }
             },
             paging: false,
         })
@@ -95,17 +94,14 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
 
         const d2api = this.api
         const results = await promiseMap(programIndicatorsResult.objects, async programIndicator => {
-            try{
-            const expressionResult = (!("expression" in programIndicator) || programIndicator.expression === "" )? undefined: await d2api.expressions.validate("program-indicator-formula", programIndicator.expression).getData();
-            const expression = (expressionResult === undefined)? false : expressionResult.message === "Valid";
-            const filterResult = (!("filter" in programIndicator) || programIndicator.filter === "")? undefined: await d2api.expressions.validate("program-indicator-filter", programIndicator.filter).getData();
-            const filter = (filterResult === undefined)? false: filterResult.message === "Valid";
-            }
-            catch(e){
-                debugger;
-            }
-            return { metadataType: "ProgramIndicator", id:programIndicator.id, name:programIndicator.name, expression: programIndicator.expression, expressionresult: false, filter: programIndicator.filter, filterresult: false, 
-                user: programIndicator.user.id, lastUpdated: programIndicator.lastUpdated };
+            const expressionResult = (!("expression" in programIndicator) || programIndicator.expression === "") ? undefined : await d2api.expressions.validate("program-indicator-formula", programIndicator.expression).getData();
+            const expression = (expressionResult === undefined) ? false : expressionResult.message === "Valid";
+            const filterResult = (!("filter" in programIndicator) || programIndicator.filter === "") ? undefined : await d2api.expressions.validate("program-indicator-filter", programIndicator.filter).getData();
+            const filter = (filterResult === undefined) ? false : filterResult.message === "Valid";
+            return {
+                metadataType: "ProgramIndicator", id: programIndicator.id, name: programIndicator.name, expression: programIndicator.expression, expressionresult: expression, filter: programIndicator.filter, filterresult: filter,
+                user: programIndicator.user.id, lastUpdated: programIndicator.lastUpdated
+            };
         });
         return results
     }
@@ -124,39 +120,55 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         return programIndicatorsLastUpdated;
     }
 
-    private async saveResult(validationResults: ValidationResults[], indicatorsLastUpdated: string, programIndicatorsLastUpdated: string): Promise<void> {
+    private async saveResult(validationResults: ValidationResults[], indicatorsLastUpdated: string, programIndicatorsLastUpdated: string): Promise<ValidationResults[]> {
         const config = await this.getConfig();
         config.indicatorsLastUpdated = indicatorsLastUpdated
         config.programIndicatorsLastUpdated = programIndicatorsLastUpdated
 
-        config.validationResults = config.validationResults? [...config.validationResults, ...validationResults] : validationResults
+        config.validationResults = config.validationResults ? [...config.validationResults, ...validationResults] : validationResults
 
-        return await this.storageClient.saveObject<PersistedConfig>(Namespaces.DATA_QUALITY_CONFIG, {
+        await this.storageClient.saveObject<PersistedConfig>(Namespaces.DATA_QUALITY_CONFIG, {
             ...config
         });
+        return config.validationResults
     }
 
     private async getConfig(): Promise<PersistedConfig> {
         const config = await this.storageClient.getObject<PersistedConfig>(Namespaces.DATA_QUALITY_CONFIG);
+        debugger;
         return config ?? {};
     }
 
     async exportToCsv(): Promise<void> {
-        const metadataObjects = await this.getValidations()
+        const metadataObjects = await (await this.getConfig()).validationResults
         const headers = csvFields.map(field => ({ id: field, text: field }));
-        const rows = metadataObjects.map(
-            (ValidationResults): MetadataRow => ({
-                metadataType: ValidationResults.metadataType,
-                id: ValidationResults.id,
-                name: ValidationResults.name,
-            })
-        );
+        if (metadataObjects === undefined) {
+            return
+         }
+        else {
+            const rows = metadataObjects.map(
+                (ValidationResults): MetadataRow => ({
+                    metadataType: ValidationResults.metadataType,
+                    id: ValidationResults.id,
+                    name: ValidationResults.name,
+                    expression: ValidationResults.expression,
+                    expressionresult: ValidationResults.expressionresult ? "valid" : "invalid",
+                    filter: ValidationResults.filter,
+                    filterresult: ValidationResults.filterresult ? "valid" : "invalid",
+                    numerator: ValidationResults.numerator,
+                    numeratorresult: ValidationResults.numeratorresult ? "valid" : "invalid",
+                    denominator: ValidationResults.denominator,
+                    denominatorresult: ValidationResults.denominatorresult ? "valid" : "invalid",
+                    user: ValidationResults.user,
+                })
+            );
 
-        const csvDataSource = new CsvWriterDataSource();
-        const csvData: CsvData<CsvField> = { headers, rows };
-        const csvContents = csvDataSource.toString(csvData);
+            const csvDataSource = new CsvWriterDataSource();
+            const csvData: CsvData<CsvField> = { headers, rows };
+            const csvContents = csvDataSource.toString(csvData);
 
-        await downloadFile(csvContents, "export.csv", "text/csv");
+            await downloadFile(csvContents, "export.csv", "text/csv");
+        }
     }
 }
 
@@ -164,6 +176,15 @@ const csvFields = [
     "metadataType",
     "id",
     "name",
+    "expression",
+    "expressionresult",
+    "filter",
+    "filterresult",
+    "numerator",
+    "numeratorresult",
+    "denominator",
+    "denominatorresult",
+    "user"
 ] as const;
 
 type CsvField = typeof csvFields[number];
