@@ -13,7 +13,7 @@ export interface DataQualityReportProgramIndicatorViewModel {
 }
 
 export function getDataQualityReportProgramIndicatorViews(validationResults: ValidationResults[]): DataQualityReportProgramIndicatorViewModel[] {
-    return validationResults.filter(item => item.metadataType === "ProgramIndicator" && (item.filterResult == false || item.expressionResult == false)).map(validationResult => {
+    return validationResults.filter(item => item.metadataType === "ProgramIndicator" && (item.filterresult === false || item.expressionresult === false)).map(validationResult => {
         return {
             id: validationResult.id,
             name: validationResult.name,

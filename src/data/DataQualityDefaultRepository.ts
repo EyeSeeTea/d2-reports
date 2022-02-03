@@ -41,7 +41,7 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
 
     async getValidatedIndicators(): Promise<ValidationResults[]> {
 
-        const startDate = this.getIndicatorsLastUpdated();
+        const startDate = await this.getIndicatorsLastUpdated();
 
         const indicatorsResult = await this.api.models.indicators.get({
             fields: {
@@ -52,8 +52,8 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
                 user: true,
                 lastUpdated: true,
             },
-            filters: {
-                startDate: startDate
+            filter: {
+                lastUpdated: {"gt": startDate } ,
             },
             paging: false,
         })
@@ -75,8 +75,8 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
 
     async getValidatedProgramIndicators(): Promise<ValidationResults[]> {
 
-        const startDate = this.getProgramIndicatorsLastUpdated()
-
+        const startDate = await this.getProgramIndicatorsLastUpdated()
+        debugger;
         const programIndicatorsResult = await this.api.models.programIndicators.get({
             fields: {
                 id: true,
@@ -86,8 +86,8 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
                 user: true,
                 lastUpdated: true,
             },
-            filters: {
-                startDate: startDate
+            filter: {
+                lastUpdated: { "gt": startDate,}
             },
             paging: false,
         })
@@ -100,8 +100,6 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
             const expression = (expressionResult === undefined)? false : expressionResult.message === "Valid";
             const filterResult = (!("filter" in programIndicator) || programIndicator.filter === "")? undefined: await d2api.expressions.validate("program-indicator-filter", programIndicator.filter).getData();
             const filter = (filterResult === undefined)? false: filterResult.message === "Valid";
-            return { metadataType: "ProgramIndicator", id:programIndicator.id, name:programIndicator.name, expression: programIndicator.expression, expressionresult: false, filter: programIndicator.filter, filterresult: false, 
-                user: programIndicator.user.id, lastUpdated: programIndicator.lastUpdated };
             }
             catch(e){
                 debugger;

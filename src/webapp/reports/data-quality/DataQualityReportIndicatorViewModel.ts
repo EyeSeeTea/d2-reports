@@ -13,7 +13,7 @@ export interface DataQualityReportIndicatorViewModel {
 }
 
 export function getDataQualityReportIndicatorViews(validationResults: ValidationResults[]): DataQualityReportIndicatorViewModel[] {
-    return validationResults.filter(item => item.metadataType === "Indicator" && (item.numeratorresult == false || item.denominatorresult == false)).map(validationResult => {
+    return validationResults.filter(item => item.metadataType === "Indicator" && (item.numeratorresult === false || item.denominatorresult === false)).map(validationResult => {
         return {
             id: validationResult.id,
             name: validationResult.name,
