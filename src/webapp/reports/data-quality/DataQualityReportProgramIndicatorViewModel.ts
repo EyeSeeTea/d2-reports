@@ -12,18 +12,26 @@ export interface DataQualityReportProgramIndicatorViewModel {
     lastUpdated: string;
 }
 
-export function getDataQualityReportProgramIndicatorViews(validationResults: ValidationResults[]): DataQualityReportProgramIndicatorViewModel[] {
-    return validationResults.filter(item => item.metadataType === "ProgramIndicator" && (item.filterresult === false || item.expressionresult === false)).map(validationResult => {
-        return {
-            id: validationResult.id,
-            name: validationResult.name,
-            metadataType: validationResult.metadataType ?? "-",
-            filter: validationResult.filter,
-            expression: validationResult.expression,
-            filterresult: validationResult.filterresult ? "valid": "invalid",
-            expressionrresult: validationResult.expressionresult ? "valid": "invalid",
-            createdBy: validationResult.user ?? "-",
-            lastUpdated: validationResult.lastUpdated ?? "-",
-        };
-    });
+export function getDataQualityReportProgramIndicatorViews(
+    validationResults: ValidationResults[]
+): DataQualityReportProgramIndicatorViewModel[] {
+    return validationResults
+        .filter(
+            item =>
+                item.metadataType === "ProgramIndicator" &&
+                (item.filterresult === false || item.expressionresult === false)
+        )
+        .map(validationResult => {
+            return {
+                id: validationResult.id,
+                name: validationResult.name,
+                metadataType: validationResult.metadataType ?? "-",
+                filter: validationResult.filter,
+                expression: validationResult.expression,
+                filterresult: validationResult.filterresult ? "valid" : "invalid",
+                expressionrresult: validationResult.expressionresult ? "valid" : "invalid",
+                createdBy: validationResult.user ?? "-",
+                lastUpdated: validationResult.lastUpdated ?? "-",
+            };
+        });
 }

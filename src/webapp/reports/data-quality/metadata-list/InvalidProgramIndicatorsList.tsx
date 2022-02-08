@@ -8,11 +8,14 @@ import {
 import StorageIcon from "@material-ui/icons/Storage";
 import React from "react";
 import { useAppContext } from "../../../contexts/app-context";
-import { useSnackbarOnError } from "../../../utils/snackbar"; 
+import { useSnackbarOnError } from "../../../utils/snackbar";
 import { TableConfig, useObjectsTable } from "../../../components/objects-list/objects-list-hooks";
 import { ObjectsList } from "../../../components/objects-list/ObjectsList";
 import i18n from "../../../../locales";
-import { DataQualityReportProgramIndicatorViewModel, getDataQualityReportProgramIndicatorViews } from "../DataQualityReportProgramIndicatorViewModel";
+import {
+    DataQualityReportProgramIndicatorViewModel,
+    getDataQualityReportProgramIndicatorViews,
+} from "../DataQualityReportProgramIndicatorViewModel";
 
 export const InvalidProgramIndicatorsList: React.FC = React.memo(() => {
     const { compositionRoot } = useAppContext();
@@ -50,7 +53,12 @@ export const InvalidProgramIndicatorsList: React.FC = React.memo(() => {
         },
     };
 
-    return <ObjectsList<DataQualityReportProgramIndicatorViewModel> {...tableProps} globalActions={[downloadCsv]}></ObjectsList>;
+    return (
+        <ObjectsList<DataQualityReportProgramIndicatorViewModel>
+            {...tableProps}
+            globalActions={[downloadCsv]}
+        ></ObjectsList>
+    );
 });
 
 function getBaseListConfig(): TableConfig<DataQualityReportProgramIndicatorViewModel> {

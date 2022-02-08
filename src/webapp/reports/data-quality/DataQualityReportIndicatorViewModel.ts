@@ -12,18 +12,26 @@ export interface DataQualityReportIndicatorViewModel {
     lastUpdated: string;
 }
 
-export function getDataQualityReportIndicatorViews(validationResults: ValidationResults[]): DataQualityReportIndicatorViewModel[] {
-    return validationResults.filter(item => item.metadataType === "Indicator" && (item.numeratorresult === false || item.denominatorresult === false)).map(validationResult => {
-        return {
-            id: validationResult.id,
-            name: validationResult.name,
-            metadataType: validationResult.metadataType ?? "-",
-            numerator: validationResult.numerator,
-            denominator: validationResult.denominator,
-            numeratorresult: validationResult.numeratorresult ? "valid": "invalid",
-            denominatorresult: validationResult.denominatorresult ? "valid": "invalid",
-            createdBy: validationResult.user ?? "-",
-            lastUpdated: validationResult.lastUpdated ?? "-",
-        };
-    });
+export function getDataQualityReportIndicatorViews(
+    validationResults: ValidationResults[]
+): DataQualityReportIndicatorViewModel[] {
+    return validationResults
+        .filter(
+            item =>
+                item.metadataType === "Indicator" &&
+                (item.numeratorresult === false || item.denominatorresult === false)
+        )
+        .map(validationResult => {
+            return {
+                id: validationResult.id,
+                name: validationResult.name,
+                metadataType: validationResult.metadataType ?? "-",
+                numerator: validationResult.numerator,
+                denominator: validationResult.denominator,
+                numeratorresult: validationResult.numeratorresult ? "valid" : "invalid",
+                denominatorresult: validationResult.denominatorresult ? "valid" : "invalid",
+                createdBy: validationResult.user ?? "-",
+                lastUpdated: validationResult.lastUpdated ?? "-",
+            };
+        });
 }

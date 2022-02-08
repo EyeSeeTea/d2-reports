@@ -3,35 +3,46 @@ import {
     TableColumn,
     TableGlobalAction,
     TablePagination,
-    TableSorting,
+    TableSorting
 } from "@eyeseetea/d2-ui-components";
 import StorageIcon from "@material-ui/icons/Storage";
+import _ from "lodash";
 import React from "react";
 import i18n from "../../../../locales";
-import { useAppContext } from "../../../contexts/app-context";
-import { useSnackbarOnError } from "../../../utils/snackbar"; 
 import { TableConfig, useObjectsTable } from "../../../components/objects-list/objects-list-hooks";
 import { ObjectsList } from "../../../components/objects-list/ObjectsList";
-import { DataQualityReportIndicatorViewModel, getDataQualityReportIndicatorViews } from "../DataQualityReportIndicatorViewModel";
+import { useAppContext } from "../../../contexts/app-context";
+import { useSnackbarOnError } from "../../../utils/snackbar";
+import {
+    DataQualityReportIndicatorViewModel,
+    getDataQualityReportIndicatorViews
+} from "../DataQualityReportIndicatorViewModel";
 
 export const InvalidIndicatorsList: React.FC = React.memo(() => {
     const { compositionRoot } = useAppContext();
     const baseConfig = React.useMemo(getBaseListConfig, []);
-    const [sorting, setSorting] = React.useState<TableSorting<DataQualityReportIndicatorViewModel>>();
 
     const getRows = React.useMemo(
         () => async (paging: TablePagination, sorting: TableSorting<DataQualityReportIndicatorViewModel>) => {
-            setSorting(sorting);
-            const objects = getDataQualityReportIndicatorViews(
-                await compositionRoot.dataQuality.getValidations()
+            const { field, order: direction } = sorting;
+            const { page, pageSize } = paging;
+
+            const response = await compositionRoot.dataQuality.getValidations();
+            const objects = getDataQualityReportIndicatorViews(response);
+
+            const sortedData = _.orderBy(
+                objects,
+                [data => (data[field] ? data[field]?.toLowerCase() : "")],
+                [direction as "asc" | "desc"]
             );
-            paging.total = objects.length;
-            paging.page = 1;
-            paging.pageSize = 20;
-            return {
-                objects: objects,
-                pager: paging,
-            };
+
+            const total = sortedData.length;
+            const pageCount = paging ? Math.ceil(sortedData.length / pageSize) : 1;
+            const firstItem = paging ? (page - 1) * pageSize : 0;
+            const lastItem = paging ? firstItem + pageSize : sortedData.length;
+            const paginatedData = _.slice(sortedData, firstItem, lastItem);
+
+            return { objects: paginatedData, pager: { page, pageCount, total } };
         },
         [compositionRoot]
     );
@@ -43,23 +54,13 @@ export const InvalidIndicatorsList: React.FC = React.memo(() => {
         name: "downloadCsv",
         text: "Download CSV",
         icon: <StorageIcon />,
-        onClick: async () => {
-            if (!sorting) return;
-
-            compositionRoot.dataQuality.exportToCsv(
-            ); 
-        },
+        onClick: async () => compositionRoot.dataQuality.exportToCsv(),
     };
 
-    return <ObjectsList<DataQualityReportIndicatorViewModel> {...tableProps} globalActions={[downloadCsv]}></ObjectsList>;
+    return (
+        <ObjectsList<DataQualityReportIndicatorViewModel> {...tableProps} globalActions={[downloadCsv]}></ObjectsList>
+    );
 });
-
-/* function getSortingFromTableSorting(sorting: TableSorting<DataQualityReportViewModel>): Sorting<Indicator> {
-    return {
-        field: sorting.field === "id" ? "metadataType" : sorting.field,
-        direction: sorting.order,
-    };
-} */
 
 function getBaseListConfig(): TableConfig<DataQualityReportIndicatorViewModel> {
     const paginationOptions: PaginationOptions = {

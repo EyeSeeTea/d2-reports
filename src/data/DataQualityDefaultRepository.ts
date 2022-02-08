@@ -27,87 +27,121 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
     }
 
     async getValidations(): Promise<ValidationResults[]> {
-        const programIndicatorDate = this.getParsedDate(new Date())
-        const programIndicatorsvalidationsResult = await this.getValidatedProgramIndicators()
-        const indicatorDate = this.getParsedDate(new Date())
-        const indicatorsValidationsResult = await this.getValidatedIndicators()
-        const result: ValidationResults[] = [...indicatorsValidationsResult, ...programIndicatorsvalidationsResult]
-        const persistedData = await this.saveResult(result, indicatorDate, programIndicatorDate)
-        return persistedData
+        const programIndicatorDate = this.getParsedDate(new Date());
+        const programIndicatorsvalidationsResult = await this.getValidatedProgramIndicators();
+        const indicatorDate = this.getParsedDate(new Date());
+        const indicatorsValidationsResult = await this.getValidatedIndicators();
+        const result: ValidationResults[] = [...indicatorsValidationsResult, ...programIndicatorsvalidationsResult];
+        const persistedData = await this.saveResult(result, indicatorDate, programIndicatorDate);
+        return persistedData;
     }
 
     async getValidatedIndicators(): Promise<ValidationResults[]> {
-
         const startDate = await this.getIndicatorsLastUpdated();
 
-        const indicatorsResult = await this.api.models.indicators.get({
-            fields: {
-                id: true,
-                numerator: true,
-                denominator: true,
-                name: true,
-                user: true,
-                lastUpdated: true,
-            },
-            filter: {
-                lastUpdated: { "gt": startDate },
-            },
-            paging: false,
-        })
-            .getData()
+        const indicatorsResult = await this.api.models.indicators
+            .get({
+                fields: {
+                    id: true,
+                    numerator: true,
+                    denominator: true,
+                    name: true,
+                    user: true,
+                    lastUpdated: true,
+                },
+                filter: {
+                    lastUpdated: { gt: startDate },
+                },
+                paging: false,
+            })
+            .getData();
 
-        const d2api = this.api
+        const d2api = this.api;
         const results = await promiseMap(indicatorsResult.objects, async indicator => {
-            const numeratorResult = (indicator.numerator === "") ? undefined : await d2api.expressions.validate("indicator", indicator.numerator).getData();
-            const numerator = (numeratorResult === undefined) ? false : numeratorResult.message === "Valid";
-            const denominatorResult = (indicator.denominator === "") ? undefined : await d2api.expressions.validate("indicator", indicator.denominator).getData();
-            const denominator = (denominatorResult === undefined) ? false : denominatorResult.message === "Valid";
+            const numeratorResult =
+                indicator.numerator === ""
+                    ? undefined
+                    : await d2api.expressions.validate("indicator", indicator.numerator).getData();
+            const numerator = numeratorResult === undefined ? false : numeratorResult.message === "Valid";
+            const denominatorResult =
+                indicator.denominator === ""
+                    ? undefined
+                    : await d2api.expressions.validate("indicator", indicator.denominator).getData();
+            const denominator = denominatorResult === undefined ? false : denominatorResult.message === "Valid";
 
             return {
-                metadataType: "Indicator", id: indicator.id, name: indicator.name, numerator: indicator.numerator, numeratorresult: numerator,
-                denominator: indicator.denominator, denominatorresult: denominator, user: indicator.user.id, lastUpdated: indicator.lastUpdated
+                metadataType: "Indicator",
+                id: indicator.id,
+                name: indicator.name,
+                numerator: indicator.numerator,
+                numeratorresult: numerator,
+                denominator: indicator.denominator,
+                denominatorresult: denominator,
+                user: indicator.user.id,
+                lastUpdated: indicator.lastUpdated,
             };
         });
 
-        return results
+        return results;
     }
 
     async getValidatedProgramIndicators(): Promise<ValidationResults[]> {
-
-        const startDate = await this.getProgramIndicatorsLastUpdated()
+        const startDate = await this.getProgramIndicatorsLastUpdated();
         debugger;
-        const programIndicatorsResult = await this.api.models.programIndicators.get({
-            fields: {
-                id: true,
-                filter: true,
-                expression: true,
-                name: true,
-                user: true,
-                lastUpdated: true,
-            },
-            filter: {
-                lastUpdated: { "gt": startDate, }
-            },
-            paging: false,
-        })
-            .getData()
+        const programIndicatorsResult = await this.api.models.programIndicators
+            .get({
+                fields: {
+                    id: true,
+                    filter: true,
+                    expression: true,
+                    name: true,
+                    user: true,
+                    lastUpdated: true,
+                },
+                filter: {
+                    lastUpdated: { gt: startDate },
+                },
+                paging: false,
+            })
+            .getData();
 
-        const d2api = this.api
+        const d2api = this.api;
         const results = await promiseMap(programIndicatorsResult.objects, async programIndicator => {
-            const expressionResult = (!("expression" in programIndicator) || programIndicator.expression === "") ? undefined : await d2api.expressions.validate("program-indicator-formula", programIndicator.expression).getData();
-            const expression = (expressionResult === undefined) ? false : expressionResult.message === "Valid";
-            const filterResult = (!("filter" in programIndicator) || programIndicator.filter === "") ? undefined : await d2api.expressions.validate("program-indicator-filter", programIndicator.filter).getData();
-            const filter = (filterResult === undefined) ? false : filterResult.message === "Valid";
+            const expressionResult =
+                !("expression" in programIndicator) || programIndicator.expression === ""
+                    ? undefined
+                    : await d2api.expressions
+                          .validate("program-indicator-formula", programIndicator.expression)
+                          .getData();
+            const expression = expressionResult === undefined ? false : expressionResult.message === "Valid";
+            const filterResult =
+                !("filter" in programIndicator) || programIndicator.filter === ""
+                    ? undefined
+                    : await d2api.expressions.validate("program-indicator-filter", programIndicator.filter).getData();
+            const filter = filterResult === undefined ? false : filterResult.message === "Valid";
             return {
-                metadataType: "ProgramIndicator", id: programIndicator.id, name: programIndicator.name, expression: programIndicator.expression, expressionresult: expression, filter: programIndicator.filter, filterresult: filter,
-                user: programIndicator.user.id, lastUpdated: programIndicator.lastUpdated
+                metadataType: "ProgramIndicator",
+                id: programIndicator.id,
+                name: programIndicator.name,
+                expression: programIndicator.expression,
+                expressionresult: expression,
+                filter: programIndicator.filter,
+                filterresult: filter,
+                user: programIndicator.user.id,
+                lastUpdated: programIndicator.lastUpdated,
             };
         });
-        return results
+        return results;
     }
 
     private getParsedDate(strDate: Date) {
-        return strDate.getFullYear() + '-' + ("0" + (new Date().getMonth() + 1)).slice(-2) + '-' + ("0" + new Date().getDate()).slice(-2)
+        return (
+            strDate.getFullYear() +
+            "-" +
+            ("0" + (new Date().getMonth() + 1)).slice(-2) +
+            "-" +
+            ("0" + new Date().getDate()).slice(-2)
+        );
     }
 
     private async getIndicatorsLastUpdated(): Promise<string> {
@@ -120,17 +154,23 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         return programIndicatorsLastUpdated;
     }
 
-    private async saveResult(validationResults: ValidationResults[], indicatorsLastUpdated: string, programIndicatorsLastUpdated: string): Promise<ValidationResults[]> {
+    private async saveResult(
+        validationResults: ValidationResults[],
+        indicatorsLastUpdated: string,
+        programIndicatorsLastUpdated: string
+    ): Promise<ValidationResults[]> {
         const config = await this.getConfig();
-        config.indicatorsLastUpdated = indicatorsLastUpdated
-        config.programIndicatorsLastUpdated = programIndicatorsLastUpdated
+        config.indicatorsLastUpdated = indicatorsLastUpdated;
+        config.programIndicatorsLastUpdated = programIndicatorsLastUpdated;
 
-        config.validationResults = config.validationResults ? [...config.validationResults, ...validationResults] : validationResults
+        config.validationResults = config.validationResults
+            ? [...config.validationResults, ...validationResults]
+            : validationResults;
 
         await this.storageClient.saveObject<PersistedConfig>(Namespaces.DATA_QUALITY_CONFIG, {
-            ...config
+            ...config,
         });
-        return config.validationResults
+        return config.validationResults;
     }
 
     private async getConfig(): Promise<PersistedConfig> {
@@ -140,12 +180,11 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
     }
 
     async exportToCsv(): Promise<void> {
-        const metadataObjects = await (await this.getConfig()).validationResults
+        const metadataObjects = await (await this.getConfig()).validationResults;
         const headers = csvFields.map(field => ({ id: field, text: field }));
         if (metadataObjects === undefined) {
-            return
-         }
-        else {
+            return;
+        } else {
             const rows = metadataObjects.map(
                 (ValidationResults): MetadataRow => ({
                     metadataType: ValidationResults.metadataType,
@@ -184,7 +223,7 @@ const csvFields = [
     "numeratorresult",
     "denominator",
     "denominatorresult",
-    "user"
+    "user",
 ] as const;
 
 type CsvField = typeof csvFields[number];

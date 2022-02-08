@@ -195,7 +195,7 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
                     id: "xcDZeClzdse",
                 },
             ],
-        }
+        },
     ];
 
     const metadata = {

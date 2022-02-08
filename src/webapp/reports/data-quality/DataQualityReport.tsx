@@ -8,7 +8,6 @@ const DataQualityReport: React.FC = () => {
 
     return (
         <div className={classes.wrapper}>
-
             <Typography variant="h5" gutterBottom>
                 {i18n.t("Data quality")}
             </Typography>

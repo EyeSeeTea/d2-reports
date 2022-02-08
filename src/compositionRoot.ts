@@ -30,7 +30,7 @@ export function getCompositionRoot(api: D2Api) {
     return {
         dataQuality: getExecute({
             getValidations: new GetDataQualityDefaultUseCase(dataQualityRepository),
-            exportToCsv: new SaveDataQualityDefaultCsvUseCase(dataQualityRepository)
+            exportToCsv: new SaveDataQualityDefaultCsvUseCase(dataQualityRepository),
         }),
         admin: getExecute({
             get: new GetWIDPAdminDefaultUseCase(widpAdminDefaultRepository),
