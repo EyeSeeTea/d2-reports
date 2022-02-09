@@ -3,9 +3,10 @@ import {
     TableColumn,
     TableGlobalAction,
     TablePagination,
-    TableSorting
+    TableSorting,
 } from "@eyeseetea/d2-ui-components";
 import StorageIcon from "@material-ui/icons/Storage";
+import CachedIcon from "@material-ui/icons/Cached";
 import _ from "lodash";
 import React from "react";
 import i18n from "../../../../locales";
@@ -15,7 +16,7 @@ import { useAppContext } from "../../../contexts/app-context";
 import { useSnackbarOnError } from "../../../utils/snackbar";
 import {
     DataQualityReportIndicatorViewModel,
-    getDataQualityReportIndicatorViews
+    getDataQualityReportIndicatorViews,
 } from "../DataQualityReportIndicatorViewModel";
 
 export const InvalidIndicatorsList: React.FC = React.memo(() => {
@@ -56,9 +57,20 @@ export const InvalidIndicatorsList: React.FC = React.memo(() => {
         icon: <StorageIcon />,
         onClick: async () => compositionRoot.dataQuality.exportToCsv(),
     };
+    const forceReload: TableGlobalAction = {
+        name: "forceReload",
+        text: "Force reload",
+        icon: <CachedIcon />,
+        onClick: async () => {
+            compositionRoot.dataQuality.reloadValidations();
+        },
+    };
 
     return (
-        <ObjectsList<DataQualityReportIndicatorViewModel> {...tableProps} globalActions={[downloadCsv]}></ObjectsList>
+        <ObjectsList<DataQualityReportIndicatorViewModel>
+            {...tableProps}
+            globalActions={[downloadCsv, forceReload]}
+        ></ObjectsList>
     );
 });
 

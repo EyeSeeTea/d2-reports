@@ -25,6 +25,12 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         const instance = new Instance({ url: this.api.baseUrl });
         this.storageClient = new DataStoreStorageClient("global", instance);
     }
+    
+    async reloadValidations(): Promise<ValidationResults[]> {
+        await this.storageClient.saveObject<PersistedConfig>(Namespaces.DATA_QUALITY_CONFIG, 
+            {});
+        return await this.getValidations()
+    }
 
     async getValidations(): Promise<ValidationResults[]> {
         const programIndicatorDate = this.getParsedDate(new Date());
@@ -87,7 +93,6 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
 
     async getValidatedProgramIndicators(): Promise<ValidationResults[]> {
         const startDate = await this.getProgramIndicatorsLastUpdated();
-        debugger;
         const programIndicatorsResult = await this.api.models.programIndicators
             .get({
                 fields: {
@@ -175,7 +180,6 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
 
     private async getConfig(): Promise<PersistedConfig> {
         const config = await this.storageClient.getObject<PersistedConfig>(Namespaces.DATA_QUALITY_CONFIG);
-        debugger;
         return config ?? {};
     }
 

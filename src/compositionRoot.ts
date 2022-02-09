@@ -29,7 +29,8 @@ export function getCompositionRoot(api: D2Api) {
 
     return {
         dataQuality: getExecute({
-            getValidations: new GetDataQualityDefaultUseCase(dataQualityRepository),
+            getValidations: new GetDataQualityDefaultUseCase(dataQualityRepository,true),
+            reloadValidations: new GetDataQualityDefaultUseCase(dataQualityRepository,false),
             exportToCsv: new SaveDataQualityDefaultCsvUseCase(dataQualityRepository),
         }),
         admin: getExecute({

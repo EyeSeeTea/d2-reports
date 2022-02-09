@@ -6,6 +6,7 @@ import {
     TableSorting,
 } from "@eyeseetea/d2-ui-components";
 import StorageIcon from "@material-ui/icons/Storage";
+import CachedIcon from "@material-ui/icons/Cached";
 import React from "react";
 import { useAppContext } from "../../../contexts/app-context";
 import { useSnackbarOnError } from "../../../utils/snackbar";
@@ -16,25 +17,34 @@ import {
     DataQualityReportProgramIndicatorViewModel,
     getDataQualityReportProgramIndicatorViews,
 } from "../DataQualityReportProgramIndicatorViewModel";
+import _ from "lodash";
 
 export const InvalidProgramIndicatorsList: React.FC = React.memo(() => {
     const { compositionRoot } = useAppContext();
     const baseConfig = React.useMemo(getBaseListConfig, []);
-    const [sorting, setSorting] = React.useState<TableSorting<DataQualityReportProgramIndicatorViewModel>>();
 
     const getRows = React.useMemo(
         () => async (paging: TablePagination, sorting: TableSorting<DataQualityReportProgramIndicatorViewModel>) => {
-            setSorting(sorting);
+            const { field, order: direction } = sorting;
+            const { page, pageSize } = paging;
+
             const objects = getDataQualityReportProgramIndicatorViews(
                 await compositionRoot.dataQuality.getValidations()
             );
-            paging.total = objects.length;
-            paging.page = 1;
-            paging.pageSize = 20;
-            return {
-                objects: objects,
-                pager: paging,
-            };
+
+            const sortedData = _.orderBy(
+                objects,
+                [data => (data[field] ? data[field]?.toLowerCase() : "")],
+                [direction as "asc" | "desc"]
+            );
+
+            const total = sortedData.length;
+            const pageCount = paging ? Math.ceil(sortedData.length / pageSize) : 1;
+            const firstItem = paging ? (page - 1) * pageSize : 0;
+            const lastItem = paging ? firstItem + pageSize : sortedData.length;
+            const paginatedData = _.slice(sortedData, firstItem, lastItem);
+
+            return { objects: paginatedData, pager: { page, pageCount, total } };
         },
         [compositionRoot]
     );
@@ -47,16 +57,22 @@ export const InvalidProgramIndicatorsList: React.FC = React.memo(() => {
         text: "Download CSV",
         icon: <StorageIcon />,
         onClick: async () => {
-            if (!sorting) return;
-
             compositionRoot.dataQuality.exportToCsv();
+        },
+    };
+    const forceReload: TableGlobalAction = {
+        name: "forceReload",
+        text: "Force reload",
+        icon: <CachedIcon />,
+        onClick: async () => {
+            compositionRoot.dataQuality.reloadValidations();
         },
     };
 
     return (
         <ObjectsList<DataQualityReportProgramIndicatorViewModel>
             {...tableProps}
-            globalActions={[downloadCsv]}
+            globalActions={[downloadCsv, forceReload]}
         ></ObjectsList>
     );
 });
