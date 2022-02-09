@@ -25,11 +25,10 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         const instance = new Instance({ url: this.api.baseUrl });
         this.storageClient = new DataStoreStorageClient("global", instance);
     }
-    
+
     async reloadValidations(): Promise<ValidationResults[]> {
-        await this.storageClient.saveObject<PersistedConfig>(Namespaces.DATA_QUALITY_CONFIG, 
-            {});
-        return await this.getValidations()
+        await this.storageClient.saveObject<PersistedConfig>(Namespaces.DATA_QUALITY_CONFIG, {});
+        return await this.getValidations();
     }
 
     async getValidations(): Promise<ValidationResults[]> {

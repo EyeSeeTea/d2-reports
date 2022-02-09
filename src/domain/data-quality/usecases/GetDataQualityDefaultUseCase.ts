@@ -2,14 +2,13 @@ import { ValidationResults } from "../../common/entities/ValidationResults";
 import { DataQualityRepository } from "../repositories/DataQualityRepository";
 
 export class GetDataQualityDefaultUseCase {
-    constructor(private dataQualityRepository: DataQualityRepository, 
-        public getFromCache: boolean) {}
+    constructor(private dataQualityRepository: DataQualityRepository, public getFromCache: boolean) {}
 
     execute(): Promise<ValidationResults[]> {
-        if (this.getFromCache){
+        if (this.getFromCache) {
             return this.dataQualityRepository.getValidations();
-        }else{
+        } else {
             return this.dataQualityRepository.reloadValidations();
-    }
+        }
     }
 }
