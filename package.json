@@ -16,6 +16,7 @@
         "@dhis2/d2-i18n-generate": "1.2.0",
         "@dhis2/d2-ui-core": "7.3.3",
         "@dhis2/d2-ui-forms": "7.3.3",
+        "@dhis2/ui": "7.16.2",
         "@dhis2/ui-core": "6.24.0",
         "@dhis2/ui-widgets": "6.24.0",
         "@eyeseetea/d2-api": "1.9.3",

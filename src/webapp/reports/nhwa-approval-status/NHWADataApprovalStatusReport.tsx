@@ -2,7 +2,7 @@ import { Typography, makeStyles } from "@material-ui/core";
 import i18n from "../../../locales";
 import { DataApprovalList } from "./data-approval-list/DataApprovalList";
 
-const NHWADataApprovalStatusReport: React.FC = () => {
+export const NHWADataApprovalStatusReport: React.FC = () => {
     const classes = useStyles();
 
     return (
@@ -19,5 +19,3 @@ const NHWADataApprovalStatusReport: React.FC = () => {
 const useStyles = makeStyles({
     wrapper: { padding: 20 },
 });
-
-export default NHWADataApprovalStatusReport;
