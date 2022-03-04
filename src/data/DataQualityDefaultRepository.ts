@@ -1,4 +1,4 @@
-import { D2Api, GetOptions, Selector } from "../types/d2-api";
+import { D2Api } from "../types/d2-api";
 import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
 import { downloadFile } from "./utils/download-file";
 import { CsvData } from "../data/CsvDataSource";
