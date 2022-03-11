@@ -127,35 +127,7 @@ function run(cmd: string): void {
     execSync(cmd, { stdio: [0, 1, 2] });
 }
 
-export async function buildMetadata(baseUrl: string, authString: string): Promise<void> {
-    const [username, password] = authString.split(":", 2);
-    if (!username || !password) return;
-
-    const api = new D2Api({ baseUrl, auth: { username, password } });
-    const metadata$ = api.metadata.get({
-        dataSets: {
-            fields: {
-                id: true,
-                name: true,
-                formType: true,
-                dataEntryForm: { htmlCode: true },
-                sections: {
-                    id: true,
-                    name: true,
-                    dataElements: {
-                        id: true,
-                        categoryCombo: { categoryOptionCombos: { id: true } },
-                    },
-                },
-            },
-            filter: {
-                name: { $ilike: "NHWA" },
-            },
-        },
-    });
-    const { dataSets } = await metadata$.getData();
-
-    const mapping = getMapping(dataSets);
+export async function buildMetadata(): Promise<void> {
 
     Object.assign(process.env, { REACT_APP_REPORT_VARIANT: "visualizations" });
     run("yarn build-report");
@@ -163,7 +135,7 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
 
     const reports: Partial<D2Report>[] = [
         {
-            id: "G2pzXQgTMg4",
+            id: "zrI0NTs9PMd",
             name: "Hidden visualizations",
             type: "HTML",
             cacheStrategy: "RESPECT_SYSTEM_SETTING",
@@ -178,21 +150,9 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
             userGroupAccesses: [
                 {
                     access: "r-------",
-                    userGroupUid: "DWWxlpQi9M8",
-                    displayName: "NHWA Data Clerk",
-                    id: "DWWxlpQi9M8",
-                },
-                {
-                    access: "rw------",
-                    userGroupUid: "EX00r2JNlQo",
-                    displayName: "NHWA administrators",
-                    id: "EX00r2JNlQo",
-                },
-                {
-                    access: "r-------",
-                    userGroupUid: "xcDZeClzdse",
-                    displayName: "NHWA Data Managers",
-                    id: "xcDZeClzdse",
+                    userGroupUid: "UfhhwZK73Lg",
+                    displayName: "WIDP IT team",
+                    id: "UfhhwZK73Lg",
                 },
             ],
         },
@@ -235,7 +195,7 @@ async function main() {
 
     try {
         const args = parser.parse_args();
-        await buildMetadata(args.url, args.user_auth);
+        await buildMetadata();
     } catch (err) {
         console.error(err);
         process.exit(1);

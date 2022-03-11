@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2022-03-04T09:29:04.233Z\n"
-"PO-Revision-Date: 2022-03-04T09:29:04.233Z\n"
+"POT-Creation-Date: 2022-03-11T09:59:16.154Z\n"
+"PO-Revision-Date: 2022-03-11T09:59:16.154Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -188,6 +188,9 @@ msgstr ""
 msgid "Toggle filters"
 msgstr ""
 
+msgid "Hidden dashboards and visualizations"
+msgstr ""
+
 msgid "Hidden visualizations"
 msgstr ""
 
@@ -198,4 +201,7 @@ msgid "code"
 msgstr ""
 
 msgid "Sharing"
+msgstr ""
+
+msgid "Details"
 msgstr ""

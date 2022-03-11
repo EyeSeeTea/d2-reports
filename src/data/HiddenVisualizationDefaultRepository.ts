@@ -5,6 +5,7 @@ import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
 import { CsvData } from "./CsvDataSource";
 import { downloadFile } from "./utils/download-file";
 
+
 export async function promiseMap<T, S>(inputValues: T[], mapper: (value: T) => Promise<S>): Promise<S[]> {
     const output: S[] = [];
     for (const value of inputValues) {
@@ -26,9 +27,8 @@ export class HiddenVisualizationDefaultRepository implements HiddenVisualization
             code: row[1],
             name: row[2],
             sharing: row[3],
-            details: window.location.href+this.api.apiPath +"/"+type+"/"+ row[0],
+            details: "<h2><a href=\"" + this.api.apiPath +"/"+type+"/"+ row[0]+"\">link</a></h2>",
         }));
-        
         const visualizations: HiddenVisualizationResult[] = data.map(
             (item: any) : HiddenVisualizationResult => ({
                 id: item.uid,

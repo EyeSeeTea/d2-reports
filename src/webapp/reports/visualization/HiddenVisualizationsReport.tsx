@@ -9,7 +9,7 @@ const VisualizationReport: React.FC = () => {
     return (
         <div className={classes.wrapper}>
             <Typography variant="h5" gutterBottom>
-                {i18n.t("Data quality")}
+                {i18n.t("Hidden dashboards and visualizations")}
             </Typography>
 
             <Typography variant="h6" gutterBottom>
