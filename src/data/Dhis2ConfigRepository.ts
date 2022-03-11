@@ -46,7 +46,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             pairedDataElementsByDataSet: pairedDataElements,
             sections: keyById(sections),
             sectionsByDataSet,
-            years: _.range(currentYear - 10, currentYear + 1).map(n => n.toString()),
+            years: _.range(currentYear - 54, currentYear + 1).map(n => n.toString()),
             approvalWorkflow: dataApprovalWorkflows,
         };
     }
