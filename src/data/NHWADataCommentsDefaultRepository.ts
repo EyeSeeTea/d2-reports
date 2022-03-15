@@ -63,12 +63,12 @@ export class NHWADataCommentsDefaultRepository implements NHWADataCommentsReposi
                 .join("-") || "-";
 
         const sqlViews = new Dhis2SqlViews(this.api);
-        const { pager, rows } = await sqlViews
+        const { pager, rows } = _.merge(await sqlViews
             .query<Variables, SqlField>(
                 config.dataCommentsSqlView.id,
                 {
                     orgUnitIds: sqlViewJoinIds(orgUnitIds),
-                    periods: sqlViewJoinIds(_.isEmpty(periods) ? config.years : periods),
+                    periods: sqlViewJoinIds(_.isEmpty(periods) ? config.years.slice(config.years.length/2, config.years.length) : periods),
                     dataSetIds: sqlViewJoinIds(dataSetIds2),
                     sectionIds: sqlViewJoinIds(sectionIds),
                     orderByColumn: fieldMapping[sorting.field],
@@ -77,8 +77,23 @@ export class NHWADataCommentsDefaultRepository implements NHWADataCommentsReposi
                 },
                 paging
             )
-            .getData();
-
+            .getData(),
+            await sqlViews
+                .query<Variables, SqlField>(
+                    config.dataCommentsSqlView.id,
+                    {
+                        orgUnitIds: sqlViewJoinIds(orgUnitIds),
+                        periods: sqlViewJoinIds(_.isEmpty(periods) ? config.years.slice(0, config.years.length-(config.years.length/2)) : periods),
+                        dataSetIds: sqlViewJoinIds(dataSetIds2),
+                        sectionIds: sqlViewJoinIds(sectionIds),
+                        orderByColumn: fieldMapping[sorting.field],
+                        orderByDirection: sorting.direction,
+                        commentPairs,
+                    },
+                    paging
+                )
+                .getData());
+                
         // A data value is not associated to a specific data set, but we can still map it
         // through the data element (1 data value -> 1 data element -> N data sets).
 
