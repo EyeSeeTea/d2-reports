@@ -84,20 +84,19 @@ function getBaseListConfig(): TableConfig<DataQualityReportProgramIndicatorViewM
     };
 
     const initialSorting: TableSorting<DataQualityReportProgramIndicatorViewModel> = {
-        field: "metadataType" as const,
+        field: "name" as const,
         order: "asc" as const,
     };
 
     const columns: TableColumn<DataQualityReportProgramIndicatorViewModel>[] = [
         { name: "id", text: i18n.t("Id"), sortable: true },
-        { name: "metadataType", text: i18n.t("Metadata Type"), sortable: true },
         { name: "name", text: i18n.t("name"), sortable: true },
-        { name: "createdBy", text: i18n.t("Created By"), sortable: true },
-        { name: "lastUpdated", text: i18n.t("lastUpdated"), sortable: true },
-        { name: "expression", text: i18n.t("expression"), sortable: true },
-        { name: "expressionrresult", text: i18n.t("Valid Expression"), sortable: true },
-        { name: "filter", text: i18n.t("filter"), sortable: true },
-        { name: "filterresult", text: i18n.t("Valid Filter"), sortable: true },
+        { name: "createdBy", text: i18n.t("Created By"), sortable: true, hidden: true },
+        { name: "lastUpdated", text: i18n.t("lastUpdated"), sortable: true, hidden: true },
+        { name: "expression", text: i18n.t("expression"), sortable: true, hidden: true },
+        { name: "expressionrresult", text: i18n.t("Valid Expression"), sortable: true, hidden: true },
+        { name: "filter", text: i18n.t("filter"), sortable: true, hidden: true },
+        { name: "filterresult", text: i18n.t("Valid Filter"), sortable: true, hidden: true },
     ];
 
     return { columns, initialSorting, paginationOptions };
