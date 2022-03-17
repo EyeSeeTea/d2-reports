@@ -2,7 +2,6 @@ import React from "react";
 import { MenuItem, Select } from "@material-ui/core";
 import DropdownForm from "./DropdownForm";
 import i18n from "../../../locales";
-
 type Value = string;
 
 export type DropdownItem = { value: Value; text: string };

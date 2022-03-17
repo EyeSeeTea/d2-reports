@@ -53,7 +53,7 @@ async function main() {
             schemas: [],
         });
 
-        const api = new D2Api({ baseUrl });
+        const api = new D2Api({ baseUrl, backend: "fetch" });
         if (isDev) window.api = api;
 
         const userSettings = await api.get<{ keyUiLocale: string }>("/userSettings").getData();

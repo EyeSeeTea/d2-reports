@@ -9,13 +9,13 @@ import _ from "lodash";
 export class WIDPAdminDefaultRepository implements WIDPAdminRepository {
     constructor(private api: D2Api) {}
     async getInvalidSharingSetting(options: WIDPAdmiRepositoryGetOptions): Promise<MetadataObject[]> {
-        const userGroupAccessesResult: any = await this.api.metadata.d2Api
+        const userGroupAccessesResult = await this.api.metadata.d2Api
             .get(
                 "/metadata.json?filter=userGroupAccesses.access:in:[rwr-----,r-r-----]&fields=id,name,publicAccess,user[name,displayName],lastUpdatedBy[name,displayName],userGroupAccesses"
             )
             .getData();
 
-        const publicAccessResult: any = await this.api.metadata.d2Api
+        const publicAccessResult = await this.api.metadata.d2Api
             .get(
                 "/metadata.json?filter=publicAccess:in:[rwr-----,r-r-----]&fields=id,name,publicAccess,user[name,displayName],lastUpdatedBy[name,displayName],userGroupAccesses"
             )
@@ -28,12 +28,12 @@ export class WIDPAdminDefaultRepository implements WIDPAdminRepository {
         const sqlView = "RIw9kc7N4g4";
 
         const result: any = await this.api.metadata.d2Api.get("/sqlViews/" + sqlView + "/data?paging=false").getData();
-        const data = result.listGrid.rows.map((row: any[]) => ({
+        const data = result.listGrid.rows.map((row: string[]) => ({
             Id: row[1],
         }));
 
-        const comma_seprated = data.map((item: { [x: string]: any }) => item["Id"]);
-        const metadataResult: any = await this.api.metadata.d2Api
+        const comma_seprated = data.map((item: { [x: string]: string }) => item["Id"]);
+        const metadataResult = await this.api.metadata.d2Api
             .get(
                 "/metadata.json?fields=id,name,created,createdBy[name],lastUpdated,publicAccess,user[name,displayName],lastUpdatedBy[name,displayName],userGroupAccesses&filter=id:in:[" +
                     comma_seprated +
@@ -71,7 +71,7 @@ export class WIDPAdminDefaultRepository implements WIDPAdminRepository {
         const metadataValues = (Object.keys(metadataResult) as Array<keyof typeof metadataResult>).reduce(
             (accumulator, current) => {
                 if (!options.removeTypes.includes(String(current)) && current !== "system") {
-                    const item: any = metadataResult[current].map((row: { [x: string]: any }) => ({
+                    const item: string = metadataResult[current].map((row: { [x: string]: string }) => ({
                         Id: row["id"],
                         name: row["name"],
                         publicAccess: row["publicAccess"],

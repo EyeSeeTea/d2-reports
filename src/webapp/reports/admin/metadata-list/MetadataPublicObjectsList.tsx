@@ -9,12 +9,12 @@ import StorageIcon from "@material-ui/icons/Storage";
 import React from "react";
 import { MetadataObject } from "../../../../domain/common/entities/MetadataObject";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
-import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
 import { useSnackbarOnError } from "../../../utils/snackbar";
 import { getAdminReportViews, AdminReportViewModel } from "../AdminReportViewModel";
 import { TableConfig, useObjectsTable } from "../../../components/objects-list/objects-list-hooks";
 import { ObjectsList } from "../../../components/objects-list/ObjectsList";
+import i18n from "../../../../locales";
 
 export const MetadataPublicObjectsList: React.FC = React.memo(() => {
     const { compositionRoot } = useAppContext();
