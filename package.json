@@ -52,7 +52,6 @@
         "build-report": "yarn build && gulp build-report",
         "build-data-quality": "npx ts-node -P tsconfig-cli.json src/scripts/build-data-quality.ts",
         "build-nhwa-metadata": "npx ts-node -P tsconfig-cli.json src/scripts/build-nhwa-metadata.ts",
-        "build-hidden-visualizations": "npx ts-node -P tsconfig-cli.json src/scripts/build-visualizations.ts",
         "post-nhwa-metadata": "npx ts-node -P tsconfig-cli.json src/scripts/post-metadata.ts",
         "test": "jest --passWithNoTests",
         "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
