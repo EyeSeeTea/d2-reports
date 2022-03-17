@@ -45,3 +45,17 @@ Create an standalone DHIS2 webapp app:
 ```
 $ yarn build-webapp # Creates dist/d2-reports.zip
 ```
+
+Create visualization report:
+Edit .env.local adding:
+REACT_APP_REPORT_VARIANT=visualizations
+and run build-reports.
+After that import dist/index.html in the dhis2 report.
+
+
+
+Create data-quality report:
+Edit .env.local adding:
+REACT_APP_REPORT_VARIANT=dataQuality
+and run build-reports.
+After that import dist/index.html in the dhis2 report.
