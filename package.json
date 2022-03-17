@@ -50,7 +50,6 @@
         "build-folder": "rm -rf build/ && d2-manifest package.json manifest.webapp && react-scripts build && yarn run manifest && cp -r i18n icon.png build",
         "build": "yarn build-folder && rm -f $npm_package_name.zip && cd build && zip --quiet -r ../$npm_package_name.zip *",
         "build-report": "yarn build && gulp build-report",
-        "build-data-quality": "npx ts-node -P tsconfig-cli.json src/scripts/build-data-quality.ts",
         "build-nhwa-metadata": "npx ts-node -P tsconfig-cli.json src/scripts/build-nhwa-metadata.ts",
         "post-nhwa-metadata": "npx ts-node -P tsconfig-cli.json src/scripts/post-metadata.ts",
         "test": "jest --passWithNoTests",
