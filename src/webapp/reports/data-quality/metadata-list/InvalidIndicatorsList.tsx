@@ -81,20 +81,19 @@ function getBaseListConfig(): TableConfig<DataQualityReportIndicatorViewModel> {
     };
 
     const initialSorting: TableSorting<DataQualityReportIndicatorViewModel> = {
-        field: "metadataType" as const,
+        field: "name" as const,
         order: "asc" as const,
     };
 
     const columns: TableColumn<DataQualityReportIndicatorViewModel>[] = [
         { name: "id", text: i18n.t("Id"), sortable: true },
-        { name: "metadataType", text: i18n.t("Metadata Type"), sortable: true },
         { name: "name", text: i18n.t("name"), sortable: true },
-        { name: "createdBy", text: i18n.t("Created By"), sortable: true },
-        { name: "lastUpdated", text: i18n.t("lastUpdated"), sortable: true },
-        { name: "denominator", text: i18n.t("denominator"), sortable: true },
-        { name: "denominatorresult", text: i18n.t("Valid Denominator"), sortable: true },
-        { name: "numerator", text: i18n.t("numerator"), sortable: true },
-        { name: "numeratorresult", text: i18n.t("Valid Numerator"), sortable: true },
+        { name: "createdBy", text: i18n.t("Created By"), sortable: true, hidden: true },
+        { name: "lastUpdated", text: i18n.t("lastUpdated"), sortable: true, hidden: true },
+        { name: "denominator", text: i18n.t("denominator"), sortable: true, hidden: true },
+        { name: "denominatorresult", text: i18n.t("Valid Denominator"), sortable: true, hidden: true },
+        { name: "numerator", text: i18n.t("numerator"), sortable: true, hidden: true },
+        { name: "numeratorresult", text: i18n.t("Valid Numerator"), sortable: true, hidden: true },
     ];
 
     return { columns, initialSorting, paginationOptions };
