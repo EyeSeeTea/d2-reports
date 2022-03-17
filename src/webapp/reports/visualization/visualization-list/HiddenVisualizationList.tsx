@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-no-target-blank */
 import {
     PaginationOptions,
     TableColumn,
@@ -78,7 +79,7 @@ function getBaseListConfig(): TableConfig<HiddenVisualizationViewModel> {
         { name: "code", text: i18n.t("code"), sortable: true },
         { name: "name", text: i18n.t("name"), sortable: true },
         { name: "sharing", text: i18n.t("Sharing"), sortable: true },
-        { name: "details", text: i18n.t("Details"), sortable: true },
+        { name: "details", text: i18n.t("Details"), sortable: true, getValue: model => <a href={model.details}  target="_blank">{model.details}</a> },
     ];
 
     return { columns, initialSorting, paginationOptions };

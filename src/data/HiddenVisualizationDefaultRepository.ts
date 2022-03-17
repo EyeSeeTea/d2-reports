@@ -20,18 +20,19 @@ export class HiddenVisualizationDefaultRepository implements HiddenVisualization
     constructor(private api: D2Api) {
     }
     async getHiddenVisualizations(sqlViewId: string, type: string): Promise<HiddenVisualizationResult[]> {
-
+        // eslint-disable-next-line
+debugger
         const result: any = await this.api.metadata.d2Api.get("/sqlViews/" + sqlViewId + "/data?paging=false").getData();
-        const data = result.listGrid.rows.map((row: any[]) => ({
-            uid: row[0],
+        const data = result.listGrid.rows.map((row: string[]) => ({
+            id: row[0],
             code: row[1],
             name: row[2],
             sharing: row[3],
-            details: "<h2><a href=\"" + this.api.apiPath +"/"+type+"/"+ row[0]+"\">link</a></h2>",
+            details: this.api.apiPath +"/"+type+"/"+ row[0],
         }));
         const visualizations: HiddenVisualizationResult[] = data.map(
-            (item: any) : HiddenVisualizationResult => ({
-                id: item.uid,
+            (item: HiddenVisualizationResult) : HiddenVisualizationResult => ({
+                id: item.id,
                 name: item.name,
                 code: item.code?? "-",
                 sharing: item.sharing,
