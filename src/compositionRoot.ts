@@ -1,5 +1,7 @@
+import { DataQualityDefaultRepository } from "./data/DataQualityDefaultRepository";
 import { Dhis2ConfigRepository } from "./data/Dhis2ConfigRepository";
 import { Dhis2OrgUnitsRepository } from "./data/Dhis2OrgUnitsRepository";
+import { HiddenDashboardsDefaultRepository } from "./data/HiddenDashboardsDefaultRepository";
 import { NHWADataApprovalDefaultRepository } from "./data/NHWADataApprovalDefaultRepository";
 import { NHWADataCommentsDefaultRepository } from "./data/NHWADataCommentsDefaultRepository";
 import { WIDPAdminDefaultRepository } from "./data/WIDPAdminDefaultRepository";
@@ -7,6 +9,10 @@ import { GetWIDPAdminDefaultUseCase } from "./domain/admin/usecases/GetWIDPAdmin
 import { SaveWIDPAdminDefaultCsvUseCase } from "./domain/admin/usecases/SaveWIDPAdminDefaultCsvUseCase";
 import { GetConfig } from "./domain/common/usecases/GetConfig";
 import { GetOrgUnitsUseCase } from "./domain/common/usecases/GetOrgUnitsUseCase";
+import { GetDataQualityDefaultUseCase } from "./domain/data-quality/usecases/GetDataQualityDefaultUseCase";
+import { SaveDataQualityDefaultCsvUseCase } from "./domain/data-quality/usecases/SaveDataQualityDefaultCsvUseCase";
+import { GetHiddenDashboardsDefaultUseCase } from "./domain/hidden-visualization/usecases/GetHiddenDashboardsDefaultUseCase";
+import { SaveHiddenDashboardsDefaultUseCase } from "./domain/hidden-visualization/usecases/SaveHiddenDashboardsDefaultUseCase";
 import { UpdateStatusUseCase } from "./domain/nhwa-approval-status/usecases/CompleteDataSetsUseCase";
 import { GetApprovalColumnsUseCase } from "./domain/nhwa-approval-status/usecases/GetApprovalColumnsUseCase";
 import { GetDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/GetDataSetsUseCase";
@@ -21,9 +27,20 @@ export function getCompositionRoot(api: D2Api) {
     const dataCommentsRepository = new NHWADataCommentsDefaultRepository(api);
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
+    const dataQualityRepository = new DataQualityDefaultRepository(api);
+    const hiddenDashboardsRepository = new HiddenDashboardsDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
 
     return {
+        dataQuality: getExecute({
+            getValidations: new GetDataQualityDefaultUseCase(dataQualityRepository, true),
+            reloadValidations: new GetDataQualityDefaultUseCase(dataQualityRepository, false),
+            exportToCsv: new SaveDataQualityDefaultCsvUseCase(dataQualityRepository),
+        }),
+        hiddenDashboards: getExecute({
+            getHiddenDashboards: new GetHiddenDashboardsDefaultUseCase(hiddenDashboardsRepository),
+            exportDashboardsToCsv: new SaveHiddenDashboardsDefaultUseCase(hiddenDashboardsRepository),
+        }),
         admin: getExecute({
             get: new GetWIDPAdminDefaultUseCase(widpAdminDefaultRepository),
             save: new SaveWIDPAdminDefaultCsvUseCase(widpAdminDefaultRepository),

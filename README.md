@@ -36,8 +36,8 @@ Create an standard report:
 
 ```
 $ yarn build-report # Creates dist/index.html
-$ yarn build-<key>-metadata -u 'user:pass' http://dhis2-server.org # Creates dist/metadata.json (key is a particular report group, e.g. nhwa)
-$ yarn post-<key>-metadata -u 'user:pass' http://dhis2-server.org # Posts dist/metadata.json (key is a particular report group, e.g. nhwa)
+$ yarn build-<key>-metadata -u 'user:pass' --url http://dhis2-server.org # Creates dist/metadata.json (key is a particular report group, e.g. nhwa)
+$ yarn post-<key>-metadata -u 'user:pass' --url http://dhis2-server.org # Posts dist/metadata.json (key is a particular report group, e.g. nhwa)
 ```
 
 Create an standalone DHIS2 webapp app:
@@ -45,3 +45,17 @@ Create an standalone DHIS2 webapp app:
 ```
 $ yarn build-webapp # Creates dist/d2-reports.zip
 ```
+
+Create visualization report:
+Edit .env.local adding:
+REACT_APP_REPORT_VARIANT=hidden-dashboards
+and run build-reports.
+After that import dist/index.html in the dhis2 report.
+
+
+
+Create data-quality report:
+Edit .env.local adding:
+REACT_APP_REPORT_VARIANT=dataQuality
+and run build-reports.
+After that import dist/index.html in the dhis2 report.

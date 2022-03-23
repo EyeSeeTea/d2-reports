@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2022-01-10T08:43:46.954Z\n"
+"POT-Creation-Date: 2022-03-23T21:45:20.768Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -74,13 +74,58 @@ msgstr ""
 msgid "created"
 msgstr ""
 
+msgid "Data quality"
+msgstr ""
+
+msgid "Indicators"
+msgstr ""
+
+msgid "ProgramIndicators"
+msgstr ""
+
+msgid "denominator"
+msgstr ""
+
+msgid "Valid Denominator"
+msgstr ""
+
+msgid "numerator"
+msgstr ""
+
+msgid "Valid Numerator"
+msgstr ""
+
+msgid "expression"
+msgstr ""
+
+msgid "Valid Expression"
+msgstr ""
+
+msgid "filter"
+msgstr ""
+
+msgid "Valid Filter"
+msgstr ""
+
+msgid "Hidden dashboards"
+msgstr ""
+
+msgid "code"
+msgstr ""
+
+msgid "Sharing"
+msgstr ""
+
+msgid "Details"
+msgstr ""
+
 msgid "NHWA Data Approval Status Report"
 msgstr ""
 
-msgid "Data set"
+msgid "Period"
 msgstr ""
 
-msgid "Period"
+msgid "Data set"
 msgstr ""
 
 msgid "Attribute"
