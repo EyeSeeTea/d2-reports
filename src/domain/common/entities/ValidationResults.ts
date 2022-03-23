@@ -1,6 +1,3 @@
-import { Indicator } from "./Indicator";
-import { ProgramIndicator } from "./ProgramIndicator";
-
 export interface ValidationResults {
     metadataType: string;
     id: string;

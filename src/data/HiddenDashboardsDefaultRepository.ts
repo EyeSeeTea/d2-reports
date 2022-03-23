@@ -1,10 +1,11 @@
 import { D2Api } from "../types/d2-api";
-import { HiddenVisualizationRepository } from "../domain/hidden-visualization/repositories/HiddenVisualizationRepository";
-import { HiddenVisualizationResult } from "../domain/common/entities/HiddenVisualizationResult";
+import { HiddenDashboardsRepository } from "../domain/hidden-visualization/repositories/HiddenDashboardsRepository";
+import { HiddenDashboardResult } from "../domain/common/entities/HiddenDashboardResult";
 import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
 import { CsvData } from "./CsvDataSource";
 import { downloadFile } from "./utils/download-file";
 
+const sqlViewUid = "n5QWHt30SCu"
 
 export async function promiseMap<T, S>(inputValues: T[], mapper: (value: T) => Promise<S>): Promise<S[]> {
     const output: S[] = [];
@@ -15,23 +16,22 @@ export async function promiseMap<T, S>(inputValues: T[], mapper: (value: T) => P
     return output;
 }
 
-export class HiddenVisualizationDefaultRepository implements HiddenVisualizationRepository {
+export class HiddenDashboardsDefaultRepository implements HiddenDashboardsRepository {
 
     constructor(private api: D2Api) {
     }
-    async getHiddenVisualizations(sqlViewId: string, type: string): Promise<HiddenVisualizationResult[]> {
-        // eslint-disable-next-line
-debugger
-        const result: any = await this.api.metadata.d2Api.get("/sqlViews/" + sqlViewId + "/data?paging=false").getData();
+    async getHiddenDashboards(): Promise<HiddenDashboardResult[]> {
+        
+        const result: any = await this.api.metadata.d2Api.get("/sqlViews/" + sqlViewUid + "/data?paging=false").getData();
         const data = result.listGrid.rows.map((row: string[]) => ({
             id: row[0],
             code: row[1],
             name: row[2],
             sharing: row[3],
-            details: this.api.apiPath +"/"+type+"/"+ row[0],
+            details: this.api.apiPath +"/dashboards/"+ row[0],
         }));
-        const visualizations: HiddenVisualizationResult[] = data.map(
-            (item: HiddenVisualizationResult) : HiddenVisualizationResult => ({
+        const dashboards: HiddenDashboardResult[] = data.map(
+            (item: HiddenDashboardResult) : HiddenDashboardResult => ({
                 id: item.id,
                 name: item.name,
                 code: item.code?? "-",
@@ -41,17 +41,17 @@ debugger
         );
         
 
-        return visualizations;
+        return dashboards;
     }
 
-    async exportToCsv(sqlViewId: string, type: string): Promise<void> {
-        const metadataObjects = await (await this.getHiddenVisualizations(sqlViewId, type));
+    async exportToCsv(): Promise<void> {
+        const metadataObjects = await (await this.getHiddenDashboards());
         const headers = csvFields.map(field => ({ id: field, text: field }));
         if (metadataObjects === undefined) {
             return;
         } else {
             const rows = metadataObjects.map(
-                (ValidationResults: HiddenVisualizationResult):  MetadataRow=> ({
+                (ValidationResults: HiddenDashboardResult):  MetadataRow=> ({
                     id: ValidationResults.id,
                     name: ValidationResults.name,
                     code: ValidationResults.code?? "-",

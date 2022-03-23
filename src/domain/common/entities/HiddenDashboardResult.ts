@@ -1,4 +1,4 @@
-export interface HiddenVisualizationResult {
+export interface HiddenDashboardResult {
     id: string;
     name: string;
     code?: string | undefined;

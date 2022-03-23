@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2022-03-11T09:59:16.154Z\n"
-"PO-Revision-Date: 2022-03-11T09:59:16.154Z\n"
+"POT-Creation-Date: 2022-03-23T21:45:20.768Z\n"
+"PO-Revision-Date: 2022-03-23T21:45:20.768Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -107,6 +107,18 @@ msgstr ""
 msgid "Valid Filter"
 msgstr ""
 
+msgid "Hidden dashboards"
+msgstr ""
+
+msgid "code"
+msgstr ""
+
+msgid "Sharing"
+msgstr ""
+
+msgid "Details"
+msgstr ""
+
 msgid "NHWA Data Approval Status Report"
 msgstr ""
 
@@ -186,22 +198,4 @@ msgid "Sections"
 msgstr ""
 
 msgid "Toggle filters"
-msgstr ""
-
-msgid "Hidden dashboards and visualizations"
-msgstr ""
-
-msgid "Hidden visualizations"
-msgstr ""
-
-msgid "Hidden dashboards"
-msgstr ""
-
-msgid "code"
-msgstr ""
-
-msgid "Sharing"
-msgstr ""
-
-msgid "Details"
 msgstr ""

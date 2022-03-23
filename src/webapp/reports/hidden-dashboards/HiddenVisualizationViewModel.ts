@@ -1,6 +1,6 @@
-import { HiddenVisualizationResult } from "../../../domain/common/entities/HiddenVisualizationResult";
+import { HiddenDashboardResult } from "../../../domain/common/entities/HiddenDashboardResult";
 
-export interface HiddenVisualizationViewModel {
+export interface HiddenDashboardViewModel {
     id: string;
     name: string;
     code?: string;
@@ -8,9 +8,9 @@ export interface HiddenVisualizationViewModel {
     details: string;
 }
 
-export function getHiddenVisualizationViews(
-    hiddenVisualizations: HiddenVisualizationResult[]
-):HiddenVisualizationViewModel[] {
+export function getHiddenDashboardViews(
+    hiddenVisualizations: HiddenDashboardResult[]
+):HiddenDashboardViewModel[] {
     return hiddenVisualizations
         .map(hiddenVisualizationResult => {
             return {

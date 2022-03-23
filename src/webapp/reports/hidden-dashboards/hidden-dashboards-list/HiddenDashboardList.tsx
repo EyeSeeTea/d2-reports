@@ -14,19 +14,20 @@ import { TableConfig, useObjectsTable } from "../../../components/objects-list/o
 import { ObjectsList } from "../../../components/objects-list/ObjectsList";
 import { useAppContext } from "../../../contexts/app-context";
 import { useSnackbarOnError } from "../../../utils/snackbar";
-import { getHiddenVisualizationViews, HiddenVisualizationViewModel } from "../HiddenVisualizationViewModel";
+import { getHiddenDashboardViews, HiddenDashboardViewModel } from "../HiddenVisualizationViewModel";
 
-export const HiddenVisualizationList: React.FC = React.memo(() => {
+export const HiddenDashboardList: React.FC = React.memo(() => {
     const { compositionRoot } = useAppContext();
     const baseConfig = React.useMemo(getBaseListConfig, []);
 
     const getRows = React.useMemo(
-        () => async (paging: TablePagination, sorting: TableSorting<HiddenVisualizationViewModel>) => {
+        () => async (paging: TablePagination, sorting: TableSorting<HiddenDashboardViewModel>) => {
             const { field, order: direction } = sorting;
             const { page, pageSize } = paging;
 
-            const response = await compositionRoot.hiddenVisualizations.getHiddenVisualizations();
-            const objects = getHiddenVisualizationViews(response);
+            const response = await compositionRoot.hiddenDashboards.getHiddenDashboards();
+
+            const objects = getHiddenDashboardViews(response);
 
             const sortedData = _.orderBy(
                 objects,
@@ -52,29 +53,28 @@ export const HiddenVisualizationList: React.FC = React.memo(() => {
         name: "downloadCsv",
         text: "Download CSV",
         icon: <StorageIcon />,
-        onClick: async () => compositionRoot.hiddenVisualizations.exportVisualizaitonsToCsv(),
+        onClick: async () => compositionRoot.hiddenDashboards.exportDashboardsToCsv(),
     };
-
     return (
-        <ObjectsList<HiddenVisualizationViewModel>
+        <ObjectsList<HiddenDashboardViewModel>
             {...tableProps}
             globalActions={[downloadCsv]}
         ></ObjectsList>
     );
 });
 
-function getBaseListConfig(): TableConfig<HiddenVisualizationViewModel> {
+function getBaseListConfig(): TableConfig<HiddenDashboardViewModel> {
     const paginationOptions: PaginationOptions = {
         pageSizeOptions: [10, 20, 50],
         pageSizeInitialValue: 20,
     };
 
-    const initialSorting: TableSorting<HiddenVisualizationViewModel> = {
+    const initialSorting: TableSorting<HiddenDashboardViewModel> = {
         field: "name" as const,
         order: "asc" as const,
     };
 
-    const columns: TableColumn<HiddenVisualizationViewModel>[] = [
+    const columns: TableColumn<HiddenDashboardViewModel>[] = [
         { name: "id", text: i18n.t("Id"), sortable: true },
         { name: "code", text: i18n.t("code"), sortable: true },
         { name: "name", text: i18n.t("name"), sortable: true },
@@ -84,4 +84,3 @@ function getBaseListConfig(): TableConfig<HiddenVisualizationViewModel> {
 
     return { columns, initialSorting, paginationOptions };
 }
-

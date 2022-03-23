@@ -48,7 +48,7 @@ $ yarn build-webapp # Creates dist/d2-reports.zip
 
 Create visualization report:
 Edit .env.local adding:
-REACT_APP_REPORT_VARIANT=visualizations
+REACT_APP_REPORT_VARIANT=hidden-dashboards
 and run build-reports.
 After that import dist/index.html in the dhis2 report.
 

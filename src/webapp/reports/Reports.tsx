@@ -3,7 +3,7 @@ import AdminReport from "./admin/AdminReport";
 import NHWACommentsReport from "./nhwa-comments/NHWACommentsReport";
 import NHWADataApprovalStatusReport from "./nhwa-approval-status/NHWADataApprovalStatusReport";
 import DataQualityReport from "./data-quality/DataQualityReport";
-import VisualizationsReport from "./visualization/HiddenVisualizationsReport";
+import HiddenDashboardsReport from "./hidden-dashboards/HiddenDashboardsReport";
 
 const widget = process.env.REACT_APP_REPORT_VARIANT || "";
 
@@ -21,8 +21,8 @@ const Component: React.FC = () => {
         case "dataQuality": {
             return <DataQualityReport />;
         }
-        case "visualizations": {
-            return <VisualizationsReport />;
+        case "hidden-dashboards": {
+            return <HiddenDashboardsReport />;
         }
         default: {
             return <p>{`Please provide a valid REACT_APP_REPORT_VARIANT`}</p>;
