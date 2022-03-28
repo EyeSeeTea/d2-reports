@@ -1,5 +1,6 @@
 import { Dhis2ConfigRepository } from "./data/Dhis2ConfigRepository";
 import { Dhis2OrgUnitsRepository } from "./data/Dhis2OrgUnitsRepository";
+import { CustomFormErrorsDefaultRepository } from "./data/CustomFormErrorsDefaultRepository";
 import { NHWADataApprovalDefaultRepository } from "./data/NHWADataApprovalDefaultRepository";
 import { NHWADataCommentsDefaultRepository } from "./data/NHWADataCommentsDefaultRepository";
 import { WIDPAdminDefaultRepository } from "./data/WIDPAdminDefaultRepository";
@@ -15,6 +16,7 @@ import { SaveDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/Save
 import { GetDataValuesUseCase } from "./domain/nhwa-comments/usecases/GetDataValuesUseCase";
 import { SaveDataValuesUseCase } from "./domain/nhwa-comments/usecases/SaveDataValuesCsvUseCase";
 import { D2Api } from "./types/d2-api";
+import { GetCustomFormErrorsUseCase } from "./domain/validatecustomforms/usecases/GetCustomFormErrorsUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api);
@@ -22,6 +24,8 @@ export function getCompositionRoot(api: D2Api) {
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
+    const customFormErrorsDefaultRepository = new CustomFormErrorsDefaultRepository(api);
+    
 
     return {
         admin: getExecute({
@@ -41,6 +45,9 @@ export function getCompositionRoot(api: D2Api) {
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),
+        }),
+        validateCustomForm: getExecute({
+            get: new GetCustomFormErrorsUseCase(customFormErrorsDefaultRepository),
         }),
         config: getExecute({
             get: new GetConfig(configRepository),
