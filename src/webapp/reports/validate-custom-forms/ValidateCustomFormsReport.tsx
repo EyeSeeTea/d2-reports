@@ -1,30 +1,41 @@
-import { Typography, makeStyles, CircularProgress } from "@material-ui/core";
+import { Typography, makeStyles } from "@material-ui/core";
 import _ from "lodash";
-import React from "react";
+import React, { useState } from "react";
 import i18n from "../../../locales";
+import { Spinner } from "../../components/objects-list/Spinner";
 import { Select, SelectOption } from "../../components/select/Select";
 import { useAppContext } from "../../contexts/app-context";
 
-const list = ["Error ex"];
+const list = [""];
 
 const ValidateCustomFormsReport: React.FC = () => {
+    const [isLoading, setLoading] = useState(false);
+
     const { compositionRoot, config } = useAppContext();
     const OnModuleChange = async ({ value }: SelectOption) => {
-        //execute use case to get the CustomFormErrorsList  from a given dataset
+        setLoading(true);
         const result = await compositionRoot.validateCustomForm.get(value);
         _.remove(list);
+        if (result.length == 0) {
+            list.push("No errors detected");
+        }
         result.map(item => {
             return list.push(item);
         });
+        setLoading(false);
         return value;
     };
+
     const classes = useStyles();
+
     const [modules] = React.useState<{ value: string; label: string }[]>(
-        _.values(config.dataSets).filter(ds =>{
-            return (ds.name.indexOf("Maturity") === -1)
-        }).map(ds => {
-            return { value: ds.id, label: ds.name };
-        })
+        _.values(config.dataSets)
+            .filter(ds => {
+                return ds.name.indexOf("Maturity") === -1;
+            })
+            .map(ds => {
+                return { value: ds.id, label: ds.name };
+            })
     );
 
     return (
@@ -39,15 +50,16 @@ const ValidateCustomFormsReport: React.FC = () => {
                 />
             </div>
 
-            {<CircularProgress />}
+            <div className={classes.row}>
+                <p>
+                    <Spinner isVisible={isLoading} />
+                </p>
+            </div>
 
             <div className={classes.row}>
                 <Typography variant="h5">{i18n.t("Result:")}</Typography>
             </div>
             <div className={classes.row}>
-                {list.forEach(item => {
-                    return <p>{item}</p>;
-                })}
                 <p> {_.values(list)}</p>
             </div>
         </React.Fragment>
