@@ -1,39 +1,69 @@
-
 import _ from "lodash";
 import { CustomFormErrorsRepository } from "../domain/validatecustomforms/repositories/CustomFormErrorsRepository";
 import { D2Api } from "../types/d2-api";
 
 export class CustomFormErrorsDefaultRepository implements CustomFormErrorsRepository {
     constructor(private api: D2Api) {}
-    async get(id:string): Promise<string[]> {
+    async get(id: string): Promise<string[]> {
         //http://localhost:8080/api/metadata.json?dataSets:fields=id,name,dataSetElements[dataElement[id,categoryCombo[id]&categoryCombos:fields=id,categoryOptionCombos&filter=id:eq:Tu81BTLUuCT
 
-    // eslint-disable-next-line
-    debugger;
         const dataSetMetadata: any = await this.api.metadata.d2Api
             .get(
                 "/metadata.json?dataSets:fields=id,name,dataEntryForm[htmlCode],dataSetElements[dataElement[id,categoryCombo[id]&categoryCombos:fields=id,categoryOptionCombos"
             )
             .getData();
-            // eslint-disable-next-line
-        const dataSets = dataSetMetadata["dataSets"]
-        // eslint-disable-next-line
-        debugger
-        // eslint-disable-next-line
+        const dataSets = dataSetMetadata["dataSets"];
         const filtered = _.filter(dataSets, dataset => dataset.id === id);
+        const htmlCode = filtered[0]["dataEntryForm"]["htmlCode"];
+        const newRegExp = new RegExp(/((([a-zA-Z0-9]){11})-(([a-zA-Z0-9]){11})-val)/g);
 
-        // eslint-disable-next-line
-        debugger
-        // eslint-disable-next-line
-        const htmlCode = filtered[0]["dataEntryForm"]["htmlCode"]
-        const newRegExp = new RegExp('((([a-zA-Z0-9]){11})-(([a-zA-Z0-9]){11})-val)')
-        // eslint-disable-next-line
-        const result = newRegExp.exec(htmlCode)
+        const matches = htmlCode.match(newRegExp);
 
-        const result_2 = [...htmlCode.matchAll(newRegExp)]
+        const result = _.map(matches, match => {
+            const groups = newRegExp.exec(match);
+            if (groups != null) {
+                return { dataElementId: groups[2], categoryOptionComboId: groups[4] };
+            }
+        });
         // eslint-disable-next-line
-        debugger
+        const errors = _.map(result, input => {
+            if (input != null) {
+                const categoryComboInDatasetElement = _.map(filtered[0]["dataSetElements"], dataelement => {
+                    if (input != null && input["dataElementId"] === dataelement["dataElement"]["id"]) {
+                        return dataelement["dataElement"]["categoryCombo"]["id"];
+                    }
+                });
+                const categoryComboInDataElement = _.compact(categoryComboInDatasetElement);
+                if (categoryComboInDataElement.length === 0) {
+                    return "ERROR dataelement " + input["dataElementId"] + " not exist in given dataset";
+                } else {
+                    const categoryOptionComboInCategoryCombo = _.map(
+                        dataSetMetadata["categoryCombos"],
+                        categoryCombo => {
+                            if (categoryComboInDataElement[0] === categoryCombo["id"]) {
+                                const exist = _.map(categoryCombo["categoryOptionCombos"], categoryOptionCombo => {
+                                    return (categoryOptionCombo["id"] === input["categoryOptionComboId"])
+                                })
+                                return _.compact(exist);
+                            }else{
+                                return undefined;
+                            }
+                        }
+                    )
+                    const categoryComboOptionErrors = _.compact(categoryOptionComboInCategoryCombo);
+                    if (categoryComboOptionErrors.length !== 1) {
+                        return (
+                            "ERROR CategoryOptionCombo " +
+                            input["categoryOptionComboId"] +
+                            " not exist in given dataelement " +
+                            input["dataElementId"]
+                        );
+                    }
+                }
+            }
+        });
+        const newerror = _.compact(errors);
         //return this.mapMetadataObjects(Object.assign(publicAccessResult, userGroupAccessesResult), options);
-        return ["Error example"]
+        return newerror
     }
 }

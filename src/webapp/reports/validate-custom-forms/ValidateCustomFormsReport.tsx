@@ -7,29 +7,22 @@ import { useAppContext } from "../../contexts/app-context";
 
 const list = ["Error ex"];
 
-const AdminReport: React.FC = () => {
+const ValidateCustomFormsReport: React.FC = () => {
     const { compositionRoot, config } = useAppContext();
     const OnModuleChange = async ({ value }: SelectOption) => {
         //execute use case to get the CustomFormErrorsList  from a given dataset
-        // eslint-disable-next-line
-        debugger;
         const result = await compositionRoot.validateCustomForm.get(value);
-        // eslint-disable-next-line
-        // eslint-disable-next-line
-        debugger;
+        _.remove(list);
         result.map(item => {
-            list.push(item);
+            return list.push(item);
         });
-        //list.push(result)
-        //    setIsRunning(false)
-        //}
-        // eslint-disable-next-line
-        debugger;
         return value;
     };
     const classes = useStyles();
     const [modules] = React.useState<{ value: string; label: string }[]>(
-        _.values(config.dataSets).map(ds => {
+        _.values(config.dataSets).filter(ds =>{
+            return (ds.name.indexOf("Maturity") === -1)
+        }).map(ds => {
             return { value: ds.id, label: ds.name };
         })
     );
@@ -83,4 +76,4 @@ const useStyles = makeStyles({
     fullWidth: { width: "25%" },
 });
 
-export default AdminReport;
+export default ValidateCustomFormsReport;
