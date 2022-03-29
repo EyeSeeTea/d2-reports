@@ -21,21 +21,21 @@ export class CustomFormErrorsDefaultRepository implements CustomFormErrorsReposi
 
         const result = _.map(matches, match => {
             const groups = newRegExp.exec(match);
-            if (groups != null) {
+            if (!_.isNil(groups)) {
                 return { dataElementId: groups[2], categoryOptionComboId: groups[4] };
             }
         });
         // eslint-disable-next-line
         const errors = _.map(result, input => {
-            if (input != null) {
+            if (!_.isNil(input)) {
                 const categoryComboInDatasetElement = _.map(filtered[0]["dataSetElements"], dataelement => {
-                    if (input != null && input["dataElementId"] === dataelement["dataElement"]["id"]) {
+                    if (!_.isNil(input) && input["dataElementId"] === dataelement["dataElement"]["id"]) {
                         return dataelement["dataElement"]["categoryCombo"]["id"];
                     }
                 });
                 const categoryComboInDataElement = _.compact(categoryComboInDatasetElement);
                 if (categoryComboInDataElement.length === 0) {
-                    return "ERROR dataelement " + input["dataElementId"] + " not exist in given dataset";
+                    return "ERROR dataelement with UID: " + input["dataElementId"] + " not exist in dataset with UID: "+id;
                 } else {
                     const categoryOptionComboInCategoryCombo = _.map(
                         dataSetMetadata["categoryCombos"],
@@ -53,10 +53,10 @@ export class CustomFormErrorsDefaultRepository implements CustomFormErrorsReposi
                     const categoryComboOptionErrors = _.compact(categoryOptionComboInCategoryCombo);
                     if (categoryComboOptionErrors.length !== 1) {
                         return (
-                            "ERROR CategoryOptionCombo " +
-                            input["categoryOptionComboId"] +
-                            " not exist in given dataelement " +
-                            input["dataElementId"]
+                            "ERROR Dataelement with UID: " +
+                            input["dataElementId"] +
+                            " is not associated with CategoryOptionComboID: "+
+                            input["categoryOptionComboId"] 
                         );
                     }
                 }
