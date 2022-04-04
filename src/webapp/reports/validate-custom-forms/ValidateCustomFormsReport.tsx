@@ -6,7 +6,7 @@ import { Spinner } from "../../components/objects-list/Spinner";
 import { Select, SelectOption } from "../../components/select/Select";
 import { useAppContext } from "../../contexts/app-context";
 
-const list = [""];
+const list = [{ text: "" }];
 
 const ValidateCustomFormsReport: React.FC = () => {
     const [isLoading, setLoading] = useState(false);
@@ -16,11 +16,11 @@ const ValidateCustomFormsReport: React.FC = () => {
         setLoading(true);
         const result = await compositionRoot.validateCustomForm.get(value);
         _.remove(list);
-        if (result.length == 0) {
-            list.push("No errors detected");
+        if (result.length === 0) {
+            list.push({ text: "No errors detected" });
         }
         result.map(item => {
-            return list.push(item);
+            return list.push({ text: item });
         });
         setLoading(false);
         return value;
@@ -59,9 +59,11 @@ const ValidateCustomFormsReport: React.FC = () => {
             <div className={classes.row}>
                 <Typography variant="h5">{i18n.t("Result:")}</Typography>
             </div>
-            <div className={classes.row}>
-                <p> {_.values(list)}</p>
-            </div>
+            
+                {_.map(list, item => {
+                    return <div className={classes.items}>{item.text}</div>;
+                })}
+            
         </React.Fragment>
     );
 };
@@ -71,6 +73,12 @@ const useStyles = makeStyles({
         display: "flex",
         flexFlow: "row nowrap",
         justifyContent: "space-around",
+        marginRight: "1em",
+        marginLeft: "1%",
+    },
+    items: {
+        display: "flex",
+        flexFlow: "row nowrap",
         marginRight: "1em",
         marginLeft: "1%",
     },

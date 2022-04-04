@@ -5,8 +5,6 @@ import { D2Api } from "../types/d2-api";
 export class CustomFormErrorsDefaultRepository implements CustomFormErrorsRepository {
     constructor(private api: D2Api) {}
     async get(id: string): Promise<string[]> {
-        //http://localhost:8080/api/metadata.json?dataSets:fields=id,name,dataSetElements[dataElement[id,categoryCombo[id]&categoryCombos:fields=id,categoryOptionCombos&filter=id:eq:Tu81BTLUuCT
-
         const dataSetMetadata: any = await this.api.metadata.d2Api
             .get(
                 "/metadata.json?dataSets:fields=id,name,dataEntryForm[htmlCode],dataSetElements[dataElement[id,categoryCombo[id]&categoryCombos:fields=id,categoryOptionCombos"
@@ -25,7 +23,6 @@ export class CustomFormErrorsDefaultRepository implements CustomFormErrorsReposi
                 return { dataElementId: groups[2], categoryOptionComboId: groups[4] };
             }
         });
-        // eslint-disable-next-line
         const errors = _.map(result, input => {
             if (!_.isNil(input)) {
                 const categoryComboInDatasetElement = _.map(filtered[0]["dataSetElements"], dataelement => {
@@ -50,8 +47,8 @@ export class CustomFormErrorsDefaultRepository implements CustomFormErrorsReposi
                             }
                         }
                     )
-                    const categoryComboOptionErrors = _.compact(categoryOptionComboInCategoryCombo);
-                    if (categoryComboOptionErrors.length !== 1) {
+                    const categoryComboOptionErrors = _.compact(categoryOptionComboInCategoryCombo)[0];
+                    if (categoryComboOptionErrors?.length !== 1) {
                         return (
                             "ERROR Dataelement with UID: " +
                             input["dataElementId"] +
@@ -63,7 +60,6 @@ export class CustomFormErrorsDefaultRepository implements CustomFormErrorsReposi
             }
         });
         const newerror = _.compact(errors);
-        //return this.mapMetadataObjects(Object.assign(publicAccessResult, userGroupAccessesResult), options);
         return newerror
     }
 }
