@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2022-03-28T16:58:13.797Z\n"
-"PO-Revision-Date: 2022-03-28T16:58:13.797Z\n"
+"POT-Creation-Date: 2022-04-05T19:14:43.245Z\n"
+"PO-Revision-Date: 2022-04-05T19:14:43.245Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -153,6 +153,9 @@ msgid "Sections"
 msgstr ""
 
 msgid "Toggle filters"
+msgstr ""
+
+msgid "No errors detected"
 msgstr ""
 
 msgid "Custom Form Validation"

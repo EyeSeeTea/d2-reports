@@ -25,7 +25,6 @@ export function getCompositionRoot(api: D2Api) {
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
     const customFormErrorsDefaultRepository = new CustomFormErrorsDefaultRepository(api);
-    
 
     return {
         admin: getExecute({
