@@ -6,7 +6,8 @@ import { Spinner } from "../../components/objects-list/Spinner";
 import { Select, SelectOption } from "../../components/select/Select";
 import { useAppContext } from "../../contexts/app-context";
 
-const list = [{ text: "" }];
+const errors = [{ text: "" }];
+const [errros, setErrors] = React.useState<Array<{ text: string }>>([{ text: "" }]);
 
 const ValidateCustomFormsReport: React.FC = () => {
     const [isLoading, setLoading] = useState(false);
@@ -15,12 +16,12 @@ const ValidateCustomFormsReport: React.FC = () => {
     const OnModuleChange = async ({ value }: SelectOption) => {
         setLoading(true);
         const result = await compositionRoot.validateCustomForm.get(value);
-        _.remove(list);
+        _.remove(errors);
         if (result.length === 0) {
-            list.push({ text: i18n.t("No errors detected") });
+            errors.push({ text: i18n.t("No errors detected") });
         }
         result.map(item => {
-            return list.push({ text: item });
+            return errors.push({ text: item });
         });
         setLoading(false);
         return value;
@@ -60,11 +61,9 @@ const ValidateCustomFormsReport: React.FC = () => {
                 <Typography variant="h5">{i18n.t("Result:")}</Typography>
             </div>
 
-            
-            {_.map(list, item => {
+            {_.map(errors, item => {
                 return <div className={classes.items}>{item.text}</div>;
             })}
-            
         </React.Fragment>
     );
 };

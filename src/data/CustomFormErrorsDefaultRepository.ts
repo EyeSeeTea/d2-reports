@@ -35,9 +35,12 @@ export class CustomFormErrorsDefaultRepository implements CustomFormErrorsReposi
                 const categoryComboInDataElement = _.compact(categoryComboInDatasetElement);
                 if (!_.some(categoryComboInDataElement, 0)) {
                     return (
-                        i18n.t("ERROR Dataelement with UID:") +" "+
-                        input["dataElementId"] +" "+
-                        i18n.t("does not exist in dataset with UID:") +" "+
+                        i18n.t("ERROR Dataelement with UID:") +
+                        " " +
+                        input["dataElementId"] +
+                        " " +
+                        i18n.t("does not exist in dataset with UID:") +
+                        " " +
                         id
                     );
                 } else {
@@ -57,9 +60,12 @@ export class CustomFormErrorsDefaultRepository implements CustomFormErrorsReposi
                     const categoryComboOptionErrors = _.compact(categoryOptionComboInCategoryCombo)[0];
                     if (_.every(categoryComboOptionErrors, false)) {
                         return (
-                            i18n.t("ERROR Dataelement with UID:") +" "+
-                            input["dataElementId"] +" "+
-                            i18n.t("is not associated with CategoryOptionComboID:") +" "+
+                            i18n.t("ERROR Dataelement with UID:") +
+                            " " +
+                            input["dataElementId"] +
+                            " " +
+                            i18n.t("is not associated with CategoryOptionComboID:") +
+                            " " +
                             input["categoryOptionComboId"]
                         );
                     }
