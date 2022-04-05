@@ -17,7 +17,7 @@ const ValidateCustomFormsReport: React.FC = () => {
         const result = await compositionRoot.validateCustomForm.get(value);
         _.remove(list);
         if (result.length === 0) {
-            list.push({ text: "No errors detected" });
+            list.push({ text: i18n.t("No errors detected" )});
         }
         result.map(item => {
             return list.push({ text: item });
@@ -59,11 +59,10 @@ const ValidateCustomFormsReport: React.FC = () => {
             <div className={classes.row}>
                 <Typography variant="h5">{i18n.t("Result:")}</Typography>
             </div>
-            
-                {_.map(list, item => {
-                    return <div className={classes.items}>{item.text}</div>;
-                })}
-            
+
+            {_.map(list, item => {
+                return <div className={classes.items}>{item.text}</div>;
+            })}
         </React.Fragment>
     );
 };
