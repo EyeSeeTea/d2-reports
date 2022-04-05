@@ -17,7 +17,7 @@ const Component: React.FC = () => {
         case "admin": {
             return <AdminReport />;
         }
-        case "validatecustomforms": {
+        case "validate-custom-forms": {
             return <ValidateCustomFormsReport />;
         }
         default: {
