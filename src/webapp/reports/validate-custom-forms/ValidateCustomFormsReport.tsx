@@ -6,23 +6,22 @@ import { Spinner } from "../../components/objects-list/Spinner";
 import { Select, SelectOption } from "../../components/select/Select";
 import { useAppContext } from "../../contexts/app-context";
 
-const errors = [{ text: "" }];
-const [errros, setErrors] = React.useState<Array<{ text: string }>>([{ text: "" }]);
+//const errors = [{ text: "" }];
 
 const ValidateCustomFormsReport: React.FC = () => {
     const [isLoading, setLoading] = useState(false);
 
+    const [errors, setErrors] = React.useState<Array<{ text: string }>>([{ text: "" }]);
     const { compositionRoot, config } = useAppContext();
     const OnModuleChange = async ({ value }: SelectOption) => {
         setLoading(true);
         const result = await compositionRoot.validateCustomForm.get(value);
         _.remove(errors);
         if (result.length === 0) {
-            errors.push({ text: i18n.t("No errors detected") });
+            setErrors([{ text: i18n.t("No errors detected") }]);
+        } else {
+            setErrors(_.map(result, item =>{ return {text: item}} ))
         }
-        result.map(item => {
-            return errors.push({ text: item });
-        });
         setLoading(false);
         return value;
     };

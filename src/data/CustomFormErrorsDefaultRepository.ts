@@ -33,7 +33,7 @@ export class CustomFormErrorsDefaultRepository implements CustomFormErrorsReposi
                     }
                 });
                 const categoryComboInDataElement = _.compact(categoryComboInDatasetElement);
-                if (!_.some(categoryComboInDataElement, 0)) {
+                if (categoryComboInDataElement.length === 0) {
                     return (
                         i18n.t("ERROR Dataelement with UID:") +
                         " " +
@@ -48,17 +48,14 @@ export class CustomFormErrorsDefaultRepository implements CustomFormErrorsReposi
                         dataSetMetadata["categoryCombos"],
                         categoryCombo => {
                             if (categoryComboInDataElement[0] === categoryCombo["id"]) {
-                                const exist = _.map(categoryCombo["categoryOptionCombos"], categoryOptionCombo => {
+                                return _.map(categoryCombo["categoryOptionCombos"], categoryOptionCombo => {
                                     return categoryOptionCombo["id"] === input["categoryOptionComboId"];
                                 });
-                                return _.compact(exist);
-                            } else {
-                                return undefined;
                             }
                         }
                     );
-                    const categoryComboOptionErrors = _.compact(categoryOptionComboInCategoryCombo)[0];
-                    if (_.every(categoryComboOptionErrors, false)) {
+                    const categoryComboOptionErrors = _.compact(_.compact(categoryOptionComboInCategoryCombo)[0]);
+                    if (categoryComboOptionErrors?.length !== 1) {
                         return (
                             i18n.t("ERROR Dataelement with UID:") +
                             " " +
