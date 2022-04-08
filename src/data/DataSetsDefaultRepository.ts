@@ -1,12 +1,12 @@
 import _ from "lodash";
-import { CustomFormErrorsRepository } from "../domain/validatecustomforms/repositories/CustomFormErrorsRepository";
+import { DataSetsRepository } from "../domain/validatecustomforms/repositories/DataSetsRepository";
 import i18n from "../locales";
 import { D2Api } from "../types/d2-api";
 
-export class CustomFormErrorsDefaultRepository implements CustomFormErrorsRepository {
+export class DataSetsDefaultRepository implements DataSetsRepository {
     constructor(private api: D2Api) {}
 
-    async get(id: string): Promise<string[]> {
+    async validate(id: string): Promise<string[]> {
         const metadata$ = this.api.metadata.get({
             dataSets: {
                 fields: {
@@ -24,7 +24,8 @@ export class CustomFormErrorsDefaultRepository implements CustomFormErrorsReposi
         const data = await metadata$.getData();
 
         const dataSets = data.dataSets;
-        const dataSet = _.filter(dataSets, dataset => dataset.id === id)[0];
+        //const dataSet = _.filter(dataSets, dataset => dataset.id === id)[0];
+        const dataSet = dataSets.find(dataset => dataset.id === id)
         const htmlCode = dataSet?.dataEntryForm.htmlCode;
         const newRegExp = new RegExp(/((([a-zA-Z0-9]){11})-(([a-zA-Z0-9]){11})-val)/g);
 
