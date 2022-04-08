@@ -50,10 +50,8 @@ const ValidateCustomFormsReport: React.FC = () => {
                 />
             </div>
 
-            <div className={classes.row}>
-                <p>
+            <div className={classes.spinner}>
                     <Spinner isVisible={isLoading} />
-                </p>
             </div>
 
             <div className={classes.row}>
@@ -74,6 +72,10 @@ const useStyles = makeStyles({
         justifyContent: "space-around",
         marginRight: "1em",
         marginLeft: "1%",
+    },
+    spinner: {
+        position: 'absolute', left: '50%', top: '50%',
+        transform: 'translate(-50%, -50%)'
     },
     items: {
         display: "flex",
