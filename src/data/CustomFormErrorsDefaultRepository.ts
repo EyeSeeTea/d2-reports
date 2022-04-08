@@ -7,17 +7,28 @@ export class CustomFormErrorsDefaultRepository implements CustomFormErrorsReposi
     constructor(private api: D2Api) {}
 
     async get(id: string): Promise<string[]> {
-        const dataSetMetadata: any = await this.api.metadata.d2Api
-            .get(
-                "/metadata.json?dataSets:fields=id,name,dataEntryForm[htmlCode],dataSetElements[dataElement[id,categoryCombo[id]&categoryCombos:fields=id,categoryOptionCombos"
-            )
-            .getData();
-        const dataSets = dataSetMetadata["dataSets"];
+        const metadata$ = this.api.metadata.get({
+            dataSets: {
+                fields: {
+                    id: true,
+                    displayName: true,
+                    dataEntryForm: { htmlCode: true },
+                    dataSetElements: {
+                        dataElement: { id: true, categoryCombo: { id: true } },
+                    },
+                },
+            },
+            categoryCombos: { fields: { id: true, categoryOptionCombos: { id: true } } },
+        });
+
+        const data = await metadata$.getData();
+
+        const dataSets = data.dataSets;
         const dataSet = _.filter(dataSets, dataset => dataset.id === id)[0];
-        const htmlCode = dataSet["dataEntryForm"]["htmlCode"];
+        const htmlCode = dataSet?.dataEntryForm.htmlCode;
         const newRegExp = new RegExp(/((([a-zA-Z0-9]){11})-(([a-zA-Z0-9]){11})-val)/g);
 
-        const matches = htmlCode.match(newRegExp);
+        const matches = htmlCode?.match(newRegExp);
 
         const result = _.map(matches, match => {
             const groups = newRegExp.exec(match);
@@ -27,9 +38,9 @@ export class CustomFormErrorsDefaultRepository implements CustomFormErrorsReposi
         });
         const errors = _.map(result, input => {
             if (input) {
-                const categoryComboInDatasetElement = _.map(dataSet["dataSetElements"], dataelement => {
-                    if (input && input["dataElementId"] === dataelement["dataElement"]["id"]) {
-                        return dataelement["dataElement"]["categoryCombo"]["id"];
+                const categoryComboInDatasetElement = _.map(dataSet?.dataSetElements, dataelement => {
+                    if (input && input["dataElementId"] === dataelement.dataElement.id) {
+                        return dataelement.dataElement.categoryCombo.id;
                     }
                 });
                 const categoryComboInDataElement = _.compact(categoryComboInDatasetElement);
@@ -44,16 +55,13 @@ export class CustomFormErrorsDefaultRepository implements CustomFormErrorsReposi
                         id
                     );
                 } else {
-                    const categoryOptionComboInCategoryCombo = _.map(
-                        dataSetMetadata["categoryCombos"],
-                        categoryCombo => {
-                            if (categoryComboInDataElement[0] === categoryCombo["id"]) {
-                                return _.map(categoryCombo["categoryOptionCombos"], categoryOptionCombo => {
-                                    return categoryOptionCombo["id"] === input["categoryOptionComboId"];
-                                });
-                            }
+                    const categoryOptionComboInCategoryCombo = _.map(data.categoryCombos, categoryCombo => {
+                        if (categoryComboInDataElement[0] === categoryCombo.id) {
+                            return _.map(categoryCombo.categoryOptionCombos, categoryOptionCombo => {
+                                return categoryOptionCombo.id === input["categoryOptionComboId"];
+                            });
                         }
-                    );
+                    });
                     const categoryComboOptionErrors = _.compact(_.compact(categoryOptionComboInCategoryCombo)[0]);
                     if (categoryComboOptionErrors?.length !== 1) {
                         return (
