@@ -20,7 +20,11 @@ const ValidateCustomFormsReport: React.FC = () => {
         if (result.length === 0) {
             setErrors([{ text: i18n.t("No errors detected") }]);
         } else {
-            setErrors(_.map(result, item =>{ return {text: item}} ))
+            setErrors(
+                _.map(result, item => {
+                    return { text: item };
+                })
+            );
         }
         setLoading(false);
         return value;
@@ -51,7 +55,7 @@ const ValidateCustomFormsReport: React.FC = () => {
             </div>
 
             <div className={classes.spinner}>
-                    <Spinner isVisible={isLoading} />
+                <Spinner isVisible={isLoading} />
             </div>
 
             <div className={classes.row}>
@@ -74,8 +78,10 @@ const useStyles = makeStyles({
         marginLeft: "1%",
     },
     spinner: {
-        position: 'absolute', left: '50%', top: '50%',
-        transform: 'translate(-50%, -50%)'
+        position: "absolute",
+        left: "50%",
+        top: "50%",
+        transform: "translate(-50%, -50%)",
     },
     items: {
         display: "flex",

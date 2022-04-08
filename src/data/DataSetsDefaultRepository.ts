@@ -25,7 +25,7 @@ export class DataSetsDefaultRepository implements DataSetsRepository {
 
         const dataSets = data.dataSets;
         //const dataSet = _.filter(dataSets, dataset => dataset.id === id)[0];
-        const dataSet = dataSets.find(dataset => dataset.id === id)
+        const dataSet = dataSets.find(dataset => dataset.id === id);
         const htmlCode = dataSet?.dataEntryForm.htmlCode;
         const newRegExp = new RegExp(/((([a-zA-Z0-9]){11})-(([a-zA-Z0-9]){11})-val)/g);
 
