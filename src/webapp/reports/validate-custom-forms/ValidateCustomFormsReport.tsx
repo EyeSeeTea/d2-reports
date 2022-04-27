@@ -62,8 +62,12 @@ const ValidateCustomFormsReport: React.FC = () => {
                 <Typography variant="h5">{i18n.t("Result:")}</Typography>
             </div>
 
-            {_.map(errors, item => {
-                return <div className={classes.items}>{item.text}</div>;
+            {_.map(errors, (item, index) => {
+                return (
+                    <div key={index} className={classes.items}>
+                        {item.text}
+                    </div>
+                );
             })}
         </React.Fragment>
     );

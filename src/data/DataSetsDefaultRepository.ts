@@ -18,63 +18,72 @@ export class DataSetsDefaultRepository implements DataSetsRepository {
                     },
                 },
             },
-            categoryCombos: { fields: { id: true, categoryOptionCombos: { id: true } } },
+            dataElements: {
+                fields: { id: true, categoryCombo: { id: true } },
+            },
+            categoryCombos: {
+                fields: { id: true, categoryOptionCombos: { id: true } },
+            },
         });
 
-        const data = await metadata$.getData();
+        const { dataSets, categoryCombos } = await metadata$.getData();
 
-        const dataSets = data.dataSets;
+        //map/find/filter
         //const dataSet = _.filter(dataSets, dataset => dataset.id === id)[0];
+        //const dataSet = _.find(dataSets, dataset => dataset.id === id);
         const dataSet = dataSets.find(dataset => dataset.id === id);
         const htmlCode = dataSet?.dataEntryForm.htmlCode;
         const newRegExp = new RegExp(/((([a-zA-Z0-9]){11})-(([a-zA-Z0-9]){11})-val)/g);
 
         const matches = htmlCode?.match(newRegExp);
 
-        const result = _.map(matches, match => {
-            const groups = newRegExp.exec(match);
-            if (groups) {
-                return { dataElementId: groups[2], categoryOptionComboId: groups[4] };
-            }
-        });
-        const errors = _.map(result, input => {
-            if (input) {
-                const categoryComboInDatasetElement = _.map(dataSet?.dataSetElements, dataelement => {
-                    if (input && input["dataElementId"] === dataelement.dataElement.id) {
-                        return dataelement.dataElement.categoryCombo.id;
+        const customFormIds = _(matches)
+            .map(match => {
+                const groups = newRegExp.exec(match);
+                return groups ? { dataElementId: groups[2], categoryOptionComboId: groups[4] } : undefined;
+            })
+            .compact()
+            .value();
+
+        const categoryCombosById = _.keyBy(categoryCombos, cc => cc.id);
+
+        // const objs: Record<DataElementId, CocId[]>
+
+        const errors = _.map(customFormIds, input => {
+            // const dataElement = dataElementsById[input.dataElementId];
+            // const categoryCombo = categoryCombosById[dataElement.categoryCombo.id]
+            // const isValid = categoryCombo.categoryOptionCombos.includes(input.categoryOptionComboId);
+
+            const categoryComboInDatasetElement = _.map(dataSet?.dataSetElements, dataElement => {
+                if (input.dataElementId === dataElement.dataElement.id) {
+                    return dataElement.dataElement.categoryCombo.id;
+                }
+            });
+            const categoryComboInDataElement = _.compact(categoryComboInDatasetElement);
+            if (categoryComboInDataElement.length === 0) {
+                return i18n.t(
+                    "ERROR Dataelement with UID '{{dataElementId}}' does not exist in dataset with UID '{{dataSetId}}'",
+                    { dataElementId: input.dataElementId, dataSetId: id, nsSeparator: false }
+                );
+            } else {
+                const categoryOptionComboInCategoryCombo = _.map(categoryCombos, categoryCombo => {
+                    if (categoryComboInDataElement[0] === categoryCombo.id) {
+                        return _.map(categoryCombo.categoryOptionCombos, categoryOptionCombo => {
+                            return categoryOptionCombo.id === input["categoryOptionComboId"];
+                        });
                     }
                 });
-                const categoryComboInDataElement = _.compact(categoryComboInDatasetElement);
-                if (categoryComboInDataElement.length === 0) {
+                const categoryComboOptionErrors = _.compact(_.compact(categoryOptionComboInCategoryCombo)[0]);
+                if (categoryComboOptionErrors?.length !== 1) {
                     return (
                         i18n.t("ERROR Dataelement with UID:") +
                         " " +
                         input["dataElementId"] +
                         " " +
-                        i18n.t("does not exist in dataset with UID:") +
+                        i18n.t("is not associated with CategoryOptionComboID:") +
                         " " +
-                        id
+                        input["categoryOptionComboId"]
                     );
-                } else {
-                    const categoryOptionComboInCategoryCombo = _.map(data.categoryCombos, categoryCombo => {
-                        if (categoryComboInDataElement[0] === categoryCombo.id) {
-                            return _.map(categoryCombo.categoryOptionCombos, categoryOptionCombo => {
-                                return categoryOptionCombo.id === input["categoryOptionComboId"];
-                            });
-                        }
-                    });
-                    const categoryComboOptionErrors = _.compact(_.compact(categoryOptionComboInCategoryCombo)[0]);
-                    if (categoryComboOptionErrors?.length !== 1) {
-                        return (
-                            i18n.t("ERROR Dataelement with UID:") +
-                            " " +
-                            input["dataElementId"] +
-                            " " +
-                            i18n.t("is not associated with CategoryOptionComboID:") +
-                            " " +
-                            input["categoryOptionComboId"]
-                        );
-                    }
                 }
             }
         });
