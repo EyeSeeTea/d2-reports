@@ -31,17 +31,17 @@ export class DataSetsDefaultRepository implements DataSetsRepository {
         const dataSet = dataSets.find(dataset => dataset.id === id);
         const htmlCode = dataSet?.dataEntryForm.htmlCode;
         const newRegExp = new RegExp(/(([a-zA-Z0-9]){11})-(([A-Za-zA-Z0-9]){11})-(val)/g);
-        const finalRegExp = new RegExp(/^((.){11})-((.){11})-val$/g)
 
         const matches = htmlCode?.match(newRegExp);
-
-        const customFormIds = _(matches)
+        const customFormIds =_.compact(matches).map(item =>{ 
+            return {dataElementId: item.split("-")[0] ?? "-", categoryOptionComboId: item.split("-")[1] ?? "-"}})
+        /* const customFormIds = _(matches)
             .map(match => {
                 const groups = finalRegExp.exec(match);
                 return groups ? { dataElementId: groups[1] ?? "", categoryOptionComboId: groups[3] ?? "" } : undefined;
             })
             .compact()
-            .value();
+            .value(); */
 
         const categoryCombosById = _.keyBy(categoryCombos, cc => cc.id);
         const dataElementsDataSetById = _.keyBy(dataSet?.dataSetElements, cc => cc.dataElement.id);
