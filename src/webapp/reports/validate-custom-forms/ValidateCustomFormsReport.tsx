@@ -1,45 +1,40 @@
-import { Typography, makeStyles } from "@material-ui/core";
-import _ from "lodash";
 import React, { useState } from "react";
+import _ from "lodash";
+import { Typography, makeStyles } from "@material-ui/core";
+
 import i18n from "../../../locales";
 import { Spinner } from "../../components/objects-list/Spinner";
 import { Select, SelectOption } from "../../components/select/Select";
 import { useAppContext } from "../../contexts/app-context";
 
-//const errors = [{ text: "" }];
-
 const ValidateCustomFormsReport: React.FC = () => {
     const [isLoading, setLoading] = useState(false);
 
-    const [errors, setErrors] = React.useState<Array<{ text: string }>>([{ text: "" }]);
+    const [errors, setErrors] = React.useState<Array<{ text: string }>>([]);
     const { compositionRoot, config } = useAppContext();
-    const validationErrors = async ({ value }: SelectOption) => {
+
+    const validateCustomForm = async ({ value }: SelectOption) => {
         setLoading(true);
         const result = await compositionRoot.validateCustomForm.get(value);
-        if (result.length === 0) {
+
+        if (_.isEmpty(result)) {
             setErrors([{ text: i18n.t("No errors detected") }]);
         } else {
-            setErrors(
-                _.map(result, item => {
-                    return { text: item };
-                })
-            );
+            setErrors(_.map(result, item => ({ text: item })));
         }
+
         setLoading(false);
         return value;
     };
 
     const classes = useStyles();
 
-    const dataSets = (
-        _(config.dataSets)
-            .filter(ds => {
-                return ds.name.indexOf("Maturity") === -1;
-            })
-            .map(ds => {
-                return { value: ds.id, label: ds.name };
-            }).value()
-    );
+    const dataSetsOptions = React.useMemo(() => {
+        return _(config.dataSets)
+            .filter(ds => ds.name.indexOf("Maturity") === -1)
+            .map(ds => ({ value: ds.id, label: ds.name }))
+            .value();
+    }, [config]);
 
     return (
         <React.Fragment>
@@ -48,8 +43,8 @@ const ValidateCustomFormsReport: React.FC = () => {
             <div className={classes.select}>
                 <Select
                     placeholder={i18n.t("Select custom form to validate...")}
-                    onChange={validationErrors}
-                    options={dataSets}
+                    onChange={validateCustomForm}
+                    options={dataSetsOptions}
                 />
             </div>
 
@@ -61,13 +56,11 @@ const ValidateCustomFormsReport: React.FC = () => {
                 <Typography variant="h5">{i18n.t("Result:")}</Typography>
             </div>
 
-            {_.map(errors, (item, index) => {
-                return (
-                    <div key={index} className={classes.items}>
-                        {item.text}
-                    </div>
-                );
-            })}
+            {_.map(errors, (item, index) => (
+                <div key={index} className={classes.items}>
+                    {item.text}
+                </div>
+            ))}
         </React.Fragment>
     );
 };
@@ -106,4 +99,4 @@ const useStyles = makeStyles({
     fullWidth: { width: "25%" },
 });
 
-export default ValidateCustomFormsReport;
+export default React.memo(ValidateCustomFormsReport);
