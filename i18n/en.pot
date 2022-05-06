@@ -5,8 +5,13 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2022-01-10T08:43:46.954Z\n"
-"PO-Revision-Date: 2022-01-10T08:43:46.954Z\n"
+"POT-Creation-Date: 2022-05-06T05:50:16.003Z\n"
+"PO-Revision-Date: 2022-05-06T05:50:16.003Z\n"
+
+msgid ""
+"ERROR Dataelement with UID '{{dataElementId}}' does not exist in dataset "
+"with UID '{{dataSetId}}'"
+msgstr ""
 
 msgid "<No value>"
 msgstr ""
@@ -77,10 +82,10 @@ msgstr ""
 msgid "NHWA Data Approval Status Report"
 msgstr ""
 
-msgid "Data set"
+msgid "Period"
 msgstr ""
 
-msgid "Period"
+msgid "Data set"
 msgstr ""
 
 msgid "Attribute"
@@ -153,4 +158,13 @@ msgid "Sections"
 msgstr ""
 
 msgid "Toggle filters"
+msgstr ""
+
+msgid "No errors detected"
+msgstr ""
+
+msgid "Custom Form Validation"
+msgstr ""
+
+msgid "Select custom form to validate..."
 msgstr ""
