@@ -31,14 +31,14 @@ const ValidateCustomFormsReport: React.FC = () => {
 
     const classes = useStyles();
 
-    const [dataSets] = React.useState<{ value: string; label: string }[]>(
-        _.values(config.dataSets)
+    const dataSets = (
+        _(config.dataSets)
             .filter(ds => {
                 return ds.name.indexOf("Maturity") === -1;
             })
             .map(ds => {
                 return { value: ds.id, label: ds.name };
-            })
+            }).value()
     );
 
     return (
