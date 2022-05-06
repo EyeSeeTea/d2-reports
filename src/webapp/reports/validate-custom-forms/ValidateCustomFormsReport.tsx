@@ -13,10 +13,9 @@ const ValidateCustomFormsReport: React.FC = () => {
 
     const [errors, setErrors] = React.useState<Array<{ text: string }>>([{ text: "" }]);
     const { compositionRoot, config } = useAppContext();
-    const OnModuleChange = async ({ value }: SelectOption) => {
+    const validationErrors = async ({ value }: SelectOption) => {
         setLoading(true);
         const result = await compositionRoot.validateCustomForm.get(value);
-        _.remove(errors);
         if (result.length === 0) {
             setErrors([{ text: i18n.t("No errors detected") }]);
         } else {
@@ -32,7 +31,7 @@ const ValidateCustomFormsReport: React.FC = () => {
 
     const classes = useStyles();
 
-    const [modules] = React.useState<{ value: string; label: string }[]>(
+    const [dataSets] = React.useState<{ value: string; label: string }[]>(
         _.values(config.dataSets)
             .filter(ds => {
                 return ds.name.indexOf("Maturity") === -1;
@@ -49,8 +48,8 @@ const ValidateCustomFormsReport: React.FC = () => {
             <div className={classes.select}>
                 <Select
                     placeholder={i18n.t("Select custom form to validate...")}
-                    onChange={OnModuleChange}
-                    options={modules}
+                    onChange={validationErrors}
+                    options={dataSets}
                 />
             </div>
 

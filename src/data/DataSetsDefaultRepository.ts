@@ -33,32 +33,23 @@ export class DataSetsDefaultRepository implements DataSetsRepository {
         const newRegExp = new RegExp(/(([a-zA-Z0-9]){11})-(([A-Za-zA-Z0-9]){11})-(val)/g);
 
         const matches = htmlCode?.match(newRegExp);
-        const customFormIds =_.compact(matches).map(item =>{ 
-            return {dataElementId: item.split("-")[0] ?? "-", categoryOptionComboId: item.split("-")[1] ?? "-"}})
-        /* const customFormIds = _(matches)
-            .map(match => {
-                const groups = finalRegExp.exec(match);
-                return groups ? { dataElementId: groups[1] ?? "", categoryOptionComboId: groups[3] ?? "" } : undefined;
-            })
-            .compact()
-            .value(); */
+        const customFormIds = _(matches).map(item => {
+            return { dataElementId: item.split("-")[0] ?? "-", categoryOptionComboId: item.split("-")[1] ?? "-" };
+        }).commit().value();
 
         const categoryCombosById = _.keyBy(categoryCombos, cc => cc.id);
         const dataElementsDataSetById = _.keyBy(dataSet?.dataSetElements, cc => cc.dataElement.id);
         const dataElementsById = _.keyBy(dataElements, cc => cc.id);
 
-        // const objs: Record<DataElementId, CocId[]>
-
         const errors = _.map(customFormIds, dataElementFromCustomForm => {
             const dataElement = dataElementsDataSetById[dataElementFromCustomForm.dataElementId]?.dataElement;
             if (dataElement) {
-                if (dataElement.id === "aEDrisPWh6i"){
-                    console.log("test");
-                }
                 const categoryCombo =
                     dataElement.categoryCombo.id ??
                     dataElementsById[dataElementFromCustomForm.dataElementId]?.categoryCombo.id;
-                const isValid = categoryCombosById[categoryCombo ?? ""]?.categoryOptionCombos.find( coc => coc.id === dataElementFromCustomForm.categoryOptionComboId);
+                const isValid = categoryCombosById[categoryCombo ?? ""]?.categoryOptionCombos.find(
+                    coc => coc.id === dataElementFromCustomForm.categoryOptionComboId
+                );
                 if (!isValid) {
                     return (
                         i18n.t("ERROR Dataelement with UID:") +
