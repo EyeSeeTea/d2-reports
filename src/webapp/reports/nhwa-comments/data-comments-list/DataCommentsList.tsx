@@ -23,8 +23,8 @@ import { DataCommentsViewModel, getDataCommentsViews } from "../DataCommentsView
 import { DataValuesFilter } from "./Filters";
 import { FiltersBox } from "./FiltersBox";
 
-export const DataCommentsList: React.FC = React.memo(() => {
-    let oldYears = false;
+export const DataCommentsList: React.FC = () => {
+    const [oldYears, setOldYears] = React.useState(false);
     const { compositionRoot, config } = useAppContext();
     const [filters, setFilters] = React.useState(() => getEmptyDataValuesFilter(config));
     const baseConfig = React.useMemo(getBaseListConfig, []);
@@ -32,13 +32,13 @@ export const DataCommentsList: React.FC = React.memo(() => {
     const getRows = React.useMemo(
         () => async (paging: TablePagination, sorting: TableSorting<DataCommentsViewModel>) => {
             switchYears(oldYears, config, filters);
-
             const { pager, objects } = await compositionRoot.dataComments.get({
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
                 ...getUseCaseOptions(filters),
             });
+            setFilters(filters);
             setSorting(sorting);
             return { pager, objects: getDataCommentsViews(config, objects) };
         },
@@ -71,21 +71,8 @@ export const DataCommentsList: React.FC = React.memo(() => {
         name: "allyears",
         text: "Switch Years",
         icon: <RestartAltIcon />,
-        onClick: async () => {
-            if (!sorting) return;
-            oldYears = !oldYears;
-            switchYears(oldYears, config, filters);
-
-            const { pager, objects } = await compositionRoot.dataComments.get({
-                config,
-                paging: { page: 1, pageSize: 20 },
-                sorting: getSortingFromTableSorting(sorting),
-                ...getUseCaseOptions(filters),
-            });
-            setSorting(sorting);
-            setFilters(filters);
-
-            return { pager, objects: getDataCommentsViews(config, objects) };
+        onClick: () => {
+            setOldYears(!oldYears);
         },
     };
     return (
@@ -93,7 +80,7 @@ export const DataCommentsList: React.FC = React.memo(() => {
             <FiltersBox showToggleButton={false} values={filters} options={filterOptions} onChange={setFilters} />
         </ObjectsList>
     );
-});
+};
 
 function switchYears(oldYears: boolean, config: Config, filters: DataValuesFilter) {
     const currentYear = new Date().getFullYear();
