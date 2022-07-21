@@ -6,6 +6,7 @@ import {
     TableSorting,
 } from "@eyeseetea/d2-ui-components";
 import StorageIcon from "@material-ui/icons/Storage";
+import RestartAltIcon from "@material-ui/icons/Storage";
 import _ from "lodash";
 import React from "react";
 import { sortByName } from "../../../../domain/common/entities/Base";
@@ -23,13 +24,15 @@ import { DataValuesFilter } from "./Filters";
 import { FiltersBox } from "./FiltersBox";
 
 export const DataCommentsList: React.FC = React.memo(() => {
+    let oldYears = false;
     const { compositionRoot, config } = useAppContext();
     const [filters, setFilters] = React.useState(() => getEmptyDataValuesFilter(config));
     const baseConfig = React.useMemo(getBaseListConfig, []);
     const [sorting, setSorting] = React.useState<TableSorting<DataCommentsViewModel>>();
-
     const getRows = React.useMemo(
         () => async (paging: TablePagination, sorting: TableSorting<DataCommentsViewModel>) => {
+            switchYears(oldYears, config, filters);
+
             const { pager, objects } = await compositionRoot.dataComments.get({
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
@@ -39,6 +42,7 @@ export const DataCommentsList: React.FC = React.memo(() => {
             setSorting(sorting);
             return { pager, objects: getDataCommentsViews(config, objects) };
         },
+        // eslint-disable-next-line
         [config, compositionRoot, filters]
     );
 
@@ -52,7 +56,7 @@ export const DataCommentsList: React.FC = React.memo(() => {
         icon: <StorageIcon />,
         onClick: async () => {
             if (!sorting) return;
-            // FUTURE: create a single use case that performs the get+saveCSV
+
             const { objects: dataValues } = await compositionRoot.dataComments.get({
                 config,
                 paging: { page: 1, pageSize: 100000 },
@@ -63,12 +67,42 @@ export const DataCommentsList: React.FC = React.memo(() => {
         },
     };
 
+    const allYearsToggle: TableGlobalAction = {
+        name: "allyears",
+        text: "Switch Years",
+        icon: <RestartAltIcon />,
+        onClick: async () => {
+            if (!sorting) return;
+            oldYears = !oldYears;
+            switchYears(oldYears, config, filters);
+
+            const { pager, objects } = await compositionRoot.dataComments.get({
+                config,
+                paging: { page: 1, pageSize: 20 },
+                sorting: getSortingFromTableSorting(sorting),
+                ...getUseCaseOptions(filters),
+            });
+            setSorting(sorting);
+            setFilters(filters);
+
+            return { pager, objects: getDataCommentsViews(config, objects) };
+        },
+    };
     return (
-        <ObjectsList<DataCommentsViewModel> {...tableProps} globalActions={[downloadCsv]}>
+        <ObjectsList<DataCommentsViewModel> {...tableProps} globalActions={[downloadCsv, allYearsToggle]}>
             <FiltersBox showToggleButton={false} values={filters} options={filterOptions} onChange={setFilters} />
         </ObjectsList>
     );
 });
+
+function switchYears(oldYears: boolean, config: Config, filters: DataValuesFilter) {
+    const currentYear = new Date().getFullYear();
+    const years = oldYears
+        ? _.range(currentYear - 40, currentYear - 10).map(n => n.toString())
+        : _.range(currentYear - 10, currentYear + 1).map(n => n.toString());
+    config.years = years;
+    filters.periods = config.years.slice(config.years.length, config.years.length) ?? filters.periods;
+}
 
 function getUseCaseOptions(filter: DataValuesFilter) {
     return {
