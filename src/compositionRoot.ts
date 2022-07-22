@@ -14,11 +14,14 @@ import { SaveApprovalColumnsUseCase } from "./domain/nhwa-approval-status/usecas
 import { SaveDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/SaveDataSetsCsvUseCase";
 import { GetDataValuesUseCase } from "./domain/nhwa-comments/usecases/GetDataValuesUseCase";
 import { SaveDataValuesUseCase } from "./domain/nhwa-comments/usecases/SaveDataValuesCsvUseCase";
+import { GetYesNoPartialDataValuesUseCase } from "./domain/validate-yesnopartial/usecases/GetYesNoPartialDataValuesUseCase";
+import { PushYesNoPartialDataValuesUseCase } from "./domain/validate-yesnopartial/usecases/PushYesNoPartialDataValuesUseCase";
 import { D2Api } from "./types/d2-api";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api);
     const dataCommentsRepository = new NHWADataCommentsDefaultRepository(api);
+    const dataValueRepository = new DataValueDefaultRepository(api);
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
@@ -27,6 +30,11 @@ export function getCompositionRoot(api: D2Api) {
         admin: getExecute({
             get: new GetWIDPAdminDefaultUseCase(widpAdminDefaultRepository),
             save: new SaveWIDPAdminDefaultCsvUseCase(widpAdminDefaultRepository),
+        }),
+        validateYesNoPartial:
+        ({
+            get: new GetYesNoPartialDataValuesUseCase(dataValueRepository),
+            save: new PushYesNoPartialDataValuesUseCase(dataValueRepository),
         }),
         dataComments: getExecute({
             get: new GetDataValuesUseCase(dataCommentsRepository),
