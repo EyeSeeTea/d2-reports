@@ -12,17 +12,16 @@ import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
 import { useSnackbarOnError } from "../../../utils/snackbar";
-import { getAdminReportViews, AdminReportViewModel } from "../AdminReportViewModel";
 import { TableConfig, useObjectsTable } from "../../../components/objects-list/objects-list-hooks";
 import { ObjectsList } from "../../../components/objects-list/ObjectsList";
 
 export const MetadataPublicObjectsList: React.FC = React.memo(() => {
     const { compositionRoot } = useAppContext();
     const baseConfig = React.useMemo(getBaseListConfig, []);
-    const [sorting, setSorting] = React.useState<TableSorting<AdminReportViewModel>>();
+    const [sorting, setSorting] = React.useState<TableSorting<ValidateYesNoPartialnReportViewModel>>();
 
     const getRows = React.useMemo(
-        () => async (paging: TablePagination, sorting: TableSorting<AdminReportViewModel>) => {
+        () => async (paging: TablePagination, sorting: TableSorting<ValidateYesNoPartialnReportViewModel>) => {
             setSorting(sorting);
             const objects = getAdminReportViews(
                 await compositionRoot.admin.get({
@@ -63,28 +62,28 @@ export const MetadataPublicObjectsList: React.FC = React.memo(() => {
         },
     };
 
-    return <ObjectsList<AdminReportViewModel> {...tableProps} globalActions={[downloadCsv]}></ObjectsList>;
+    return <ObjectsList<ValidateYesNoPartialnReportViewModel> {...tableProps} globalActions={[downloadCsv]}></ObjectsList>;
 });
-
-function getSortingFromTableSorting(sorting: TableSorting<AdminReportViewModel>): Sorting<MetadataObject> {
+ValidateYesNoPartialnReportViewModel
+function getSortingFromTableSorting(sorting: TableSorting<ValidateYesNoPartialnReportViewModel>): Sorting<MetadataObject> {
     return {
         field: sorting.field === "id" ? "metadataType" : sorting.field,
         direction: sorting.order,
     };
 }
 
-function getBaseListConfig(): TableConfig<AdminReportViewModel> {
+function getBaseListConfig(): TableConfig<ValidateYesNoPartialnReportViewModel> {
     const paginationOptions: PaginationOptions = {
         pageSizeOptions: [10, 20, 50],
         pageSizeInitialValue: 20,
     };
 
-    const initialSorting: TableSorting<AdminReportViewModel> = {
+    const initialSorting: TableSorting<ValidateYesNoPartialnReportViewModel> = {
         field: "metadataType" as const,
         order: "asc" as const,
     };
 
-    const columns: TableColumn<AdminReportViewModel>[] = [
+    const columns: TableColumn<ValidateYesNoPartialnReportViewModel>[] = [
         { name: "id", text: i18n.t("Id"), sortable: true },
         { name: "metadataType", text: i18n.t("Metadata Type"), sortable: true },
         { name: "publicAccess", text: i18n.t("Public Access"), sortable: true },
