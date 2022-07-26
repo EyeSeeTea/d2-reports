@@ -5,9 +5,11 @@ export interface DataValue {
     orgUnit: Named;
     dataSet: Named;
     dataElement: NamedRef;
-    section: string;
     categoryOptionCombo: Named;
     value: string;
+    yes:boolean,
+    no:boolean,
+    partial:boolean,
     comment: string;
     lastUpdated: Date;
     storedBy: string;

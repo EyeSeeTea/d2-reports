@@ -1,3 +1,4 @@
+import { DataValueDefaultRepository } from "./data/DataValueDefaultRepository";
 import { Dhis2ConfigRepository } from "./data/Dhis2ConfigRepository";
 import { Dhis2OrgUnitsRepository } from "./data/Dhis2OrgUnitsRepository";
 import { NHWADataApprovalDefaultRepository } from "./data/NHWADataApprovalDefaultRepository";
@@ -32,10 +33,10 @@ export function getCompositionRoot(api: D2Api) {
             save: new SaveWIDPAdminDefaultCsvUseCase(widpAdminDefaultRepository),
         }),
         validateYesNoPartial:
-        ({
-            get: new GetYesNoPartialDataValuesUseCase(dataValueRepository),
-            save: new PushYesNoPartialDataValuesUseCase(dataValueRepository),
-        }),
+            getExecute({
+                get: new GetYesNoPartialDataValuesUseCase(dataValueRepository),
+                push: new PushYesNoPartialDataValuesUseCase(dataValueRepository),
+            }),
         dataComments: getExecute({
             get: new GetDataValuesUseCase(dataCommentsRepository),
             save: new SaveDataValuesUseCase(dataCommentsRepository),

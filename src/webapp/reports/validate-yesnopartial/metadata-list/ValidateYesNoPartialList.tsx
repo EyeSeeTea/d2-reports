@@ -14,8 +14,9 @@ import { useAppContext } from "../../../contexts/app-context";
 import { useSnackbarOnError } from "../../../utils/snackbar";
 import { TableConfig, useObjectsTable } from "../../../components/objects-list/objects-list-hooks";
 import { ObjectsList } from "../../../components/objects-list/ObjectsList";
+import { getValidateYesNoPartialnReportViews, ValidateYesNoPartialnReportViewModel } from "../ValidateYesNoPartialnReportViewModel";
 
-export const MetadataPublicObjectsList: React.FC = React.memo(() => {
+export const ValidateYesNoPartialList: React.FC = React.memo(() => {
     const { compositionRoot } = useAppContext();
     const baseConfig = React.useMemo(getBaseListConfig, []);
     const [sorting, setSorting] = React.useState<TableSorting<ValidateYesNoPartialnReportViewModel>>();
@@ -23,12 +24,8 @@ export const MetadataPublicObjectsList: React.FC = React.memo(() => {
     const getRows = React.useMemo(
         () => async (paging: TablePagination, sorting: TableSorting<ValidateYesNoPartialnReportViewModel>) => {
             setSorting(sorting);
-            const objects = getAdminReportViews(
-                await compositionRoot.admin.get({
-                    sorting: getSortingFromTableSorting(sorting),
-                    publicObjects: true,
-                    removeTypes: [],
-                })
+            const objects = getValidateYesNoPartialnReportViews(
+                await compositionRoot.validateYesNoPartial.get()
             );
             paging.total = objects.length;
             paging.page = 1;
@@ -43,28 +40,11 @@ export const MetadataPublicObjectsList: React.FC = React.memo(() => {
 
     const getRowsWithSnackbarOrError = useSnackbarOnError(getRows);
     const tableProps = useObjectsTable(baseConfig, getRowsWithSnackbarOrError);
+ 
 
-    const downloadCsv: TableGlobalAction = {
-        name: "downloadCsv",
-        text: "Download CSV",
-        icon: <StorageIcon />,
-        onClick: async () => {
-            if (!sorting) return;
-
-            compositionRoot.admin.save(
-                "metadata-objects.csv",
-                await compositionRoot.admin.get({
-                    sorting: getSortingFromTableSorting(sorting),
-                    publicObjects: true,
-                    removeTypes: [],
-                })
-            );
-        },
-    };
-
-    return <ObjectsList<ValidateYesNoPartialnReportViewModel> {...tableProps} globalActions={[downloadCsv]}></ObjectsList>;
+    return <ObjectsList<ValidateYesNoPartialnReportViewModel> {...tableProps} ></ObjectsList>;
 });
-ValidateYesNoPartialnReportViewModel
+
 function getSortingFromTableSorting(sorting: TableSorting<ValidateYesNoPartialnReportViewModel>): Sorting<MetadataObject> {
     return {
         field: sorting.field === "id" ? "metadataType" : sorting.field,

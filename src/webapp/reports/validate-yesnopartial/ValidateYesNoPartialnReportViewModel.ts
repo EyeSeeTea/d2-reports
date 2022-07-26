@@ -14,7 +14,7 @@ export interface ValidateYesNoPartialnReportViewModel {
     lastUpdated: string;
 }
 
-export function getAdminReportViews(metadataObjects: MetadataObject[]): ValidateYesNoPartialnReportViewModel[] {
+export function getValidateYesNoPartialnReportViews(metadataObjects: MetadataObject[]): ValidateYesNoPartialnReportViewModel[] {
     return metadataObjects.map(object => {
         return {
             id: object.Id,
