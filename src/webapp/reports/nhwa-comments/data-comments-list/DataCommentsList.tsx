@@ -31,7 +31,6 @@ export const DataCommentsList: React.FC = () => {
     const [sorting, setSorting] = React.useState<TableSorting<DataCommentsViewModel>>();
     const getRows = React.useMemo(
         () => async (paging: TablePagination, sorting: TableSorting<DataCommentsViewModel>) => {
-            switchYears(oldYears, config, filters);
             const { pager, objects } = await compositionRoot.dataComments.get({
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
@@ -71,8 +70,16 @@ export const DataCommentsList: React.FC = () => {
         name: "allyears",
         text: "Switch Years",
         icon: <RestartAltIcon />,
-        onClick: () => {
-            setOldYears(!oldYears);
+        onClick: async () => {
+            setOldYears(oldYears => !oldYears);
+            switchYears(!oldYears, config, filters);
+            compositionRoot.dataComments.get({
+                config,
+                paging: { page: 0, pageSize: 20 },
+                sorting: getDefaultSortingFromTableSorting(),
+                ...getUseCaseOptions(filters),
+            });
+            filterOptions.periods = filters.periods;
         },
     };
     return (
@@ -102,6 +109,13 @@ function getSortingFromTableSorting(sorting: TableSorting<DataCommentsViewModel>
     return {
         field: sorting.field === "id" ? "period" : sorting.field,
         direction: sorting.order,
+    };
+}
+
+function getDefaultSortingFromTableSorting(): Sorting<DataCommentsItem> {
+    return {
+        field: "period",
+        direction: "asc",
     };
 }
 
