@@ -6,13 +6,13 @@ export interface DataValue {
     dataSet: Named;
     dataElement: NamedRef;
     categoryOptionCombo: Named;
+    comment: string;
+    lastUpdated: Date;
+    storedBy: string;
     value: string;
     yes:boolean,
     no:boolean,
     partial:boolean,
-    comment: string;
-    lastUpdated: Date;
-    storedBy: string;
 }
 
 export function getDataValueId(dataValue: DataValue): Id {

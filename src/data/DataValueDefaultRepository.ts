@@ -13,49 +13,38 @@ import { DataValueRepository } from "../domain/validate-yesnopartial/repositorie
 import { DataValue } from "../domain/entities/DataValue";
 import { D2ApiRequestParamsValue } from "@eyeseetea/d2-api/api/common";
 import { NamedRef } from "../domain/entities/Ref";
+import { DataValueItem } from "../domain/validate-yesnopartial/entities/DataValueItem";
+import { Component } from "react";
+import { Config } from "../domain/common/entities/Config";
 
 interface Variables {
-    orgUnitIds: string;
-    dataSetIds: string;
-    sectionIds: string;
-    periods: string;
-    orderByColumn: SqlField;
-    orderByDirection: "asc" | "desc";
-    commentPairs: string;
+    value: string;
+    storedby: string;
+    lastupdated: string;
+    created: string;
+    comment: string;
+    ou_name: string;
+    ou_uid: string;
+    de_name: string;
+    de_uid: string;
+    pe_startdate: string;
+    coc_name: string;
+    coc_uid: string;
 }
 
 type SqlField =
-    | "datasetname"
-    | "dataelementid"
-    | "dataelementname"
-    | "section"
-    | "cocname"
-    | "period"
     | "value"
-    | "comment"
     | "storedby"
-    | "orgunit"
-    | "lastupdated";
-
-const fieldMapping: Record<keyof DataValue, SqlField> = {
-    period: "period",
-    orgUnit: "orgunit",
-    dataSet: "datasetname",
-    dataElement: "dataelementname",
-    categoryOptionCombo: "cocname",
-    value: "value",
-    comment: "comment",
-};
-
-interface DataSet {
-    id: Id;
-    dataSetElements: Array<{ dataElement: NamedRef }>;
-}
-
-const base = {
-    dataSets: { namePrefix: "NHWA", nameExcluded: /old$/ },
-    dataSetElements: { dataElement: { categoryCombo: { id: { idPrefix: "sNmNyudrFxw" } } } },
-};
+    | "lastupdated"
+    | "created"
+    | "comment"
+    | "ou_name"
+    | "ou_uid"
+    | "de_name"
+    | "de_uid"
+    | "pe_startdate"
+    | "coc_name"
+    | "coc_uid";
 
 function sqlViewJoinIds(ids: Id[]): string {
     return ids.join("-") || "-";
@@ -63,65 +52,39 @@ function sqlViewJoinIds(ids: Id[]): string {
 
 type DataValueRow = Record<string, string>;
 const toName = { $fn: { name: "rename", to: "name" } } as const;
-
-function getFilteredDataSets<DataSet extends NamedRef>(dataSets: DataSet[]): DataSet[] {
-    const { namePrefix, nameExcluded } = base.dataSets;
-    return dataSets.filter(({ name }) => name.startsWith(namePrefix) && !name.match(nameExcluded));
-}
+ 
 export class DataValueDefaultRepository implements DataValueRepository {
     constructor(private api: D2Api) {}
 
-    async get(): Promise<PaginatedObjects<DataValue>> {
-        const { dataSets } = await this.getMetadata();
-        const filteredDataSets = getFilteredDataSets(dataSets);
+    async get(config: Config): Promise<PaginatedObjects<DataValueItem>> { 
+        const sqlViews = new Dhis2SqlViews(this.api);
 
-        const { config, dataSetIds, sectionIds, orgUnitIds, periods } = options;
-        const { paging, sorting } = options;
-        const allDataSetIds = _.values(config.dataSets).map(ds => ds.id);
-        const dataSetIds2 = _.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds;
-        const commentPairs =
-            _(config.pairedDataElementsByDataSet)
-                .at(dataSetIds2)
-                .flatten()
-                .map(pair => `${pair.dataValueVal}_${pair.dataValueComment}`)
-                .join("-") || "-";
-
-        /*         const sqlViews = new Dhis2SqlViews(this.api);
         const { pager, rows } = await sqlViews
             .query<Variables, SqlField>(
-                config.dataCommentsSqlView.id,
-                {
-                    orgUnitIds: sqlViewJoinIds(orgUnitIds),
-                    periods: sqlViewJoinIds(_.isEmpty(periods) ? config.years : periods),
-                    dataSetIds: sqlViewJoinIds(dataSetIds2),
-                    sectionIds: sqlViewJoinIds(sectionIds),
-                    orderByColumn: fieldMapping[sorting.field],
-                    orderByDirection: sorting.direction,
-                    commentPairs,
-                },
-                paging
+                config.dataYesNoPartialSqlView.id
             )
-            .getData(); */
-
+            .getData();
         // A data value is not associated to a specific data set, but we can still map it
         // through the data element (1 data value -> 1 data element -> N data sets).
 
-        const dataValues: Array<DataCommentsItem> = rows.map(
-            (dv): DataCommentsItem => ({
-                period: dv.period.split("-")[0] ?? "",
-                orgUnit: { name: dv.orgunit },
-                dataSet: { name: dv.datasetname },
-                dataElement: { id: dv.dataelementid, name: dv.dataelementname },
-                section: dv.section,
-                categoryOptionCombo: { name: dv.cocname },
-                value: dv.value,
-                comment: dv.comment,
-                lastUpdated: new Date(dv.lastupdated),
-                storedBy: dv.storedby,
+        const items: Array<DataValueItem> = rows.map(
+            (item): DataValueItem => ({
+                value: item.value,
+                storedBy: item.storedby,
+                lastUpdated: item.lastupdated,
+                comment: item.comment,
+                ou_name: item.ou_name,
+                ou_uid: item.ou_uid,
+                de_name: item.de_name,
+                de_uid: item.de_uid,
+                pe_startdate: item.pe_startdate,
+                coc_name: item.coc_name,
+                coc_uid: item.coc_uid,
+                created: item.created,
             })
         );
 
-        return { pager, objects: dataValues };
+        return { pager, objects: items };
     }
 
     async push(dataValues: DataValue[], remove: boolean): Promise<boolean | undefined> {
@@ -159,22 +122,5 @@ export class DataValueDefaultRepository implements DataValueRepository {
                 return error;
             }
         }
-    }
-
-    getMetadata() {
-        const metadata$ = this.api.metadata.get({
-            dataSets: {
-                fields: {
-                    id: true,
-                    displayName: toName,
-                    dataSetElements: {
-                        dataElement: { id: true, name: true, categoryCombo: { id: true } },
-                    },
-                },
-                filter: { name: { $ilike: base.dataSets.namePrefix } },
-            },
-        });
-
-        return metadata$.getData();
     }
 }

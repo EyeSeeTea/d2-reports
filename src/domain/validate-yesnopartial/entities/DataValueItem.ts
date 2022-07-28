@@ -1,22 +1,20 @@
 import { Id, NamedRef, Named } from "../../common/entities/Base";
 
 export interface DataValueItem {
-    period: string;
-    orgUnit: Named;
-    dataSet: Named;
-    dataElement: NamedRef;
-    section: string;
-    categoryOptionCombo: Named;
+    ou_name: string;
+    ou_uid: string;
+    de_name: string;
+    de_uid: string;
+    coc_name: string;
+    coc_uid: string;
+    pe_startdate: string;
     value: string;
     comment: string;
-    lastUpdated: Date;
+    lastUpdated: string;
+    created: string;
     storedBy: string;
 }
 
-export function geDataValueItemsItemId(dataValue: DataValueItem): Id {
-    return [dataValue.dataElement, dataValue.period, dataValue.categoryOptionCombo, dataValue.orgUnit].join("-");
-}
-
 export function geDataValueItemsGroupedByCocId(dataValue: DataValueItem): Id {
-    return [dataValue.dataElement, dataValue.period, dataValue.orgUnit].join("-");
+    return [dataValue.de_uid, dataValue.pe_startdate, dataValue.ou_name].join("-");
 }

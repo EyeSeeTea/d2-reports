@@ -1,5 +1,6 @@
 import { Id } from "../../../domain/common/entities/Base";
 import { MetadataObject } from "../../../domain/common/entities/MetadataObject";
+import { DataValue } from "../../../domain/entities/DataValue";
 
 export interface ValidateYesNoPartialnReportViewModel {
     id: Id;
@@ -14,7 +15,7 @@ export interface ValidateYesNoPartialnReportViewModel {
     lastUpdated: string;
 }
 
-export function getValidateYesNoPartialnReportViews(metadataObjects: MetadataObject[]): ValidateYesNoPartialnReportViewModel[] {
+export function getValidateYesNoPartialnReportViews(metadataObjects: DataValue[]): ValidateYesNoPartialnReportViewModel[] {
     return metadataObjects.map(object => {
         return {
             id: object.Id,
