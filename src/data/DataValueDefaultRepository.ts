@@ -52,22 +52,18 @@ function sqlViewJoinIds(ids: Id[]): string {
 
 type DataValueRow = Record<string, string>;
 const toName = { $fn: { name: "rename", to: "name" } } as const;
- 
+
 export class DataValueDefaultRepository implements DataValueRepository {
     constructor(private api: D2Api) {}
 
-    async get(config: Config): Promise<PaginatedObjects<DataValueItem>> { 
+    async get(config: Config): Promise<PaginatedObjects<Array<DataValueItem>>> {
         const sqlViews = new Dhis2SqlViews(this.api);
 
-        const { pager, rows } = await sqlViews
-            .query<Variables, SqlField>(
-                config.dataYesNoPartialSqlView.id
-            )
-            .getData();
+        const { pager, rows } = await sqlViews.query<Variables, SqlField>(config.dataYesNoPartialSqlView.id).getData();
         // A data value is not associated to a specific data set, but we can still map it
         // through the data element (1 data value -> 1 data element -> N data sets).
 
-        const items: Array<DataValueItem> = rows.map(
+        const items: DataValueItem[] = rows.map(
             (item): DataValueItem => ({
                 value: item.value,
                 storedBy: item.storedby,
@@ -83,8 +79,11 @@ export class DataValueDefaultRepository implements DataValueRepository {
                 created: item.created,
             })
         );
-
-        return { pager, objects: items };
+        if (items == undefined) {
+            return { pager, objects: [] };
+        } else {
+            return { pager, objects: [items] };
+        }
     }
 
     async push(dataValues: DataValue[], remove: boolean): Promise<boolean | undefined> {
