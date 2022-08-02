@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2022-01-10T08:43:46.954Z\n"
-"PO-Revision-Date: 2022-01-10T08:43:46.954Z\n"
+"POT-Creation-Date: 2022-08-02T18:51:46.114Z\n"
+"PO-Revision-Date: 2022-08-02T18:51:46.114Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -77,10 +77,10 @@ msgstr ""
 msgid "NHWA Data Approval Status Report"
 msgstr ""
 
-msgid "Data set"
+msgid "Period"
 msgstr ""
 
-msgid "Period"
+msgid "Data set"
 msgstr ""
 
 msgid "Attribute"
@@ -125,13 +125,28 @@ msgstr ""
 msgid "Periods"
 msgstr ""
 
+msgid "NHWA Atachment Report"
+msgstr ""
+
+msgid "Data Element"
+msgstr ""
+
+msgid "link"
+msgstr ""
+
+msgid "Last updated"
+msgstr ""
+
+msgid "Stored by"
+msgstr ""
+
+msgid "Toggle filters"
+msgstr ""
+
 msgid "NHWA Comments Report"
 msgstr ""
 
 msgid "Section"
-msgstr ""
-
-msgid "Data Element"
 msgstr ""
 
 msgid "Category option combo"
@@ -143,14 +158,5 @@ msgstr ""
 msgid "Comment"
 msgstr ""
 
-msgid "Last updated"
-msgstr ""
-
-msgid "Stored by"
-msgstr ""
-
 msgid "Sections"
-msgstr ""
-
-msgid "Toggle filters"
 msgstr ""

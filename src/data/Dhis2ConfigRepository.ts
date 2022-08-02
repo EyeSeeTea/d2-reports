@@ -7,10 +7,11 @@ import { D2Api, Id } from "../types/d2-api";
 
 const SQL_VIEW_DATA_COMMENTS_NAME = "NHWA Data Comments";
 const SQL_VIEW_DATA_APPROVAL_NAME = "NHWA Data Approval Status";
+const SQL_VIEW_ATTACHEMENT_NAME = "NHWA attachments (wip)";
 
 const base = {
     dataSets: { namePrefix: "NHWA", nameExcluded: /old$/ },
-    sqlViewNames: [SQL_VIEW_DATA_COMMENTS_NAME, SQL_VIEW_DATA_APPROVAL_NAME],
+    sqlViewNames: [SQL_VIEW_DATA_COMMENTS_NAME, SQL_VIEW_DATA_APPROVAL_NAME, SQL_VIEW_ATTACHEMENT_NAME],
     constantCode: "NHWA_COMMENTS",
     approvalWorkflows: { namePrefix: "NHWA" },
 };
@@ -23,12 +24,17 @@ export class Dhis2ConfigRepository implements ConfigRepository {
         const filteredDataSets = getFilteredDataSets(dataSets);
         const dataCommentsSqlView = sqlViews.find(({ name }) => name === SQL_VIEW_DATA_COMMENTS_NAME);
         const dataApprovalSqlView = sqlViews.find(({ name }) => name === SQL_VIEW_DATA_APPROVAL_NAME);
+        const dataAttachmentSqlView = sqlViews.find(({ name }) => name === SQL_VIEW_ATTACHEMENT_NAME);
         if (!dataCommentsSqlView) {
             throw new Error(`Missing SQL views: ${SQL_VIEW_DATA_COMMENTS_NAME}`);
         }
 
         if (!dataApprovalSqlView) {
             throw new Error(`Missing SQL views: ${SQL_VIEW_DATA_APPROVAL_NAME}`);
+        }
+
+        if (!dataAttachmentSqlView) {
+            throw new Error(`Missing SQL views: ${SQL_VIEW_ATTACHEMENT_NAME}`);
         }
 
         const constant = getNth(constants, 0, `Missing constant: ${base.constantCode}`);
@@ -43,6 +49,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             currentUser,
             dataCommentsSqlView,
             dataApprovalSqlView,
+            dataAttachmentSqlView,
             pairedDataElementsByDataSet: pairedDataElements,
             sections: keyById(sections),
             sectionsByDataSet,

@@ -1,5 +1,6 @@
 import { Dhis2ConfigRepository } from "./data/Dhis2ConfigRepository";
 import { Dhis2OrgUnitsRepository } from "./data/Dhis2OrgUnitsRepository";
+import { NHWAAttachementsDefaultRepository } from "./data/NHWAAttachementsDefaultRepository ";
 import { NHWADataApprovalDefaultRepository } from "./data/NHWADataApprovalDefaultRepository";
 import { NHWADataCommentsDefaultRepository } from "./data/NHWADataCommentsDefaultRepository";
 import { WIDPAdminDefaultRepository } from "./data/WIDPAdminDefaultRepository";
@@ -12,6 +13,8 @@ import { GetApprovalColumnsUseCase } from "./domain/nhwa-approval-status/usecase
 import { GetDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/GetDataSetsUseCase";
 import { SaveApprovalColumnsUseCase } from "./domain/nhwa-approval-status/usecases/SaveApprovalColumnsUseCase";
 import { SaveDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/SaveDataSetsCsvUseCase";
+import { GetAttachementsUseCase } from "./domain/nhwa-attachments/usecases/GetAttachementsUseCase";
+import { SaveAttachementsUseCase } from "./domain/nhwa-attachments/usecases/SaveAttachementsUseCase";
 import { GetDataValuesUseCase } from "./domain/nhwa-comments/usecases/GetDataValuesUseCase";
 import { SaveDataValuesUseCase } from "./domain/nhwa-comments/usecases/SaveDataValuesCsvUseCase";
 import { D2Api } from "./types/d2-api";
@@ -22,6 +25,7 @@ export function getCompositionRoot(api: D2Api) {
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
+    const attachementRepository = new NHWAAttachementsDefaultRepository(api);
 
     return {
         admin: getExecute({
@@ -44,6 +48,10 @@ export function getCompositionRoot(api: D2Api) {
         }),
         config: getExecute({
             get: new GetConfig(configRepository),
+        }),
+        attachements: getExecute({
+            get: new GetAttachementsUseCase(attachementRepository),
+            save: new SaveAttachementsUseCase(attachementRepository),
         }),
     };
 }
