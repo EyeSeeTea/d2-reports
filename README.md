@@ -16,6 +16,10 @@ This report shows data values for data sets `NHWA Module ...`. There are two kin
 
 The API endpoint `/dataValueSets` does not provide all the features we need, so we use a custom SQL View instead.
 
+### new variants:
+
+nhwa-attachments
+
 ## Initial setup
 
 ```
