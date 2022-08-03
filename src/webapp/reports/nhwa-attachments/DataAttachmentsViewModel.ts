@@ -9,7 +9,6 @@ export interface DataAttachmentsViewModel {
     period: string;
     orgUnit: string;
     dataSet: string;
-    dataElement: string;
     link: string;
     lastUpdated: string;
     storedBy: string;
@@ -22,7 +21,6 @@ export function getDataAttachmentsViews(config: Config, dataValues: DataAttachme
             period: dataValue.period,
             orgUnit: dataValue.orgUnit.name,
             dataSet: dataValue.dataSet.name,
-            dataElement: dataValue.dataElement.name,
             link: dataValue.link || "",
             lastUpdated: dataValue.lastUpdated.toISOString(),
             storedBy: dataValue.storedBy,

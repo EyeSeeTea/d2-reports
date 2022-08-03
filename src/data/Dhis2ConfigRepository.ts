@@ -7,7 +7,7 @@ import { D2Api, Id } from "../types/d2-api";
 
 const SQL_VIEW_DATA_COMMENTS_NAME = "NHWA Data Comments";
 const SQL_VIEW_DATA_APPROVAL_NAME = "NHWA Data Approval Status";
-const SQL_VIEW_ATTACHEMENT_NAME = "NHWA attachments (wip)";
+const SQL_VIEW_ATTACHEMENT_NAME = "NHWA attachments";
 
 const base = {
     dataSets: { namePrefix: "NHWA", nameExcluded: /old$/ },

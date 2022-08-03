@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2022-08-02T18:51:46.114Z\n"
-"PO-Revision-Date: 2022-08-02T18:51:46.114Z\n"
+"POT-Creation-Date: 2022-08-03T07:20:50.359Z\n"
+"PO-Revision-Date: 2022-08-03T07:20:50.359Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -128,9 +128,6 @@ msgstr ""
 msgid "NHWA Atachment Report"
 msgstr ""
 
-msgid "Data Element"
-msgstr ""
-
 msgid "link"
 msgstr ""
 
@@ -147,6 +144,9 @@ msgid "NHWA Comments Report"
 msgstr ""
 
 msgid "Section"
+msgstr ""
+
+msgid "Data Element"
 msgstr ""
 
 msgid "Category option combo"

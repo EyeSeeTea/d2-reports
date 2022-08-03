@@ -99,8 +99,12 @@ function getBaseListConfig(): TableConfig<DataAttachmentsViewModel> {
         { name: "dataSet", text: i18n.t("Data set"), sortable: true },
         { name: "period", text: i18n.t("Period"), sortable: true },
         { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
-        { name: "dataElement", text: i18n.t("Data Element"), sortable: true },
-        { name: "link", text: i18n.t("link"), sortable: true },
+        {
+            name: "link",
+            text: i18n.t("link"),
+            sortable: true,
+            getValue: model => <a href={model.link}>link</a>,
+        },
         { name: "lastUpdated", text: i18n.t("Last updated"), sortable: true, hidden: true },
         { name: "storedBy", text: i18n.t("Stored by"), sortable: true, hidden: true },
     ];

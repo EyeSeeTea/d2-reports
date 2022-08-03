@@ -18,21 +18,12 @@ interface Variables {
     orderByDirection: "asc" | "desc";
 }
 
-type SqlField =
-    | "datasetname"
-    | "dataelementid"
-    | "dataelementname"
-    | "link"
-    | "period"
-    | "storedby"
-    | "orgunit"
-    | "lastupdated";
+type SqlField = "datasetname" | "link" | "period" | "storedby" | "orgunit" | "lastupdated";
 
 const fieldMapping: Record<keyof DataAttachmentItem, SqlField> = {
     period: "period",
     orgUnit: "orgunit",
     dataSet: "datasetname",
-    dataElement: "dataelementname",
     link: "link",
     lastUpdated: "lastupdated",
     storedBy: "storedby",
@@ -71,8 +62,7 @@ export class NHWAAttachementsDefaultRepository implements NHWADataAttachmentsRep
                 period: dv.period.split("-")[0] ?? "",
                 orgUnit: { name: dv.orgunit },
                 dataSet: { name: dv.datasetname },
-                dataElement: { id: dv.dataelementid, name: dv.dataelementname },
-                link: dv.link,
+                link: this.api.apiPath + dv.link,
                 lastUpdated: new Date(dv.lastupdated),
                 storedBy: dv.storedby,
             })
@@ -88,7 +78,6 @@ export class NHWAAttachementsDefaultRepository implements NHWADataAttachmentsRep
                 period: dataValue.period,
                 orgUnit: dataValue.orgUnit.name,
                 dataSet: dataValue.dataSet.name,
-                dataElement: dataValue.dataElement.name,
                 lastUpdated: dataValue.lastUpdated.toISOString(),
                 storedBy: dataValue.storedBy,
                 link: dataValue.link,
@@ -103,7 +92,7 @@ export class NHWAAttachementsDefaultRepository implements NHWADataAttachmentsRep
     }
 }
 
-const csvFields = ["dataSet", "period", "orgUnit", "dataElement", "link", "lastUpdated", "storedBy"] as const;
+const csvFields = ["dataSet", "period", "orgUnit", "link", "lastUpdated", "storedBy"] as const;
 
 type CsvField = typeof csvFields[number];
 
