@@ -62,7 +62,7 @@ export class NHWAAttachementsDefaultRepository implements NHWADataAttachmentsRep
                 period: dv.period.split("-")[0] ?? "",
                 orgUnit: { name: dv.orgunit },
                 dataSet: { name: dv.datasetname },
-                link: this.api.apiPath + dv.link,
+                link: this.api.apiPath + "/" + dv.link,
                 lastUpdated: new Date(dv.lastupdated),
                 storedBy: dv.storedby,
             })
