@@ -1,21 +1,10 @@
-import _ from "lodash";
-import { DataCommentsItem } from "../domain/nhwa-comments/entities/DataCommentsItem";
-import {
-    NHWADataCommentsRepository,
-    NHWADataCommentsRepositoryGetOptions,
-} from "../domain/nhwa-comments/repositories/NHWADataCommentsRepository";
-import { D2Api, PaginatedObjects, Id } from "../types/d2-api";
+import { D2Api, PaginatedObjects } from "../types/d2-api";
 import { Dhis2SqlViews } from "./Dhis2SqlViews";
-import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
-import { downloadFile } from "./utils/download-file";
-import { CsvData } from "./CsvDataSource";
-import { DataValueRepository } from "../domain/validate-yesnopartial/repositories/DataValueRepository";
+
 import { DataValue } from "../domain/entities/DataValue";
-import { D2ApiRequestParamsValue } from "@eyeseetea/d2-api/api/common";
-import { NamedRef } from "../domain/entities/Ref";
 import { DataValueItem } from "../domain/validate-yesnopartial/entities/DataValueItem";
-import { Component } from "react";
 import { Config } from "../domain/common/entities/Config";
+import { NHWAYesNoPartialDataValuesRepository } from "../domain/validate-yesnopartial/repositories/NHWAYesNoPartialDataValuesRepository";
 
 interface Variables {
     value: string;
@@ -30,6 +19,9 @@ interface Variables {
     pe_startdate: string;
     coc_name: string;
     coc_uid: string;
+    yes: string;
+    no: string;
+    partial: string;
 }
 
 type SqlField =
@@ -44,19 +36,18 @@ type SqlField =
     | "de_uid"
     | "pe_startdate"
     | "coc_name"
-    | "coc_uid";
-
-function sqlViewJoinIds(ids: Id[]): string {
-    return ids.join("-") || "-";
-}
+    | "coc_uid"
+    | "yes"
+    | "no"
+    | "partial"
+    | "count";
 
 type DataValueRow = Record<string, string>;
-const toName = { $fn: { name: "rename", to: "name" } } as const;
 
-export class DataValueDefaultRepository implements DataValueRepository {
+export class NHWAYesNoPartialDataValuesDefaultRepository implements NHWAYesNoPartialDataValuesRepository {
     constructor(private api: D2Api) {}
 
-    async get(config: Config): Promise<PaginatedObjects<Array<DataValueItem>>> {
+    async get(config: Config): Promise<PaginatedObjects<DataValueItem>> {
         const sqlViews = new Dhis2SqlViews(this.api);
 
         const { pager, rows } = await sqlViews.query<Variables, SqlField>(config.dataYesNoPartialSqlView.id).getData();
@@ -77,12 +68,16 @@ export class DataValueDefaultRepository implements DataValueRepository {
                 coc_name: item.coc_name,
                 coc_uid: item.coc_uid,
                 created: item.created,
+                yes: item.yes,
+                no: item.no,
+                partial: item.partial,
+                count: item.count,
             })
         );
-        if (items == undefined) {
+        if (items === undefined) {
             return { pager, objects: [] };
         } else {
-            return { pager, objects: [items] };
+            return { pager, objects: items };
         }
     }
 

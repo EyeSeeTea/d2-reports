@@ -1,4 +1,4 @@
-import { DataValueDefaultRepository } from "./data/DataValueDefaultRepository";
+import { NHWAYesNoPartialDataValuesDefaultRepository } from "./data/NHWAYesNoPartialDataValuesDefaultRepository";
 import { Dhis2ConfigRepository } from "./data/Dhis2ConfigRepository";
 import { Dhis2OrgUnitsRepository } from "./data/Dhis2OrgUnitsRepository";
 import { NHWADataApprovalDefaultRepository } from "./data/NHWADataApprovalDefaultRepository";
@@ -22,7 +22,7 @@ import { D2Api } from "./types/d2-api";
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api);
     const dataCommentsRepository = new NHWADataCommentsDefaultRepository(api);
-    const dataValueRepository = new DataValueDefaultRepository(api);
+    const dataYesNoPartialDataValuesRepository = new NHWAYesNoPartialDataValuesDefaultRepository(api);
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
@@ -32,11 +32,10 @@ export function getCompositionRoot(api: D2Api) {
             get: new GetWIDPAdminDefaultUseCase(widpAdminDefaultRepository),
             save: new SaveWIDPAdminDefaultCsvUseCase(widpAdminDefaultRepository),
         }),
-        validateYesNoPartial:
-            getExecute({
-                get: new GetYesNoPartialDataValuesUseCase(dataValueRepository),
-                push: new PushYesNoPartialDataValuesUseCase(dataValueRepository),
-            }),
+        validateYesNoPartial: getExecute({
+            get: new GetYesNoPartialDataValuesUseCase(dataYesNoPartialDataValuesRepository),
+            push: new PushYesNoPartialDataValuesUseCase(dataYesNoPartialDataValuesRepository),
+        }),
         dataComments: getExecute({
             get: new GetDataValuesUseCase(dataCommentsRepository),
             save: new SaveDataValuesUseCase(dataCommentsRepository),

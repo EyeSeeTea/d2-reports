@@ -17,8 +17,8 @@ const Component: React.FC = () => {
         case "admin": {
             return <AdminReport />;
         }
-        case "validate_Yes_No_Partial":{
-            return <ValidateYesNoPartial/>
+        case "nhwa-validate-yes-no-partial": {
+            return <ValidateYesNoPartial />;
         }
         default: {
             return <p>{`Please provide a valid REACT_APP_REPORT_VARIANT`}</p>;

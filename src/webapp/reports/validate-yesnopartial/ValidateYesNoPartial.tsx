@@ -8,11 +8,7 @@ const AdminReport: React.FC = () => {
     return (
         <div className={classes.wrapper}>
             <Typography variant="h5" gutterBottom>
-                {i18n.t("Validate yes no partial")}
-            </Typography>
-
-            <Typography variant="h6" gutterBottom>
-                {i18n.t("Objects with invalid sharing settings")}
+                {i18n.t("Yes No Partial Validation")}
             </Typography>
             <ValidateYesNoPartialList />
         </div>

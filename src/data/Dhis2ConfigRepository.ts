@@ -7,7 +7,7 @@ import { D2Api, Id } from "../types/d2-api";
 
 const SQL_VIEW_DATA_COMMENTS_NAME = "NHWA Data Comments";
 const SQL_VIEW_DATA_APPROVAL_NAME = "NHWA Data Approval Status";
-const SQL_VIEW_YES_NO_PARTIAL_NAME = "NHWA Yes No Partial Multivalue";
+const SQL_VIEW_YES_NO_PARTIAL_NAME = "NHWA Yes No Partial report (wip)";
 
 const base = {
     dataSets: { namePrefix: "NHWA", nameExcluded: /old$/ },
@@ -34,7 +34,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
         }
 
         if (!dataYesNoPartialSqlView) {
-            throw new Error(`Missing SQL views: ${SQL_VIEW_DATA_APPROVAL_NAME}`);
+            throw new Error(`Missing SQL views: ${SQL_VIEW_YES_NO_PARTIAL_NAME}`);
         }
 
         const constant = getNth(constants, 0, `Missing constant: ${base.constantCode}`);

@@ -1,4 +1,4 @@
-import { Id, NamedRef, Named } from "../../common/entities/Base";
+import { Id } from "../../common/entities/Base";
 
 export interface DataValueItem {
     ou_name: string;
@@ -13,6 +13,10 @@ export interface DataValueItem {
     lastUpdated: string;
     created: string;
     storedBy: string;
+    yes: string;
+    no: string;
+    partial: string;
+    count: string;
 }
 
 export function geDataValueItemsGroupedByCocId(dataValue: DataValueItem): Id {
