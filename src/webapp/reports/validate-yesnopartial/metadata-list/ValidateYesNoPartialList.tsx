@@ -1,6 +1,7 @@
 import { PaginationOptions, TableColumn, TableSorting } from "@eyeseetea/d2-ui-components";
 import React from "react";
 import i18n from "../../../../locales";
+import DoneIcon from "@material-ui/icons/Done";
 import { useAppContext } from "../../../contexts/app-context";
 import { useSnackbarOnError } from "../../../utils/snackbar";
 import { TableConfig, useObjectsTable } from "../../../components/objects-list/objects-list-hooks";
@@ -53,7 +54,8 @@ function getBaseListConfig(): TableConfig<YesNoPartialViewModel> {
         order: "asc" as const,
     };
 
-    const columns: TableColumn<YesNoPartialViewModel>[] = [
+    const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
+        () => ({ columns: [
         { name: "ou_name", text: i18n.t("Org unit"), sortable: true },
         { name: "ou_uid", text: i18n.t("Org unit uid"), sortable: true },
         { name: "de_name", text: i18n.t("DataElement"), sortable: true },
@@ -66,7 +68,59 @@ function getBaseListConfig(): TableConfig<YesNoPartialViewModel> {
         // { name: "lastUpdated", text: i18n.t("lastUpdated"), sortable: true },
         //   { name: "storedBy", text: i18n.t("stored By"), sortable: true },
         //{ name: "created", text: i18n.t("Created"), sortable: true },
+        ]
+        ,actions: [
+            {
+                name: "yes",
+                text: i18n.t("Yes"),
+                icon: <DoneIcon />,
+                multiple: false,
+                onClick: async (selectedIds: string[]) => {
+                    const items = _.compact(selectedIds.map(item => parseDataValueItemId(item)));
+                    if (items.length === 0) return;
+    
+                    const result = await compositionRoot.dataApproval.updateStatus(items, "complete");
+                    if (!result) snackbar.error(i18n.t("Error when trying to complete data set"));
+    
+                    reload();
+                },
+                isActive: rows => _.every(rows, row => row.completed === false),
+            },
+            {
+                name: "no",
+                text: i18n.t("No"),
+                icon: <RemoveIcon />,
+                multiple: true,
+                onClick: async (selectedIds: string[]) => {
+                    const items = _.compact(selectedIds.map(item => parseDataValueItemId(item)));
+                    if (items.length === 0) return;
+    
+                    const result = await compositionRoot.dataApproval.updateStatus(items, "incomplete");
+                    if (!result) snackbar.error(i18n.t("Error when trying to incomplete data set"));
+    
+                    reload();
+                },
+                isActive: rows => _.every(rows, row => row.completed === true),
+            },
+            {
+                name: "partial",
+                text: i18n.t("Partial"),
+                icon: <DoneAllIcon />,
+                multiple: true,
+                onClick: async (selectedIds: string[]) => {
+                    const items = _.compact(selectedIds.map(item => parseDataValueItemId(item)));
+                    if (items.length === 0) return;
+    
+                    const result = await compositionRoot.dataApproval.updateStatus(items, "approve");
+                    if (!result) snackbar.error(i18n.t("Error when trying to approve data set"));
+    
+                    reload();
+                },
+                isActive: rows => _.every(rows, row => row.validated === false),
+            }
+        ],
+        }
     ];
-
-    return { columns, initialSorting, paginationOptions };
+ 
+    return { columns, actions, initialSorting, paginationOptions };
 }

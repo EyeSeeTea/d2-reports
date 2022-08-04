@@ -19,6 +19,18 @@ export interface DataValueItem {
     count: string;
 }
 
+export interface DataValueItemIdentifier {
+    dataElement: string;
+    orgUnit: string;
+    period: string;
+}
 export function geDataValueItemsGroupedByCocId(dataValue: DataValueItem): Id {
     return [dataValue.de_uid, dataValue.pe_startdate, dataValue.ou_name].join("-");
+}
+
+export function parseDataValueItemId(string: string): DataValueItemIdentifier | undefined {
+    const [dataElement, orgUnit, period] = string.split("-");
+    if (!dataElement || !orgUnit || !period) return undefined;
+
+    return { dataElement, orgUnit, period };
 }
