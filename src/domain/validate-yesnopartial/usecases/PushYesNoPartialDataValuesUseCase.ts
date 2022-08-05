@@ -1,10 +1,10 @@
-import { DataValue } from "../../entities/DataValue";
+import { DataValueItemIdentifier } from "../entities/DataValueItem";
 import { NHWAYesNoPartialDataValuesRepository } from "../repositories/NHWAYesNoPartialDataValuesRepository";
 
 export class PushYesNoPartialDataValuesUseCase {
     constructor(private dataValueRepository: NHWAYesNoPartialDataValuesRepository) {}
 
-    async execute(dataValues: DataValue[], remove: boolean): Promise<void> {
-        this.dataValueRepository.push(dataValues, remove);
+    async execute(dataValues: DataValueItemIdentifier[], option: string): Promise<boolean> {
+        return this.dataValueRepository.push(dataValues, option);
     }
 }

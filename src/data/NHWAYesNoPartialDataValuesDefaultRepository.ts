@@ -1,10 +1,11 @@
 import { D2Api, PaginatedObjects } from "../types/d2-api";
 import { Dhis2SqlViews } from "./Dhis2SqlViews";
 
-import { DataValue } from "../domain/entities/DataValue";
-import { DataValueItem } from "../domain/validate-yesnopartial/entities/DataValueItem";
-import { Config } from "../domain/common/entities/Config";
-import { NHWAYesNoPartialDataValuesRepository } from "../domain/validate-yesnopartial/repositories/NHWAYesNoPartialDataValuesRepository";
+import { DataValueItem, DataValueItemIdentifier } from "../domain/validate-yesnopartial/entities/DataValueItem";
+import {
+    NHWAYesNoPartialDataValuesRepository,
+    NHWAYesNoPartialDataValuesRepositoryGetOptions,
+} from "../domain/validate-yesnopartial/repositories/NHWAYesNoPartialDataValuesRepository";
 
 interface Variables {
     value: string;
@@ -42,15 +43,15 @@ type SqlField =
     | "partial"
     | "count";
 
-type DataValueRow = Record<string, string>;
-
 export class NHWAYesNoPartialDataValuesDefaultRepository implements NHWAYesNoPartialDataValuesRepository {
     constructor(private api: D2Api) {}
 
-    async get(config: Config): Promise<PaginatedObjects<DataValueItem>> {
+    async get(options: NHWAYesNoPartialDataValuesRepositoryGetOptions): Promise<PaginatedObjects<DataValueItem>> {
         const sqlViews = new Dhis2SqlViews(this.api);
 
-        const { pager, rows } = await sqlViews.query<Variables, SqlField>(config.dataYesNoPartialSqlView.id).getData();
+        const { pager, rows } = await sqlViews
+            .query<Variables, SqlField>(options.config.dataYesNoPartialSqlView.id)
+            .getData();
         // A data value is not associated to a specific data set, but we can still map it
         // through the data element (1 data value -> 1 data element -> N data sets).
 
@@ -80,21 +81,48 @@ export class NHWAYesNoPartialDataValuesDefaultRepository implements NHWAYesNoPar
             return { pager, objects: items };
         }
     }
+    // eslint-disable-next-line
+    async push(dataValues: DataValueItemIdentifier[], option: string): Promise<boolean> {
+        return true;
+        //todo
+        /* 
+        const rows = dataValues.map(
+            (dataValue): DataValueRow => ({
+                pe: dataValue.period,
+                ou: dataValue.orgUnit.name,
+                ds: dataValue.dataSet.name,
+                det: dataValue.dataElement.name,
+                co: "I93t0K7b1oN",
+                value: true
+            })
+        );
 
-    async push(dataValues: DataValue[], remove: boolean): Promise<boolean | undefined> {
+    
+        //yes -> I93t0K7b1oN
+        //no -> Y7EAGQA1bfv
+        //partial ->  Xgr3PJxcWfJ
+        if (option === "yes"){
+
+        }else{
+
+        } 
+        if (option === "no"){
+
+        }else{
+
+        } 
+        if (option === "partial"){
+
+        } else {
+
+        }
         if (remove) {
-            const rows = dataValues.map(
-                (dataValue): DataValueRow => ({
-                    pe: dataValue.period,
-                    ou: dataValue.orgUnit.name,
-                    ds: dataValue.dataSet.name,
-                    det: dataValue.dataElement.name,
-                    co: dataValue.categoryOptionCombo.name,
-                })
-            );
             try {
                 const response = await this.api.post<any>("/dataValues", {}, { rows }).getData();
-                return response.status === "SUCCESS";
+                if (response.status === "SUCCESS")
+                    return true;
+                else
+                    return false;
             } catch (error: any) {
                 return error;
             }
@@ -115,6 +143,6 @@ export class NHWAYesNoPartialDataValuesDefaultRepository implements NHWAYesNoPar
             } catch (error: any) {
                 return error;
             }
-        }
+        } */
     }
 }

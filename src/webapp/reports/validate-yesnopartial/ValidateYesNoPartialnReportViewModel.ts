@@ -1,4 +1,7 @@
-import { DataValueItem } from "../../../domain/validate-yesnopartial/entities/DataValueItem";
+import {
+    DataValueItem,
+    geDataValueItemsGroupedByCocId,
+} from "../../../domain/validate-yesnopartial/entities/DataValueItem";
 
 export interface YesNoPartialViewModel {
     id: string;
@@ -21,7 +24,7 @@ export interface YesNoPartialViewModel {
 export function getYesNoPartialViewModels(metadataObjects: DataValueItem[]): YesNoPartialViewModel[] {
     return metadataObjects.map(object => {
         return {
-            id: object.de_uid + object.ou_uid + object.pe_startdate,
+            id: geDataValueItemsGroupedByCocId(object),
             value: object.value,
             ou_name: object.ou_name,
             ou_uid: object.ou_uid,

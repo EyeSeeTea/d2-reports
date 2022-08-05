@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2022-08-04T02:39:02.794Z\n"
+"POT-Creation-Date: 2022-08-05T16:57:18.977Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -155,7 +155,34 @@ msgstr ""
 msgid "Toggle filters"
 msgstr ""
 
-msgid "Validate yes no partial"
+msgid "Yes No Partial Validation"
+msgstr ""
+
+msgid "Org unit"
+msgstr ""
+
+msgid "Org unit uid"
+msgstr ""
+
+msgid "DataElement"
+msgstr ""
+
+msgid "DataElement uid"
+msgstr ""
+
+msgid "Yes"
+msgstr ""
+
+msgid "No"
+msgstr ""
+
+msgid "Partial"
+msgstr ""
+
+msgid "period"
+msgstr ""
+
+msgid "count"
 msgstr ""
 
 #~ msgid "Add"

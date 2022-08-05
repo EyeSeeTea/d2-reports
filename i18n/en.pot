@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2022-08-04T02:39:02.794Z\n"
-"PO-Revision-Date: 2022-08-04T02:39:02.794Z\n"
+"POT-Creation-Date: 2022-08-05T16:57:18.977Z\n"
+"PO-Revision-Date: 2022-08-05T16:57:18.977Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -155,5 +155,32 @@ msgstr ""
 msgid "Toggle filters"
 msgstr ""
 
-msgid "Validate yes no partial"
+msgid "Yes No Partial Validation"
+msgstr ""
+
+msgid "Org unit"
+msgstr ""
+
+msgid "Org unit uid"
+msgstr ""
+
+msgid "DataElement"
+msgstr ""
+
+msgid "DataElement uid"
+msgstr ""
+
+msgid "Yes"
+msgstr ""
+
+msgid "No"
+msgstr ""
+
+msgid "Partial"
+msgstr ""
+
+msgid "period"
+msgstr ""
+
+msgid "count"
 msgstr ""
