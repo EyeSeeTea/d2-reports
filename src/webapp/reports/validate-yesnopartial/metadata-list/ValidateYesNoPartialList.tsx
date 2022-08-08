@@ -109,9 +109,10 @@ export const ValidateYesNoPartialList: React.FC = React.memo(() => {
                 ...getUseCaseOptions(filters),
             });
             setSorting(sorting);
+            const objectsFixed = _(getYesNoPartialViewModels(objects)).unionBy("id").value();
             return {
+                objects: objectsFixed,
                 pager,
-                objects: _(getYesNoPartialViewModels(objects)).unionBy("id"),
             };
         },
         [config, compositionRoot, filters]
