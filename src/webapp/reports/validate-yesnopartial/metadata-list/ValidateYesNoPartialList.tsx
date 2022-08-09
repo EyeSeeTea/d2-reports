@@ -6,7 +6,7 @@ import { useAppContext } from "../../../contexts/app-context";
 import { TableConfig, useObjectsTable } from "../../../components/objects-list/objects-list-hooks";
 import { ObjectsList } from "../../../components/objects-list/ObjectsList";
 import { getYesNoPartialViewModels, YesNoPartialViewModel } from "../ValidateYesNoPartialnReportViewModel";
-import { parseDataValueItemId } from "../../../../domain/validate-yesnopartial/entities/DataValueItem";
+import { DataValueItem, parseDataValueItemId } from "../../../../domain/validate-yesnopartial/entities/DataValueItem";
 import _ from "lodash";
 import { useReload } from "../../../utils/use-reload";
 import { useSnackbarOnError } from "../../../utils/snackbar";
@@ -34,7 +34,7 @@ export const ValidateYesNoPartialList: React.FC = React.memo(() => {
                 { name: "yes", text: i18n.t("Yes"), sortable: true },
                 { name: "no", text: i18n.t("No"), sortable: true },
                 { name: "partial", text: i18n.t("Partial"), sortable: true },
-                { name: "pe_startdate", text: i18n.t("period"), sortable: true },
+                { name: "period", text: i18n.t("period"), sortable: true },
                 { name: "count", text: i18n.t("count"), sortable: true },
             ],
             actions: [
@@ -52,7 +52,7 @@ export const ValidateYesNoPartialList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: true,
+                    isActive: (rows: any) => _.every(rows, true),
                 },
                 {
                     name: "no",
@@ -68,7 +68,7 @@ export const ValidateYesNoPartialList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: true,
+                    isActive: rows => _.every(rows, true),
                 },
                 {
                     name: "approve",
@@ -84,7 +84,7 @@ export const ValidateYesNoPartialList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: true,
+                    isActive: rows => _.every(rows, true),
                 },
             ],
             initialSorting: {
@@ -109,18 +109,17 @@ export const ValidateYesNoPartialList: React.FC = React.memo(() => {
                 ...getUseCaseOptions(filters),
             });
             setSorting(sorting);
-            const objectsFixed = _(getYesNoPartialViewModels(objects)).unionBy("id").value();
             return {
-                objects: objectsFixed,
+                objects: getYesNoPartialViewModels(objects),
                 pager,
             };
         },
         [config, compositionRoot, filters]
     );
 
-    function getSortingFromTableSorting(sorting: TableSorting<YesNoPartialViewModel>): Sorting<YesNoPartialViewModel> {
+    function getSortingFromTableSorting(sorting: TableSorting<YesNoPartialViewModel>): Sorting<DataValueItem> {
         return {
-            field: sorting.field === "ou_name" ? "ou_name" : sorting.field,
+            field: sorting.field === "id" ? "ou_uid" : sorting.field,
             direction: sorting.order,
         };
     }

@@ -7,7 +7,7 @@ export interface DataValueItem {
     de_uid: string;
     coc_name: string;
     coc_uid: string;
-    pe_startdate: string;
+    period: string;
     value: string;
     comment: string;
     lastUpdated: string;
@@ -25,7 +25,7 @@ export interface DataValueItemIdentifier {
     period: string;
 }
 export function geDataValueItemsGroupedByCocId(dataValue: DataValueItem): Id {
-    return [dataValue.de_uid, dataValue.ou_name, dataValue.pe_startdate].join("-");
+    return [dataValue.de_uid, dataValue.ou_name, dataValue.period].join("-");
 }
 
 export function parseDataValueItemId(string: string): DataValueItemIdentifier | undefined {

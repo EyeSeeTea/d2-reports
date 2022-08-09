@@ -14,7 +14,7 @@ export interface YesNoPartialViewModel {
     yes: string;
     no: string;
     partial: string;
-    pe_startdate: string;
+    period: string;
     count: string;
     value: string;
     comment: string;
@@ -33,7 +33,7 @@ export function getYesNoPartialViewModels(metadataObjects: DataValueItem[]): Yes
             yes: object.yes,
             no: object.no,
             partial: object.partial,
-            pe_startdate: object.pe_startdate,
+            period: object.period,
             created: object.created,
             lastUpdated: object.lastUpdated,
             comment: object.comment ?? "-",

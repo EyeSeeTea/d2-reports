@@ -12,7 +12,7 @@ export interface NHWAYesNoPartialDataValuesRepository {
 export interface NHWAYesNoPartialDataValuesRepositoryGetOptions {
     config: Config;
     paging: Paging;
-    sorting: Sorting<YesNoPartialViewModel>;
+    sorting: Sorting<DataValueItem>;
     periods: string[];
     orgUnitIds: Id[];
 }

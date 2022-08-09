@@ -1,4 +1,4 @@
-import { D2Api, PaginatedObjects } from "../types/d2-api";
+import { D2Api, Id, PaginatedObjects } from "../types/d2-api";
 import { Dhis2SqlViews } from "./Dhis2SqlViews";
 
 import { DataValueItem, DataValueItemIdentifier } from "../domain/validate-yesnopartial/entities/DataValueItem";
@@ -8,21 +8,9 @@ import {
 } from "../domain/validate-yesnopartial/repositories/NHWAYesNoPartialDataValuesRepository";
 
 interface Variables {
-    value: string;
-    storedby: string;
-    lastupdated: string;
-    created: string;
-    comment: string;
-    ou_name: string;
     ou_uid: string;
-    de_name: string;
-    de_uid: string;
-    pe_startdate: string;
-    coc_name: string;
-    coc_uid: string;
-    yes: string;
-    no: string;
-    partial: string;
+    orderByColumn: SqlField;
+    orderByDirection: "asc" | "desc";
 }
 
 type SqlField =
@@ -35,7 +23,7 @@ type SqlField =
     | "ou_uid"
     | "de_name"
     | "de_uid"
-    | "pe_startdate"
+    | "period"
     | "coc_name"
     | "coc_uid"
     | "yes"
@@ -43,17 +31,46 @@ type SqlField =
     | "partial"
     | "count";
 
+const fieldMapping: Record<keyof DataValueItem, SqlField> = {
+    period: "period",
+    ou_uid: "ou_uid",
+    de_name: "de_name",
+    lastUpdated: "lastupdated",
+    storedBy: "storedby",
+    ou_name: "ou_name",
+    de_uid: "de_uid",
+    coc_name: "coc_name",
+    coc_uid: "coc_uid",
+    value: "value",
+    comment: "comment",
+    created: "created",
+    yes: "yes",
+    no: "no",
+    partial: "partial",
+    count: "count",
+};
+
 export class NHWAYesNoPartialDataValuesDefaultRepository implements NHWAYesNoPartialDataValuesRepository {
     constructor(private api: D2Api) {}
 
+    /*     get(options: NHWAYesNoPartialDataValuesRepositoryGetOptions): Promise<PaginatedObjects<DataValueItem>>;
+    push(dataValues: DataValueItemIdentifier[], option: string): Promise<boolean>; */
     async get(options: NHWAYesNoPartialDataValuesRepositoryGetOptions): Promise<PaginatedObjects<DataValueItem>> {
+        const { orgUnitIds } = options;
+        const { paging, sorting } = options;
         const sqlViews = new Dhis2SqlViews(this.api);
 
         const { pager, rows } = await sqlViews
-            .query<Variables, SqlField>(options.config.dataYesNoPartialSqlView.id)
+            .query<Variables, SqlField>(
+                options.config.dataYesNoPartialSqlView.id,
+                {
+                    ou_uid: sqlViewJoinIds(orgUnitIds),
+                    orderByColumn: fieldMapping[sorting.field],
+                    orderByDirection: sorting.direction,
+                },
+                paging
+            )
             .getData();
-        // A data value is not associated to a specific data set, but we can still map it
-        // through the data element (1 data value -> 1 data element -> N data sets).
 
         const items: DataValueItem[] = rows.map(
             (item): DataValueItem => ({
@@ -65,7 +82,7 @@ export class NHWAYesNoPartialDataValuesDefaultRepository implements NHWAYesNoPar
                 ou_uid: item.ou_uid,
                 de_name: item.de_name,
                 de_uid: item.de_uid,
-                pe_startdate: item.pe_startdate,
+                period: item.period,
                 coc_name: item.coc_name,
                 coc_uid: item.coc_uid,
                 created: item.created,
@@ -145,4 +162,7 @@ export class NHWAYesNoPartialDataValuesDefaultRepository implements NHWAYesNoPar
             }
         } */
     }
+}
+function sqlViewJoinIds(ids: Id[]): string {
+    return ids.join("-") || "-";
 }
