@@ -1,11 +1,11 @@
 import { TablePagination, TableSorting, useSnackbar } from "@eyeseetea/d2-ui-components";
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import i18n from "../../../../locales";
-import DoneIcon from "@material-ui/icons/Done";
+import SyncIcon from "@material-ui/icons/Sync";
 import { useAppContext } from "../../../contexts/app-context";
 import { TableConfig, useObjectsTable } from "../../../components/objects-list/objects-list-hooks";
 import { ObjectsList } from "../../../components/objects-list/ObjectsList";
-import { getYesNoPartialViewModels, YesNoPartialViewModel } from "../ValidateYesNoPartialnReportViewModel";
+import { getYesNoPartialViewModels, YesNoPartialViewModel } from "../ValidateYesNoPartialReportViewModel";
 import { DataValueItem, parseDataValueItemId } from "../../../../domain/validate-yesnopartial/entities/DataValueItem";
 import _ from "lodash";
 import { useReload } from "../../../utils/use-reload";
@@ -19,10 +19,6 @@ export const ValidateYesNoPartialList: React.FC = React.memo(() => {
     const snackbar = useSnackbar();
 
     const [reloadKey, reload] = useReload();
-    // eslint-disable-next-line
-    const [sorting, setSorting] = React.useState<TableSorting<YesNoPartialViewModel>>();
-    // eslint-disable-next-line
-    const [filters, setFilters] = useState(() => getEmptyDataValuesFilter());
 
     const baseConfig: TableConfig<YesNoPartialViewModel> = useMemo(
         () => ({
@@ -41,54 +37,60 @@ export const ValidateYesNoPartialList: React.FC = React.memo(() => {
                 {
                     name: "yes",
                     text: i18n.t("Yes"),
-                    icon: <DoneIcon />,
+                    icon: <SyncIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
                         const items = _.compact(selectedIds.map(item => parseDataValueItemId(item)));
                         if (items.length === 0) return;
 
                         const result = await compositionRoot.validateYesNoPartial.push(items, "yes");
-                        if (!result) snackbar.error(i18n.t("Error when trying to complete data set"));
+                        if (!result) snackbar.error(i18n.t("Error when trying to save the datavalues"));
 
                         reload();
                     },
-                    isActive: (rows: any) => _.every(rows, true),
+                    isActive: () => {
+                        return true;
+                    },
                 },
                 {
                     name: "no",
                     text: i18n.t("No"),
-                    icon: <DoneIcon />,
+                    icon: <SyncIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
                         const items = _.compact(selectedIds.map(item => parseDataValueItemId(item)));
                         if (items.length === 0) return;
 
                         const result = await compositionRoot.validateYesNoPartial.push(items, "no");
-                        if (!result) snackbar.error(i18n.t("Error when trying to incomplete data set"));
+                        if (!result) snackbar.error(i18n.t("Error when trying to save the datavalues"));
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, true),
+                    isActive: () => {
+                        return true;
+                    },
                 },
                 {
-                    name: "approve",
-                    text: i18n.t("Approve"),
-                    icon: <DoneIcon />,
+                    name: "partial",
+                    text: i18n.t("Partial"),
+                    icon: <SyncIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
                         const items = _.compact(selectedIds.map(item => parseDataValueItemId(item)));
                         if (items.length === 0) return;
 
                         const result = await compositionRoot.validateYesNoPartial.push(items, "partial");
-                        if (!result) snackbar.error(i18n.t("Error when trying to approve data set"));
+                        if (!result) snackbar.error(i18n.t("Error when trying to save the datavalues"));
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, true),
+                    isActive: () => {
+                        return true;
+                    },
                 },
             ],
             initialSorting: {
-                field: "id" as const,
+                field: "ou_uid" as const,
                 order: "asc" as const,
             },
             paginationOptions: {
@@ -96,8 +98,7 @@ export const ValidateYesNoPartialList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        // eslint-disable-next-line
-        [compositionRoot, reloadKey, snackbar]
+        [compositionRoot, reload, snackbar]
     );
 
     const getRows = useMemo(
@@ -106,15 +107,15 @@ export const ValidateYesNoPartialList: React.FC = React.memo(() => {
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
-                ...getUseCaseOptions(filters),
+                ...getUseCaseOptions(getEmptyDataValuesFilter()),
             });
-            setSorting(sorting);
+            console.debug("Reloading", reloadKey);
             return {
                 objects: getYesNoPartialViewModels(objects),
                 pager,
             };
         },
-        [config, compositionRoot, filters]
+        [config, compositionRoot, reloadKey]
     );
 
     function getSortingFromTableSorting(sorting: TableSorting<YesNoPartialViewModel>): Sorting<DataValueItem> {
@@ -137,58 +138,9 @@ export const ValidateYesNoPartialList: React.FC = React.memo(() => {
             periods: [],
         };
     }
-    /*     const getRows = React.useMemo(
-        () => async (paging: TablePagination, sorting: TableSorting<DataCommentsViewModel>) => {
-            const { pager, objects } = await compositionRoot.dataComments.get({
-                config,
-                paging: { page: paging.page, pageSize: paging.pageSize },
-                sorting: getSortingFromTableSorting(sorting),
-                ...getUseCaseOptions(filters),
-            });
-            setSorting(sorting);
-            return { pager, objects: getDataCommentsViews(config, objects) };
-        },
-        [config, compositionRoot, filters]
-    ); */
-
-    /*     const saveReorderedColumns = useCallback(
-        async (columnKeys: Array<keyof YesNoPartialViewModel>) => {
-            await compositionRoot.dataApproval.saveColumns(columnKeys);
-        },
-        [compositionRoot, visibleColumns]
-    );
- */
-
-    /*     useEffect(() => {
-        compositionRoot.validateYesNoPartial.get(
-            config
-            //                 sorting: getSortingFromTableSorting(sorting),
-        );
-    }, [compositionRoot]); */
 
     const getRowsWithSnackbarOrError = useSnackbarOnError(getRows);
     const tableProps = useObjectsTable(baseConfig, getRowsWithSnackbarOrError);
-    //const tableProps = useObjectsTable(baseConfig, getRows);
-
-    /*     const columnsToShow = useMemo<TableColumn<YesNoPartialViewModel>[]>(() => {
-        if (!visibleColumns || _.isEmpty(visibleColumns)) return tableProps.columns;
-
-        const indexes = _(visibleColumns)
-            .map((columnName, idx) => [columnName, idx] as [string, number])
-            .fromPairs()
-            .value();
-
-        return _(tableProps.columns)
-            .map(column => ({ ...column, hidden: !visibleColumns.includes(column.name) }))
-            .sortBy(column => indexes[column.name] || 0)
-            .value();
-    }, [tableProps.columns, visibleColumns]); */
-    /* 
-    const filterOptions = useMemo(() => getFilterOptions(config), [config]);
-
-    useEffect(() => {
-        compositionRoot.dataApproval.getColumns().then(columns => setVisibleColumns(columns));
-    }, [compositionRoot]); */
 
     return <ObjectsList<YesNoPartialViewModel> {...tableProps} columns={tableProps.columns}></ObjectsList>;
 });

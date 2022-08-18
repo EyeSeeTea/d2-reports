@@ -1,7 +1,7 @@
 import React from "react";
 import i18n from "../../../../locales";
 import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
-import { Id, NamedRef } from "../../../../domain/common/entities/Base";
+import { Id } from "../../../../domain/common/entities/Base";
 import { useAppContext } from "../../../contexts/app-context";
 import { getRootIds } from "../../../../domain/common/entities/OrgUnit";
 import { OrgUnitsFilterButton } from "../../../components/org-units-filter/OrgUnitsFilterButton";
@@ -49,11 +49,5 @@ export const Filters: React.FC<DataValuesFiltersProps> = React.memo(props => {
 function useMemoOptionsFromStrings(options: string[]) {
     return React.useMemo(() => {
         return options.map(option => ({ value: option, text: option }));
-    }, [options]);
-}
-
-function useMemoOptionsFromNamedRef(options: NamedRef[]) {
-    return React.useMemo(() => {
-        return options.map(option => ({ value: option.id, text: option.name }));
     }, [options]);
 }

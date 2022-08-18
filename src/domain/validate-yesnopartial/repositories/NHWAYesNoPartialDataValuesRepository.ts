@@ -1,4 +1,3 @@
-import { YesNoPartialViewModel } from "../../../webapp/reports/validate-yesnopartial/ValidateYesNoPartialnReportViewModel";
 import { Config } from "../../common/entities/Config";
 import { PaginatedObjects, Paging, Sorting } from "../../common/entities/PaginatedObjects";
 import { DataValueItem, DataValueItemIdentifier } from "../entities/DataValueItem";

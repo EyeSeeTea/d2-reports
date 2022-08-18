@@ -1,14 +1,16 @@
-import { D2Api, Id, PaginatedObjects } from "../types/d2-api";
+import { D2Api, PaginatedObjects } from "../types/d2-api";
 import { Dhis2SqlViews } from "./Dhis2SqlViews";
-
 import { DataValueItem, DataValueItemIdentifier } from "../domain/validate-yesnopartial/entities/DataValueItem";
 import {
     NHWAYesNoPartialDataValuesRepository,
     NHWAYesNoPartialDataValuesRepositoryGetOptions,
 } from "../domain/validate-yesnopartial/repositories/NHWAYesNoPartialDataValuesRepository";
 
+const NO = "Y7EAGQA1bfv";
+const PARTIAL = "Xgr3PJxcWfJ";
+const YES = "I93t0K7b1oN";
+const DEFAULT = "Xr12mI7VPn3";
 interface Variables {
-    ou_uid: string;
     orderByColumn: SqlField;
     orderByDirection: "asc" | "desc";
 }
@@ -53,10 +55,25 @@ const fieldMapping: Record<keyof DataValueItem, SqlField> = {
 export class NHWAYesNoPartialDataValuesDefaultRepository implements NHWAYesNoPartialDataValuesRepository {
     constructor(private api: D2Api) {}
 
+    dataValues: {
+        period: string;
+        orgUnit: string;
+        dataElement: string;
+        categoryOptionCombo: string;
+        attributeOptionCombo: string;
+        value?: boolean;
+    }[] = [];
+    dataValuesToBeDeleted: {
+        period: string;
+        orgUnit: string;
+        dataElement: string;
+        categoryOptionCombo: string;
+        attributeOptionCombo: string;
+        value?: boolean;
+    }[] = [];
     /*     get(options: NHWAYesNoPartialDataValuesRepositoryGetOptions): Promise<PaginatedObjects<DataValueItem>>;
     push(dataValues: DataValueItemIdentifier[], option: string): Promise<boolean>; */
     async get(options: NHWAYesNoPartialDataValuesRepositoryGetOptions): Promise<PaginatedObjects<DataValueItem>> {
-        const { orgUnitIds } = options;
         const { paging, sorting } = options;
         const sqlViews = new Dhis2SqlViews(this.api);
 
@@ -64,7 +81,6 @@ export class NHWAYesNoPartialDataValuesDefaultRepository implements NHWAYesNoPar
             .query<Variables, SqlField>(
                 options.config.dataYesNoPartialSqlView.id,
                 {
-                    ou_uid: sqlViewJoinIds(orgUnitIds),
                     orderByColumn: fieldMapping[sorting.field],
                     orderByDirection: sorting.direction,
                 },
@@ -99,70 +115,88 @@ export class NHWAYesNoPartialDataValuesDefaultRepository implements NHWAYesNoPar
         }
     }
     // eslint-disable-next-line
-    async push(dataValues: DataValueItemIdentifier[], option: string): Promise<boolean> {
-        return true;
-        //todo
-        /* 
-        const rows = dataValues.map(
-            (dataValue): DataValueRow => ({
-                pe: dataValue.period,
-                ou: dataValue.orgUnit.name,
-                ds: dataValue.dataSet.name,
-                det: dataValue.dataElement.name,
-                co: "I93t0K7b1oN",
-                value: true
-            })
-        );
+    async push(rows: DataValueItemIdentifier[], option: string): Promise<boolean> {
+        rows.forEach(datavalue => {
+            if (option === "yes") {
+                if (datavalue.no === "1") {
+                    this.prepareDataValue(datavalue, NO, "false");
+                }
+                if (datavalue.partial === "1") {
+                    this.prepareDataValue(datavalue, PARTIAL, "false");
+                }
+                if (datavalue.yes === "0") {
+                    this.prepareDataValue(datavalue, YES, "true");
+                }
+            } else if (option === "no") {
+                if (datavalue.no === "0") {
+                    //push no
+                    this.prepareDataValue(datavalue, NO, "true");
+                }
+                if (datavalue.partial === "1") {
+                    this.prepareDataValue(datavalue, PARTIAL, "false");
+                }
 
-    
-        //yes -> I93t0K7b1oN
-        //no -> Y7EAGQA1bfv
-        //partial ->  Xgr3PJxcWfJ
-        if (option === "yes"){
+                if (datavalue.yes === "1") {
+                    this.prepareDataValue(datavalue, YES, "false");
+                }
+            } else if (option === "partial") {
+                if (datavalue.no === "1") {
+                    this.prepareDataValue(datavalue, NO, "false");
+                }
+                if (datavalue.partial === "0") {
+                    this.prepareDataValue(datavalue, PARTIAL, "true");
+                }
 
-        }else{
+                if (datavalue.yes === "1") {
+                    this.prepareDataValue(datavalue, YES, "false");
+                }
+            }
+        });
 
-        } 
-        if (option === "no"){
+        //send values
+        try {
+            if (this.dataValues.length > 0) {
+                const responsePush = await this.api
+                    .post<any>("/dataValueSets?importStrategy=CREATE&async=false", {}, { dataValues: this.dataValues })
+                    .getData();
+                this.dataValues = [];
+                if (responsePush.status !== "SUCCESS") return false;
+            }
 
-        }else{
-
-        } 
-        if (option === "partial"){
-
-        } else {
-
+            const responseDelete = await this.api
+                .post<any>(
+                    "/dataValueSets?importStrategy=DELETE&async=false",
+                    {},
+                    { dataValues: this.dataValuesToBeDeleted }
+                )
+                .getData();
+            this.dataValuesToBeDeleted = [];
+            if (responseDelete.status === "SUCCESS") return true;
+            else return false;
+        } catch (error: any) {
+            return error;
         }
-        if (remove) {
-            try {
-                const response = await this.api.post<any>("/dataValues", {}, { rows }).getData();
-                if (response.status === "SUCCESS")
-                    return true;
-                else
-                    return false;
-            } catch (error: any) {
-                return error;
-            }
-        } else {
-            const rows = dataValues.map(
-                (dataValue): DataValueRow => ({
-                    pe: dataValue.period,
-                    ou: dataValue.orgUnit.name,
-                    ds: dataValue.dataSet.name,
-                    det: dataValue.dataElement.name,
-                    co: dataValue.categoryOptionCombo.name,
-                    value: dataValue.value,
-                })
-            );
-            try {
-                const response = await this.api.post<any>("/dataValues", {}, { rows }).getData();
-                return response.status === "SUCCESS";
-            } catch (error: any) {
-                return error;
-            }
-        } */
+        return true;
     }
-}
-function sqlViewJoinIds(ids: Id[]): string {
-    return ids.join("-") || "-";
+
+    prepareDataValue(datavalue: DataValueItemIdentifier, categoryOptionCombo: string, value: string) {
+        if (value === "true") {
+            this.dataValues.push({
+                period: datavalue.period,
+                orgUnit: datavalue.orgUnit,
+                dataElement: datavalue.dataElement,
+                categoryOptionCombo: categoryOptionCombo,
+                attributeOptionCombo: DEFAULT,
+                value: true,
+            });
+        } else {
+            this.dataValuesToBeDeleted.push({
+                period: datavalue.period,
+                orgUnit: datavalue.orgUnit,
+                dataElement: datavalue.dataElement,
+                categoryOptionCombo: categoryOptionCombo,
+                attributeOptionCombo: DEFAULT,
+            });
+        }
+    }
 }

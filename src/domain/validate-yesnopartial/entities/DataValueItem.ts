@@ -23,14 +23,19 @@ export interface DataValueItemIdentifier {
     dataElement: string;
     orgUnit: string;
     period: string;
+    yes: string;
+    no: string;
+    partial: string;
 }
 export function geDataValueItemsGroupedByCocId(dataValue: DataValueItem): Id {
-    return [dataValue.de_uid, dataValue.ou_name, dataValue.period].join("-");
+    return [dataValue.de_uid, dataValue.ou_uid, dataValue.period, dataValue.yes, dataValue.no, dataValue.partial].join(
+        "-"
+    );
 }
 
 export function parseDataValueItemId(string: string): DataValueItemIdentifier | undefined {
-    const [dataElement, orgUnit, period] = string.split("-");
-    if (!dataElement || !orgUnit || !period) return undefined;
+    const [dataElement, orgUnit, period, yes, no, partial] = string.split("-");
+    if (!dataElement || !orgUnit || !period || !yes || !no || !partial) return undefined;
 
-    return { dataElement, orgUnit, period };
+    return { dataElement, orgUnit, period, yes, no, partial };
 }
