@@ -142,5 +142,12 @@ export const ValidateYesNoPartialList: React.FC = React.memo(() => {
     const getRowsWithSnackbarOrError = useSnackbarOnError(getRows);
     const tableProps = useObjectsTable(baseConfig, getRowsWithSnackbarOrError);
 
-    return <ObjectsList<YesNoPartialViewModel> {...tableProps} columns={tableProps.columns}></ObjectsList>;
+    return (
+        <ObjectsList<YesNoPartialViewModel>
+            key={reloadKey}
+            hideSelectAll={true}
+            {...tableProps}
+            columns={tableProps.columns}
+        ></ObjectsList>
+    );
 });

@@ -24,6 +24,7 @@ export interface ObjectsListProps<Obj extends ReferenceObject> {
     onChange(newState: TableState<Obj>): void;
     sideComponents?: ObjectsTableProps<Obj>["sideComponents"];
     globalActions?: TableGlobalAction[];
+    hideSelectAll?: boolean;
 }
 
 export function ObjectsList<T extends ReferenceObject>(
