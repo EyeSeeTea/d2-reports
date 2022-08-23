@@ -9,6 +9,7 @@ export interface Config {
     currentUser: User;
     dataCommentsSqlView: NamedRef;
     dataApprovalSqlView: NamedRef;
+    dataYesNoPartialSqlView: NamedRef;
     pairedDataElementsByDataSet: {
         [dataSetId: string]: Array<{ dataValueVal: Id; dataValueComment: Id }>;
     };

@@ -7,10 +7,11 @@ import { D2Api, Id } from "../types/d2-api";
 
 const SQL_VIEW_DATA_COMMENTS_NAME = "NHWA Data Comments";
 const SQL_VIEW_DATA_APPROVAL_NAME = "NHWA Data Approval Status";
+const SQL_VIEW_YES_NO_PARTIAL_NAME = "NHWA Yes No Partial report";
 
 const base = {
     dataSets: { namePrefix: "NHWA", nameExcluded: /old$/ },
-    sqlViewNames: [SQL_VIEW_DATA_COMMENTS_NAME, SQL_VIEW_DATA_APPROVAL_NAME],
+    sqlViewNames: [SQL_VIEW_DATA_COMMENTS_NAME, SQL_VIEW_DATA_APPROVAL_NAME, SQL_VIEW_YES_NO_PARTIAL_NAME],
     constantCode: "NHWA_COMMENTS",
     approvalWorkflows: { namePrefix: "NHWA" },
 };
@@ -23,12 +24,17 @@ export class Dhis2ConfigRepository implements ConfigRepository {
         const filteredDataSets = getFilteredDataSets(dataSets);
         const dataCommentsSqlView = sqlViews.find(({ name }) => name === SQL_VIEW_DATA_COMMENTS_NAME);
         const dataApprovalSqlView = sqlViews.find(({ name }) => name === SQL_VIEW_DATA_APPROVAL_NAME);
+        const dataYesNoPartialSqlView = sqlViews.find(({ name }) => name === SQL_VIEW_YES_NO_PARTIAL_NAME);
         if (!dataCommentsSqlView) {
             throw new Error(`Missing SQL views: ${SQL_VIEW_DATA_COMMENTS_NAME}`);
         }
 
         if (!dataApprovalSqlView) {
             throw new Error(`Missing SQL views: ${SQL_VIEW_DATA_APPROVAL_NAME}`);
+        }
+
+        if (!dataYesNoPartialSqlView) {
+            throw new Error(`Missing SQL views: ${SQL_VIEW_YES_NO_PARTIAL_NAME}`);
         }
 
         const constant = getNth(constants, 0, `Missing constant: ${base.constantCode}`);
@@ -43,6 +49,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             currentUser,
             dataCommentsSqlView,
             dataApprovalSqlView,
+            dataYesNoPartialSqlView,
             pairedDataElementsByDataSet: pairedDataElements,
             sections: keyById(sections),
             sectionsByDataSet,
