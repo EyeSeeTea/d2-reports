@@ -71,8 +71,7 @@ export class NHWAYesNoPartialDataValuesDefaultRepository implements NHWAYesNoPar
         attributeOptionCombo: string;
         value?: boolean;
     }[] = [];
-    /*     get(options: NHWAYesNoPartialDataValuesRepositoryGetOptions): Promise<PaginatedObjects<DataValueItem>>;
-    push(dataValues: DataValueItemIdentifier[], option: string): Promise<boolean>; */
+
     async get(options: NHWAYesNoPartialDataValuesRepositoryGetOptions): Promise<PaginatedObjects<DataValueItem>> {
         const { paging, sorting } = options;
         const sqlViews = new Dhis2SqlViews(this.api);
@@ -114,7 +113,7 @@ export class NHWAYesNoPartialDataValuesDefaultRepository implements NHWAYesNoPar
             return { pager, objects: items };
         }
     }
-    // eslint-disable-next-line
+
     async push(rows: DataValueItemIdentifier[], option: string): Promise<boolean> {
         rows.forEach(datavalue => {
             if (option === "yes") {
