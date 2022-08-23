@@ -6,6 +6,7 @@ import {
     TableSorting,
 } from "@eyeseetea/d2-ui-components";
 import StorageIcon from "@material-ui/icons/Storage";
+import RestartAltIcon from "@material-ui/icons/Storage";
 import _ from "lodash";
 import React from "react";
 import { sortByName } from "../../../../domain/common/entities/Base";
@@ -21,80 +22,93 @@ import { useSnackbarOnError } from "../../../utils/snackbar";
 import { DataCommentsViewModel, getDataCommentsViews } from "../DataCommentsViewModel";
 import { DataValuesFilter } from "./Filters";
 import { FiltersBox } from "./FiltersBox";
-
-export const DataCommentsList: React.FC = React.memo(() => {
+export const DataCommentsList: React.FC = () => {
+    const [oldYears, setOldYears] = React.useState(false);
     const { compositionRoot, config } = useAppContext();
+
+    const selectablePeriods = React.useMemo(() => {
+        const currentYear = new Date().getFullYear();
+        return oldYears
+            ? _.range(currentYear - 40, currentYear - 10).map(n => n.toString())
+            : _.range(currentYear - 10, currentYear + 1).map(n => n.toString());
+    }, [oldYears]);
+
     const [filters, setFilters] = React.useState(() => getEmptyDataValuesFilter(config));
     const baseConfig = React.useMemo(getBaseListConfig, []);
     const [sorting, setSorting] = React.useState<TableSorting<DataCommentsViewModel>>();
-
     const getRows = React.useMemo(
         () => async (paging: TablePagination, sorting: TableSorting<DataCommentsViewModel>) => {
             const { pager, objects } = await compositionRoot.dataComments.get({
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
-                ...getUseCaseOptions(filters),
+                ...getUseCaseOptions(filters, selectablePeriods),
             });
+            setFilters(filters);
             setSorting(sorting);
             return { pager, objects: getDataCommentsViews(config, objects) };
         },
-        [config, compositionRoot, filters]
+        [config, compositionRoot, filters, selectablePeriods]
     );
-
     const getRowsWithSnackbarOrError = useSnackbarOnError(getRows);
     const tableProps = useObjectsTable(baseConfig, getRowsWithSnackbarOrError);
-    const filterOptions = React.useMemo(() => getFilterOptions(config, filters), [config, filters]);
-
+    const filterOptions = React.useMemo(
+        () => getFilterOptions(config, filters, selectablePeriods),
+        [config, filters, selectablePeriods]
+    );
     const downloadCsv: TableGlobalAction = {
         name: "downloadCsv",
-        text: "Download CSV",
+        text: i18n.t("Download CSV"),
         icon: <StorageIcon />,
         onClick: async () => {
             if (!sorting) return;
-            // FUTURE: create a single use case that performs the get+saveCSV
             const { objects: dataValues } = await compositionRoot.dataComments.get({
                 config,
                 paging: { page: 1, pageSize: 100000 },
                 sorting: getSortingFromTableSorting(sorting),
-                ...getUseCaseOptions(filters),
+                ...getUseCaseOptions(filters, selectablePeriods),
             });
             compositionRoot.dataComments.save("data-values.csv", dataValues);
         },
     };
-
+    const periodsToggle: TableGlobalAction = {
+        name: "switchPeriods",
+        text: i18n.t("Switch Periods"),
+        icon: <RestartAltIcon />,
+        onClick: async () => {
+            setOldYears(oldYears => !oldYears);
+            setFilters(currentFilters => ({ ...currentFilters, periods: [] }));
+        },
+    };
     return (
-        <ObjectsList<DataCommentsViewModel> {...tableProps} globalActions={[downloadCsv]}>
+        <ObjectsList<DataCommentsViewModel> {...tableProps} globalActions={[downloadCsv, periodsToggle]}>
             <FiltersBox showToggleButton={false} values={filters} options={filterOptions} onChange={setFilters} />
         </ObjectsList>
     );
-});
+};
 
-function getUseCaseOptions(filter: DataValuesFilter) {
+function getUseCaseOptions(filter: DataValuesFilter, selectablePeriods: string[]) {
     return {
         ...filter,
+        periods: _.isEmpty(filter.periods) ? selectablePeriods : filter.periods,
         orgUnitIds: getOrgUnitIdsFromPaths(filter.orgUnitPaths),
     };
 }
-
 function getSortingFromTableSorting(sorting: TableSorting<DataCommentsViewModel>): Sorting<DataCommentsItem> {
     return {
         field: sorting.field === "id" ? "period" : sorting.field,
         direction: sorting.order,
     };
 }
-
 function getBaseListConfig(): TableConfig<DataCommentsViewModel> {
     const paginationOptions: PaginationOptions = {
         pageSizeOptions: [10, 20, 50],
         pageSizeInitialValue: 10,
     };
-
     const initialSorting: TableSorting<DataCommentsViewModel> = {
         field: "dataSet" as const,
         order: "asc" as const,
     };
-
     const columns: TableColumn<DataCommentsViewModel>[] = [
         { name: "dataSet", text: i18n.t("Data set"), sortable: true },
         { name: "period", text: i18n.t("Period"), sortable: true },
@@ -107,11 +121,9 @@ function getBaseListConfig(): TableConfig<DataCommentsViewModel> {
         { name: "lastUpdated", text: i18n.t("Last updated"), sortable: true, hidden: true },
         { name: "storedBy", text: i18n.t("Stored by"), sortable: true, hidden: true },
     ];
-
     return { columns, initialSorting, paginationOptions };
 }
-
-function getFilterOptions(config: Config, filters: DataValuesFilter) {
+function getFilterOptions(config: Config, filters: DataValuesFilter, selectablePeriods: string[]) {
     const { dataSetIds } = filters;
     const sections = _(config.sectionsByDataSet)
         .at(_.isEmpty(dataSetIds) ? _.keys(config.sectionsByDataSet) : dataSetIds)
@@ -119,14 +131,12 @@ function getFilterOptions(config: Config, filters: DataValuesFilter) {
         .compact()
         .uniqBy(section => section.id)
         .value();
-
     return {
-        periods: config.years,
+        periods: selectablePeriods,
         dataSets: sortByName(_.values(config.dataSets)),
         sections: sortByName(sections),
     };
 }
-
 function getEmptyDataValuesFilter(config: Config): DataValuesFilter {
     return {
         orgUnitPaths: getMainUserPaths(config),

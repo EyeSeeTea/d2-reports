@@ -63,27 +63,41 @@ export class NHWADataCommentsDefaultRepository implements NHWADataCommentsReposi
                 .join("-") || "-";
 
         const sqlViews = new Dhis2SqlViews(this.api);
-        const { pager, rows } = await sqlViews
-            .query<Variables, SqlField>(
-                config.dataCommentsSqlView.id,
-                {
-                    orgUnitIds: sqlViewJoinIds(orgUnitIds),
-                    periods: sqlViewJoinIds(_.isEmpty(periods) ? config.years : periods),
-                    dataSetIds: sqlViewJoinIds(dataSetIds2),
-                    sectionIds: sqlViewJoinIds(sectionIds),
-                    orderByColumn: fieldMapping[sorting.field],
-                    orderByDirection: sorting.direction,
-                    commentPairs,
-                },
-                paging
-            )
-            .getData();
+        const { pager, rows } = _.merge(
+            await sqlViews
+                .query<Variables, SqlField>(
+                    config.dataCommentsSqlView.id,
+                    {
+                        orgUnitIds: sqlViewJoinIds(orgUnitIds),
+                        periods: sqlViewJoinIds(periods),
+                        dataSetIds: sqlViewJoinIds(dataSetIds2),
+                        sectionIds: sqlViewJoinIds(sectionIds),
+                        orderByColumn: fieldMapping[sorting.field],
+                        orderByDirection: sorting.direction,
+                        commentPairs,
+                    },
+                    paging
+                )
+                .getData()
+        );
 
         // A data value is not associated to a specific data set, but we can still map it
         // through the data element (1 data value -> 1 data element -> N data sets).
 
         const dataValues: Array<DataCommentsItem> = rows.map(
-            (dv): DataCommentsItem => ({
+            (dv: {
+                period: string;
+                orgunit: any;
+                datasetname: any;
+                dataelementid: any;
+                dataelementname: any;
+                section: any;
+                cocname: any;
+                value: any;
+                comment: any;
+                lastupdated: string | number | Date;
+                storedby: any;
+            }): DataCommentsItem => ({
                 period: dv.period.split("-")[0] ?? "",
                 orgUnit: { name: dv.orgunit },
                 dataSet: { name: dv.datasetname },
