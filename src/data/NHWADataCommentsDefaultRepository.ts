@@ -70,7 +70,6 @@ export class NHWADataCommentsDefaultRepository implements NHWADataCommentsReposi
                     {
                         orgUnitIds: sqlViewJoinIds(orgUnitIds),
                         periods: sqlViewJoinIds(periods),
-                        //periods: sqlViewJoinIds(_.isEmpty(periods) ? config.years.slice(config.years.length/2, config.years.length) : periods),
                         dataSetIds: sqlViewJoinIds(dataSetIds2),
                         sectionIds: sqlViewJoinIds(sectionIds),
                         orderByColumn: fieldMapping[sorting.field],

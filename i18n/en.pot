@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2022-03-11T21:26:56.913Z\n"
-"PO-Revision-Date: 2022-03-11T21:26:56.913Z\n"
+"POT-Creation-Date: 2022-08-23T08:55:03.041Z\n"
+"PO-Revision-Date: 2022-08-23T08:55:03.041Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -126,6 +126,12 @@ msgid "Periods"
 msgstr ""
 
 msgid "NHWA Comments Report"
+msgstr ""
+
+msgid "Download CSV"
+msgstr ""
+
+msgid "Switch Periods"
 msgstr ""
 
 msgid "Section"

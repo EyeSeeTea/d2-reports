@@ -58,7 +58,7 @@ export const DataCommentsList: React.FC = () => {
     );
     const downloadCsv: TableGlobalAction = {
         name: "downloadCsv",
-        text: "Download CSV",
+        text: i18n.t("Download CSV"),
         icon: <StorageIcon />,
         onClick: async () => {
             if (!sorting) return;
@@ -71,9 +71,9 @@ export const DataCommentsList: React.FC = () => {
             compositionRoot.dataComments.save("data-values.csv", dataValues);
         },
     };
-    const allYearsToggle: TableGlobalAction = {
-        name: "allyears",
-        text: "Switch Years",
+    const periodsToggle: TableGlobalAction = {
+        name: "switchPeriods",
+        text: i18n.t("Switch Periods"),
         icon: <RestartAltIcon />,
         onClick: async () => {
             setOldYears(oldYears => !oldYears);
@@ -81,7 +81,7 @@ export const DataCommentsList: React.FC = () => {
         },
     };
     return (
-        <ObjectsList<DataCommentsViewModel> {...tableProps} globalActions={[downloadCsv, allYearsToggle]}>
+        <ObjectsList<DataCommentsViewModel> {...tableProps} globalActions={[downloadCsv, periodsToggle]}>
             <FiltersBox showToggleButton={false} values={filters} options={filterOptions} onChange={setFilters} />
         </ObjectsList>
     );
