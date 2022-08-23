@@ -90,7 +90,7 @@ export const ValidateYesNoPartialList: React.FC = React.memo(() => {
                 },
             ],
             initialSorting: {
-                field: "ou_uid" as const,
+                field: "ou_name" as const,
                 order: "asc" as const,
             },
             paginationOptions: {
@@ -120,7 +120,7 @@ export const ValidateYesNoPartialList: React.FC = React.memo(() => {
 
     function getSortingFromTableSorting(sorting: TableSorting<YesNoPartialViewModel>): Sorting<DataValueItem> {
         return {
-            field: sorting.field === "id" ? "ou_uid" : sorting.field,
+            field: sorting.field === "id" ? "ou_name" : sorting.field,
             direction: sorting.order,
         };
     }

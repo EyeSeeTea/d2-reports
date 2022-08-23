@@ -176,7 +176,6 @@ export class NHWAYesNoPartialDataValuesDefaultRepository implements NHWAYesNoPar
         } catch (error: any) {
             return error;
         }
-        return true;
     }
 
     prepareDataValue(datavalue: DataValueItemIdentifier, categoryOptionCombo: string, value: string) {
