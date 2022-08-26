@@ -2,6 +2,7 @@ import React from "react";
 import AdminReport from "./admin/AdminReport";
 import NHWACommentsReport from "./nhwa-comments/NHWACommentsReport";
 import NHWADataApprovalStatusReport from "./nhwa-approval-status/NHWADataApprovalStatusReport";
+import MALDataApprovalStatusReport from "./mal-dataset-duplication/MALDataApprovalStatusReport";
 
 const widget = process.env.REACT_APP_REPORT_VARIANT || "";
 
@@ -12,6 +13,9 @@ const Component: React.FC = () => {
         }
         case "nhwa-approval-status": {
             return <NHWADataApprovalStatusReport />;
+        }
+        case "mal-approval-status": {
+            return <MALDataApprovalStatusReport />;
         }
         case "admin": {
             return <AdminReport />;

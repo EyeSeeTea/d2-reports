@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2022-01-10T08:43:46.954Z\n"
+"POT-Creation-Date: 2022-08-25T17:23:38.373Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -74,13 +74,13 @@ msgstr ""
 msgid "created"
 msgstr ""
 
-msgid "NHWA Data Approval Status Report"
-msgstr ""
-
-msgid "Data set"
+msgid "Malaria Data Approval Report"
 msgstr ""
 
 msgid "Period"
+msgstr ""
+
+msgid "Data set"
 msgstr ""
 
 msgid "Attribute"
@@ -92,7 +92,7 @@ msgstr ""
 msgid "Approval status"
 msgstr ""
 
-msgid "Last updated value"
+msgid "Last data approved date"
 msgstr ""
 
 msgid "Complete"
@@ -123,6 +123,12 @@ msgid "Data sets"
 msgstr ""
 
 msgid "Periods"
+msgstr ""
+
+msgid "NHWA Data Approval Status Report"
+msgstr ""
+
+msgid "Last updated value"
 msgstr ""
 
 msgid "NHWA Comments Report"
