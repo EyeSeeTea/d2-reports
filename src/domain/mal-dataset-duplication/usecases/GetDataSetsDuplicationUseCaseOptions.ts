@@ -6,12 +6,12 @@ import {
     MALDataDuplicationRepositoryGetOptions,
 } from "../repositories/MALDataDuplicationRepository";
 
-type GetDataSetsUseCaseOptions = MALDataDuplicationRepositoryGetOptions;
+type GetDataSetsDuplicationUseCaseOptions = MALDataDuplicationRepositoryGetOptions;
 
-export class GetDataSetsUseCase implements UseCase {
+export class GetDataSetsDuplicationUseCase implements UseCase {
     constructor(private dataSetRepository: MALDataDuplicationRepository) { }
 
-    execute(options: GetDataSetsUseCaseOptions): Promise<PaginatedObjects<DataDuplicationItem>> {
+    execute(options: GetDataSetsDuplicationUseCaseOptions): Promise<PaginatedObjects<DataDuplicationItem>> {
         // FUTURE: Return a Future-like instead, to allow better error handling and cancellation.
         return this.dataSetRepository.get(options);
     }

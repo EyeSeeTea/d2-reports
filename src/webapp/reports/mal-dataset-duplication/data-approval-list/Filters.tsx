@@ -20,6 +20,7 @@ export interface DataSetsFilter {
     periods: string[];
     completionStatus?: string;
     approvalStatus?: string;
+    duplicationStatus?: string;
 }
 
 interface FilterOptions {
@@ -39,8 +40,13 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         { id: "true", name: "Completed" },
         { id: "false", name: "Not completed" },
     ]);
-
+    
     const approvalStatusItems = useMemoOptionsFromNamedRef([
+        { id: "true", name: "Submitted" },
+        { id: "false", name: "Ready for submission" },
+    ]);
+    
+    const duplicationStatusItems = useMemoOptionsFromNamedRef([
         { id: "true", name: "Approved" },
         { id: "false", name: "Ready for approval" },
     ]);
@@ -80,6 +86,14 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 items={approvalStatusItems}
                 values={_.compact([filter.approvalStatus])}
                 onChange={([approvalStatus]) => onChange({ ...filter, approvalStatus })}
+                label={i18n.t("Submission status")}
+                multiple={false}
+            />
+
+            <Dropdown
+                items={duplicationStatusItems}
+                values={_.compact([filter.duplicationStatus])}
+                onChange={([duplicationStatus]) => onChange({ ...filter, duplicationStatus })}
                 label={i18n.t("Approval status")}
                 multiple={false}
             />

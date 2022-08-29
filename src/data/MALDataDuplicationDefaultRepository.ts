@@ -22,6 +22,7 @@ interface Variables {
     periods: string;
     completed: string;
     approved: string;
+    duplicated: string;
     orderByColumn: SqlField;
     orderByDirection: "asc" | "desc";
 }
@@ -37,6 +38,7 @@ type SqlField =
     | "approvalworkflow"
     | "completed"
     | "validated"
+    | "duplicated"
     | "lastupdatedvalue";
 
 const fieldMapping: Record<keyof DataDuplicationItem, SqlField> = {
@@ -50,6 +52,7 @@ const fieldMapping: Record<keyof DataDuplicationItem, SqlField> = {
     approvalWorkflow: "approvalworkflow",
     completed: "completed",
     validated: "validated",
+    duplicated: "duplicated",
     lastUpdatedValue: "lastupdatedvalue",
 };
 
@@ -78,6 +81,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                     dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
                     completed: options.completionStatus ?? "-",
                     approved: options.approvalStatus ?? "-",
+                    duplicated: options.duplicationStatus ?? "-",
                     orderByColumn: fieldMapping[sorting.field],
                     orderByDirection: sorting.direction,
                 },
@@ -100,6 +104,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                 approvalWorkflow: item.approvalworkflow,
                 completed: Boolean(item.completed),
                 validated: Boolean(item.validated),
+                duplicated: Boolean(item.duplicated),
                 lastUpdatedValue: item.lastupdatedvalue,
             })
         );
@@ -145,6 +150,24 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
     }
 
     async approve(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean> {
+        try {
+            const response = await promiseMap(dataSets, async approval =>
+                this.api
+                    .post<any>(
+                        "/dataApprovals",
+                        { wf: approval.workflow, pe: approval.period, ou: approval.orgUnit },
+                        {}
+                    )
+                    .getData()
+            );
+
+            return _.every(response, item => item === "");
+        } catch (error: any) {
+            return false;
+        }
+    }
+
+    async duplicate(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean> {
         try {
             const approvalDataSetId = "fRrt4V8ImqD";
 
@@ -221,17 +244,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
 
             //console.log("copyResponse: ", copyResponse)
 
-            const response = await promiseMap(dataSets, async approval =>
-                this.api
-                    .post<any>(
-                        "/dataApprovals",
-                        { wf: approval.workflow, pe: approval.period, ou: approval.orgUnit },
-                        {}
-                    )
-                    .getData()
-            );
-
-            return _.every(response, item => item === "");
+            return copyResponse;
         } catch (error: any) {
             return false;
         }

@@ -8,6 +8,7 @@ export interface MALDataDuplicationRepository {
     save(filename: string, dataSets: DataDuplicationItem[]): Promise<void>;
     complete(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean>;
     approve(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean>;
+    duplicate(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean>;
     incomplete(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean>;
     unapprove(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean>;
     getColumns(): Promise<string[]>;
@@ -22,5 +23,6 @@ export interface MALDataDuplicationRepositoryGetOptions {
     orgUnitIds: Id[];
     dataSetIds: Id[];
     approvalStatus?: string;
+    duplicationStatus?: string;
     completionStatus?: string;
 }

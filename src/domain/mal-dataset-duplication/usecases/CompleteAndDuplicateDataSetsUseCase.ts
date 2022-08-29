@@ -10,6 +10,8 @@ export class UpdateStatusAndDuplicateUseCase {
                 return this.approvalRepository.complete(items);
             case "approve":
                 return this.approvalRepository.approve(items);
+            case "duplicate":
+                return this.approvalRepository.duplicate(items);
             case "unapprove":
                 return this.approvalRepository.unapprove(items);
             case "incomplete":
@@ -20,4 +22,4 @@ export class UpdateStatusAndDuplicateUseCase {
     }
 }
 
-type UpdateAction = "approve" | "complete" | "unapprove" | "incomplete";
+type UpdateAction = "complete" | "approve" | "duplicate" | "incomplete" | "unapprove";

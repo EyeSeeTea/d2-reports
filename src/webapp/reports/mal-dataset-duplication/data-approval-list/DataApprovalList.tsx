@@ -50,9 +50,15 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 },
                 {
                     name: "validated",
+                    text: i18n.t("Submission status"),
+                    sortable: true,
+                    getValue: row => (row.validated ? "Submitted" : "Ready for submission"),
+                },
+                {
+                    name: "duplicated",
                     text: i18n.t("Approval status"),
                     sortable: true,
-                    getValue: row => (row.validated ? "Approved" : "Ready for approval"),
+                    getValue: row => (row.duplicated ? "Approved" : "Ready for approval"),
                 },
                 { name: "lastUpdatedValue", text: i18n.t("Last data approved date"), sortable: true },
             ],
@@ -90,6 +96,38 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     isActive: rows => _.every(rows, row => row.completed === true),
                 },
                 {
+                    name: "submit",
+                    text: i18n.t("Submit"),
+                    icon: <DoneAllIcon />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
+                        if (items.length === 0) return;
+
+                        const result = await compositionRoot.dataDuplicate.updateStatus(items, "approve");
+                        if (!result) snackbar.error(i18n.t("Error when trying to submit data set"));
+
+                        reload();
+                    },
+                    isActive: rows => _.every(rows, row => row.validated === false),
+                },
+                {
+                    name: "unsubmit",
+                    text: i18n.t("Unsubmit"),
+                    icon: <ClearAllIcon />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
+                        if (items.length === 0) return;
+
+                        const result = await compositionRoot.dataDuplicate.updateStatus(items, "unapprove");
+                        if (!result) snackbar.error(i18n.t("Error when trying to unsubmit data set"));
+
+                        reload();
+                    },
+                    isActive: rows => _.every(rows, row => row.validated === true),
+                },
+                {
                     name: "approve",
                     text: i18n.t("Approve"),
                     icon: <DoneAllIcon />,
@@ -98,28 +136,12 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
                         if (items.length === 0) return;
 
-                        const result = await compositionRoot.dataDuplicate.updateStatus(items, "approve");
-                        if (!result) snackbar.error(i18n.t("Error when trying to approve data set"));
+                        const result = await compositionRoot.dataDuplicate.updateStatus(items, "duplicate");
+                        if (!result) snackbar.error(i18n.t("Error when trying to approve data values"));
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.validated === false),
-                },
-                {
-                    name: "unapprove",
-                    text: i18n.t("Unapprove"),
-                    icon: <ClearAllIcon />,
-                    multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
-                        if (items.length === 0) return;
-
-                        const result = await compositionRoot.dataDuplicate.updateStatus(items, "unapprove");
-                        if (!result) snackbar.error(i18n.t("Error when trying to unapprove data set"));
-
-                        reload();
-                    },
-                    isActive: rows => _.every(rows, row => row.validated === true),
+                    isActive: rows => _.every(rows, row => row.duplicated === false),
                 },
             ],
             initialSorting: {

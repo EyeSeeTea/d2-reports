@@ -16,10 +16,10 @@ import { SaveDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/Save
 import { GetDataValuesUseCase } from "./domain/nhwa-comments/usecases/GetDataValuesUseCase";
 import { SaveDataValuesUseCase } from "./domain/nhwa-comments/usecases/SaveDataValuesCsvUseCase";
 import { UpdateStatusAndDuplicateUseCase } from "./domain/mal-dataset-duplication/usecases/CompleteAndDuplicateDataSetsUseCase";
-// import { GetApprovalColumnsUseCase } from "./domain/mal-dataset-duplication/usecases/GetApprovalColumnsUseCase";
-// import { GetDataSetsUseCase } from "./domain/mal-dataset-duplication/usecases/GetDataSetsUseCase";
+import { GetApprovalAndDuplicateColumnsUseCase } from "./domain/mal-dataset-duplication/usecases/GetApprovalAndDuplicateColumnsUseCase";
+import { GetDataSetsDuplicationUseCase } from "./domain/mal-dataset-duplication/usecases/GetDataSetsDuplicationUseCaseOptions";
 import { SaveApprovalAndDuplicateColumnsUseCase } from "./domain/mal-dataset-duplication/usecases/SaveApprovalDuplicateColumnsUseCase";
-// import { SaveDataSetsUseCase } from "./domain/mal-dataset-duplication/usecases/SaveDataSetsCsvUseCase";
+import { SaveDataSetsDuplicationUseCase } from "./domain/mal-dataset-duplication/usecases/SaveDataSetsDuplicationUseCase";
 import { D2Api } from "./types/d2-api";
 
 export function getCompositionRoot(api: D2Api) {
@@ -47,9 +47,9 @@ export function getCompositionRoot(api: D2Api) {
             updateStatus: new UpdateStatusUseCase(dataApprovalRepository),
         }),
         dataDuplicate: getExecute({
-            get: new GetDataSetsUseCase(dataDuplicationRepository),
-            save: new SaveDataSetsUseCase(dataDuplicationRepository),
-            getColumns: new GetApprovalColumnsUseCase(dataDuplicationRepository),
+            get: new GetDataSetsDuplicationUseCase(dataDuplicationRepository),
+            save: new SaveDataSetsDuplicationUseCase(dataDuplicationRepository),
+            getColumns: new GetApprovalAndDuplicateColumnsUseCase(dataDuplicationRepository),
             saveColumns: new SaveApprovalAndDuplicateColumnsUseCase(dataDuplicationRepository),
             updateStatus: new UpdateStatusAndDuplicateUseCase(dataDuplicationRepository),
         }),

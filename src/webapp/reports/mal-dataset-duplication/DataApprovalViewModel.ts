@@ -16,6 +16,7 @@ export interface DataApprovalViewModel {
     approvalWorkflow: string;
     completed: boolean;
     validated: boolean;
+    duplicated: boolean;
     lastUpdatedValue: Date;
 }
 
@@ -33,6 +34,7 @@ export function getDataApprovalViews(_config: Config, items: DataDuplicationItem
             approvalWorkflow: item.approvalWorkflow,
             completed: item.completed,
             validated: item.validated,
+            duplicated: item.duplicated,
             lastUpdatedValue: new Date(item.lastUpdatedValue),
         };
     });

@@ -9,6 +9,7 @@ export interface DataDuplicationItem {
     approvalWorkflow: string;
     completed: boolean;
     validated: boolean;
+    duplicated: boolean;
     lastUpdatedValue: string;
 }
 
