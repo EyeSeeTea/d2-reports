@@ -165,29 +165,29 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
         value: 0,
     };
 
-    // const sqlDataComments = fs.readFileSync("src/data/data-values-with-comments.sql", "utf8");
-    // const sqlDataApproval = fs.readFileSync("src/data/data-approval-status.sql", "utf8");
+    const sqlDataComments = fs.readFileSync("src/data/data-values-with-comments.sql", "utf8");
+    const sqlDataApproval = fs.readFileSync("src/data/data-approval-status.sql", "utf8");
     const sqlMALDataApproval = fs.readFileSync("src/data/mal-data-approval-status.sql", "utf8");
 
     const sqlViews: Partial<D2SqlView>[] = [
-        // {
-        //     id: "gCvQF1yeC9f",
-        //     name: "NHWA Data Comments",
-        //     cacheStrategy: "RESPECT_SYSTEM_SETTING",
-        //     type: "QUERY",
-        //     sqlQuery: sqlDataComments,
-        //     publicAccess: "--------",
-        // },
-        // {
-        //     id: "QTKlHcbGQRh",
-        //     name: "NHWA Data Approval Status",
-        //     cacheStrategy: "RESPECT_SYSTEM_SETTING",
-        //     type: "QUERY",
-        //     sqlQuery: sqlDataApproval,
-        //     publicAccess: "--------",
-        // },
         {
-            id: "HMuIzBOpfmw",
+            id: "gCvQF1yeC9f",
+            name: "NHWA Data Comments",
+            cacheStrategy: "RESPECT_SYSTEM_SETTING",
+            type: "QUERY",
+            sqlQuery: sqlDataComments,
+            publicAccess: "--------",
+        },
+        {
+            id: "QTKlHcbGQRh",
+            name: "NHWA Data Approval Status",
+            cacheStrategy: "RESPECT_SYSTEM_SETTING",
+            type: "QUERY",
+            sqlQuery: sqlDataApproval,
+            publicAccess: "--------",
+        },
+        {
+            id: "i2eh7Zfe9LW",
             name: "MAL Data Approval Status",
             cacheStrategy: "RESPECT_SYSTEM_SETTING",
             type: "QUERY",
@@ -196,46 +196,46 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
         },
     ];
 
-    // Object.assign(process.env, { REACT_APP_REPORT_VARIANT: "nhwa-comments" });
-    // run("yarn build-report");
-    // const htmlComments = fs.readFileSync("dist/index.html", "utf8");
+    Object.assign(process.env, { REACT_APP_REPORT_VARIANT: "nhwa-comments" });
+    run("yarn build-report");
+    const htmlComments = fs.readFileSync("dist/index.html", "utf8");
 
-    // Object.assign(process.env, { REACT_APP_REPORT_VARIANT: "nhwa-approval-status" });
-    // run("yarn build-report");
-    // const htmlApproval = fs.readFileSync("dist/index.html", "utf8");
+    Object.assign(process.env, { REACT_APP_REPORT_VARIANT: "nhwa-approval-status" });
+    run("yarn build-report");
+    const htmlApproval = fs.readFileSync("dist/index.html", "utf8");
 
     Object.assign(process.env, { REACT_APP_REPORT_VARIANT: "mal-approval-status" });
     run("yarn build-report");
     const htmlDuplicate = fs.readFileSync("dist/index.html", "utf8");
 
     const reports: Partial<D2Report>[] = [
-        // {
-        //     id: "G2pzXQgTMgw",
-        //     name: "NHWA Comments",
-        //     type: "HTML",
-        //     cacheStrategy: "RESPECT_SYSTEM_SETTING",
-        //     reportParams: {
-        //         parentOrganisationUnit: false,
-        //         reportingPeriod: false,
-        //         organisationUnit: false,
-        //         grandParentOrganisationUnit: false,
-        //     },
-        //     designContent: htmlComments,
-        //     publicAccess: "--------",
-        // },
-        // {
-        //     id: "klA47Z2KS6s",
-        //     name: "NHWA Data Approval Status",
-        //     type: "HTML",
-        //     cacheStrategy: "RESPECT_SYSTEM_SETTING",
-        //     reportParams: {
-        //         parentOrganisationUnit: false,
-        //         reportingPeriod: false,
-        //         organisationUnit: false,
-        //         grandParentOrganisationUnit: false,
-        //     },
-        //     designContent: htmlApproval,
-        // },
+        {
+            id: "G2pzXQgTMgw",
+            name: "NHWA Comments",
+            type: "HTML",
+            cacheStrategy: "RESPECT_SYSTEM_SETTING",
+            reportParams: {
+                parentOrganisationUnit: false,
+                reportingPeriod: false,
+                organisationUnit: false,
+                grandParentOrganisationUnit: false,
+            },
+            designContent: htmlComments,
+            publicAccess: "--------",
+        },
+        {
+            id: "klA47Z2KS6s",
+            name: "NHWA Data Approval Status",
+            type: "HTML",
+            cacheStrategy: "RESPECT_SYSTEM_SETTING",
+            reportParams: {
+                parentOrganisationUnit: false,
+                reportingPeriod: false,
+                organisationUnit: false,
+                grandParentOrganisationUnit: false,
+            },
+            designContent: htmlApproval,
+        },
         {
             id: "fffffffffff",
             name: "Malaria Data Approval Report",
