@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { Paging } from "../domain/common/entities/PaginatedObjects";
 import { DataDuplicationItem, DataDuplicationItemIdentifier } from "../domain/mal-dataset-duplication/entities/DataDuplicationItem";
 import {
     MALDataDuplicationRepository,
@@ -11,10 +12,35 @@ import { Namespaces } from "./clients/storage/Namespaces";
 import { StorageClient } from "./clients/storage/StorageClient";
 import { CsvData } from "./CsvDataSource";
 import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
-import { Dhis2SqlViews } from "./Dhis2SqlViews";
+import { Dhis2SqlViews, SqlViewGetData } from "./Dhis2SqlViews";
 import { Instance } from "./entities/Instance";
 import { downloadFile } from "./utils/download-file";
 
+export interface Pagination {
+    page: number;
+    pageSize: number;
+}
+
+export function paginate<Obj>(objects: Obj[], pagination: Pagination) {
+    const pager = {
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+        pageCount: Math.ceil(objects.length / pagination.pageSize),
+        total: objects.length,
+    };
+    const { page, pageSize } = pagination;
+    const start = (page - 1) * pageSize;
+
+    const paginatedObjects = _(objects)
+        .slice(start, start + pageSize)
+        .value();
+
+    return { pager: pager, objects: paginatedObjects };
+}
+
+interface VariableHeaders {
+    dataSets: string;
+}
 interface Variables {
     orgUnitRoot: string;
     dataSets: string;
@@ -26,6 +52,12 @@ interface Variables {
     orderByColumn: SqlField;
     orderByDirection: "asc" | "desc";
 }
+
+type SqlFieldHeaders =
+    | "datasetuid"
+    | "dataset"
+    | "orgunituid"
+    | "orgunit";
 
 type SqlField =
     | "datasetuid"
@@ -39,7 +71,8 @@ type SqlField =
     | "completed"
     | "validated"
     | "duplicated"
-    | "lastupdatedvalue";
+    | "lastupdatedvalue"
+    | "lastdateofsubmission";
 
 const fieldMapping: Record<keyof DataDuplicationItem, SqlField> = {
     dataSetUid: "datasetuid",
@@ -66,50 +99,50 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
 
     async get(options: MALDataDuplicationRepositoryGetOptions): Promise<PaginatedObjects<DataDuplicationItem>> {
         const { config, dataSetIds, orgUnitIds, periods } = options; // ?
-        const { paging, sorting } = options; // ?
+        const { sorting } = options; // ?
 
         const allDataSetIds = _.values(config.dataSets).map(ds => ds.id); // ?
         const sqlViews = new Dhis2SqlViews(this.api);
-
-        const { pager, rows } = await sqlViews
-            .query<Variables, SqlField>(
-                config.dataDuplicationSqlView.id,
+        const paging =
+            { page: 1, pageSize: 10000 }
+            periods.push('2012')
+            periods.push('2013')
+            periods.push('2014')
+            periods.push('2015')
+            periods.push('2016')
+            periods.push('2017')
+            periods.push('2018')
+            periods.push('2019')
+            periods.push('2020')
+            periods.push('2021')
+        const { pager, objects } = mergeHeadersAndData(paging, periods, await sqlViews
+            .query<VariableHeaders, SqlFieldHeaders>(
+                config.dataMalMetadataSqlView.id,
                 {
-                    orgUnitRoot: sqlViewJoinIds(config.currentUser.orgUnits.map(({ id }) => id)),
-                    orgUnits: sqlViewJoinIds(orgUnitIds),
-                    periods: sqlViewJoinIds(periods),
                     dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
-                    completed: options.completionStatus ?? "-",
-                    approved: options.approvalStatus ?? "-",
-                    duplicated: options.duplicationStatus ?? "-",
-                    orderByColumn: fieldMapping[sorting.field],
-                    orderByDirection: sorting.direction,
-                },
-                paging
+                }, paging
             )
-            .getData();
-
-        // A data value is not associated to a specific data set, but we can still map it
-        // through the data element (1 data value -> 1 data element -> N data sets).
-
-        const items: Array<DataDuplicationItem> = rows.map(
-            (item): DataDuplicationItem => ({
-                dataSetUid: item.datasetuid,
-                dataSet: item.dataset,
-                orgUnitUid: item.orgunituid,
-                orgUnit: item.orgunit,
-                period: item.period,
-                attribute: item.attribute,
-                approvalWorkflowUid: item.approvalworkflowuid,
-                approvalWorkflow: item.approvalworkflow,
-                completed: Boolean(item.completed),
-                validated: Boolean(item.validated),
-                duplicated: Boolean(item.duplicated),
-                lastUpdatedValue: item.lastupdatedvalue,
-            })
+            .getData(), await sqlViews
+                .query<Variables, SqlField>(
+                    config.dataDuplicationSqlView.id,
+                    {
+                        orgUnitRoot: sqlViewJoinIds(config.currentUser.orgUnits.map(({ id }) => id)),
+                        orgUnits: sqlViewJoinIds(orgUnitIds),
+                        periods: sqlViewJoinIds(periods),
+                        dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
+                        completed: options.completionStatus ?? "-",
+                        approved: options.approvalStatus ?? "-",
+                        duplicated: options.duplicationStatus ?? "-",
+                        orderByColumn: fieldMapping[sorting.field],
+                        orderByDirection: sorting.direction,
+                    }, paging
+                )
+                .getData()
         );
+        // A data value is not associated to a specific data set, but we can still map it
+        // through the data ehjhlement (1 data value -> 1 data element -> N data sets).
 
-        return { pager, objects: items };
+        return paginate(objects, pager);
     }
 
     async save(filename: string, dataSets: DataDuplicationItem[]): Promise<void> {
@@ -305,3 +338,46 @@ type DataSetRow = Record<CsvField, string>;
 function sqlViewJoinIds(ids: Id[]): string {
     return ids.join("-") || "-";
 }
+
+
+function mergeHeadersAndData(paging: Paging, periods: string[], headers: SqlViewGetData<SqlFieldHeaders>, data: SqlViewGetData<SqlField>) {
+    const rows: Array<DataDuplicationItem> = [];
+    for (const period of periods) {
+        for (const header of headers.rows) {
+
+            const datavalues = data.rows.filter(dv => {
+                return dv.orgunituid === header.orgunituid && dv.period === period;
+            });
+            const lastUpdatedValue = datavalues.map(dv => dv.lastupdatedvalue)[0];
+            const duplicated = datavalues.map(dv => dv.duplicated)[0];
+            const validated = datavalues.map(dv => dv.validated)[0];
+            const completed = datavalues.map(dv => dv.completed)[0];
+            const approvalWorkflow = datavalues.map(dv => dv.approvalworkflow)[0];
+            const approvalWorkflowUid = datavalues.map(dv => dv.approvalworkflowuid)[0];
+            const attribute = datavalues.map(dv => dv.attribute)[0];
+
+            const row: DataDuplicationItem = {
+                dataSetUid: header.datasetuid,
+                dataSet: header.dataset,
+                orgUnitUid: header.orgunituid,
+                orgUnit: header.orgunit,
+                period: period,
+                attribute: attribute,
+                approvalWorkflow: approvalWorkflow,
+                approvalWorkflowUid: approvalWorkflowUid,
+                completed: Boolean(completed),
+                validated: Boolean(validated),
+                duplicated: Boolean(duplicated),
+                lastUpdatedValue: lastUpdatedValue
+            };
+            rows.push(row);
+        }
+    }
+
+    const rowsSorted = _(rows)
+        .orderBy([row => [row.orgUnit]], ["asc"])
+        .value();
+
+    return paginate(rowsSorted, paging);
+}
+

@@ -4,13 +4,13 @@ export interface DataDuplicationItem {
     orgUnitUid: string;
     orgUnit: string;
     period: string;
-    attribute: string;
-    approvalWorkflowUid: string;
-    approvalWorkflow: string;
+    attribute: string | undefined;
+    approvalWorkflowUid: string | undefined;
+    approvalWorkflow: string | undefined;
     completed: boolean;
     validated: boolean;
     duplicated: boolean;
-    lastUpdatedValue: string;
+    lastUpdatedValue: string | undefined;
 }
 
 export interface DataDuplicationItemIdentifier {

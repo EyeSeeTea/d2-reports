@@ -10,6 +10,7 @@ export interface Config {
     dataCommentsSqlView: NamedRef;
     dataApprovalSqlView: NamedRef;
     dataDuplicationSqlView: NamedRef;
+    dataMalMetadataSqlView: NamedRef;
     pairedDataElementsByDataSet: {
         [dataSetId: string]: Array<{ dataValueVal: Id; dataValueComment: Id }>;
     };
