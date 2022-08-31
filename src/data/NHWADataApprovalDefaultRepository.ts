@@ -180,7 +180,7 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
         }
     }
 
-    async unapprove(dataSets: DataApprovalItemIdentifier[]): Promise<boolean> {
+    async revoke(dataSets: DataApprovalItemIdentifier[]): Promise<boolean> {
         try {
             const response = await promiseMap(dataSets, async approval =>
                 this.api

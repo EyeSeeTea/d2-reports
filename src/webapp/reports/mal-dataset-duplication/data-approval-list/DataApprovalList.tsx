@@ -111,16 +111,16 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     isActive: rows => _.every(rows, row => row.validated === false),
                 },
                 {
-                    name: "unsubmit",
-                    text: i18n.t("Unsubmit"),
+                    name: "revoke",
+                    text: i18n.t("Revoke"),
                     icon: <ClearAllIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
                         const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
                         if (items.length === 0) return;
 
-                        const result = await compositionRoot.dataDuplicate.updateStatus(items, "unapprove");
-                        if (!result) snackbar.error(i18n.t("Error when trying to unsubmit data set"));
+                        const result = await compositionRoot.dataDuplicate.updateStatus(items, "revoke");
+                        if (!result) snackbar.error(i18n.t("Error when trying to revoke data set"));
 
                         reload();
                     },

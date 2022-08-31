@@ -164,11 +164,11 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                 value: moment(new Date()).format("YYYY-MM-DD"),
             }));
 
-            //de=SQWZ8POEhMI&co=Xr12mI7VPn3&ds=I1Tn68LFq5Y&ou=mNa42CHbkO7&pe=2021&value=1
             try {
                 dataValues.forEach(async datavalue => {
                     const response = await this.api.dataValues.post(datavalue).getData();
-                    if (response === "") {
+                    //TODO: check if was right and continue
+                    if (response.status !== "SUCCESS") {
                     }
                 });
             } catch (error: any) {
@@ -293,7 +293,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
         }
     }
 
-    async unapprove(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean> {
+    async revoke(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean> {
         try {
             const response = await promiseMap(dataSets, async approval =>
                 this.api
