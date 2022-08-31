@@ -39,7 +39,8 @@ type SqlField =
     | "completed"
     | "validated"
     | "duplicated"
-    | "lastupdatedvalue";
+    | "lastupdatedvalue"
+    | "lastdateofsubmission";
 
 const fieldMapping: Record<keyof DataDuplicationItem, SqlField> = {
     dataSetUid: "datasetuid",
@@ -54,6 +55,7 @@ const fieldMapping: Record<keyof DataDuplicationItem, SqlField> = {
     validated: "validated",
     duplicated: "duplicated",
     lastUpdatedValue: "lastupdatedvalue",
+    lastDateOfSubmission: "lastdateofsubmission",
 };
 
 export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRepository {
@@ -106,6 +108,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                 validated: Boolean(item.validated),
                 duplicated: Boolean(item.duplicated),
                 lastUpdatedValue: item.lastupdatedvalue,
+                lastDateOfSubmission: item.lastdateofsubmission
             })
         );
 
