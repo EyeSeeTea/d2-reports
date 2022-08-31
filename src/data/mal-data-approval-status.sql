@@ -2,7 +2,7 @@ SELECT dataset.name                                      AS dataset,
        dataset.uid                                       AS datasetuid,
        organisationunit.uid                              AS orgunituid,
        organisationunit.name                             AS orgunit,
-       _periodstructure.iso                              AS period,
+       _periodstructure.yearly                              AS period,
        categoryoptioncombo.name                          AS attribute,
        dataapprovalworkflow.uid                          AS approvalworkflowuid,
        dataapprovalworkflow.name                         AS approvalworkflow,
@@ -20,6 +20,8 @@ FROM ((SELECT datavalue.periodid,
                 JOIN dataset USING (datasetid)
        /** TODO: Filter by DEs, remove totals **/
        WHERE dataset.uid ~ ('^' || replace('${dataSets}', '-', '|') || '$')
+       /**  Filtered by orgunits in the dataset**/
+     AND sourceid in ( select dss.sourceid from  datasetsource dss  where  dss.datasetid = dataset.datasetid) 
        GROUP BY datavalue.periodid, datavalue.sourceid, datavalue.attributeoptioncomboid, dataset.datasetid, dataset.workflowid) AS entries
          INNER JOIN _periodstructure USING (periodid)
          INNER JOIN organisationunit USING (organisationunitid)
@@ -40,7 +42,7 @@ FROM ((SELECT datavalue.periodid,
                                     (dataapproval.dataapprovallevelid = dataapprovallevel.dataapprovallevelid)))
 WHERE organisationunit.path ~ (replace('${orgUnitRoot}', '-', '|'))
   AND organisationunit.uid ~ ('^' || replace('${orgUnits}', '-', '|') || '$')
-  AND _periodstructure.iso ~ ('^' || replace('${periods}', '-', '|') || '$')
+  AND _periodstructure.yearly ~ ('^' || replace('${periods}', '-', '|') || '$')
   AND (completedatasetregistration.completed IS NOT NULL)::text ~ ('^' || replace('${completed}', '-', '|') || '$')
   AND (dataapproval.accepted IS NOT NULL)::text ~ ('^' || replace('${approved}', '-', '|') || '$')
 ORDER BY
