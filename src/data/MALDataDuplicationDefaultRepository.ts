@@ -1,10 +1,14 @@
 import _ from "lodash";
-import { DataDuplicationItem, DataDuplicationItemIdentifier } from "../domain/mal-dataset-duplication/entities/DataDuplicationItem";
+import moment from "moment";
+import {
+    DataDuplicationItem,
+    DataDuplicationItemIdentifier,
+} from "../domain/mal-dataset-duplication/entities/DataDuplicationItem";
 import {
     MALDataDuplicationRepository,
     MALDataDuplicationRepositoryGetOptions,
 } from "../domain/mal-dataset-duplication/repositories/MALDataDuplicationRepository";
-import { D2Api, Id, PaginatedObjects } from "../types/d2-api";
+import { D2Api, DataValuePostRequest, Id, PaginatedObjects } from "../types/d2-api";
 import { promiseMap } from "../utils/promises";
 import { DataStoreStorageClient } from "./clients/storage/DataStoreStorageClient";
 import { Namespaces } from "./clients/storage/Namespaces";
@@ -151,6 +155,25 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
 
     async approve(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean> {
         try {
+            const dataValues: DataValuePostRequest[] = dataSets.map(ds => ({
+                ds: ds.dataSet,
+                pe: ds.period,
+                ou: ds.orgUnit,
+                de: "QlXqA11tA0y",
+                co: "Xr12mI7VPn3",
+                value: moment(new Date()).format("YYYY-MM-DD"),
+            }));
+
+            //de=SQWZ8POEhMI&co=Xr12mI7VPn3&ds=I1Tn68LFq5Y&ou=mNa42CHbkO7&pe=2021&value=1
+            try {
+                dataValues.forEach(async datavalue => {
+                    const response = await this.api.dataValues.post(datavalue).getData();
+                    if (response === "") {
+                    }
+                });
+            } catch (error: any) {
+                return false;
+            }
             const response = await promiseMap(dataSets, async approval =>
                 this.api
                     .post<any>(
@@ -160,6 +183,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                     )
                     .getData()
             );
+            //todo check approval result and remove datavalue if fail?
 
             return _.every(response, item => item === "");
         } catch (error: any) {
@@ -173,37 +197,34 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
 
             const DSDataElements = await promiseMap(dataSets, async approval =>
                 this.api
-                    .get<any>(
-                        `/dataSets/${approval.dataSet}`,
-                        { fields: "dataSetElements[dataElement[id,name]]" }
-                    )
+                    .get<any>(`/dataSets/${approval.dataSet}`, { fields: "dataSetElements[dataElement[id,name]]" })
                     .getData()
             );
 
             //console.log("DSDataElements: ", DSDataElements)
 
             const ADSDataElements2 = await this.api
-                .get<any>(
-                    `/dataSets/${approvalDataSetId}`,
-                    { fields: "dataSetElements[dataElement[id,name]]" }
-                )
+                .get<any>(`/dataSets/${approvalDataSetId}`, { fields: "dataSetElements[dataElement[id,name]]" })
                 .getData();
 
-            const ADSDataElements = ADSDataElements2.dataSetElements.map((element: { dataElement: { id: any; name: any; }; }) => {
-                return {
-                    id: element.dataElement.id,
-                    name: element.dataElement.name
-                };
-            });
+            const ADSDataElements = ADSDataElements2.dataSetElements.map(
+                (element: { dataElement: { id: any; name: any } }) => {
+                    return {
+                        id: element.dataElement.id,
+                        name: element.dataElement.name,
+                    };
+                }
+            );
 
             //console.log("ADSDataElements: ", ADSDataElements)
 
             const dataValueSets = await promiseMap(dataSets, async approval =>
                 this.api
-                    .get<any>(
-                        "/dataValueSets",
-                        { dataSet: approval.dataSet, period: approval.period, orgUnit: approval.orgUnit }
-                    )
+                    .get<any>("/dataValueSets", {
+                        dataSet: approval.dataSet,
+                        period: approval.period,
+                        orgUnit: approval.orgUnit,
+                    })
                     .getData()
             );
 
@@ -211,36 +232,40 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
 
             //console.log("DSDataElements[0]: ", DSDataElements[0].dataSetElements)
 
-            const dataElementsMatchedArray: { origId: any, destId: any; }[] = DSDataElements[0].dataSetElements.map((element: { dataElement: any; }) => {
-                const dataElement = element.dataElement;
-                const othername = dataElement.name + "-_APPROVED";
-                const ADSDataElement = ADSDataElements.find((DataElement: { name: any; }) => String(DataElement.name) === othername);
-                return {
-                    origId: dataElement.id,
-                    destId: ADSDataElement.id,
-                };
-            });
+            const dataElementsMatchedArray: { origId: any; destId: any }[] = DSDataElements[0].dataSetElements.map(
+                (element: { dataElement: any }) => {
+                    const dataElement = element.dataElement;
+                    const othername = dataElement.name + "-_APPROVED";
+                    const ADSDataElement = ADSDataElements.find(
+                        (DataElement: { name: any }) => String(DataElement.name) === othername
+                    );
+                    return {
+                        origId: dataElement.id,
+                        destId: ADSDataElement.id,
+                    };
+                }
+            );
 
             //console.log("dataElementsMatchedArray: ", dataElementsMatchedArray)
 
-            const dataValues = dataValueSets.map((dataValueSet) => {
-                const data = dataValueSet.dataValues.map((dataValue: { dataElement: any, lastUpdated: any; }) => {
-                    const data2 = { ...dataValue };
-                    const destId = dataElementsMatchedArray.find((dataElementsMatchedObj) => dataElementsMatchedObj.origId === dataValue.dataElement)?.destId;
-                    data2.dataElement = destId;
-                    delete data2.lastUpdated;
-                    return data2;
+            const dataValues = dataValueSets
+                .map(dataValueSet => {
+                    const data = dataValueSet.dataValues.map((dataValue: { dataElement: any; lastUpdated: any }) => {
+                        const data2 = { ...dataValue };
+                        const destId = dataElementsMatchedArray.find(
+                            dataElementsMatchedObj => dataElementsMatchedObj.origId === dataValue.dataElement
+                        )?.destId;
+                        data2.dataElement = destId;
+                        delete data2.lastUpdated;
+                        return data2;
+                    });
+                    return data;
                 })
-                return data;
-            }).flat();
+                .flat();
 
             //console.log("approvalDataValues: ", dataValues)
 
-            const copyResponse = await this.api.post<any>(
-                "/dataValueSets.json",
-                {},
-                { dataValues }
-            ).getData()
+            const copyResponse = await this.api.post<any>("/dataValueSets.json", {}, { dataValues }).getData();
 
             //console.log("copyResponse: ", copyResponse)
 

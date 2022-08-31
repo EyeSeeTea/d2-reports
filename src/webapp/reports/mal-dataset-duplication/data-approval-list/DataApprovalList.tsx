@@ -103,7 +103,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     onClick: async (selectedIds: string[]) => {
                         const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
                         if (items.length === 0) return;
-
                         const result = await compositionRoot.dataDuplicate.updateStatus(items, "approve");
                         if (!result) snackbar.error(i18n.t("Error when trying to submit data set"));
 

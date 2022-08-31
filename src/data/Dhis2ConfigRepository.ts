@@ -18,7 +18,7 @@ const base = {
 };
 
 export class Dhis2ConfigRepository implements ConfigRepository {
-    constructor(private api: D2Api) { }
+    constructor(private api: D2Api) {}
 
     async get(): Promise<Config> {
         const { dataSets, constants, sqlViews, dataApprovalWorkflows } = await this.getMetadata();

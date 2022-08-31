@@ -2,7 +2,7 @@ import { DataDuplicationItemIdentifier } from "../entities/DataDuplicationItem";
 import { MALDataDuplicationRepository } from "../repositories/MALDataDuplicationRepository";
 
 export class UpdateStatusAndDuplicateUseCase {
-    constructor(private approvalRepository: MALDataDuplicationRepository) { }
+    constructor(private approvalRepository: MALDataDuplicationRepository) {}
 
     async execute(items: DataDuplicationItemIdentifier[], action: UpdateAction): Promise<boolean> {
         switch (action) {
