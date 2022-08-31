@@ -60,7 +60,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     sortable: true,
                     getValue: row => (row.duplicated ? "Approved" : "Ready for approval"),
                 },
-                { name: "lastUpdatedValue", text: i18n.t("Last data approved date"), sortable: true },
+                { name: "lastUpdatedValue", text: i18n.t("Last modification date"), sortable: true },
             ],
             actions: [
                 {
