@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Paging } from "../domain/common/entities/PaginatedObjects";
+import { Paging, Sorting } from "../domain/common/entities/PaginatedObjects";
 import { DataDuplicationItem, DataDuplicationItemIdentifier } from "../domain/mal-dataset-duplication/entities/DataDuplicationItem";
 import {
     MALDataDuplicationRepository,
@@ -99,28 +99,19 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
 
     async get(options: MALDataDuplicationRepositoryGetOptions): Promise<PaginatedObjects<DataDuplicationItem>> {
         const { config, dataSetIds, orgUnitIds, periods } = options; // ?
-        const { sorting } = options; // ?
+        const { sorting, paging } = options; // ?
 
         const allDataSetIds = _.values(config.dataSets).map(ds => ds.id); // ?
         const sqlViews = new Dhis2SqlViews(this.api);
-        const paging =
+        const paging_to_download =
             { page: 1, pageSize: 10000 }
-            periods.push('2012')
-            periods.push('2013')
-            periods.push('2014')
-            periods.push('2015')
-            periods.push('2016')
-            periods.push('2017')
-            periods.push('2018')
-            periods.push('2019')
-            periods.push('2020')
-            periods.push('2021')
-        const { pager, objects } = mergeHeadersAndData(paging, periods, await sqlViews
+            
+        const { pager, objects } = mergeHeadersAndData(sorting, paging, periods, await sqlViews
             .query<VariableHeaders, SqlFieldHeaders>(
                 config.dataMalMetadataSqlView.id,
                 {
                     dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
-                }, paging
+                }, paging_to_download
             )
             .getData(), await sqlViews
                 .query<Variables, SqlField>(
@@ -135,7 +126,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                         duplicated: options.duplicationStatus ?? "-",
                         orderByColumn: fieldMapping[sorting.field],
                         orderByDirection: sorting.direction,
-                    }, paging
+                    }, paging_to_download
                 )
                 .getData()
         );
@@ -340,7 +331,7 @@ function sqlViewJoinIds(ids: Id[]): string {
 }
 
 
-function mergeHeadersAndData(paging: Paging, periods: string[], headers: SqlViewGetData<SqlFieldHeaders>, data: SqlViewGetData<SqlField>) {
+function mergeHeadersAndData(sorting: Sorting<DataDuplicationItem>,paging: Paging, periods: string[], headers: SqlViewGetData<SqlFieldHeaders>, data: SqlViewGetData<SqlField>) {
     const rows: Array<DataDuplicationItem> = [];
     for (const period of periods) {
         for (const header of headers.rows) {
@@ -375,8 +366,7 @@ function mergeHeadersAndData(paging: Paging, periods: string[], headers: SqlView
     }
 
     const rowsSorted = _(rows)
-        .orderBy([row => [row.orgUnit]], ["asc"])
-        .value();
+        .orderBy([row => row[sorting.field]], [sorting.direction]).value();
 
     return paginate(rowsSorted, paging);
 }
