@@ -48,9 +48,9 @@ interface Variables {
     dataSets: string;
     orgUnits: string;
     periods: string;
-    completed: boolean;
-    approved: boolean;
-    duplicated: boolean;
+    completed: string;
+    approved: string;
+    duplicated: string;
     orderByColumn: SqlField;
     orderByDirection: "asc" | "desc";
 }
@@ -120,9 +120,9 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                     orgUnits: sqlViewJoinIds(orgUnitIds),
                     periods: sqlViewJoinIds(periods),
                     dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
-                    completed: Boolean(options.completionStatus),
-                    approved: Boolean(options.approvalStatus),
-                    duplicated: Boolean(options.duplicationStatus),
+                    completed: options.completionStatus === undefined ? "-" : options.completionStatus.toString(),
+                    approved: options.approvalStatus === undefined ? "-" : options.approvalStatus.toString(),
+                    duplicated: options.duplicationStatus === undefined ? "-" : options.duplicationStatus.toString(),
                     orderByColumn: fieldMapping[sorting.field],
                     orderByDirection: sorting.direction,
                 },
