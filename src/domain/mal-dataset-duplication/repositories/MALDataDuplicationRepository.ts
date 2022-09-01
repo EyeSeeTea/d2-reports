@@ -22,7 +22,7 @@ export interface MALDataDuplicationRepositoryGetOptions {
     periods: string[];
     orgUnitIds: Id[];
     dataSetIds: Id[];
-    approvalStatus?: string;
-    duplicationStatus?: string;
-    completionStatus?: string;
+    approvalStatus?: boolean;
+    duplicationStatus?: boolean;
+    completionStatus?: boolean;
 }
