@@ -372,10 +372,6 @@ function mergeHeadersAndData(
         .orderBy([row => row[sorting.field]], [sorting.direction])
         .value();
 
-    const approved = approvalStatus;
-    const completed = completionStatus;
-    const duplicated = duplicationStatus;
-
     const filterOrgUnitIds = orgUnitIds.length > 0 ? orgUnitIds : undefined;
     const rowsFiltered = rowsSorted.filter(row => {
         //aproval is submission, ready -> truefalse

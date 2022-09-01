@@ -1,4 +1,3 @@
-import _ from "lodash";
 import React, { useMemo } from "react";
 import styled from "styled-components";
 import { Id, NamedRef } from "../../../../domain/common/entities/Base";
