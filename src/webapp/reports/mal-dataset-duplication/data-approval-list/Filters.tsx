@@ -76,24 +76,26 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
 
             <Dropdown
                 items={completionStatusItems}
-                values={_.compact([filter.completionStatus])}
-                onChange={([completionStatus]) => onChange({ ...filter, completionStatus })}
+                values={fromBool(filter.completionStatus)}
+                onChange={([completionStatus]) => onChange({ ...filter, completionStatus: toBool(completionStatus) })}
                 label={i18n.t("Completion status")}
                 multiple={false}
             />
 
             <Dropdown
                 items={approvalStatusItems}
-                values={_.compact([filter.approvalStatus])}
-                onChange={([approvalStatus]) => onChange({ ...filter, approvalStatus })}
+                values={fromBool(filter.approvalStatus)}
+                onChange={([approvalStatus]) => onChange({ ...filter, approvalStatus: toBool(approvalStatus) })}
                 label={i18n.t("Submission status")}
                 multiple={false}
             />
 
             <Dropdown
                 items={duplicationStatusItems}
-                values={_.compact([filter.duplicationStatus])}
-                onChange={([duplicationStatus]) => onChange({ ...filter, duplicationStatus })}
+                values={fromBool(filter.duplicationStatus)}
+                onChange={([duplicationStatus]) =>
+                    onChange({ ...filter, duplicationStatus: toBool(duplicationStatus) })
+                }
                 label={i18n.t("Approval status")}
                 multiple={false}
             />
@@ -122,3 +124,11 @@ const Container = styled.div`
 const Dropdown = styled(MultipleDropdown)`
     margin-left: -10px;
 `;
+
+function toBool(s: string | undefined): boolean | undefined {
+    return s === undefined ? undefined : s === "true";
+}
+
+function fromBool(value: boolean | undefined): string[] {
+    return value === undefined ? [] : [value.toString()];
+}
