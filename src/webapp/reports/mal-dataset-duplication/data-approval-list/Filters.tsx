@@ -18,9 +18,9 @@ export interface DataSetsFilter {
     dataSetIds: Id[];
     orgUnitPaths: Id[];
     periods: string[];
-    completionStatus?: string;
-    approvalStatus?: string;
-    duplicationStatus?: string;
+    completionStatus?: boolean;
+    approvalStatus?: boolean;
+    duplicationStatus?: boolean;
 }
 
 interface FilterOptions {
@@ -40,12 +40,12 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         { id: "true", name: "Completed" },
         { id: "false", name: "Not completed" },
     ]);
-    
+
     const approvalStatusItems = useMemoOptionsFromNamedRef([
         { id: "true", name: "Submitted" },
         { id: "false", name: "Ready for submission" },
     ]);
-    
+
     const duplicationStatusItems = useMemoOptionsFromNamedRef([
         { id: "true", name: "Approved" },
         { id: "false", name: "Ready for approval" },
