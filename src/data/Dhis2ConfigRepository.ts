@@ -18,7 +18,7 @@ const base = {
 };
 
 export class Dhis2ConfigRepository implements ConfigRepository {
-    constructor(private api: D2Api) { }
+    constructor(private api: D2Api) {}
 
     async get(): Promise<Config> {
         const { dataSets, constants, sqlViews, dataApprovalWorkflows } = await this.getMetadata();
@@ -104,6 +104,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                         username: true,
                         userRoles: { id: true, name: true },
                     },
+                    userGroups: { id: true, name: true },
                 },
             })
             .getData();
@@ -112,6 +113,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             id: d2User.id,
             name: d2User.displayName,
             orgUnits: d2User.dataViewOrganisationUnits,
+            userGroups: d2User.userGroups,
             ...d2User.userCredentials,
         };
     }
