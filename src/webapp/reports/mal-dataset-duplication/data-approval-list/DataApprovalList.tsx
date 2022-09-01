@@ -34,13 +34,11 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [reloadKey, reload] = useReload();
-    const [defaultPeriods] = React.useState(false);
+
     const selectablePeriods = React.useMemo(() => {
         const currentYear = new Date().getFullYear();
-        return defaultPeriods
-            ? _.range(currentYear - 40, currentYear - 10).map(n => n.toString())
-            : _.range(currentYear - 10, currentYear).map(n => n.toString());
-    }, [defaultPeriods]);
+        return _.range(currentYear - 10, currentYear).map(n => n.toString());
+    }, []);
 
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
@@ -212,19 +210,14 @@ export const DataApprovalList: React.FC = React.memo(() => {
             .value();
     }, [tableProps.columns, visibleColumns]);
 
-    
-
-function getFilterOptions(config: Config, selectablePeriods: string[]) {
-    return {
-        dataSets: sortByName(_.values(config.dataSets)),
-        periods: selectablePeriods,
-        approvalWorkflow: config.approvalWorkflow,
-    };
-}
-const filterOptions = React.useMemo(
-    () => getFilterOptions(config, selectablePeriods),
-    [config, selectablePeriods]
-);
+    function getFilterOptions(config: Config, selectablePeriods: string[]) {
+        return {
+            dataSets: sortByName(_.values(config.dataSets)),
+            periods: selectablePeriods,
+            approvalWorkflow: config.approvalWorkflow,
+        };
+    }
+    const filterOptions = React.useMemo(() => getFilterOptions(config, selectablePeriods), [config, selectablePeriods]);
 
     useEffect(() => {
         compositionRoot.dataDuplicate.getColumns().then(columns => setVisibleColumns(columns));
@@ -241,7 +234,6 @@ const filterOptions = React.useMemo(
         </ObjectsList>
     );
 });
- 
 
 function getSortingFromTableSorting(sorting: TableSorting<DataApprovalViewModel>): Sorting<DataDuplicationItem> {
     return {
