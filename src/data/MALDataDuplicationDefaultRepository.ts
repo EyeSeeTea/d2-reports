@@ -27,6 +27,22 @@ interface Variables {
     orderByDirection: "asc" | "desc";
 }
 
+type completeDataSetRegistrationsType = {
+    completeDataSetRegistrations: [
+        {
+            period?: string,
+            dataSet?: string,
+            organisationUnit?: string,
+            attributeOptionCombo?: string,
+            date?: string,
+            storedBy?: string,
+            completed?: boolean,
+        }
+    ]
+}
+
+type completeCheckresponseType = completeDataSetRegistrationsType[]
+
 type SqlField =
     | "datasetuid"
     | "dataset"
@@ -151,6 +167,33 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
 
     async approve(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean> {
         try {
+            let completeCheckResponses: completeCheckresponseType = await promiseMap(dataSets, async approval =>
+                this.api.get<any>(
+                    "/completeDataSetRegistrations",
+                    { dataSet: approval.dataSet, period: approval.period, orgUnit: approval.orgUnit }
+                ).getData()
+            );
+
+            completeCheckResponses = completeCheckResponses.filter(item => Object.keys(item).length !== 0);
+
+            const dataSetsCompleted = completeCheckResponses.flatMap((completeCheckResponse) => {
+                return completeCheckResponse.completeDataSetRegistrations.map((completeDataSetRegistrations) => {
+                    return {
+                        dataSet: completeDataSetRegistrations.dataSet,
+                        period: completeDataSetRegistrations.period,
+                        orgUnit: completeDataSetRegistrations.organisationUnit,
+                    };
+                });
+            });
+
+            const dataSetsToComplete = _.differenceWith(
+                dataSets,
+                dataSetsCompleted,
+                ((value, othervalue) => _.isEqual(_.omit(value, ['workflow']), othervalue))
+            );
+
+            const completeResponse = (Object.keys(dataSetsToComplete).length !== 0) ? await this.complete(dataSetsToComplete) : true;
+
             const response = await promiseMap(dataSets, async approval =>
                 this.api
                     .post<any>(
@@ -161,7 +204,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                     .getData()
             );
 
-            return _.every(response, item => item === "");
+            return _.every(response, item => item === "") && completeResponse;
         } catch (error: any) {
             return false;
         }
