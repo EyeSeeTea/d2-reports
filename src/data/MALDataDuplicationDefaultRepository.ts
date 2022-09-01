@@ -252,8 +252,8 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                     const othername = dataElement.name + "-APVD";
                     const ADSDataElement = ADSDataElements.find((DataElement: { name: any; }) => String(DataElement.name) === othername);
                     return {
-                        origId: dataElement.id,
-                        destId: ADSDataElement.id,
+                        origId: dataElement?.id,
+                        destId: ADSDataElement?.id,
                     };
                 });
 
@@ -275,7 +275,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                 ).getData()
             });
 
-            return _.every(copyResponse, item => item.status === "SUCCESS");
+            return _.every(copyResponse, item => item.status !== "ERROR");
         } catch (error: any) {
             return false;
         }
