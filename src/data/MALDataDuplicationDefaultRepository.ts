@@ -8,7 +8,7 @@ import {
     MALDataDuplicationRepository,
     MALDataDuplicationRepositoryGetOptions,
 } from "../domain/mal-dataset-duplication/repositories/MALDataDuplicationRepository";
-import { D2Api, DataValuePostRequest, Id, PaginatedObjects } from "../types/d2-api";
+import { D2Api, Id, PaginatedObjects } from "../types/d2-api";
 import { promiseMap } from "../utils/promises";
 import { DataStoreStorageClient } from "./clients/storage/DataStoreStorageClient";
 import { Namespaces } from "./clients/storage/Namespaces";
@@ -155,25 +155,18 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
 
     async approve(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean> {
         try {
-            const dataValues: DataValuePostRequest[] = dataSets.map(ds => ({
-                ds: ds.dataSet,
-                pe: ds.period,
-                ou: ds.orgUnit,
-                de: "QlXqA11tA0y",
-                co: "Xr12mI7VPn3",
+            const dataValues = dataSets.map(ds => ({
+                dataSet: ds.dataSet,
+                period: ds.period,
+                orgUnit: ds.orgUnit,
+                dataElement: "QlXqA11tA0y",
+                categoryOptionCombo: "Xr12mI7VPn3",
                 value: moment(new Date()).format("YYYY-MM-DD"),
             }));
 
-            try {
-                dataValues.forEach(async datavalue => {
-                    const response = await this.api.dataValues.post(datavalue).getData();
-                    //TODO: check if was right and continue
-                    if (response.status !== "SUCCESS") {
-                    }
-                });
-            } catch (error: any) {
-                return false;
-            }
+            const dateResponse = await this.api.post<any>("/dataValueSets.json", {}, { dataValues }).getData();
+            if (dateResponse.status !== "SUCCESS") throw new Error('Error when posting Submission date');
+
             const response = await promiseMap(dataSets, async approval =>
                 this.api
                     .post<any>(
@@ -183,7 +176,6 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                     )
                     .getData()
             );
-            //todo check approval result and remove datavalue if fail?
 
             return _.every(response, item => item === "");
         } catch (error: any) {
