@@ -29,7 +29,20 @@ import { DataSetsFilter, Filters } from "./Filters";
 
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
+    const { currentUser } = config;
     const snackbar = useSnackbar();
+
+    const isMalApprover =
+        _.intersection(
+            currentUser.userGroups.map(userGroup => userGroup.name),
+            ["MAL_Country Approver"]
+        ).length > 0;
+
+    const isMalAdmin =
+        _.intersection(
+            currentUser.userGroups.map(userGroup => userGroup.name),
+            ["MAL_Malaria admin"]
+        ).length > 0;
 
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
@@ -65,7 +78,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     sortable: true,
                     getValue: row => (row.duplicated ? "Approved" : "Ready for approval"),
                 },
-                { name: "lastUpdatedValue", text: i18n.t("Last data approved date"), sortable: true },
+                { name: "lastUpdatedValue", text: i18n.t("Last modification date"), sortable: true },
             ],
             actions: [
                 {
@@ -82,7 +95,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.completed === false),
+                    isActive: rows => _.every(rows, row => row.completed === false) && (isMalApprover || isMalAdmin),
                 },
                 {
                     name: "incomplete",
@@ -109,12 +122,15 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
                         if (items.length === 0) return;
 
+                        const result2 = await compositionRoot.dataDuplicate.updateStatus(items, "complete");
+                        if (!result2) snackbar.error(i18n.t("Error when trying to complete data set"));
+
                         const result = await compositionRoot.dataDuplicate.updateStatus(items, "approve");
                         if (!result) snackbar.error(i18n.t("Error when trying to submit data set"));
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.validated === false),
+                    isActive: rows => _.every(rows, row => row.validated === false) && (isMalApprover || isMalAdmin),
                 },
                 {
                     name: "unsubmit",
@@ -146,7 +162,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.duplicated === false),
+                    isActive: rows => _.every(rows, row => row.duplicated === false) && isMalAdmin,
                 },
             ],
             initialSorting: {
@@ -158,7 +174,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot, reload, snackbar]
+        [compositionRoot.dataDuplicate, isMalAdmin, isMalApprover, reload, snackbar]
     );
 
     const getRows = useMemo(
