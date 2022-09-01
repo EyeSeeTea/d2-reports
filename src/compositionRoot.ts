@@ -1,6 +1,7 @@
 import { Dhis2ConfigRepository } from "./data/Dhis2ConfigRepository";
 import { Dhis2OrgUnitsRepository } from "./data/Dhis2OrgUnitsRepository";
 import { NHWADataApprovalDefaultRepository } from "./data/NHWADataApprovalDefaultRepository";
+import { MALDataDuplicationDefaultRepository } from "./data/MALDataDuplicationDefaultRepository";
 import { NHWADataCommentsDefaultRepository } from "./data/NHWADataCommentsDefaultRepository";
 import { WIDPAdminDefaultRepository } from "./data/WIDPAdminDefaultRepository";
 import { GetWIDPAdminDefaultUseCase } from "./domain/admin/usecases/GetWIDPAdminDefaultUseCase";
@@ -14,12 +15,18 @@ import { SaveApprovalColumnsUseCase } from "./domain/nhwa-approval-status/usecas
 import { SaveDataSetsUseCase } from "./domain/nhwa-approval-status/usecases/SaveDataSetsCsvUseCase";
 import { GetDataValuesUseCase } from "./domain/nhwa-comments/usecases/GetDataValuesUseCase";
 import { SaveDataValuesUseCase } from "./domain/nhwa-comments/usecases/SaveDataValuesCsvUseCase";
+import { UpdateStatusAndDuplicateUseCase } from "./domain/mal-dataset-duplication/usecases/CompleteAndDuplicateDataSetsUseCase";
+import { GetApprovalAndDuplicateColumnsUseCase } from "./domain/mal-dataset-duplication/usecases/GetApprovalAndDuplicateColumnsUseCase";
+import { GetDataSetsDuplicationUseCase } from "./domain/mal-dataset-duplication/usecases/GetDataSetsDuplicationUseCaseOptions";
+import { SaveApprovalAndDuplicateColumnsUseCase } from "./domain/mal-dataset-duplication/usecases/SaveApprovalDuplicateColumnsUseCase";
+import { SaveDataSetsDuplicationUseCase } from "./domain/mal-dataset-duplication/usecases/SaveDataSetsDuplicationUseCase";
 import { D2Api } from "./types/d2-api";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api);
     const dataCommentsRepository = new NHWADataCommentsDefaultRepository(api);
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
+    const dataDuplicationRepository = new MALDataDuplicationDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
 
@@ -38,6 +45,13 @@ export function getCompositionRoot(api: D2Api) {
             getColumns: new GetApprovalColumnsUseCase(dataApprovalRepository),
             saveColumns: new SaveApprovalColumnsUseCase(dataApprovalRepository),
             updateStatus: new UpdateStatusUseCase(dataApprovalRepository),
+        }),
+        dataDuplicate: getExecute({
+            get: new GetDataSetsDuplicationUseCase(dataDuplicationRepository),
+            save: new SaveDataSetsDuplicationUseCase(dataDuplicationRepository),
+            getColumns: new GetApprovalAndDuplicateColumnsUseCase(dataDuplicationRepository),
+            saveColumns: new SaveApprovalAndDuplicateColumnsUseCase(dataDuplicationRepository),
+            updateStatus: new UpdateStatusAndDuplicateUseCase(dataDuplicationRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),

@@ -9,6 +9,8 @@ export interface Config {
     currentUser: User;
     dataCommentsSqlView: NamedRef;
     dataApprovalSqlView: NamedRef;
+    dataDuplicationSqlView: NamedRef;
+    dataMalMetadataSqlView: NamedRef;
     pairedDataElementsByDataSet: {
         [dataSetId: string]: Array<{ dataValueVal: Id; dataValueComment: Id }>;
     };

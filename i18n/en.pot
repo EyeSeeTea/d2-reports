@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2022-01-10T08:43:46.954Z\n"
-"PO-Revision-Date: 2022-01-10T08:43:46.954Z\n"
+"POT-Creation-Date: 2022-08-25T17:23:38.373Z\n"
+"PO-Revision-Date: 2022-08-25T17:23:38.373Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -74,13 +74,13 @@ msgstr ""
 msgid "created"
 msgstr ""
 
-msgid "NHWA Data Approval Status Report"
-msgstr ""
-
-msgid "Data set"
+msgid "Malaria Data Approval Report"
 msgstr ""
 
 msgid "Period"
+msgstr ""
+
+msgid "Data set"
 msgstr ""
 
 msgid "Attribute"
@@ -92,7 +92,7 @@ msgstr ""
 msgid "Approval status"
 msgstr ""
 
-msgid "Last updated value"
+msgid "Last data approved date"
 msgstr ""
 
 msgid "Complete"
@@ -123,6 +123,12 @@ msgid "Data sets"
 msgstr ""
 
 msgid "Periods"
+msgstr ""
+
+msgid "NHWA Data Approval Status Report"
+msgstr ""
+
+msgid "Last updated value"
 msgstr ""
 
 msgid "NHWA Comments Report"
