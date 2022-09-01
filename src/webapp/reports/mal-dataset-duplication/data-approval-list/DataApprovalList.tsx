@@ -52,7 +52,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     name: "validated",
                     text: i18n.t("Submission status"),
                     sortable: true,
-                    getValue: row => (row.validated ? "Submitted" : "Ready for submission"),
+                    getValue: row => (row.validated ? "Submitted" : row.completed ? "Ready for submission" : "Not completed"),
                 },
                 {
                     name: "duplicated",
