@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2022-08-25T17:23:38.373Z\n"
-"PO-Revision-Date: 2022-08-25T17:23:38.373Z\n"
+"POT-Creation-Date: 2022-08-31T15:59:31.462Z\n"
+"PO-Revision-Date: 2022-08-31T15:59:31.462Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -89,6 +89,9 @@ msgstr ""
 msgid "Completion status"
 msgstr ""
 
+msgid "Submission status"
+msgstr ""
+
 msgid "Approval status"
 msgstr ""
 
@@ -107,16 +110,22 @@ msgstr ""
 msgid "Error when trying to incomplete data set"
 msgstr ""
 
+msgid "Submit"
+msgstr ""
+
+msgid "Error when trying to submit data set"
+msgstr ""
+
+msgid "Unsubmit"
+msgstr ""
+
+msgid "Error when trying to unsubmit data set"
+msgstr ""
+
 msgid "Approve"
 msgstr ""
 
-msgid "Error when trying to approve data set"
-msgstr ""
-
-msgid "Unapprove"
-msgstr ""
-
-msgid "Error when trying to unapprove data set"
+msgid "Error when trying to approve data values"
 msgstr ""
 
 msgid "Data sets"
@@ -129,6 +138,15 @@ msgid "NHWA Data Approval Status Report"
 msgstr ""
 
 msgid "Last updated value"
+msgstr ""
+
+msgid "Error when trying to approve data set"
+msgstr ""
+
+msgid "Unapprove"
+msgstr ""
+
+msgid "Error when trying to unapprove data set"
 msgstr ""
 
 msgid "NHWA Comments Report"
