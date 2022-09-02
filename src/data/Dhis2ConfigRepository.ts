@@ -9,7 +9,7 @@ const SQL_VIEW_DATA_COMMENTS_NAME = "NHWA Data Comments";
 const SQL_VIEW_DATA_APPROVAL_NAME = "NHWA Data Approval Status";
 const SQL_VIEW_DATA_DUPLICATION_NAME = "MAL Data Approval Status";
 const SQL_VIEW_MAL_METADATA_NAME = "MAL Data approval header";
-const SQL_VIEW_MAL_DIFF_NAME = "MAL Data Approval DIff";
+const SQL_VIEW_MAL_DIFF_NAME = "MAL Data Approval Diff";
 
 const base = {
     dataSets: { namePrefix: "MAL - WMR Form", nameExcluded: /-APVD$/ },
