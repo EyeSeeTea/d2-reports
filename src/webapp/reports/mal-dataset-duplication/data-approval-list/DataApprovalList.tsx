@@ -12,6 +12,7 @@ import DoneIcon from "@material-ui/icons/Done";
 import DoneAllIcon from "@material-ui/icons/DoneAll";
 import RemoveIcon from "@material-ui/icons/Remove";
 import _ from "lodash";
+import moment from "moment";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { sortByName } from "../../../../domain/common/entities/Base";
 import { Config } from "../../../../domain/common/entities/Config";
@@ -78,8 +79,18 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     sortable: true,
                     getValue: row => (row.duplicated ? "Approved" : "Ready for approval"),
                 },
-                { name: "lastUpdatedValue", text: i18n.t("Last modification date"), sortable: true },
-                { name: "lastDateOfSubmission", text: i18n.t("Last date of submission"), sortable: true },
+                { 
+                    name: "lastUpdatedValue",
+                    text: i18n.t("Last modification date"),
+                    sortable: true,
+                    getValue: row => ((typeof row.lastUpdatedValue !== 'undefined') ? moment(row.lastUpdatedValue).format("YYYY-MM-DD HH:MM:SS") : "No data"),
+                },
+                { 
+                    name: "lastDateOfSubmission",
+                    text: i18n.t("Last date of submission"),
+                    sortable: true,
+                    getValue: row => ((typeof row.lastDateOfSubmission !== 'undefined') ? moment(row.lastUpdatedValue).format("YYYY-MM-DD HH:MM:SS") : "Never submitted"),
+                 },
             ],
             actions: [
                 {
@@ -132,7 +143,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 },
                 {
                     name: "unapprove",
-                    text: i18n.t("Unapprove"),
+                    text: i18n.t("Revoke"),
                     icon: <ClearAllIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
