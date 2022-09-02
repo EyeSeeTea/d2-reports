@@ -198,7 +198,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                 orgUnit: ds.orgUnit,
                 dataElement: "QlXqA11tA0y",
                 categoryOptionCombo: "Xr12mI7VPn3",
-                value: moment(new Date()).format("YYYY-MM-DD"),
+                value: moment(new Date()).format("YYYY-MM-DDTHH:MM"),
             }));
 
             const dateResponse = await this.api.post<any>("/dataValueSets.json", {}, { dataValues }).getData();
