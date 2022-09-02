@@ -29,11 +29,29 @@ import { DataSetsFilter, Filters } from "./Filters";
 
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
+    const { currentUser } = config;
     const snackbar = useSnackbar();
+
+    const isMalApprover =
+        _.intersection(
+            currentUser.userGroups.map(userGroup => userGroup.name),
+            ["MAL_Country Approver"]
+        ).length > 0;
+
+    const isMalAdmin =
+        _.intersection(
+            currentUser.userGroups.map(userGroup => userGroup.name),
+            ["MAL_Malaria admin"]
+        ).length > 0;
 
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [reloadKey, reload] = useReload();
+
+    const selectablePeriods = React.useMemo(() => {
+        const currentYear = new Date().getFullYear();
+        return _.range(currentYear - 10, currentYear).map(n => n.toString());
+    }, []);
 
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
@@ -52,7 +70,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     name: "validated",
                     text: i18n.t("Submission status"),
                     sortable: true,
-                    getValue: row => (row.validated ? "Submitted" : "Ready for submission"),
+                    getValue: row => (row.validated ? "Submitted" : row.completed ? "Ready for submission" : "Not completed"),
                 },
                 {
                     name: "duplicated",
@@ -60,7 +78,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     sortable: true,
                     getValue: row => (row.duplicated ? "Approved" : "Ready for approval"),
                 },
-                { name: "lastUpdatedValue", text: i18n.t("Last data approved date"), sortable: true },
+                { name: "lastUpdatedValue", text: i18n.t("Last modification date"), sortable: true },
                 { name: "lastDateOfSubmission", text: i18n.t("Last date of submission"), sortable: true },
             ],
             actions: [
@@ -78,7 +96,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.completed === false),
+                    isActive: rows => _.every(rows, row => row.completed === false) && (isMalApprover || isMalAdmin),
                 },
                 {
                     name: "incomplete",
@@ -104,24 +122,25 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     onClick: async (selectedIds: string[]) => {
                         const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
                         if (items.length === 0) return;
+
                         const result = await compositionRoot.dataDuplicate.updateStatus(items, "approve");
                         if (!result) snackbar.error(i18n.t("Error when trying to submit data set"));
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.validated === false),
+                    isActive: rows => _.every(rows, row => row.validated === false) && (isMalApprover || isMalAdmin),
                 },
                 {
-                    name: "revoke",
-                    text: i18n.t("Revoke"),
+                    name: "unapprove",
+                    text: i18n.t("Unapprove"),
                     icon: <ClearAllIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
                         const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
                         if (items.length === 0) return;
 
-                        const result = await compositionRoot.dataDuplicate.updateStatus(items, "revoke");
-                        if (!result) snackbar.error(i18n.t("Error when trying to revoke data set"));
+                        const result = await compositionRoot.dataDuplicate.updateStatus(items, "unapprove");
+                        if (!result) snackbar.error(i18n.t("Error when trying to unsubmit data set"));
 
                         reload();
                     },
@@ -141,7 +160,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.duplicated === false),
+                    isActive: rows => _.every(rows, row => row.duplicated === false) && isMalAdmin,
                 },
             ],
             initialSorting: {
@@ -153,7 +172,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot, reload, snackbar]
+        [compositionRoot.dataDuplicate, isMalAdmin, isMalApprover, reload, snackbar]
     );
 
     const getRows = useMemo(
@@ -162,16 +181,24 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
-                ...getUseCaseOptions(filters),
+                ...getUseCaseOptions(filters, selectablePeriods),
             });
 
+            setFilters(filters);
             console.debug("Reloading", reloadKey);
 
             return { pager, objects: getDataApprovalViews(config, objects) };
         },
-        [config, compositionRoot, filters, reloadKey]
+        [config, compositionRoot, filters, reloadKey, selectablePeriods]
     );
 
+    function getUseCaseOptions(filter: DataSetsFilter, selectablePeriods: string[]) {
+        return {
+            ...filter,
+            periods: _.isEmpty(filter.periods) ? selectablePeriods : filter.periods,
+            orgUnitIds: getOrgUnitIdsFromPaths(filter.orgUnitPaths),
+        };
+    }
     const saveReorderedColumns = useCallback(
         async (columnKeys: Array<keyof DataApprovalViewModel>) => {
             if (!visibleColumns) return;
@@ -197,7 +224,14 @@ export const DataApprovalList: React.FC = React.memo(() => {
             .value();
     }, [tableProps.columns, visibleColumns]);
 
-    const filterOptions = useMemo(() => getFilterOptions(config), [config]);
+    function getFilterOptions(config: Config, selectablePeriods: string[]) {
+        return {
+            dataSets: sortByName(_.values(config.dataSets)),
+            periods: selectablePeriods,
+            approvalWorkflow: config.approvalWorkflow,
+        };
+    }
+    const filterOptions = React.useMemo(() => getFilterOptions(config, selectablePeriods), [config, selectablePeriods]);
 
     useEffect(() => {
         compositionRoot.dataDuplicate.getColumns().then(columns => setVisibleColumns(columns));
@@ -215,25 +249,10 @@ export const DataApprovalList: React.FC = React.memo(() => {
     );
 });
 
-function getUseCaseOptions(filter: DataSetsFilter) {
-    return {
-        ...filter,
-        orgUnitIds: getOrgUnitIdsFromPaths(filter.orgUnitPaths),
-    };
-}
-
 function getSortingFromTableSorting(sorting: TableSorting<DataApprovalViewModel>): Sorting<DataDuplicationItem> {
     return {
         field: sorting.field === "id" ? "period" : sorting.field,
         direction: sorting.order,
-    };
-}
-
-function getFilterOptions(config: Config) {
-    return {
-        dataSets: sortByName(_.values(config.dataSets)),
-        periods: config.years,
-        approvalWorkflow: config.approvalWorkflow,
     };
 }
 

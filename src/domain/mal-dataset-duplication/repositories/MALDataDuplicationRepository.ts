@@ -10,7 +10,7 @@ export interface MALDataDuplicationRepository {
     approve(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean>;
     duplicate(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean>;
     incomplete(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean>;
-    revoke(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean>;
+    unapprove(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean>;
     getColumns(): Promise<string[]>;
     saveColumns(columns: string[]): Promise<void>;
 }
@@ -22,7 +22,7 @@ export interface MALDataDuplicationRepositoryGetOptions {
     periods: string[];
     orgUnitIds: Id[];
     dataSetIds: Id[];
-    approvalStatus?: string;
-    duplicationStatus?: string;
-    completionStatus?: string;
+    approvalStatus?: boolean;
+    duplicationStatus?: boolean;
+    completionStatus?: boolean;
 }

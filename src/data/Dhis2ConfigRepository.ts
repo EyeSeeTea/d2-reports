@@ -10,7 +10,7 @@ const SQL_VIEW_DATA_APPROVAL_NAME = "NHWA Data Approval Status";
 const SQL_VIEW_DATA_DUPLICATION_NAME = "MAL Data Approval Status";
 
 const base = {
-    dataSets: { namePrefix: "MAL - WMR Form", nameExcluded: /_APPROVED$/ },
+    dataSets: { namePrefix: "MAL - WMR Form", nameExcluded: /APVD$/ },
 
     sqlViewNames: [SQL_VIEW_DATA_COMMENTS_NAME, SQL_VIEW_DATA_APPROVAL_NAME, SQL_VIEW_DATA_DUPLICATION_NAME],
     constantCode: "NHWA_COMMENTS",
@@ -33,6 +33,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
         if (!dataApprovalSqlView) {
             throw new Error(`Missing SQL views: ${SQL_VIEW_DATA_APPROVAL_NAME}`);
         }
+
         if (!dataDuplicationSqlView) {
             throw new Error(`Missing SQL views: ${SQL_VIEW_DATA_DUPLICATION_NAME}`);
         }
@@ -103,6 +104,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                         username: true,
                         userRoles: { id: true, name: true },
                     },
+                    userGroups: { id: true, name: true },
                 },
             })
             .getData();
@@ -111,6 +113,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             id: d2User.id,
             name: d2User.displayName,
             orgUnits: d2User.dataViewOrganisationUnits,
+            userGroups: d2User.userGroups,
             ...d2User.userCredentials,
         };
     }
