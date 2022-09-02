@@ -9,7 +9,7 @@ import {
 type GetDataSetsDuplicationUseCaseOptions = MALDataDuplicationRepositoryGetOptions;
 
 export class GetDataSetsDuplicationUseCase implements UseCase {
-    constructor(private dataSetRepository: MALDataDuplicationRepository) { }
+    constructor(private dataSetRepository: MALDataDuplicationRepository) {}
 
     execute(options: GetDataSetsDuplicationUseCaseOptions): Promise<PaginatedObjects<DataDuplicationItem>> {
         // FUTURE: Return a Future-like instead, to allow better error handling and cancellation.

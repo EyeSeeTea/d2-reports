@@ -18,6 +18,7 @@ export interface DataApprovalViewModel {
     validated: boolean;
     duplicated: boolean;
     lastUpdatedValue: Date | undefined;
+    lastDateOfSubmission: Date | undefined;
 }
 
 export function getDataApprovalViews(_config: Config, items: DataDuplicationItem[]): DataApprovalViewModel[] {
@@ -36,6 +37,7 @@ export function getDataApprovalViews(_config: Config, items: DataDuplicationItem
             validated: item.validated,
             duplicated: item.duplicated,
             lastUpdatedValue: item.lastUpdatedValue? new Date(item.lastUpdatedValue): undefined,
+            lastDateOfSubmission: item.lastDateOfSubmission ? new Date(item.lastDateOfSubmission) : undefined,
         };
     });
 }

@@ -1,4 +1,5 @@
 import _ from "lodash";
+import moment from "moment";
 import {
     DataDuplicationItem,
     DataDuplicationItemIdentifier,
@@ -101,6 +102,7 @@ const fieldMapping: Record<keyof DataDuplicationItem, SqlField> = {
     validated: "validated",
     duplicated: "duplicated",
     lastUpdatedValue: "lastupdatedvalue",
+    lastDateOfSubmission: "lastdateofsubmission",
 };
 
 export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRepository {
@@ -148,7 +150,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
 
         return mergeHeadersAndData(options, periods, headerRows, rows);
         // A data value is not associated to a specific data set, but we can still map it
-        // through the data ehjhlement (1 data value -> 1 data element -> N data sets).
+        // through the data element (1 data value -> 1 data element -> N data sets).
     }
 
     async save(filename: string, dataSets: DataDuplicationItem[]): Promise<void> {
@@ -190,6 +192,18 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
 
     async approve(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean> {
         try {
+            const dataValues = dataSets.map(ds => ({
+                dataSet: ds.dataSet,
+                period: ds.period,
+                orgUnit: ds.orgUnit,
+                dataElement: "QlXqA11tA0y",
+                categoryOptionCombo: "Xr12mI7VPn3",
+                value: moment(new Date()).format("YYYY-MM-DD"),
+            }));
+
+            const dateResponse = await this.api.post<any>("/dataValueSets.json", {}, { dataValues }).getData();
+            if (dateResponse.status !== "SUCCESS") throw new Error('Error when posting Submission date');
+
             let completeCheckResponses: completeCheckresponseType = await promiseMap(dataSets, async approval =>
                 this.api.get<any>(
                     "/completeDataSetRegistrations",
@@ -394,6 +408,7 @@ function mergeHeadersAndData(
                 validated: Boolean(datavalue?.validated),
                 duplicated: Boolean(datavalue?.duplicated),
                 lastUpdatedValue: datavalue?.lastupdatedvalue,
+                lastDateOfSubmission: datavalue?.lastdateofsubmission,
             };
             rows.push(row);
         }

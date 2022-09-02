@@ -79,6 +79,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     getValue: row => (row.duplicated ? "Approved" : "Ready for approval"),
                 },
                 { name: "lastUpdatedValue", text: i18n.t("Last modification date"), sortable: true },
+                { name: "lastDateOfSubmission", text: i18n.t("Last date of submission"), sortable: true },
             ],
             actions: [
                 {
@@ -130,8 +131,8 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     isActive: rows => _.every(rows, row => row.validated === false) && (isMalApprover || isMalAdmin),
                 },
                 {
-                    name: "unsubmit",
-                    text: i18n.t("Unsubmit"),
+                    name: "unapprove",
+                    text: i18n.t("Unapprove"),
                     icon: <ClearAllIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
