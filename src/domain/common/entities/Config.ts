@@ -11,6 +11,7 @@ export interface Config {
     dataApprovalSqlView: NamedRef;
     dataDuplicationSqlView: NamedRef;
     dataMalMetadataSqlView: NamedRef;
+    dataMalDiffSqlView: NamedRef;
     pairedDataElementsByDataSet: {
         [dataSetId: string]: Array<{ dataValueVal: Id; dataValueComment: Id }>;
     };
