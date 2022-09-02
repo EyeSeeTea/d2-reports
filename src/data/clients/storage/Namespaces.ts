@@ -6,7 +6,7 @@ export type Namespace = typeof Namespaces[keyof typeof Namespaces];
 export const Namespaces = {
     NHWA_APPROVAL_STATUS_USER_COLUMNS: "nhwa-approval-status-user-columns",
     MAL_APPROVAL_STATUS_USER_COLUMNS: "mal-approval-status-user-columns",
-}
+};
 
 export const NamespaceProperties: Record<Namespace, string[]> = {
     [Namespaces.NHWA_APPROVAL_STATUS_USER_COLUMNS]: [],

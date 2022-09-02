@@ -7,4 +7,5 @@ export interface User {
     username: string;
     orgUnits: OrgUnit[];
     userRoles: NamedRef[];
+    userGroups: NamedRef[];
 }

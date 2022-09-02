@@ -11,6 +11,7 @@ export interface DataDuplicationItem {
     validated: boolean;
     duplicated: boolean;
     lastUpdatedValue: string | undefined;
+    lastDateOfSubmission: string | undefined;
 }
 
 export interface DataDuplicationItemIdentifier {
