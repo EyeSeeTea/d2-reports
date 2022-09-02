@@ -23,6 +23,8 @@ import {
 } from "../../../../domain/mal-dataset-duplication/entities/DataDuplicationItem";
 import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
+import { ConfirmationDialog } from "@eyeseetea/d2-ui-components";
+import { useBooleanState } from "../../../utils/use-boolean";
 import { useReload } from "../../../utils/use-reload";
 import { DataApprovalViewModel, getDataApprovalViews } from "../DataApprovalViewModel";
 import { DataSetsFilter, Filters } from "./Filters";
@@ -30,6 +32,7 @@ import { DataSetsFilter, Filters } from "./Filters";
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
     const { currentUser } = config;
+    const [isDialogOpen, { enable: openDialog, disable: closeDialog }] = useBooleanState(false);
     const snackbar = useSnackbar();
 
     const isMalApprover =
@@ -70,7 +73,8 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     name: "validated",
                     text: i18n.t("Submission status"),
                     sortable: true,
-                    getValue: row => (row.validated ? "Submitted" : row.completed ? "Ready for submission" : "Not completed"),
+                    getValue: row =>
+                        row.validated ? "Submitted" : row.completed ? "Ready for submission" : "Not completed",
                 },
                 {
                     name: "duplicated",
@@ -162,6 +166,21 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     },
                     isActive: rows => _.every(rows, row => row.duplicated === false) && isMalAdmin,
                 },
+                {
+                    name: "duplicate",
+                    text: i18n.t("Check Difference"),
+                    icon: <DoneAllIcon />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        openDialog();
+                        const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
+                        if (items.length === 0) return;
+
+                        reload();
+                        console.log(items);
+                    },
+                    isActive: rows => _.every(rows, row => row.duplicated === false) && (isMalApprover || isMalAdmin),
+                },
             ],
             initialSorting: {
                 field: "dataSet" as const,
@@ -172,7 +191,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot.dataDuplicate, isMalAdmin, isMalApprover, reload, snackbar]
+        [compositionRoot.dataDuplicate, isMalAdmin, isMalApprover, openDialog, reload, snackbar]
     );
 
     const getRows = useMemo(
@@ -238,14 +257,26 @@ export const DataApprovalList: React.FC = React.memo(() => {
     }, [compositionRoot]);
 
     return (
-        <ObjectsList<DataApprovalViewModel>
-            {...tableProps}
-            columns={columnsToShow}
-            onChangeSearch={undefined}
-            onReorderColumns={saveReorderedColumns}
-        >
-            <Filters values={filters} options={filterOptions} onChange={setFilters} />
-        </ObjectsList>
+        <React.Fragment>
+            <ObjectsList<DataApprovalViewModel>
+                {...tableProps}
+                columns={columnsToShow}
+                onChangeSearch={undefined}
+                onReorderColumns={saveReorderedColumns}
+            >
+                <Filters values={filters} options={filterOptions} onChange={setFilters} />
+            </ObjectsList>
+            <ConfirmationDialog
+                isOpen={isDialogOpen}
+                title={i18n.t("Check differences")}
+                onCancel={closeDialog}
+                cancelText={i18n.t("Close")}
+                maxWidth="md"
+                fullWidth
+            >
+                <p>hi</p>
+            </ConfirmationDialog>
+        </React.Fragment>
     );
 });
 
