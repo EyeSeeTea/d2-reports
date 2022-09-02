@@ -8,19 +8,17 @@ import { D2Api, Id } from "../types/d2-api";
 const SQL_VIEW_DATA_COMMENTS_NAME = "NHWA Data Comments";
 const SQL_VIEW_DATA_APPROVAL_NAME = "NHWA Data Approval Status";
 const SQL_VIEW_DATA_DUPLICATION_NAME = "MAL Data Approval Status";
-const SQL_VIEW_MAL_METADATA_NAME = "MAL Data approval header";
-
 
 const base = {
-    dataSets: { namePrefix: "MAL - WMR Form", nameExcluded: /-APVD$/ },
+    dataSets: { namePrefix: "MAL - WMR Form", nameExcluded: /APVD$/ },
 
-    sqlViewNames: [SQL_VIEW_DATA_COMMENTS_NAME, SQL_VIEW_DATA_APPROVAL_NAME, SQL_VIEW_DATA_DUPLICATION_NAME, SQL_VIEW_MAL_METADATA_NAME],
+    sqlViewNames: [SQL_VIEW_DATA_COMMENTS_NAME, SQL_VIEW_DATA_APPROVAL_NAME, SQL_VIEW_DATA_DUPLICATION_NAME],
     constantCode: "NHWA_COMMENTS",
     approvalWorkflows: { namePrefix: "MAL" },
 };
 
 export class Dhis2ConfigRepository implements ConfigRepository {
-    constructor(private api: D2Api) {}
+    constructor(private api: D2Api) { }
 
     async get(): Promise<Config> {
         const { dataSets, constants, sqlViews, dataApprovalWorkflows } = await this.getMetadata();
@@ -28,7 +26,6 @@ export class Dhis2ConfigRepository implements ConfigRepository {
         const dataCommentsSqlView = sqlViews.find(({ name }) => name === SQL_VIEW_DATA_COMMENTS_NAME);
         const dataApprovalSqlView = sqlViews.find(({ name }) => name === SQL_VIEW_DATA_APPROVAL_NAME);
         const dataDuplicationSqlView = sqlViews.find(({ name }) => name === SQL_VIEW_DATA_DUPLICATION_NAME);
-        const dataMalMetadataSqlView = sqlViews.find(({ name }) => name === SQL_VIEW_MAL_METADATA_NAME);
         if (!dataCommentsSqlView) {
             throw new Error(`Missing SQL views: ${SQL_VIEW_DATA_COMMENTS_NAME}`);
         }
@@ -39,10 +36,6 @@ export class Dhis2ConfigRepository implements ConfigRepository {
 
         if (!dataDuplicationSqlView) {
             throw new Error(`Missing SQL views: ${SQL_VIEW_DATA_DUPLICATION_NAME}`);
-        }
-
-        if(!dataMalMetadataSqlView){
-            throw new Error(`Missing SQL views: ${SQL_VIEW_MAL_METADATA_NAME}`);
         }
 
         const constant = getNth(constants, 0, `Missing constant: ${base.constantCode}`);
@@ -58,7 +51,6 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             dataCommentsSqlView,
             dataApprovalSqlView,
             dataDuplicationSqlView,
-            dataMalMetadataSqlView,
             pairedDataElementsByDataSet: pairedDataElements,
             sections: keyById(sections),
             sectionsByDataSet,

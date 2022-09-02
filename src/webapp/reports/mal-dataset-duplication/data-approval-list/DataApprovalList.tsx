@@ -70,7 +70,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     name: "validated",
                     text: i18n.t("Submission status"),
                     sortable: true,
-                    getValue: row => (row.validated ? "Submitted" : "Ready for submission"),
+                    getValue: row => (row.validated ? "Submitted" : row.completed ? "Ready for submission" : "Not completed"),
                 },
                 {
                     name: "duplicated",
@@ -121,9 +121,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     onClick: async (selectedIds: string[]) => {
                         const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
                         if (items.length === 0) return;
-
-                        const result2 = await compositionRoot.dataDuplicate.updateStatus(items, "complete");
-                        if (!result2) snackbar.error(i18n.t("Error when trying to complete data set"));
 
                         const result = await compositionRoot.dataDuplicate.updateStatus(items, "approve");
                         if (!result) snackbar.error(i18n.t("Error when trying to submit data set"));

@@ -57,6 +57,22 @@ interface Variables {
 
 type SqlFieldHeaders = "datasetuid" | "dataset" | "orgunituid" | "orgunit";
 
+type completeDataSetRegistrationsType = {
+    completeDataSetRegistrations: [
+        {
+            period?: string,
+            dataSet?: string,
+            organisationUnit?: string,
+            attributeOptionCombo?: string,
+            date?: string,
+            storedBy?: string,
+            completed?: boolean,
+        }
+    ]
+}
+
+type completeCheckresponseType = completeDataSetRegistrationsType[]
+
 type SqlField =
     | "datasetuid"
     | "dataset"
@@ -174,6 +190,33 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
 
     async approve(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean> {
         try {
+            let completeCheckResponses: completeCheckresponseType = await promiseMap(dataSets, async approval =>
+                this.api.get<any>(
+                    "/completeDataSetRegistrations",
+                    { dataSet: approval.dataSet, period: approval.period, orgUnit: approval.orgUnit }
+                ).getData()
+            );
+
+            completeCheckResponses = completeCheckResponses.filter(item => Object.keys(item).length !== 0);
+
+            const dataSetsCompleted = completeCheckResponses.flatMap((completeCheckResponse) => {
+                return completeCheckResponse.completeDataSetRegistrations.map((completeDataSetRegistrations) => {
+                    return {
+                        dataSet: completeDataSetRegistrations.dataSet,
+                        period: completeDataSetRegistrations.period,
+                        orgUnit: completeDataSetRegistrations.organisationUnit,
+                    };
+                });
+            });
+
+            const dataSetsToComplete = _.differenceWith(
+                dataSets,
+                dataSetsCompleted,
+                ((value, othervalue) => _.isEqual(_.omit(value, ['workflow']), othervalue))
+            );
+
+            const completeResponse = (Object.keys(dataSetsToComplete).length !== 0) ? await this.complete(dataSetsToComplete) : true;
+
             const response = await promiseMap(dataSets, async approval =>
                 this.api
                     .post<any>(
@@ -184,7 +227,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                     .getData()
             );
 
-            return _.every(response, item => item === "");
+            return _.every(response, item => item === "") && completeResponse;
         } catch (error: any) {
             return false;
         }
@@ -192,30 +235,30 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
 
     async duplicate(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean> {
         try {
-            const approvalDataSetId = "fRrt4V8ImqD";
+            const approvalDataSetId = process.env.REACT_APP_APPROVE_DATASET_ID ?? "fRrt4V8ImqD";
 
             const DSDataElements = await promiseMap(dataSets, async approval =>
                 this.api
-                    .get<any>(`/dataSets/${approval.dataSet}`, { fields: "dataSetElements[dataElement[id,name]]" })
+                    .get<any>(
+                        `/dataSets/${approval.dataSet}`,
+                        { fields: "dataSetElements[dataElement[id,name]]" }
+                    )
                     .getData()
             );
 
-            //console.log("DSDataElements: ", DSDataElements)
-
-            const ADSDataElements2 = await this.api
-                .get<any>(`/dataSets/${approvalDataSetId}`, { fields: "dataSetElements[dataElement[id,name]]" })
+            const ADSDataElementsRaw = await this.api
+                .get<any>(
+                    `/dataSets/${approvalDataSetId}`,
+                    { fields: "dataSetElements[dataElement[id,name]]" }
+                )
                 .getData();
 
-            const ADSDataElements = ADSDataElements2.dataSetElements.map(
-                (element: { dataElement: { id: any; name: any } }) => {
-                    return {
-                        id: element.dataElement.id,
-                        name: element.dataElement.name,
-                    };
-                }
-            );
-
-            //console.log("ADSDataElements: ", ADSDataElements)
+            const ADSDataElements = ADSDataElementsRaw.dataSetElements.map((element: { dataElement: { id: any; name: any; }; }) => {
+                return {
+                    id: element.dataElement.id,
+                    name: element.dataElement.name
+                };
+            });
 
             const dataValueSets = await promiseMap(dataSets, async approval =>
                 this.api
@@ -227,48 +270,36 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                     .getData()
             );
 
-            //console.log("dataValues: ", dataValueSets)
-
-            //console.log("DSDataElements[0]: ", DSDataElements[0].dataSetElements)
-
-            const dataElementsMatchedArray: { origId: any; destId: any }[] = DSDataElements[0].dataSetElements.map(
-                (element: { dataElement: any }) => {
+            const copyResponse = await promiseMap(DSDataElements, async DSDataElement => {
+                const dataElementsMatchedArray: { origId: any, destId: any; }[] = DSDataElement.dataSetElements.map((element: { dataElement: any; }) => {
                     const dataElement = element.dataElement;
-                    const othername = dataElement.name + "-_APPROVED";
-                    const ADSDataElement = ADSDataElements.find(
-                        (DataElement: { name: any }) => String(DataElement.name) === othername
-                    );
+                    const othername = dataElement.name + "-APVD";
+                    const ADSDataElement = ADSDataElements.find((DataElement: { name: any; }) => String(DataElement.name) === othername);
                     return {
-                        origId: dataElement.id,
-                        destId: ADSDataElement.id,
+                        origId: dataElement?.id,
+                        destId: ADSDataElement?.id,
                     };
-                }
-            );
+                });
 
-            //console.log("dataElementsMatchedArray: ", dataElementsMatchedArray)
-
-            const dataValues = dataValueSets
-                .map(dataValueSet => {
-                    const data = dataValueSet.dataValues.map((dataValue: { dataElement: any; lastUpdated: any }) => {
+                const dataValues = dataValueSets.map((dataValueSet) => {
+                    const data = dataValueSet.dataValues.map((dataValue: { dataElement: any, lastUpdated: any; }) => {
                         const data2 = { ...dataValue };
-                        const destId = dataElementsMatchedArray.find(
-                            dataElementsMatchedObj => dataElementsMatchedObj.origId === dataValue.dataElement
-                        )?.destId;
+                        const destId = dataElementsMatchedArray.find((dataElementsMatchedObj) => dataElementsMatchedObj.origId === dataValue.dataElement)?.destId;
                         data2.dataElement = destId;
                         delete data2.lastUpdated;
                         return data2;
-                    });
+                    })
                     return data;
-                })
-                .flat();
+                }).flat();
 
-            //console.log("approvalDataValues: ", dataValues)
+                return this.api.post<any>(
+                    "/dataValueSets.json",
+                    {},
+                    { dataValues }
+                ).getData()
+            });
 
-            const copyResponse = await this.api.post<any>("/dataValueSets.json", {}, { dataValues }).getData();
-
-            //console.log("copyResponse: ", copyResponse)
-
-            return copyResponse;
+            return _.every(copyResponse, item => item.status !== "ERROR");
         } catch (error: any) {
             return false;
         }
