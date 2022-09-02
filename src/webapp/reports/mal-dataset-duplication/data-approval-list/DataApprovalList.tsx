@@ -28,6 +28,8 @@ import { useBooleanState } from "../../../utils/use-boolean";
 import { useReload } from "../../../utils/use-reload";
 import { DataApprovalViewModel, getDataApprovalViews } from "../DataApprovalViewModel";
 import { DataSetsFilter, Filters } from "./Filters";
+import { parseDataDiffItemId } from "../../../../domain/mal-dataset-duplication/entities/DataDiffItem";
+import { DataDifferencesList } from "../DataDifferencesList";
 
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
@@ -167,17 +169,25 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     isActive: rows => _.every(rows, row => row.duplicated === false) && isMalAdmin,
                 },
                 {
-                    name: "duplicate",
+                    name: "getDiff",
                     text: i18n.t("Check Difference"),
-                    icon: <DoneAllIcon />,
+                    icon: <DoneIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
                         openDialog();
-                        const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
+                        const items = _.compact(selectedIds.map(item => parseDataDiffItemId(item)));
                         if (items.length === 0) return;
 
-                        reload();
-                        console.log(items);
+                        // const result = await compositionRoot.dataDuplicate.getDiff({
+                        //     config,
+                        //     paging: { page: paging.page, pageSize: paging.pageSize },
+                        //     sorting: getSortingFromTableSorting(sorting),
+                        //     periods: ["2012"],
+                        //     orgUnitIds: ["av3fkpFxEXj"],
+                        //     dataSetIds: ["PWCUb3Se1Ie"],
+                        // });
+
+                        // if (!result) snackbar.error(i18n.t("Error when trying to approve data values"));
                     },
                     isActive: rows => _.every(rows, row => row.duplicated === false) && (isMalApprover || isMalAdmin),
                 },
@@ -274,7 +284,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 maxWidth="md"
                 fullWidth
             >
-                <p>hi</p>
+                <DataDifferencesList />
             </ConfirmationDialog>
         </React.Fragment>
     );

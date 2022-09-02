@@ -21,7 +21,7 @@ export function getDatiffItemId(dataSet: DataDiffItem): string {
 }
 
 export function parseDataDiffItemId(string: string): DataDiffItemIdentifier | undefined {
-    const [dataSet, period, orgUnit] = string.split("-");
+    const [dataSet, orgUnit, period] = string.split("-");
     if (!dataSet || !period || !orgUnit) return undefined;
 
     return { dataSet, period, orgUnit };
