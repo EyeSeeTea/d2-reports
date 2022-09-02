@@ -29,11 +29,29 @@ import { DataSetsFilter, Filters } from "./Filters";
 
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
+    const { currentUser } = config;
     const snackbar = useSnackbar();
+
+    const isMalApprover =
+        _.intersection(
+            currentUser.userGroups.map(userGroup => userGroup.name),
+            ["MAL_Country Approver"]
+        ).length > 0;
+
+    const isMalAdmin =
+        _.intersection(
+            currentUser.userGroups.map(userGroup => userGroup.name),
+            ["MAL_Malaria admin"]
+        ).length > 0;
 
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [reloadKey, reload] = useReload();
+
+    const selectablePeriods = React.useMemo(() => {
+        const currentYear = new Date().getFullYear();
+        return _.range(currentYear - 10, currentYear).map(n => n.toString());
+    }, []);
 
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
@@ -77,7 +95,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.completed === false),
+                    isActive: rows => _.every(rows, row => row.completed === false) && (isMalApprover || isMalAdmin),
                 },
                 {
                     name: "incomplete",
@@ -109,7 +127,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.validated === false),
+                    isActive: rows => _.every(rows, row => row.validated === false) && (isMalApprover || isMalAdmin),
                 },
                 {
                     name: "unsubmit",
@@ -141,7 +159,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.duplicated === false),
+                    isActive: rows => _.every(rows, row => row.duplicated === false) && isMalAdmin,
                 },
             ],
             initialSorting: {
@@ -153,7 +171,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot, reload, snackbar]
+        [compositionRoot.dataDuplicate, isMalAdmin, isMalApprover, reload, snackbar]
     );
 
     const getRows = useMemo(
@@ -162,16 +180,24 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
-                ...getUseCaseOptions(filters),
+                ...getUseCaseOptions(filters, selectablePeriods),
             });
 
+            setFilters(filters);
             console.debug("Reloading", reloadKey);
 
             return { pager, objects: getDataApprovalViews(config, objects) };
         },
-        [config, compositionRoot, filters, reloadKey]
+        [config, compositionRoot, filters, reloadKey, selectablePeriods]
     );
 
+    function getUseCaseOptions(filter: DataSetsFilter, selectablePeriods: string[]) {
+        return {
+            ...filter,
+            periods: _.isEmpty(filter.periods) ? selectablePeriods : filter.periods,
+            orgUnitIds: getOrgUnitIdsFromPaths(filter.orgUnitPaths),
+        };
+    }
     const saveReorderedColumns = useCallback(
         async (columnKeys: Array<keyof DataApprovalViewModel>) => {
             if (!visibleColumns) return;
@@ -197,7 +223,14 @@ export const DataApprovalList: React.FC = React.memo(() => {
             .value();
     }, [tableProps.columns, visibleColumns]);
 
-    const filterOptions = useMemo(() => getFilterOptions(config), [config]);
+    function getFilterOptions(config: Config, selectablePeriods: string[]) {
+        return {
+            dataSets: sortByName(_.values(config.dataSets)),
+            periods: selectablePeriods,
+            approvalWorkflow: config.approvalWorkflow,
+        };
+    }
+    const filterOptions = React.useMemo(() => getFilterOptions(config, selectablePeriods), [config, selectablePeriods]);
 
     useEffect(() => {
         compositionRoot.dataDuplicate.getColumns().then(columns => setVisibleColumns(columns));
@@ -215,25 +248,10 @@ export const DataApprovalList: React.FC = React.memo(() => {
     );
 });
 
-function getUseCaseOptions(filter: DataSetsFilter) {
-    return {
-        ...filter,
-        orgUnitIds: getOrgUnitIdsFromPaths(filter.orgUnitPaths),
-    };
-}
-
 function getSortingFromTableSorting(sorting: TableSorting<DataApprovalViewModel>): Sorting<DataDuplicationItem> {
     return {
         field: sorting.field === "id" ? "period" : sorting.field,
         direction: sorting.order,
-    };
-}
-
-function getFilterOptions(config: Config) {
-    return {
-        dataSets: sortByName(_.values(config.dataSets)),
-        periods: config.years,
-        approvalWorkflow: config.approvalWorkflow,
     };
 }
 
