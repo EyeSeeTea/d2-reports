@@ -122,7 +122,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
         const paging_to_download = { page: 1, pageSize: 10000 };
         const { rows: headerRows } = await sqlViews
             .query<VariableHeaders, SqlFieldHeaders>(
-                config.dataMalMetadataSqlView.id,
+                config.dataDuplicationSqlView.id,
                 {
                     dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
                 },
