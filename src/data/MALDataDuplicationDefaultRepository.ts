@@ -1,5 +1,5 @@
 import _ from "lodash";
-import moment from "moment";
+import { format } from 'date-fns'
 import {
     DataDuplicationItem,
     DataDuplicationItemIdentifier,
@@ -196,7 +196,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                 orgUnit: ds.orgUnit,
                 dataElement: "QlXqA11tA0y",
                 categoryOptionCombo: "Xr12mI7VPn3",
-                value: moment(new Date()).format("YYYY-MM-DDTHH:MM"),
+                value: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
             }));
 
             const dateResponse = await this.api.post<any>("/dataValueSets.json", {}, { dataValues }).getData();
@@ -247,6 +247,18 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
 
     async duplicate(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean> {
         try {
+            const dataValues = dataSets.map(ds => ({
+                dataSet: ds.dataSet,
+                period: ds.period,
+                orgUnit: ds.orgUnit,
+                dataElement: "VqcXVXTPaZG",
+                categoryOptionCombo: "Xr12mI7VPn3",
+                value: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+            }));
+
+            const dateResponse = await this.api.post<any>("/dataValueSets.json", {}, { dataValues }).getData();
+            if (dateResponse.status !== "SUCCESS") throw new Error('Error when posting Submission date');
+
             const approvalDataSetId = process.env.REACT_APP_APPROVE_DATASET_ID ?? "fRrt4V8ImqD";
 
             const DSDataElements = await promiseMap(dataSets, async approval =>
