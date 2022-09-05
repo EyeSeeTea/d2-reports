@@ -30,6 +30,7 @@ import { DataApprovalViewModel, getDataApprovalViews } from "../DataApprovalView
 import { DataSetsFilter, Filters } from "./Filters";
 import { parseDataDiffItemId } from "../../../../domain/mal-dataset-duplication/entities/DataDiffItem";
 import { DataDifferencesList } from "../DataDifferencesList";
+import { getDataADiffViews } from "../DataDiffViewModel";
 
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
@@ -50,6 +51,11 @@ export const DataApprovalList: React.FC = React.memo(() => {
         ).length > 0;
 
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
+    const [paging, setPaging] = useState({
+        page: 1,
+        pageSize: 10,
+        total: 0,
+    });
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [reloadKey, reload] = useReload();
 
@@ -178,16 +184,20 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         const items = _.compact(selectedIds.map(item => parseDataDiffItemId(item)));
                         if (items.length === 0) return;
 
-                        // const result = await compositionRoot.dataDuplicate.getDiff({
-                        //     config,
-                        //     paging: { page: paging.page, pageSize: paging.pageSize },
-                        //     sorting: getSortingFromTableSorting(sorting),
-                        //     periods: ["2012"],
-                        //     orgUnitIds: ["av3fkpFxEXj"],
-                        //     dataSetIds: ["PWCUb3Se1Ie"],
-                        // });
+                        const { pager, objects } = await compositionRoot.dataDuplicate.getDiff({
+                            config,
+                            paging: { page: paging.page, pageSize: paging.pageSize },
+                            sorting: getSortingFromTableSorting(baseConfig.initialSorting),
+                            periods: items.map(item => item.period),
+                            orgUnitIds: items.map(item => item.orgUnit),
+                            dataSetIds: _.union(items.map(item => item.dataSet)),
+                        });
 
-                        // if (!result) snackbar.error(i18n.t("Error when trying to approve data values"));
+                        console.log(pager, objects)
+
+                        if (!pager || !objects)
+                            snackbar.error(i18n.t("Error when trying to check difference in data values"));
+                        return { pager, objects: getDataADiffViews(config, objects) };
                     },
                     isActive: rows => _.every(rows, row => row.duplicated === false) && (isMalApprover || isMalAdmin),
                 },
@@ -201,7 +211,17 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot.dataDuplicate, isMalAdmin, isMalApprover, openDialog, reload, snackbar]
+        [
+            compositionRoot.dataDuplicate,
+            config,
+            isMalAdmin,
+            isMalApprover,
+            openDialog,
+            paging.page,
+            paging.pageSize,
+            reload,
+            snackbar,
+        ]
     );
 
     const getRows = useMemo(
@@ -214,6 +234,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
             });
 
             setFilters(filters);
+            setPaging(paging);
             console.debug("Reloading", reloadKey);
 
             return { pager, objects: getDataApprovalViews(config, objects) };
