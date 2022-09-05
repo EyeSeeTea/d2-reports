@@ -4,9 +4,7 @@ import { DataDiffItem, getDatiffItemId } from "../../../domain/mal-dataset-dupli
 export interface DataDiffViewModel {
     id: string;
     dataSetUid: string;
-    dataSet: string;
     orgUnitUid: string;
-    orgUnit: string;
     period: string;
     value: string | undefined;
     apvdvalue: string | undefined;
@@ -18,10 +16,8 @@ export function getDataADiffViews(_config: Config, items: DataDiffItem[]): DataD
     return items.map(item => {
         return {
             id: getDatiffItemId(item),
-            dataSetUid: item.dataSetUid,
-            dataSet: item.dataSet,
-            orgUnitUid: item.orgUnitUid,
-            orgUnit: item.orgUnit,
+            dataSetUid: item.datasetuid,
+            orgUnitUid: item.orgunituid,
             period: item.period,
             value: item.value,
             apvdvalue: item.apvdvalue,

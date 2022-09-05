@@ -152,10 +152,8 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
 
         const items: Array<DataDiffItem> = rows.map(
             (item): DataDiffItem => ({
-                dataSetUid: item.datasetuid,
-                dataSet: item.dataset,
-                orgUnitUid: item.orgunituid,
-                orgUnit: item.orgunit,
+                datasetuid: item.datasetuid,
+                orgunituid: item.orgunituid,
                 period: item.period,
                 value: item.value,
                 apvdvalue: item.apvdvalue,

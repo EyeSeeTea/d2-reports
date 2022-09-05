@@ -192,8 +192,8 @@ export const DataApprovalList: React.FC = React.memo(() => {
                             orgUnitIds: items.map(item => item.orgUnit),
                             dataSetIds: _.union(items.map(item => item.dataSet)),
                         });
-
-                        console.log(pager, objects)
+                        // eslint-disable-next-line
+                        console.log(pager, objects);
 
                         if (!pager || !objects)
                             snackbar.error(i18n.t("Error when trying to check difference in data values"));

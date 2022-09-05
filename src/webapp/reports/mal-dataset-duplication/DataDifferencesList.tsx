@@ -10,13 +10,14 @@ export const DataDifferencesList: React.FC = React.memo(() => {
     const _baseConfig: TableConfig<DataDiffViewModel> = useMemo(
         () => ({
             columns: [
-                { name: "dataSet", text: i18n.t("Data set"), sortable: true },
-                { name: "dataelement", text: i18n.t("Data Element"), sortable: true },
-                { name: "apvddataelement", text: i18n.t("Approved data element"), sortable: true },
+                { name: "dataelement", text: i18n.t("Data Element"), sortable: false },
+                { name: "value", text: i18n.t("Value"), sortable: false },
+                { name: "apvddataelement", text: i18n.t("Approved data element"), sortable: false },
+                { name: "apvdvalue", text: i18n.t("APVD Value"), sortable: false },
             ],
             actions: [],
             initialSorting: {
-                field: "dataSet" as const,
+                field: "dataelement" as const,
                 order: "asc" as const,
             },
             paginationOptions: {
@@ -36,12 +37,6 @@ export const DataDifferencesList: React.FC = React.memo(() => {
 
     const columnsToShow: TableColumn<DataDiffViewModel>[] = [
         {
-            name: "dataSet",
-            text: "Data set",
-            sortable: true,
-            hidden: false,
-        },
-        {
             name: "dataelement",
             text: "Data Element",
             sortable: true,
@@ -53,16 +48,23 @@ export const DataDifferencesList: React.FC = React.memo(() => {
             sortable: true,
             hidden: false,
         },
+        {
+            name: "value",
+            text: "Original value",
+            sortable: false,
+            hidden: false,
+        },
+        {
+            name: "apvdvalue",
+            text: "APVD value",
+            sortable: false,
+            hidden: false,
+        },
     ];
 
     const tableProps = {
         actions: [],
         columnsToShow: [
-            {
-                name: "dataSet",
-                text: "Data set",
-                sortable: true,
-            },
             {
                 name: "dataelement",
                 text: "Data Element",
@@ -72,6 +74,16 @@ export const DataDifferencesList: React.FC = React.memo(() => {
                 name: "apvddataelement",
                 text: "Approved data element",
                 sortable: true,
+            },
+            {
+                name: "value",
+                text: "Original value",
+                sortable: false,
+            },
+            {
+                name: "apvdvalue",
+                text: "APVD value",
+                sortable: false,
             },
         ],
         ids: undefined,
@@ -94,10 +106,8 @@ export const DataDifferencesList: React.FC = React.memo(() => {
         reload: undefined,
         rows: [
             {
-                dataSetUid: "PWCUb3Se1Ie",
-                dataSet: "MAL - WMR Form",
-                orgUnitUid: "av3fkpFxEXj",
-                orgUnit: "Socialist Republic of Viet Nam",
+                datasetuid: "PWCUb3Se1Ie",
+                orgunituid: "av3fkpFxEXj",
                 period: "2012",
                 value: "2022-09-02T13:09",
                 apvdvalue: null,
@@ -105,10 +115,8 @@ export const DataDifferencesList: React.FC = React.memo(() => {
                 apvddataelement: null,
             },
             {
-                dataSetUid: "PWCUb3Se1Ie",
-                dataSet: "MAL - WMR Form",
-                orgUnitUid: "av3fkpFxEXj",
-                orgUnit: "Socialist Republic of Viet Nam",
+                datasetuid: "PWCUb3Se1Ie",
+                orgunituid: "av3fkpFxEXj",
                 period: "2012",
                 value: "No",
                 apvdvalue: null,
@@ -117,10 +125,8 @@ export const DataDifferencesList: React.FC = React.memo(() => {
                     "MAL - ACD for mass screening (including non-febrile) - policy implemented this year-APVD",
             },
             {
-                dataSetUid: "PWCUb3Se1Ie",
-                dataSet: "MAL - WMR Form",
-                orgUnitUid: "av3fkpFxEXj",
-                orgUnit: "Socialist Republic of Viet Nam",
+                datasetuid: "PWCUb3Se1Ie",
+                orgunituid: "av3fkpFxEXj",
                 period: "2012",
                 value: "Yes",
                 apvdvalue: null,
@@ -130,10 +136,8 @@ export const DataDifferencesList: React.FC = React.memo(() => {
                     "MAL - ACD in response to passively detected case (reactive) - policy implemented this year-APVD",
             },
             {
-                dataSetUid: "PWCUb3Se1Ie",
-                dataSet: "MAL - WMR Form",
-                orgUnitUid: "av3fkpFxEXj",
-                orgUnit: "Socialist Republic of Viet Nam",
+                datasetuid: "PWCUb3Se1Ie",
+                orgunituid: "av3fkpFxEXj",
                 period: "2012",
                 value: "Yes",
                 apvdvalue: null,
