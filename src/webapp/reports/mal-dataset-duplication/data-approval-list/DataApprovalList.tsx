@@ -12,6 +12,7 @@ import DoneIcon from "@material-ui/icons/Done";
 import DoneAllIcon from "@material-ui/icons/DoneAll";
 import RemoveIcon from "@material-ui/icons/Remove";
 import _ from "lodash";
+import { format } from 'date-fns';
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { sortByName } from "../../../../domain/common/entities/Base";
 import { Config } from "../../../../domain/common/entities/Config";
@@ -88,7 +89,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     name: "lastDateOfApproval",
                     text: i18n.t("Last date of approval"),
                     sortable: true,
-                    getValue: row => (row.lastDateOfApproval ? row.lastDateOfApproval.toLocaleString('en-GB' , { hour12: false }) : "Never approved"),
+                    getValue: row => (row.lastDateOfApproval ? format(row.lastDateOfApproval, "yyyy-MM-dd' 'HH:mm:ss") : "Never approved"),
                 },
             ],
             actions: [
