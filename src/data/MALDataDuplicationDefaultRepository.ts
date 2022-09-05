@@ -247,8 +247,10 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
 
     async duplicate(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean> {
         try {
+            const approvalDataSetId = process.env.REACT_APP_APPROVE_DATASET_ID ?? "fRrt4V8ImqD";
+
             const dataValues = dataSets.map(ds => ({
-                dataSet: ds.dataSet,
+                dataSet: approvalDataSetId,
                 period: ds.period,
                 orgUnit: ds.orgUnit,
                 dataElement: "VqcXVXTPaZG",
@@ -257,9 +259,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
             }));
 
             const dateResponse = await this.api.post<any>("/dataValueSets.json", {}, { dataValues }).getData();
-            if (dateResponse.status !== "SUCCESS") throw new Error('Error when posting Submission date');
-
-            const approvalDataSetId = process.env.REACT_APP_APPROVE_DATASET_ID ?? "fRrt4V8ImqD";
+            if (dateResponse.status !== "SUCCESS") throw new Error('Error when posting approval date');
 
             const DSDataElements = await promiseMap(dataSets, async approval =>
                 this.api
