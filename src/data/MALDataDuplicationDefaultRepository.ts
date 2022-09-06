@@ -1,5 +1,6 @@
 import _ from "lodash";
 import { format } from 'date-fns'
+import { DataDiffItem } from "../domain/mal-dataset-duplication/entities/DataDiffItem";
 import {
     DataDuplicationItem,
     DataDuplicationItemIdentifier,
@@ -55,23 +56,40 @@ interface Variables {
     orderByDirection: "asc" | "desc";
 }
 
+interface VariablesDiff {
+    dataSets: string;
+    orgUnits: string;
+    periods: string;
+}
+
 type SqlFieldHeaders = "datasetuid" | "dataset" | "orgunituid" | "orgunit";
 
 type completeDataSetRegistrationsType = {
     completeDataSetRegistrations: [
         {
-            period?: string,
-            dataSet?: string,
-            organisationUnit?: string,
-            attributeOptionCombo?: string,
-            date?: string,
-            storedBy?: string,
-            completed?: boolean,
+            period?: string;
+            dataSet?: string;
+            organisationUnit?: string;
+            attributeOptionCombo?: string;
+            date?: string;
+            storedBy?: string;
+            completed?: boolean;
         }
-    ]
-}
+    ];
+};
 
-type completeCheckresponseType = completeDataSetRegistrationsType[]
+type completeCheckresponseType = completeDataSetRegistrationsType[];
+
+type SqlFieldDiff =
+    | "datasetuid"
+    | "dataset"
+    | "orgunituid"
+    | "orgunit"
+    | "period"
+    | "value"
+    | "apvdvalue"
+    | "dataelement"
+    | "apvddataelement";
 
 type SqlField =
     | "datasetuid"
@@ -110,6 +128,40 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
     constructor(private api: D2Api) {
         const instance = new Instance({ url: this.api.baseUrl });
         this.storageClient = new DataStoreStorageClient("user", instance);
+    }
+
+    async getDiff(options: MALDataDuplicationRepositoryGetOptions): Promise<PaginatedObjects<DataDiffItem>> {
+        const { config } = options; // ?
+        const { dataSetIds, orgUnitIds, periods } = options; // ?
+
+        const allDataSetIds = _.values(config.dataSets).map(ds => ds.id); // ?
+        const sqlViews = new Dhis2SqlViews(this.api);
+        const paging_to_download = { page: 1, pageSize: 10000 };
+        const { rows } = await sqlViews
+            .query<VariablesDiff, SqlFieldDiff>(
+                config.dataMalDiffSqlView.id,
+                {
+                    orgUnits: sqlViewJoinIds(orgUnitIds),
+                    periods: sqlViewJoinIds(periods),
+                    dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
+                },
+                paging_to_download
+            )
+            .getData();
+
+        const items: Array<DataDiffItem> = rows.map(
+            (item): DataDiffItem => ({
+                datasetuid: item.datasetuid,
+                orgunituid: item.orgunituid,
+                period: item.period,
+                value: item.value,
+                apvdvalue: item.apvdvalue,
+                dataelement: item.dataelement,
+                apvddataelement: item.apvddataelement,
+            })
+        );
+
+        return paginate(items, paging_to_download);
     }
 
     async get(options: MALDataDuplicationRepositoryGetOptions): Promise<PaginatedObjects<DataDuplicationItem>> {
@@ -200,19 +252,22 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
             }));
 
             const dateResponse = await this.api.post<any>("/dataValueSets.json", {}, { dataValues }).getData();
-            if (dateResponse.status !== "SUCCESS") throw new Error('Error when posting Submission date');
+            if (dateResponse.status !== "SUCCESS") throw new Error("Error when posting Submission date");
 
             let completeCheckResponses: completeCheckresponseType = await promiseMap(dataSets, async approval =>
-                this.api.get<any>(
-                    "/completeDataSetRegistrations",
-                    { dataSet: approval.dataSet, period: approval.period, orgUnit: approval.orgUnit }
-                ).getData()
+                this.api
+                    .get<any>("/completeDataSetRegistrations", {
+                        dataSet: approval.dataSet,
+                        period: approval.period,
+                        orgUnit: approval.orgUnit,
+                    })
+                    .getData()
             );
 
             completeCheckResponses = completeCheckResponses.filter(item => Object.keys(item).length !== 0);
 
-            const dataSetsCompleted = completeCheckResponses.flatMap((completeCheckResponse) => {
-                return completeCheckResponse.completeDataSetRegistrations.map((completeDataSetRegistrations) => {
+            const dataSetsCompleted = completeCheckResponses.flatMap(completeCheckResponse => {
+                return completeCheckResponse.completeDataSetRegistrations.map(completeDataSetRegistrations => {
                     return {
                         dataSet: completeDataSetRegistrations.dataSet,
                         period: completeDataSetRegistrations.period,
@@ -221,13 +276,12 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                 });
             });
 
-            const dataSetsToComplete = _.differenceWith(
-                dataSets,
-                dataSetsCompleted,
-                ((value, othervalue) => _.isEqual(_.omit(value, ['workflow']), othervalue))
+            const dataSetsToComplete = _.differenceWith(dataSets, dataSetsCompleted, (value, othervalue) =>
+                _.isEqual(_.omit(value, ["workflow"]), othervalue)
             );
 
-            const completeResponse = (Object.keys(dataSetsToComplete).length !== 0) ? await this.complete(dataSetsToComplete) : true;
+            const completeResponse =
+                Object.keys(dataSetsToComplete).length !== 0 ? await this.complete(dataSetsToComplete) : true;
 
             const response = await promiseMap(dataSets, async approval =>
                 this.api
@@ -261,12 +315,14 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                 { fields: "dataSetElements[dataElement[id,name]]" }
             ).getData();
 
-            const ADSDataElements = ADSDataElementsRaw.dataSetElements.map((element: { dataElement: { id: any; name: any; }; }) => {
-                return {
-                    id: element.dataElement.id,
-                    name: element.dataElement.name
-                };
-            });
+            const ADSDataElements = ADSDataElementsRaw.dataSetElements.map(
+                (element: { dataElement: { id: any; name: any } }) => {
+                    return {
+                        id: element.dataElement.id,
+                        name: element.dataElement.name,
+                    };
+                }
+            );
 
             const dataValueSets = await promiseMap(dataSets, async approval =>
                 this.api.get<any>("/dataValueSets", {
