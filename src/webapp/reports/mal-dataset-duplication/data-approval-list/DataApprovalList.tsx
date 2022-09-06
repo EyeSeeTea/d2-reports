@@ -175,7 +175,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 },
             ],
             initialSorting: {
-                field: "dataSet" as const,
+                field: "orgUnit" as const,
                 order: "asc" as const,
             },
             paginationOptions: {
