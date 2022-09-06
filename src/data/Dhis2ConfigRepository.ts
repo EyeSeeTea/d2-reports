@@ -48,6 +48,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
         const constant = getNth(constants, 0, `Missing constant: ${base.constantCode}`);
         const currentUser = await this.getCurrentUser();
         const pairedDataElements = getPairedMapping(filteredDataSets);
+        const orgunitAccess = getPairedOrgunitsMapping(filteredDataSets);
         const constantData = JSON.parse(constant.description || "{}") as Constant;
         const { sections, sectionsByDataSet } = getSectionsInfo(constantData);
         const currentYear = new Date().getFullYear();
@@ -76,6 +77,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                     dataSetElements: {
                         dataElement: { id: true, name: true },
                     },
+                    organisationUnits: { id: true }
                 },
                 filter: { name: { $ilike: base.dataSets.namePrefix } },
             },
@@ -130,6 +132,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
 interface DataSet {
     id: Id;
     dataSetElements: Array<{ dataElement: NamedRef }>;
+    organisationUnits: Array<{ organisationUnit: NamedRef }>;
 }
 
 type Constant = Partial<{
@@ -157,12 +160,39 @@ function getPairedMapping(dataSets: DataSet[]): Config["pairedDataElementsByData
         .keyBy(de => getCleanName(de.name))
         .value();
 
+
     return _(dataSets)
         .map(dataSet => {
             const mapping = getMappingForDataSet(dataSet, dataElementsByName);
             return [dataSet.id, mapping] as [string, typeof mapping];
         })
         .fromPairs()
+        .value();
+}
+
+function getPairedOrgunitsMapping(dataSets: DataSet[]): Config["pairedOrgunitsByDataSet"] {
+    const orgUnitList = _(dataSets)
+        .flatMap(dataSet => dataSet.organisationUnits)
+        .map(dse => dse.organisationUnit.id) 
+        .value();
+
+        return _(dataSets)
+            .map(dataSet => {
+                const mapping = getMappingForDataSetOrganisationUnits(dataSet);
+                return [mapping] as [string, typeof mapping];
+            })
+            .fromPairs()
+            .value();
+    }
+    
+
+function getMappingForDataSetOrganisationUnits(dataSet: DataSet) {
+    return _(dataSet.dataSetElements)
+        .map(dse => dse.dataElement)
+        .map(de => { 
+                return { id: de.id }; 
+        })
+        .compact()
         .value();
 }
 
@@ -226,3 +256,7 @@ function getFilteredDataSets<DataSet extends NamedRef>(dataSets: DataSet[]): Dat
 }
 
 const toName = { $fn: { name: "rename", to: "name" } } as const;
+    function getSectionsInfo(constantData: Partial<{ sections?: Record<string, string> | undefined; sectionNames?: Record<string, string> | undefined; }>): { sections: any; sectionsByDataSet: any; } {
+        throw new Error("Function not implemented.");
+    }
+
