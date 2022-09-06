@@ -249,33 +249,17 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
         try {
             const approvalDataSetId = process.env.REACT_APP_APPROVE_DATASET_ID ?? "fRrt4V8ImqD";
 
-            const dataValues = dataSets.map(ds => ({
-                dataSet: approvalDataSetId,
-                period: ds.period,
-                orgUnit: ds.orgUnit,
-                dataElement: "VqcXVXTPaZG",
-                categoryOptionCombo: "Xr12mI7VPn3",
-                value: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-            }));
-
-            const dateResponse = await this.api.post<any>("/dataValueSets.json", {}, { dataValues }).getData();
-            if (dateResponse.status !== "SUCCESS") throw new Error('Error when posting approval date');
-
             const DSDataElements = await promiseMap(dataSets, async approval =>
-                this.api
-                    .get<any>(
-                        `/dataSets/${approval.dataSet}`,
-                        { fields: "dataSetElements[dataElement[id,name]]" }
-                    )
-                    .getData()
+                this.api.get<any>(
+                    `/dataSets/${approval.dataSet}`,
+                    { fields: "dataSetElements[dataElement[id,name]]" }
+                ).getData()
             );
 
-            const ADSDataElementsRaw = await this.api
-                .get<any>(
-                    `/dataSets/${approvalDataSetId}`,
-                    { fields: "dataSetElements[dataElement[id,name]]" }
-                )
-                .getData();
+            const ADSDataElementsRaw = await this.api.get<any>(
+                `/dataSets/${approvalDataSetId}`,
+                { fields: "dataSetElements[dataElement[id,name]]" }
+            ).getData();
 
             const ADSDataElements = ADSDataElementsRaw.dataSetElements.map((element: { dataElement: { id: any; name: any; }; }) => {
                 return {
@@ -285,13 +269,11 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
             });
 
             const dataValueSets = await promiseMap(dataSets, async approval =>
-                this.api
-                    .get<any>("/dataValueSets", {
-                        dataSet: approval.dataSet,
-                        period: approval.period,
-                        orgUnit: approval.orgUnit,
-                    })
-                    .getData()
+                this.api.get<any>("/dataValueSets", {
+                    dataSet: approval.dataSet,
+                    period: approval.period,
+                    orgUnit: approval.orgUnit,
+                }).getData()
             );
 
             const copyResponse = await promiseMap(DSDataElements, async DSDataElement => {
@@ -306,24 +288,35 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                 });
 
                 const dataValues = dataValueSets.map((dataValueSet) => {
-                    const data = dataValueSet.dataValues.map((dataValue: { dataElement: any, lastUpdated: any; }) => {
-                        const data2 = { ...dataValue };
+                    const data = dataValueSet.dataValues.map((dataValue: { dataElement: any, lastUpdated: any, dataSet: any; }) => {
+                        const data = { ...dataValue };
                         const destId = dataElementsMatchedArray.find((dataElementsMatchedObj) => dataElementsMatchedObj.origId === dataValue.dataElement)?.destId;
-                        data2.dataElement = destId;
-                        delete data2.lastUpdated;
-                        return data2;
+                        data.dataElement = destId;
+                        data.dataSet = approvalDataSetId;
+                        delete data.lastUpdated;
+
+                        return data.dataElement ? data : {};
                     })
                     return data;
                 }).flat();
 
+                dataValues.push({
+                    dataSet: approvalDataSetId,
+                    period: dataValues[0].period,
+                    orgUnit: dataValues[0].orgUnit,
+                    dataElement: "VqcXVXTPaZG",
+                    categoryOptionCombo: "Xr12mI7VPn3",
+                    value: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+                })
+
                 return this.api.post<any>(
                     "/dataValueSets.json",
                     {},
-                    { dataValues }
+                    { dataValues: _.reject(dataValues, _.isEmpty) }
                 ).getData()
             });
 
-            return _.every(copyResponse, item => item.status !== "ERROR");
+            return _.every(copyResponse, item => item.status === "SUCCESS");
         } catch (error: any) {
             return false;
         }
