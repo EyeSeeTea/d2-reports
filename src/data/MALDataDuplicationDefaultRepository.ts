@@ -1,5 +1,5 @@
 import _ from "lodash";
-import moment from "moment";
+import { format } from 'date-fns'
 import {
     DataDuplicationItem,
     DataDuplicationItemIdentifier,
@@ -51,7 +51,6 @@ interface Variables {
     periods: string;
     completed: string;
     approved: string;
-    duplicated: string;
     orderByColumn: SqlField;
     orderByDirection: "asc" | "desc";
 }
@@ -85,9 +84,9 @@ type SqlField =
     | "approvalworkflow"
     | "completed"
     | "validated"
-    | "duplicated"
     | "lastupdatedvalue"
-    | "lastdateofsubmission";
+    | "lastdateofsubmission"
+    | "lastdateofapproval";
 
 const fieldMapping: Record<keyof DataDuplicationItem, SqlField> = {
     dataSetUid: "datasetuid",
@@ -100,9 +99,9 @@ const fieldMapping: Record<keyof DataDuplicationItem, SqlField> = {
     approvalWorkflow: "approvalworkflow",
     completed: "completed",
     validated: "validated",
-    duplicated: "duplicated",
     lastUpdatedValue: "lastupdatedvalue",
     lastDateOfSubmission: "lastdateofsubmission",
+    lastDateOfApproval: "lastdateofapproval"
 };
 
 export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRepository {
@@ -140,7 +139,6 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                     dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
                     completed: options.completionStatus === undefined ? "-" : options.completionStatus.toString(),
                     approved: options.approvalStatus === undefined ? "-" : options.approvalStatus.toString(),
-                    duplicated: options.duplicationStatus === undefined ? "-" : options.duplicationStatus.toString(),
                     orderByColumn: fieldMapping[sorting.field],
                     orderByDirection: sorting.direction,
                 },
@@ -198,7 +196,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                 orgUnit: ds.orgUnit,
                 dataElement: "QlXqA11tA0y",
                 categoryOptionCombo: "Xr12mI7VPn3",
-                value: moment(new Date()).format("YYYY-MM-DDTHH:MM"),
+                value: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
             }));
 
             const dateResponse = await this.api.post<any>("/dataValueSets.json", {}, { dataValues }).getData();
@@ -250,6 +248,18 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
     async duplicate(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean> {
         try {
             const approvalDataSetId = process.env.REACT_APP_APPROVE_DATASET_ID ?? "fRrt4V8ImqD";
+
+            const dataValues = dataSets.map(ds => ({
+                dataSet: approvalDataSetId,
+                period: ds.period,
+                orgUnit: ds.orgUnit,
+                dataElement: "VqcXVXTPaZG",
+                categoryOptionCombo: "Xr12mI7VPn3",
+                value: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+            }));
+
+            const dateResponse = await this.api.post<any>("/dataValueSets.json", {}, { dataValues }).getData();
+            if (dateResponse.status !== "SUCCESS") throw new Error('Error when posting approval date');
 
             const DSDataElements = await promiseMap(dataSets, async approval =>
                 this.api
@@ -381,7 +391,7 @@ function mergeHeadersAndData(
     headers: SqlViewGetData<SqlFieldHeaders>["rows"],
     data: SqlViewGetData<SqlField>["rows"]
 ) {
-    const { sorting, paging, orgUnitIds, periods, approvalStatus, completionStatus, duplicationStatus } = options; // ?
+    const { sorting, paging, orgUnitIds, periods, approvalStatus, completionStatus } = options; // ?
     const activePeriods = periods.length > 0 ? periods : selectablePeriods;
     const rows: Array<DataDuplicationItem> = [];
 
@@ -406,9 +416,9 @@ function mergeHeadersAndData(
                 approvalWorkflowUid: datavalue?.approvalworkflowuid,
                 completed: Boolean(datavalue?.completed),
                 validated: Boolean(datavalue?.validated),
-                duplicated: Boolean(datavalue?.duplicated),
                 lastUpdatedValue: datavalue?.lastupdatedvalue,
                 lastDateOfSubmission: datavalue?.lastdateofsubmission,
+                lastDateOfApproval: datavalue?.lastdateofapproval,
             };
             rows.push(row);
         }
@@ -424,7 +434,6 @@ function mergeHeadersAndData(
         return (
             (approvalStatus === undefined || approvalStatus === row.validated) &&
             (completionStatus === undefined || completionStatus === row.completed) &&
-            (duplicationStatus === undefined || duplicationStatus === row.duplicated) &&
             (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)
         );
     });

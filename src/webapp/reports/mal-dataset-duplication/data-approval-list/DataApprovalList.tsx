@@ -12,7 +12,7 @@ import DoneIcon from "@material-ui/icons/Done";
 import DoneAllIcon from "@material-ui/icons/DoneAll";
 import RemoveIcon from "@material-ui/icons/Remove";
 import _ from "lodash";
-import moment from "moment";
+import { format } from 'date-fns';
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { sortByName } from "../../../../domain/common/entities/Base";
 import { Config } from "../../../../domain/common/entities/Config";
@@ -73,24 +73,24 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     sortable: true,
                     getValue: row => (!row.lastUpdatedValue ? "Not Started" : row.validated ? "Submitted" : row.completed ? "Ready for submission" : "Not completed"),
                 },
-                {
-                    name: "duplicated",
-                    text: i18n.t("Approval status"),
-                    sortable: true,
-                    getValue: row => (row.duplicated ? "Approved" : "Ready for approval"),
-                },
                 { 
                     name: "lastUpdatedValue",
                     text: i18n.t("Last modification date"),
                     sortable: true,
-                    getValue: row => ((typeof row.lastUpdatedValue !== 'undefined') ? moment(row.lastUpdatedValue).format("YYYY-MM-DD HH:MM:SS") : "No data"),
+                    getValue: row => (row.lastUpdatedValue ? format(row.lastUpdatedValue, "yyyy-MM-dd' 'HH:mm:ss") : "No data"),
                 },
                 { 
                     name: "lastDateOfSubmission",
                     text: i18n.t("Last date of submission"),
                     sortable: true,
-                    getValue: row => ((typeof row.lastDateOfSubmission !== 'undefined') ? moment(row.lastUpdatedValue).format("YYYY-MM-DD HH:MM:SS") : "Never submitted"),
-                 },
+                    getValue: row => (row.lastDateOfSubmission ? format(row.lastDateOfSubmission, "yyyy-MM-dd' 'HH:mm:ss") : "Never submitted"),
+                },
+                { 
+                    name: "lastDateOfApproval",
+                    text: i18n.t("Last date of approval"),
+                    sortable: true,
+                    getValue: row => (row.lastDateOfApproval ? format(row.lastDateOfApproval, "yyyy-MM-dd' 'HH:mm:ss") : "Never approved"),
+                },
             ],
             actions: [
                 {
@@ -171,7 +171,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.duplicated === false) && isMalAdmin,
+                    isActive: () => isMalAdmin,
                 },
             ],
             initialSorting: {
