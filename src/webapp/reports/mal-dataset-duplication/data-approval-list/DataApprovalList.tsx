@@ -77,13 +77,13 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     name: "lastUpdatedValue",
                     text: i18n.t("Last modification date"),
                     sortable: true,
-                    getValue: row => (row.lastUpdatedValue ? row.lastUpdatedValue.toLocaleString('en-GB' , { hour12: false }) : "No data"),
+                    getValue: row => (row.lastUpdatedValue ? format(row.lastUpdatedValue, "yyyy-MM-dd' 'HH:mm:ss") : "No data"),
                 },
                 { 
                     name: "lastDateOfSubmission",
                     text: i18n.t("Last date of submission"),
                     sortable: true,
-                    getValue: row => (row.lastDateOfSubmission ? row.lastDateOfSubmission.toLocaleString('en-GB' , { hour12: false }) : "Never submitted"),
+                    getValue: row => (row.lastDateOfSubmission ? format(row.lastDateOfSubmission, "yyyy-MM-dd' 'HH:mm:ss") : "Never submitted"),
                 },
                 { 
                     name: "lastDateOfApproval",
