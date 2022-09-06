@@ -30,6 +30,7 @@ import { useReload } from "../../../utils/use-reload";
 import { DataApprovalViewModel, getDataApprovalViews } from "../DataApprovalViewModel";
 import { DataSetsFilter, Filters } from "./Filters";
 import { DataDifferencesList } from "../DataDifferencesList";
+import { PlaylistAddCheck, ThumbUp } from "@material-ui/icons";
 
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
@@ -173,7 +174,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 {
                     name: "approve",
                     text: i18n.t("Approve"),
-                    icon: <DoneAllIcon />,
+                    icon: <ThumbUp />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
                         const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
@@ -189,7 +190,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 {
                     name: "getDiff",
                     text: i18n.t("Check Difference"),
-                    icon: <DoneIcon />,
+                    icon: <PlaylistAddCheck />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
                         openDialog();
