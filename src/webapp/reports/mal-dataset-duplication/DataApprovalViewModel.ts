@@ -16,9 +16,9 @@ export interface DataApprovalViewModel {
     approvalWorkflow: string;
     completed: boolean;
     validated: boolean;
-    duplicated: boolean;
     lastUpdatedValue: Date | undefined;
     lastDateOfSubmission: Date | undefined;
+    lastDateOfApproval: Date | undefined;
 }
 
 export function getDataApprovalViews(_config: Config, items: DataDuplicationItem[]): DataApprovalViewModel[] {
@@ -30,14 +30,14 @@ export function getDataApprovalViews(_config: Config, items: DataDuplicationItem
             orgUnitUid: item.orgUnitUid,
             orgUnit: item.orgUnit,
             period: item.period,
-            attribute: item.attribute??"-",
-            approvalWorkflowUid: item.approvalWorkflowUid??"-",
-            approvalWorkflow: item.approvalWorkflow??"-",
+            attribute: item.attribute ?? "-",
+            approvalWorkflowUid: item.approvalWorkflowUid ?? "-",
+            approvalWorkflow: item.approvalWorkflow ?? "-",
             completed: item.completed,
             validated: item.validated,
-            duplicated: item.duplicated,
-            lastUpdatedValue: item.lastUpdatedValue? new Date(item.lastUpdatedValue): undefined,
+            lastUpdatedValue: item.lastUpdatedValue ? new Date(item.lastUpdatedValue) : undefined,
             lastDateOfSubmission: item.lastDateOfSubmission ? new Date(item.lastDateOfSubmission) : undefined,
+            lastDateOfApproval: item.lastDateOfApproval ? new Date(item.lastDateOfApproval) : undefined,
         };
     });
 }

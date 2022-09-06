@@ -25,6 +25,5 @@ export interface MALDataDuplicationRepositoryGetOptions {
     orgUnitIds: Id[];
     dataSetIds: Id[];
     approvalStatus?: boolean;
-    duplicationStatus?: boolean;
     completionStatus?: boolean;
 }

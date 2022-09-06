@@ -12,6 +12,7 @@ import DoneIcon from "@material-ui/icons/Done";
 import DoneAllIcon from "@material-ui/icons/DoneAll";
 import RemoveIcon from "@material-ui/icons/Remove";
 import _ from "lodash";
+import { format } from "date-fns";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { sortByName } from "../../../../domain/common/entities/Base";
 import { Config } from "../../../../domain/common/entities/Config";
@@ -79,13 +80,30 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         row.validated ? "Submitted" : row.completed ? "Ready for submission" : "Not completed",
                 },
                 {
-                    name: "duplicated",
-                    text: i18n.t("Approval status"),
+                    name: "lastUpdatedValue",
+                    text: i18n.t("Last modification date"),
                     sortable: true,
-                    getValue: row => (row.duplicated ? "Approved" : "Ready for approval"),
+                    getValue: row =>
+                        row.lastUpdatedValue ? format(row.lastUpdatedValue, "yyyy-MM-dd' 'HH:mm:ss") : "No data",
                 },
-                { name: "lastUpdatedValue", text: i18n.t("Last modification date"), sortable: true },
-                { name: "lastDateOfSubmission", text: i18n.t("Last date of submission"), sortable: true },
+                {
+                    name: "lastDateOfSubmission",
+                    text: i18n.t("Last date of submission"),
+                    sortable: true,
+                    getValue: row =>
+                        row.lastDateOfSubmission
+                            ? format(row.lastDateOfSubmission, "yyyy-MM-dd' 'HH:mm:ss")
+                            : "Never submitted",
+                },
+                {
+                    name: "lastDateOfApproval",
+                    text: i18n.t("Last date of approval"),
+                    sortable: true,
+                    getValue: row =>
+                        row.lastDateOfApproval
+                            ? format(row.lastDateOfApproval, "yyyy-MM-dd' 'HH:mm:ss")
+                            : "Never approved",
+                },
             ],
             actions: [
                 {
@@ -138,7 +156,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 },
                 {
                     name: "unapprove",
-                    text: i18n.t("Unapprove"),
+                    text: i18n.t("Revoke"),
                     icon: <ClearAllIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
@@ -166,7 +184,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.duplicated === false) && isMalAdmin,
+                    isActive: () => isMalAdmin,
                 },
                 {
                     name: "getDiff",
@@ -177,11 +195,11 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         openDialog();
                         setSelected(selectedIds);
                     },
-                    isActive: rows => _.every(rows, row => row.duplicated === false) && (isMalApprover || isMalAdmin),
+                    isActive: () => isMalApprover || isMalAdmin,
                 },
             ],
             initialSorting: {
-                field: "dataSet" as const,
+                field: "orgUnit" as const,
                 order: "asc" as const,
             },
             paginationOptions: {
