@@ -9,9 +9,9 @@ export interface DataDuplicationItem {
     approvalWorkflow: string | undefined;
     completed: boolean;
     validated: boolean;
-    duplicated: boolean;
     lastUpdatedValue: string | undefined;
     lastDateOfSubmission: string | undefined;
+    lastDateOfApproval: string | undefined;
 }
 
 export interface DataDuplicationItemIdentifier {
