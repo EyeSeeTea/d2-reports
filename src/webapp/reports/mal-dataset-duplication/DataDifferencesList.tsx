@@ -28,9 +28,8 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
     const baseConfig: TableConfig<DataDiffViewModel> = useMemo(
         () => ({
             columns: [
-                { name: "dataelement", text: i18n.t("Data Element"), sortable: false },
+                { name: "dataelement", text: i18n.t("Data Element"), sortable: true },
                 { name: "value", text: i18n.t("Value entered"), sortable: false },
-                { name: "apvddataelement", text: i18n.t("Approved data element"), sortable: false },
                 { name: "apvdvalue", text: i18n.t("Approved value"), sortable: false },
             ],
             actions: [],
