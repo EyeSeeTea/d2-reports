@@ -1,13 +1,31 @@
-import { ObjectsList, TableColumn, TableConfig } from "@eyeseetea/d2-ui-components";
-import React, { useCallback, useMemo } from "react";
+import {
+    ObjectsList,
+    TableColumn,
+    TableConfig,
+    TablePagination,
+    TableSorting,
+    useObjectsTable,
+    useSnackbar,
+} from "@eyeseetea/d2-ui-components";
+import _ from "lodash";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { parseDataDiffItemId } from "../../../domain/mal-dataset-duplication/entities/DataDiffItem";
 import i18n from "../../../locales";
 import { useAppContext } from "../../contexts/app-context";
+import { getSortingFromTableSorting } from "./data-approval-list/DataApprovalList";
+import { DataApprovalViewModel } from "./DataApprovalViewModel";
+import { DataDiffViewModel, getDataADiffViews } from "./DataDiffViewModel";
 
-import { DataDiffViewModel } from "./DataDiffViewModel";
+interface DataDifferencesListProps {
+    selectedIds: string[];
+}
 
-export const DataDifferencesList: React.FC = React.memo(() => {
-    const { compositionRoot } = useAppContext();
-    const _baseConfig: TableConfig<DataDiffViewModel> = useMemo(
+export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ selectedIds }) => {
+    const { compositionRoot, config } = useAppContext();
+    const [visibleColumns, setVisibleColumns] = useState<string[]>();
+    const snackbar = useSnackbar();
+
+    const baseConfig: TableConfig<DataDiffViewModel> = useMemo(
         () => ({
             columns: [
                 { name: "dataelement", text: i18n.t("Data Element"), sortable: false },
@@ -28,6 +46,30 @@ export const DataDifferencesList: React.FC = React.memo(() => {
         []
     );
 
+    const getRows = useMemo(
+        () => async (_search: string, paging: TablePagination, sorting: TableSorting<DataApprovalViewModel>) => {
+            const items = _.compact(selectedIds.map(item => parseDataDiffItemId(item)));
+            if (items.length === 0) return;
+
+            const { pager, objects } = await compositionRoot.dataDuplicate.getDiff({
+                config,
+                paging: { page: paging.page, pageSize: paging.pageSize },
+                sorting: getSortingFromTableSorting(sorting),
+                periods: items.map(item => item.period),
+                orgUnitIds: items.map(item => item.orgUnit),
+                dataSetIds: items.map(item => item.dataSet),
+            });
+
+            if (!pager || !objects) snackbar.error(i18n.t("Error when trying to check difference in data values"));
+
+            return { pager, objects: getDataADiffViews(config, objects) };
+        },
+        [compositionRoot.dataDuplicate, config, selectedIds, snackbar]
+    );
+
+    // @ts-ignore
+    const tableProps = useObjectsTable(baseConfig, getRows);
+
     const saveReorderedColumns = useCallback(
         async (columnKeys: Array<keyof DataDiffViewModel>) => {
             await compositionRoot.dataDuplicate.saveColumns(columnKeys);
@@ -35,123 +77,25 @@ export const DataDifferencesList: React.FC = React.memo(() => {
         [compositionRoot]
     );
 
-    const columnsToShow: TableColumn<DataDiffViewModel>[] = [
-        {
-            name: "dataelement",
-            text: "Data Element",
-            sortable: true,
-            hidden: false,
-        },
-        {
-            name: "apvddataelement",
-            text: "Approved data element",
-            sortable: true,
-            hidden: false,
-        },
-        {
-            name: "value",
-            text: "Original value",
-            sortable: false,
-            hidden: false,
-        },
-        {
-            name: "apvdvalue",
-            text: "APVD value",
-            sortable: false,
-            hidden: false,
-        },
-    ];
+    const columnsToShow = useMemo<TableColumn<DataDiffViewModel>[]>(() => {
+        if (!visibleColumns || _.isEmpty(visibleColumns)) return tableProps.columns;
 
-    const tableProps = {
-        actions: [],
-        columnsToShow: [
-            {
-                name: "dataelement",
-                text: "Data Element",
-                sortable: true,
-            },
-            {
-                name: "apvddataelement",
-                text: "Approved data element",
-                sortable: true,
-            },
-            {
-                name: "value",
-                text: "Original value",
-                sortable: false,
-            },
-            {
-                name: "apvdvalue",
-                text: "APVD value",
-                sortable: false,
-            },
-        ],
-        ids: undefined,
-        initialSorting: {
-            field: "dataSet",
-            order: "asc",
-        },
-        isLoading: false,
-        onChange: undefined,
-        pagination: {
-            page: 1,
-            pageSize: 10,
-            total: 900,
-            pageCount: 90,
-        },
-        paginationOptions: {
-            pageSizeOptions: [10, 20, 50],
-            pageSizeInitialValue: 10,
-        },
-        reload: undefined,
-        rows: [
-            {
-                datasetuid: "PWCUb3Se1Ie",
-                orgunituid: "av3fkpFxEXj",
-                period: "2012",
-                value: "2022-09-02T13:09",
-                apvdvalue: null,
-                dataelement: "MAL - Submission date",
-                apvddataelement: null,
-            },
-            {
-                datasetuid: "PWCUb3Se1Ie",
-                orgunituid: "av3fkpFxEXj",
-                period: "2012",
-                value: "No",
-                apvdvalue: null,
-                dataelement: "MAL - ACD for mass screening (including non-febrile) - policy implemented this year",
-                apvddataelement:
-                    "MAL - ACD for mass screening (including non-febrile) - policy implemented this year-APVD",
-            },
-            {
-                datasetuid: "PWCUb3Se1Ie",
-                orgunituid: "av3fkpFxEXj",
-                period: "2012",
-                value: "Yes",
-                apvdvalue: null,
-                dataelement:
-                    "MAL - ACD in response to passively detected case (reactive) - policy implemented this year",
-                apvddataelement:
-                    "MAL - ACD in response to passively detected case (reactive) - policy implemented this year-APVD",
-            },
-            {
-                datasetuid: "PWCUb3Se1Ie",
-                orgunituid: "av3fkpFxEXj",
-                period: "2012",
-                value: "Yes",
-                apvdvalue: null,
-                dataelement:
-                    "MAL - ACD of febrile cases at community level (pro-active) - policy implemented this year",
-                apvddataelement:
-                    "MAL - ACD of febrile cases at community level (pro-active) - policy implemented this year-APVD",
-            },
-        ],
-        searchBoxLabel: "",
-    };
+        const indexes = _(visibleColumns)
+            .map((columnName, idx) => [columnName, idx] as [string, number])
+            .fromPairs()
+            .value();
+
+        return _(tableProps.columns)
+            .map(column => ({ ...column, hidden: !visibleColumns.includes(column.name) }))
+            .sortBy(column => indexes[column.name] || 0)
+            .value();
+    }, [tableProps.columns, visibleColumns]);
+
+    useEffect(() => {
+        compositionRoot.dataDuplicate.getColumns().then(columns => setVisibleColumns(columns));
+    }, [compositionRoot]);
 
     return (
-        // @ts-ignore
         <ObjectsList<DataDiffViewModel>
             {...tableProps}
             columns={columnsToShow}
@@ -159,4 +103,4 @@ export const DataDifferencesList: React.FC = React.memo(() => {
             onReorderColumns={saveReorderedColumns}
         ></ObjectsList>
     );
-});
+};
