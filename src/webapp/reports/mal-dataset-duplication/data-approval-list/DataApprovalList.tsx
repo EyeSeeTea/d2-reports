@@ -220,9 +220,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 ...getUseCaseOptions(filters, selectablePeriods),
             });
 
-            setFilters(filters);
             console.debug("Reloading", reloadKey);
-
             return { pager, objects: getDataApprovalViews(config, objects) };
         },
         [config, compositionRoot, filters, reloadKey, selectablePeriods]
