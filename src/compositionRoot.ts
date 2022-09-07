@@ -21,6 +21,7 @@ import { GetDataSetsDuplicationUseCase } from "./domain/mal-dataset-duplication/
 import { SaveApprovalAndDuplicateColumnsUseCase } from "./domain/mal-dataset-duplication/usecases/SaveApprovalDuplicateColumnsUseCase";
 import { SaveDataSetsDuplicationUseCase } from "./domain/mal-dataset-duplication/usecases/SaveDataSetsDuplicationUseCase";
 import { D2Api } from "./types/d2-api";
+import { GetDataDiffUseCase } from "./domain/mal-dataset-duplication/usecases/GetDataDiffUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api);
@@ -48,6 +49,7 @@ export function getCompositionRoot(api: D2Api) {
         }),
         dataDuplicate: getExecute({
             get: new GetDataSetsDuplicationUseCase(dataDuplicationRepository),
+            getDiff: new GetDataDiffUseCase(dataDuplicationRepository),
             save: new SaveDataSetsDuplicationUseCase(dataDuplicationRepository),
             getColumns: new GetApprovalAndDuplicateColumnsUseCase(dataDuplicationRepository),
             saveColumns: new SaveApprovalAndDuplicateColumnsUseCase(dataDuplicationRepository),

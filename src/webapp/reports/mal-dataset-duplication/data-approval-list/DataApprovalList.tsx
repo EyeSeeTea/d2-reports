@@ -12,7 +12,7 @@ import DoneIcon from "@material-ui/icons/Done";
 import DoneAllIcon from "@material-ui/icons/DoneAll";
 import RemoveIcon from "@material-ui/icons/Remove";
 import _ from "lodash";
-import moment from "moment";
+import { format } from "date-fns";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { sortByName } from "../../../../domain/common/entities/Base";
 import { Config } from "../../../../domain/common/entities/Config";
@@ -24,13 +24,18 @@ import {
 } from "../../../../domain/mal-dataset-duplication/entities/DataDuplicationItem";
 import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
+import { ConfirmationDialog } from "@eyeseetea/d2-ui-components";
+import { useBooleanState } from "../../../utils/use-boolean";
 import { useReload } from "../../../utils/use-reload";
 import { DataApprovalViewModel, getDataApprovalViews } from "../DataApprovalViewModel";
 import { DataSetsFilter, Filters } from "./Filters";
+import { DataDifferencesList } from "../DataDifferencesList";
+import { PlaylistAddCheck, ThumbUp } from "@material-ui/icons";
 
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
     const { currentUser } = config;
+    const [isDialogOpen, { enable: openDialog, disable: closeDialog }] = useBooleanState(false);
     const snackbar = useSnackbar();
 
     const isMalApprover =
@@ -46,6 +51,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
         ).length > 0;
 
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
+    const [selected, setSelected] = useState<string[]>([""]);
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [reloadKey, reload] = useReload();
 
@@ -71,26 +77,34 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     name: "validated",
                     text: i18n.t("Submission status"),
                     sortable: true,
-                    getValue: row => (!row.lastUpdatedValue ? "Not Started" : row.validated ? "Submitted" : row.completed ? "Ready for submission" : "Not completed"),
+                    getValue: row =>
+                        row.validated ? "Submitted" : row.completed ? "Ready for submission" : "Not completed",
                 },
                 {
-                    name: "duplicated",
-                    text: i18n.t("Approval status"),
-                    sortable: true,
-                    getValue: row => (row.duplicated ? "Approved" : "Ready for approval"),
-                },
-                { 
                     name: "lastUpdatedValue",
                     text: i18n.t("Last modification date"),
                     sortable: true,
-                    getValue: row => ((typeof row.lastUpdatedValue !== 'undefined') ? moment(row.lastUpdatedValue).format("YYYY-MM-DD HH:MM:SS") : "No data"),
+                    getValue: row =>
+                        row.lastUpdatedValue ? format(row.lastUpdatedValue, "yyyy-MM-dd' 'HH:mm:ss") : "No data",
                 },
-                { 
+                {
                     name: "lastDateOfSubmission",
                     text: i18n.t("Last date of submission"),
                     sortable: true,
-                    getValue: row => ((typeof row.lastDateOfSubmission !== 'undefined') ? moment(row.lastUpdatedValue).format("YYYY-MM-DD HH:MM:SS") : "Never submitted"),
-                 },
+                    getValue: row =>
+                        row.lastDateOfSubmission
+                            ? format(row.lastDateOfSubmission, "yyyy-MM-dd' 'HH:mm:ss")
+                            : "Never submitted",
+                },
+                {
+                    name: "lastDateOfApproval",
+                    text: i18n.t("Last date of approval"),
+                    sortable: true,
+                    getValue: row =>
+                        row.lastDateOfApproval
+                            ? format(row.lastDateOfApproval, "yyyy-MM-dd' 'HH:mm:ss")
+                            : "Never approved",
+                },
             ],
             actions: [
                 {
@@ -160,7 +174,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 {
                     name: "approve",
                     text: i18n.t("Approve"),
-                    icon: <DoneAllIcon />,
+                    icon: <ThumbUp />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
                         const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
@@ -171,11 +185,22 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.duplicated === false) && isMalAdmin,
+                    isActive: () => isMalAdmin,
+                },
+                {
+                    name: "getDiff",
+                    text: i18n.t("Check Difference"),
+                    icon: <PlaylistAddCheck />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        openDialog();
+                        setSelected(selectedIds);
+                    },
+                    isActive: () => isMalApprover || isMalAdmin,
                 },
             ],
             initialSorting: {
-                field: "dataSet" as const,
+                field: "orgUnit" as const,
                 order: "asc" as const,
             },
             paginationOptions: {
@@ -183,7 +208,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot.dataDuplicate, isMalAdmin, isMalApprover, reload, snackbar]
+        [compositionRoot.dataDuplicate, isMalAdmin, isMalApprover, openDialog, reload, snackbar]
     );
 
     const getRows = useMemo(
@@ -196,7 +221,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
             });
 
             console.debug("Reloading", reloadKey);
-
             return { pager, objects: getDataApprovalViews(config, objects) };
         },
         [config, compositionRoot, filters, reloadKey, selectablePeriods]
@@ -248,18 +272,30 @@ export const DataApprovalList: React.FC = React.memo(() => {
     }, [compositionRoot]);
 
     return (
-        <ObjectsList<DataApprovalViewModel>
-            {...tableProps}
-            columns={columnsToShow}
-            onChangeSearch={undefined}
-            onReorderColumns={saveReorderedColumns}
-        >
-            <Filters values={filters} options={filterOptions} onChange={setFilters} />
-        </ObjectsList>
+        <React.Fragment>
+            <ObjectsList<DataApprovalViewModel>
+                {...tableProps}
+                columns={columnsToShow}
+                onChangeSearch={undefined}
+                onReorderColumns={saveReorderedColumns}
+            >
+                <Filters values={filters} options={filterOptions} onChange={setFilters} />
+            </ObjectsList>
+            <ConfirmationDialog
+                isOpen={isDialogOpen}
+                title={i18n.t("Check differences")}
+                onCancel={closeDialog}
+                cancelText={i18n.t("Close")}
+                maxWidth="md"
+                fullWidth
+            >
+                <DataDifferencesList selectedIds={selected} />
+            </ConfirmationDialog>
+        </React.Fragment>
     );
 });
 
-function getSortingFromTableSorting(sorting: TableSorting<DataApprovalViewModel>): Sorting<DataDuplicationItem> {
+export function getSortingFromTableSorting(sorting: TableSorting<DataApprovalViewModel>): Sorting<DataDuplicationItem> {
     return {
         field: sorting.field === "id" ? "period" : sorting.field,
         direction: sorting.order,

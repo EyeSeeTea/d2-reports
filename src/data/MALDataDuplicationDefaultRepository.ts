@@ -1,5 +1,6 @@
 import _ from "lodash";
-import moment from "moment";
+import { format } from 'date-fns'
+import { DataDiffItem } from "../domain/mal-dataset-duplication/entities/DataDiffItem";
 import {
     DataDuplicationItem,
     DataDuplicationItemIdentifier,
@@ -51,9 +52,14 @@ interface Variables {
     periods: string;
     completed: string;
     approved: string;
-    duplicated: string;
     orderByColumn: SqlField;
     orderByDirection: "asc" | "desc";
+}
+
+interface VariablesDiff {
+    dataSets: string;
+    orgUnits: string;
+    periods: string;
 }
 
 type SqlFieldHeaders = "datasetuid" | "dataset" | "orgunituid" | "orgunit";
@@ -61,18 +67,29 @@ type SqlFieldHeaders = "datasetuid" | "dataset" | "orgunituid" | "orgunit";
 type completeDataSetRegistrationsType = {
     completeDataSetRegistrations: [
         {
-            period?: string,
-            dataSet?: string,
-            organisationUnit?: string,
-            attributeOptionCombo?: string,
-            date?: string,
-            storedBy?: string,
-            completed?: boolean,
+            period?: string;
+            dataSet?: string;
+            organisationUnit?: string;
+            attributeOptionCombo?: string;
+            date?: string;
+            storedBy?: string;
+            completed?: boolean;
         }
-    ]
-}
+    ];
+};
 
-type completeCheckresponseType = completeDataSetRegistrationsType[]
+type completeCheckresponseType = completeDataSetRegistrationsType[];
+
+type SqlFieldDiff =
+    | "datasetuid"
+    | "dataset"
+    | "orgunituid"
+    | "orgunit"
+    | "period"
+    | "value"
+    | "apvdvalue"
+    | "dataelement"
+    | "apvddataelement";
 
 type SqlField =
     | "datasetuid"
@@ -85,9 +102,9 @@ type SqlField =
     | "approvalworkflow"
     | "completed"
     | "validated"
-    | "duplicated"
     | "lastupdatedvalue"
-    | "lastdateofsubmission";
+    | "lastdateofsubmission"
+    | "lastdateofapproval";
 
 const fieldMapping: Record<keyof DataDuplicationItem, SqlField> = {
     dataSetUid: "datasetuid",
@@ -100,9 +117,9 @@ const fieldMapping: Record<keyof DataDuplicationItem, SqlField> = {
     approvalWorkflow: "approvalworkflow",
     completed: "completed",
     validated: "validated",
-    duplicated: "duplicated",
     lastUpdatedValue: "lastupdatedvalue",
     lastDateOfSubmission: "lastdateofsubmission",
+    lastDateOfApproval: "lastdateofapproval"
 };
 
 export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRepository {
@@ -111,6 +128,40 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
     constructor(private api: D2Api) {
         const instance = new Instance({ url: this.api.baseUrl });
         this.storageClient = new DataStoreStorageClient("user", instance);
+    }
+
+    async getDiff(options: MALDataDuplicationRepositoryGetOptions): Promise<PaginatedObjects<DataDiffItem>> {
+        const { config } = options; // ?
+        const { dataSetIds, orgUnitIds, periods } = options; // ?
+
+        const allDataSetIds = _.values(config.dataSets).map(ds => ds.id); // ?
+        const sqlViews = new Dhis2SqlViews(this.api);
+        const paging_to_download = { page: 1, pageSize: 10000 };
+        const { rows } = await sqlViews
+            .query<VariablesDiff, SqlFieldDiff>(
+                config.dataMalDiffSqlView.id,
+                {
+                    orgUnits: sqlViewJoinIds(orgUnitIds),
+                    periods: sqlViewJoinIds(periods),
+                    dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
+                },
+                paging_to_download
+            )
+            .getData();
+
+        const items: Array<DataDiffItem> = rows.map(
+            (item): DataDiffItem => ({
+                datasetuid: item.datasetuid,
+                orgunituid: item.orgunituid,
+                period: item.period,
+                value: item.value,
+                apvdvalue: item.apvdvalue,
+                dataelement: item.dataelement,
+                apvddataelement: item.apvddataelement,
+            })
+        );
+
+        return paginate(items, paging_to_download);
     }
 
     async get(options: MALDataDuplicationRepositoryGetOptions): Promise<PaginatedObjects<DataDuplicationItem>> {
@@ -140,7 +191,6 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                     dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
                     completed: options.completionStatus === undefined ? "-" : options.completionStatus.toString(),
                     approved: options.approvalStatus === undefined ? "-" : options.approvalStatus.toString(),
-                    duplicated: options.duplicationStatus === undefined ? "-" : options.duplicationStatus.toString(),
                     orderByColumn: fieldMapping[sorting.field],
                     orderByDirection: sorting.direction,
                 },
@@ -198,23 +248,26 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                 orgUnit: ds.orgUnit,
                 dataElement: "QlXqA11tA0y",
                 categoryOptionCombo: "Xr12mI7VPn3",
-                value: moment(new Date()).format("YYYY-MM-DDTHH:MM"),
+                value: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
             }));
 
             const dateResponse = await this.api.post<any>("/dataValueSets.json", {}, { dataValues }).getData();
-            if (dateResponse.status !== "SUCCESS") throw new Error('Error when posting Submission date');
+            if (dateResponse.status !== "SUCCESS") throw new Error("Error when posting Submission date");
 
             let completeCheckResponses: completeCheckresponseType = await promiseMap(dataSets, async approval =>
-                this.api.get<any>(
-                    "/completeDataSetRegistrations",
-                    { dataSet: approval.dataSet, period: approval.period, orgUnit: approval.orgUnit }
-                ).getData()
+                this.api
+                    .get<any>("/completeDataSetRegistrations", {
+                        dataSet: approval.dataSet,
+                        period: approval.period,
+                        orgUnit: approval.orgUnit,
+                    })
+                    .getData()
             );
 
             completeCheckResponses = completeCheckResponses.filter(item => Object.keys(item).length !== 0);
 
-            const dataSetsCompleted = completeCheckResponses.flatMap((completeCheckResponse) => {
-                return completeCheckResponse.completeDataSetRegistrations.map((completeDataSetRegistrations) => {
+            const dataSetsCompleted = completeCheckResponses.flatMap(completeCheckResponse => {
+                return completeCheckResponse.completeDataSetRegistrations.map(completeDataSetRegistrations => {
                     return {
                         dataSet: completeDataSetRegistrations.dataSet,
                         period: completeDataSetRegistrations.period,
@@ -223,13 +276,12 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                 });
             });
 
-            const dataSetsToComplete = _.differenceWith(
-                dataSets,
-                dataSetsCompleted,
-                ((value, othervalue) => _.isEqual(_.omit(value, ['workflow']), othervalue))
+            const dataSetsToComplete = _.differenceWith(dataSets, dataSetsCompleted, (value, othervalue) =>
+                _.isEqual(_.omit(value, ["workflow"]), othervalue)
             );
 
-            const completeResponse = (Object.keys(dataSetsToComplete).length !== 0) ? await this.complete(dataSetsToComplete) : true;
+            const completeResponse =
+                Object.keys(dataSetsToComplete).length !== 0 ? await this.complete(dataSetsToComplete) : true;
 
             const response = await promiseMap(dataSets, async approval =>
                 this.api
@@ -252,36 +304,32 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
             const approvalDataSetId = process.env.REACT_APP_APPROVE_DATASET_ID ?? "fRrt4V8ImqD";
 
             const DSDataElements = await promiseMap(dataSets, async approval =>
-                this.api
-                    .get<any>(
-                        `/dataSets/${approval.dataSet}`,
-                        { fields: "dataSetElements[dataElement[id,name]]" }
-                    )
-                    .getData()
+                this.api.get<any>(
+                    `/dataSets/${approval.dataSet}`,
+                    { fields: "dataSetElements[dataElement[id,name]]" }
+                ).getData()
             );
 
-            const ADSDataElementsRaw = await this.api
-                .get<any>(
-                    `/dataSets/${approvalDataSetId}`,
-                    { fields: "dataSetElements[dataElement[id,name]]" }
-                )
-                .getData();
+            const ADSDataElementsRaw = await this.api.get<any>(
+                `/dataSets/${approvalDataSetId}`,
+                { fields: "dataSetElements[dataElement[id,name]]" }
+            ).getData();
 
-            const ADSDataElements = ADSDataElementsRaw.dataSetElements.map((element: { dataElement: { id: any; name: any; }; }) => {
-                return {
-                    id: element.dataElement.id,
-                    name: element.dataElement.name
-                };
-            });
+            const ADSDataElements = ADSDataElementsRaw.dataSetElements.map(
+                (element: { dataElement: { id: any; name: any } }) => {
+                    return {
+                        id: element.dataElement.id,
+                        name: element.dataElement.name,
+                    };
+                }
+            );
 
             const dataValueSets = await promiseMap(dataSets, async approval =>
-                this.api
-                    .get<any>("/dataValueSets", {
-                        dataSet: approval.dataSet,
-                        period: approval.period,
-                        orgUnit: approval.orgUnit,
-                    })
-                    .getData()
+                this.api.get<any>("/dataValueSets", {
+                    dataSet: approval.dataSet,
+                    period: approval.period,
+                    orgUnit: approval.orgUnit,
+                }).getData()
             );
 
             const copyResponse = await promiseMap(DSDataElements, async DSDataElement => {
@@ -296,24 +344,35 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                 });
 
                 const dataValues = dataValueSets.map((dataValueSet) => {
-                    const data = dataValueSet.dataValues.map((dataValue: { dataElement: any, lastUpdated: any; }) => {
-                        const data2 = { ...dataValue };
+                    const data = dataValueSet.dataValues.map((dataValue: { dataElement: any, lastUpdated: any, dataSet: any; }) => {
+                        const data = { ...dataValue };
                         const destId = dataElementsMatchedArray.find((dataElementsMatchedObj) => dataElementsMatchedObj.origId === dataValue.dataElement)?.destId;
-                        data2.dataElement = destId;
-                        delete data2.lastUpdated;
-                        return data2;
+                        data.dataElement = destId;
+                        data.dataSet = approvalDataSetId;
+                        delete data.lastUpdated;
+
+                        return data.dataElement ? data : {};
                     })
                     return data;
                 }).flat();
 
+                dataValues.push({
+                    dataSet: approvalDataSetId,
+                    period: dataValues[0].period,
+                    orgUnit: dataValues[0].orgUnit,
+                    dataElement: "VqcXVXTPaZG",
+                    categoryOptionCombo: "Xr12mI7VPn3",
+                    value: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+                })
+
                 return this.api.post<any>(
                     "/dataValueSets.json",
                     {},
-                    { dataValues }
+                    { dataValues: _.reject(dataValues, _.isEmpty) }
                 ).getData()
             });
 
-            return _.every(copyResponse, item => item.status !== "ERROR");
+            return _.every(copyResponse, item => item.status === "SUCCESS");
         } catch (error: any) {
             return false;
         }
@@ -381,7 +440,7 @@ function mergeHeadersAndData(
     headers: SqlViewGetData<SqlFieldHeaders>["rows"],
     data: SqlViewGetData<SqlField>["rows"]
 ) {
-    const { sorting, paging, orgUnitIds, periods, approvalStatus, completionStatus, duplicationStatus } = options; // ?
+    const { sorting, paging, orgUnitIds, periods, approvalStatus, completionStatus } = options; // ?
     const activePeriods = periods.length > 0 ? periods : selectablePeriods;
     const rows: Array<DataDuplicationItem> = [];
 
@@ -406,9 +465,9 @@ function mergeHeadersAndData(
                 approvalWorkflowUid: datavalue?.approvalworkflowuid,
                 completed: Boolean(datavalue?.completed),
                 validated: Boolean(datavalue?.validated),
-                duplicated: Boolean(datavalue?.duplicated),
                 lastUpdatedValue: datavalue?.lastupdatedvalue,
                 lastDateOfSubmission: datavalue?.lastdateofsubmission,
+                lastDateOfApproval: datavalue?.lastdateofapproval,
             };
             rows.push(row);
         }
@@ -424,7 +483,6 @@ function mergeHeadersAndData(
         return (
             (approvalStatus === undefined || approvalStatus === row.validated) &&
             (completionStatus === undefined || completionStatus === row.completed) &&
-            (duplicationStatus === undefined || duplicationStatus === row.duplicated) &&
             (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)
         );
     });
