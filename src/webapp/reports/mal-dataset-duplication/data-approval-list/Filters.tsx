@@ -1,16 +1,20 @@
+import { Dropdown, DropdownProps, MultipleDropdownProps } from "@eyeseetea/d2-ui-components";
 import React, { useMemo } from "react";
 import styled from "styled-components";
 import { Id, NamedRef } from "../../../../domain/common/entities/Base";
 import { getRootIds } from "../../../../domain/common/entities/OrgUnit";
 import i18n from "../../../../locales";
 import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
-import { OrgUnitsFilterButton } from "../../../components/org-units-filter/OrgUnitsFilterButton";
+import {
+    OrgUnitsFilterButton,
+    OrgUnitsFilterButtonProps,
+} from "../../../components/org-units-filter/OrgUnitsFilterButton";
 import { useAppContext } from "../../../contexts/app-context";
 
 export interface DataSetsFiltersProps {
     values: DataSetsFilter;
     options: FilterOptions;
-    onChange(newFilters: DataSetsFilter): void;
+    onChange: React.Dispatch<React.SetStateAction<DataSetsFilter>>;
 }
 
 export interface DataSetsFilter {
@@ -34,16 +38,48 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
 
-    const completionStatusItems = useMemoOptionsFromNamedRef([
-        { id: "true", name: "Completed" },
-        { id: "false", name: "Not completed" },
-    ]);
+    const completionStatusItems = React.useMemo(() => {
+        return [
+            { value: "true", text: i18n.t("Completed") },
+            { value: "false", text: i18n.t("Not completed") },
+        ];
+    }, []);
 
-    const approvalStatusItems = useMemoOptionsFromNamedRef([
-        { id: "true", name: "Submitted" },
-        { id: "false", name: "Ready for submission" },
-    ]);
+    const approvalStatusItems = React.useMemo(() => {
+        return [
+            { value: "true", text: i18n.t("Submitted") },
+            { value: "false", text: i18n.t("Ready for submission") },
+        ];
+    }, []);
 
+    const setOrgUnitPaths = React.useCallback<OrgUnitsFilterButtonProps["setSelected"]>(
+        paths => onChange(prev => ({ ...prev, orgUnitPaths: paths })),
+        [onChange]
+    );
+
+    const setDataSetIds = React.useCallback<DropdownHandler>(
+        dataSetIds => onChange(prev => ({ ...prev, dataSetIds })),
+        [onChange]
+    );
+
+    const setPeriods = React.useCallback<DropdownHandler>(
+        periods => onChange(prev => ({ ...prev, periods })),
+        [onChange]
+    );
+
+    const setCompletionStatus = React.useCallback<SingleDropdownHandler>(
+        completionStatus => {
+            onChange(filter => ({ ...filter, completionStatus: toBool(completionStatus) }));
+        },
+        [onChange]
+    );
+
+    const setApprovalStatus = React.useCallback<SingleDropdownHandler>(
+        approvalStatus => {
+            onChange(filter => ({ ...filter, approvalStatus: toBool(approvalStatus) }));
+        },
+        [onChange]
+    );
 
     return (
         <Container>
@@ -51,39 +87,36 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 api={api}
                 rootIds={rootIds}
                 selected={filter.orgUnitPaths}
-                setSelected={paths => onChange({ ...filter, orgUnitPaths: paths })}
+                setSelected={setOrgUnitPaths}
             />
 
-            <Dropdown
+            <DropdownStyled
                 items={dataSetItems}
                 values={filter.dataSetIds}
-                onChange={dataSetIds => onChange({ ...filter, dataSetIds })}
+                onChange={setDataSetIds}
                 label={i18n.t("Data sets")}
             />
 
-            <Dropdown
+            <DropdownStyled
                 items={periodItems}
                 values={filter.periods}
-                onChange={periods => onChange({ ...filter, periods })}
+                onChange={setPeriods}
                 label={i18n.t("Periods")}
             />
 
-            <Dropdown
+            <SingleDropdownStyled
                 items={completionStatusItems}
-                values={fromBool(filter.completionStatus)}
-                onChange={([completionStatus]) => onChange({ ...filter, completionStatus: toBool(completionStatus) })}
+                value={fromBool(filter.completionStatus)}
+                onChange={setCompletionStatus}
                 label={i18n.t("Completion status")}
-                multiple={false}
             />
 
-            <Dropdown
+            <SingleDropdownStyled
                 items={approvalStatusItems}
-                values={fromBool(filter.approvalStatus)}
-                onChange={([approvalStatus]) => onChange({ ...filter, approvalStatus: toBool(approvalStatus) })}
+                value={fromBool(filter.approvalStatus)}
+                onChange={setApprovalStatus}
                 label={i18n.t("Submission status")}
-                multiple={false}
             />
-
         </Container>
     );
 });
@@ -106,14 +139,22 @@ const Container = styled.div`
     flex-wrap: wrap;
 `;
 
-const Dropdown = styled(MultipleDropdown)`
+const DropdownStyled = styled(MultipleDropdown)`
     margin-left: -10px;
+`;
+
+const SingleDropdownStyled = styled(Dropdown)`
+    margin-left: -10px;
+    width: 180px;
 `;
 
 function toBool(s: string | undefined): boolean | undefined {
     return s === undefined ? undefined : s === "true";
 }
 
-function fromBool(value: boolean | undefined): string[] {
-    return value === undefined ? [] : [value.toString()];
+function fromBool(value: boolean | undefined): string | undefined {
+    return value === undefined ? undefined : value.toString();
 }
+
+type DropdownHandler = MultipleDropdownProps["onChange"];
+type SingleDropdownHandler = DropdownProps["onChange"];
