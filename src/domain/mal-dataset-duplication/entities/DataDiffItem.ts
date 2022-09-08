@@ -6,6 +6,8 @@ export interface DataDiffItem {
     apvdvalue: string | undefined;
     dataelement: string | undefined;
     apvddataelement: string | undefined;
+    comment: string | undefined;
+    apvdcomment: string | undefined;
 }
 
 export interface DataDiffItemIdentifier {

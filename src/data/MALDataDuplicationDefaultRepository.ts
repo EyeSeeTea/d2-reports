@@ -89,7 +89,9 @@ type SqlFieldDiff =
     | "value"
     | "apvdvalue"
     | "dataelement"
-    | "apvddataelement";
+    | "apvddataelement"
+    | "comment"
+    | "apvdcomment";
 
 type SqlField =
     | "datasetuid"
@@ -158,6 +160,8 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                 apvdvalue: item.apvdvalue,
                 dataelement: item.dataelement,
                 apvddataelement: item.apvddataelement,
+                comment: item.comment,
+                apvdcomment: item.apvdcomment,
             })
         );
 

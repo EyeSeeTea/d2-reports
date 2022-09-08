@@ -10,6 +10,8 @@ export interface DataDiffViewModel {
     apvdvalue: string | undefined;
     dataelement: string | undefined;
     apvddataelement: string | undefined;
+    comment: string | undefined;
+    apvdcomment: string | undefined;
 }
 
 export function getDataADiffViews(_config: Config, items: DataDiffItem[]): DataDiffViewModel[] {
@@ -23,6 +25,8 @@ export function getDataADiffViews(_config: Config, items: DataDiffItem[]): DataD
             apvdvalue: item.apvdvalue,
             dataelement: item.dataelement,
             apvddataelement: item.apvddataelement,
+            comment: item.comment,
+            apvdcomment: item.apvdcomment,
         };
     });
 }
