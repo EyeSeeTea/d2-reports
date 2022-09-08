@@ -57,7 +57,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
     const selectablePeriods = React.useMemo(() => {
         const currentYear = new Date().getFullYear();
-        return _.range(currentYear - 10, currentYear).map(n => n.toString());
+        return _.range(currentYear - 5, currentYear).map(n => n.toString());
     }, []);
 
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
@@ -220,9 +220,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 ...getUseCaseOptions(filters, selectablePeriods),
             });
 
-            setFilters(filters);
             console.debug("Reloading", reloadKey);
-
             return { pager, objects: getDataApprovalViews(config, objects) };
         },
         [config, compositionRoot, filters, reloadKey, selectablePeriods]
