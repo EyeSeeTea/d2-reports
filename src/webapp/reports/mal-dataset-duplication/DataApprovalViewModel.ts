@@ -3,6 +3,7 @@ import {
     DataDuplicationItem,
     getDataDuplicationItemId,
 } from "../../../domain/mal-dataset-duplication/entities/DataDuplicationItem";
+import { toDate } from 'date-fns-tz';
 
 export interface DataApprovalViewModel {
     id: string;
@@ -35,9 +36,9 @@ export function getDataApprovalViews(_config: Config, items: DataDuplicationItem
             approvalWorkflow: item.approvalWorkflow ?? "-",
             completed: item.completed,
             validated: item.validated,
-            lastUpdatedValue: item.lastUpdatedValue ? new Date(item.lastUpdatedValue) : undefined,
-            lastDateOfSubmission: item.lastDateOfSubmission ? new Date(item.lastDateOfSubmission) : undefined,
-            lastDateOfApproval: item.lastDateOfApproval ? new Date(item.lastDateOfApproval) : undefined,
+            lastUpdatedValue: item.lastUpdatedValue ? toDate(item.lastUpdatedValue, { timeZone: "UTC" }) : undefined,
+            lastDateOfSubmission: item.lastDateOfSubmission ? toDate(item.lastDateOfSubmission, { timeZone: "UTC" }) : undefined,
+            lastDateOfApproval: item.lastDateOfApproval ? toDate(item.lastDateOfApproval, { timeZone: "UTC" }) : undefined,
         };
     });
 }
