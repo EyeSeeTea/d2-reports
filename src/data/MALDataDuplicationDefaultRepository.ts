@@ -106,7 +106,8 @@ type SqlField =
     | "validated"
     | "lastupdatedvalue"
     | "lastdateofsubmission"
-    | "lastdateofapproval";
+    | "lastdateofapproval"
+    | "diff";
 
 const fieldMapping: Record<keyof DataDuplicationItem, SqlField> = {
     dataSetUid: "datasetuid",
@@ -122,6 +123,7 @@ const fieldMapping: Record<keyof DataDuplicationItem, SqlField> = {
     lastUpdatedValue: "lastupdatedvalue",
     lastDateOfSubmission: "lastdateofsubmission",
     lastDateOfApproval: "lastdateofapproval",
+    modificationCount: "diff",
 };
 
 export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRepository {
@@ -480,6 +482,7 @@ function mergeHeadersAndData(
                 lastUpdatedValue: datavalue?.lastupdatedvalue,
                 lastDateOfSubmission: datavalue?.lastdateofsubmission,
                 lastDateOfApproval: datavalue?.lastdateofapproval,
+                modificationCount: datavalue?.diff,
             };
             rows.push(row);
         }

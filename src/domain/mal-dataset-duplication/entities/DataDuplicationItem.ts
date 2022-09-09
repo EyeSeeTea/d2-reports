@@ -12,6 +12,7 @@ export interface DataDuplicationItem {
     lastUpdatedValue: string | undefined;
     lastDateOfSubmission: string | undefined;
     lastDateOfApproval: string | undefined;
+    modificationCount: string | undefined;
 }
 
 export interface DataDuplicationItemIdentifier {
