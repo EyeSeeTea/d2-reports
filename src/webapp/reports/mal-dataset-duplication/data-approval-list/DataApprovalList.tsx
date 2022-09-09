@@ -121,7 +121,10 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.completed === false) && (isMalApprover || isMalAdmin),
+                    isActive: (rows: DataApprovalViewModel[]) => {return _.every(rows, row => row.completed === false 
+                        && row.lastUpdatedValue) 
+                        && (isMalApprover || isMalAdmin)
+                    },
                 },
                 {
                     name: "incomplete",
@@ -153,7 +156,10 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.validated === false) && (isMalApprover || isMalAdmin),
+                    isActive: (rows: DataApprovalViewModel[]) => {return _.every(rows, row => row.validated === false 
+                        && row.lastUpdatedValue) 
+                        && (isMalApprover || isMalAdmin)
+                    },
                 },
                 {
                     name: "unapprove",
@@ -185,7 +191,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: () => isMalAdmin,
+                    isActive: rows => _.every(rows, row => row.lastUpdatedValue) && isMalAdmin,
                 },
                 {
                     name: "getDiff",
@@ -196,7 +202,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         openDialog();
                         setSelected(selectedIds);
                     },
-                    isActive: () => isMalApprover || isMalAdmin,
+                    isActive: rows => _.every(rows, row => row.lastUpdatedValue) && (isMalApprover || isMalAdmin),
                 },
             ],
             initialSorting: {
