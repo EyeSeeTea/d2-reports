@@ -67,6 +67,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 { name: "period", text: i18n.t("Period"), sortable: true },
                 { name: "dataSet", text: i18n.t("Data set"), sortable: true },
                 { name: "attribute", text: i18n.t("Attribute"), sortable: true, hidden: true },
+                { name: "modificationCount", text: i18n.t("Modification Count"), sortable: true },
                 {
                     name: "completed",
                     text: i18n.t("Completion status"),

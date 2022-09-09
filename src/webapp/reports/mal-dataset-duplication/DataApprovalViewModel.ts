@@ -20,6 +20,7 @@ export interface DataApprovalViewModel {
     lastUpdatedValue: Date | undefined;
     lastDateOfSubmission: Date | undefined;
     lastDateOfApproval: Date | undefined;
+    modificationCount: string | undefined;
 }
 
 export function getDataApprovalViews(_config: Config, items: DataDuplicationItem[]): DataApprovalViewModel[] {
@@ -39,6 +40,7 @@ export function getDataApprovalViews(_config: Config, items: DataDuplicationItem
             lastUpdatedValue: item.lastUpdatedValue ? toDate(item.lastUpdatedValue, { timeZone: "UTC" }) : undefined,
             lastDateOfSubmission: item.lastDateOfSubmission ? toDate(item.lastDateOfSubmission, { timeZone: "UTC" }) : undefined,
             lastDateOfApproval: item.lastDateOfApproval ? toDate(item.lastDateOfApproval, { timeZone: "UTC" }) : undefined,
+            modificationCount: item.modificationCount,
         };
     });
 }
