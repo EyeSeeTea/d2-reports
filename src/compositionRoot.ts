@@ -20,6 +20,8 @@ import { GetApprovalAndDuplicateColumnsUseCase } from "./domain/mal-dataset-dupl
 import { GetDataSetsDuplicationUseCase } from "./domain/mal-dataset-duplication/usecases/GetDataSetsDuplicationUseCaseOptions";
 import { SaveApprovalAndDuplicateColumnsUseCase } from "./domain/mal-dataset-duplication/usecases/SaveApprovalDuplicateColumnsUseCase";
 import { SaveDataSetsDuplicationUseCase } from "./domain/mal-dataset-duplication/usecases/SaveDataSetsDuplicationUseCase";
+import { GetSortOrderUseCase } from "./domain/mal-dataset-duplication/usecases/GetSortOrderUseCase";
+import { GenerateSortOrderUseCase } from "./domain/mal-dataset-duplication/usecases/GenerateSortOrderUseCase";
 import { D2Api } from "./types/d2-api";
 import { GetDataDiffUseCase } from "./domain/mal-dataset-duplication/usecases/GetDataDiffUseCase";
 
@@ -54,6 +56,8 @@ export function getCompositionRoot(api: D2Api) {
             getColumns: new GetApprovalAndDuplicateColumnsUseCase(dataDuplicationRepository),
             saveColumns: new SaveApprovalAndDuplicateColumnsUseCase(dataDuplicationRepository),
             updateStatus: new UpdateStatusAndDuplicateUseCase(dataDuplicationRepository),
+            getSortOrder: new GetSortOrderUseCase(dataDuplicationRepository),
+            generateSortOrder: new GenerateSortOrderUseCase(dataDuplicationRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),

@@ -18,6 +18,7 @@ import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
 import { Dhis2SqlViews, SqlViewGetData } from "./Dhis2SqlViews";
 import { Instance } from "./entities/Instance";
 import { downloadFile } from "./utils/download-file";
+import { Namespaces } from "./clients/storage/Namespaces";
 
 export interface Pagination {
     page: number;
@@ -166,7 +167,17 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
             })
         );
 
-        return paginate(items, paging_to_download);
+        const dataElementOrderArray = await this.getSortOrder();
+
+        const sortedItems = items.sort((a, b) => {
+            if (a.dataelement && b.dataelement) {
+                return dataElementOrderArray.indexOf(a.dataelement) - dataElementOrderArray.indexOf(b.dataelement);
+            } else {
+                return 0;
+            }
+        });
+
+        return paginate(sortedItems, paging_to_download);
     }
 
     async get(options: MALDataDuplicationRepositoryGetOptions): Promise<PaginatedObjects<DataDuplicationItem>> {
@@ -431,6 +442,49 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
 
     async saveColumns(namespace: string, columns: string[]): Promise<void> {
         return this.storageClient.saveObject<string[]>(namespace, columns);
+    }
+
+    async getSortOrder(): Promise<string[]> {
+        const sortOrderArray = await this.storageClient.getObject<string[]>(Namespaces.MAL_DIFF_NAMES_SORT_ORDER);
+
+        return sortOrderArray ?? [];
+    }
+
+    async generateSortOrder(): Promise<void> {
+        try {
+            const dataSetData: {
+                dataSetElements: { dataElement: { id: string, name: string } }[],
+                sections: { id: string }[]
+            } = await this.api.get<any>(
+                `/dataSets/PWCUb3Se1Ie`,
+                { fields: "sections,dataSetElements[dataElement[id,name]]" }
+            ).getData();
+
+            const dataSetElements: { id: string, name: string }[] = dataSetData.dataSetElements.map((item) =>
+                (item.dataElement)
+            );
+
+            const sectionsDEs = await promiseMap(dataSetData.sections, async sections => {
+                return this.api.get<any>(
+                    `/sections/${sections.id}`,
+                    { fields: "dataElements" }
+                ).getData()
+            });
+
+            const sectionsDEsIds: { id: string }[] = sectionsDEs.flatMap((item) => {
+                return item.dataElements.map((dataElementId: { id: string }) => {
+                    return dataElementId;
+                })
+            });
+
+            const sortOrderArray: string[] = sectionsDEsIds.map(obj =>
+                Object.assign(obj, dataSetElements.find((obj2) => obj.id === obj2.id))
+            ).map(item => (item.name));
+
+            return this.storageClient.saveObject<string[]>(Namespaces.MAL_DIFF_NAMES_SORT_ORDER, sortOrderArray);
+        } catch (error: any) {
+            console.debug(error);
+        }
     }
 }
 
