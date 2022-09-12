@@ -12,7 +12,6 @@ import {
 import { D2Api, Id, PaginatedObjects } from "../types/d2-api";
 import { promiseMap } from "../utils/promises";
 import { DataStoreStorageClient } from "./clients/storage/DataStoreStorageClient";
-import { Namespaces } from "./clients/storage/Namespaces";
 import { StorageClient } from "./clients/storage/StorageClient";
 import { CsvData } from "./CsvDataSource";
 import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
