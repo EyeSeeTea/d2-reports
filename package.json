@@ -49,7 +49,7 @@
         "start": "react-scripts start",
         "craco-start": "craco start",
         "prebuild": "yarn localize && yarn test",
-        "build-folder": "rm -rf build/ && d2-manifest package.json manifest.webapp && react-scripts build && yarn run manifest && cp -r i18n icon.png build",
+        "build-folder": "REACT_APP_DHIS2_BASE_URL='' REACT_APP_DHIS2_AUTH='' rm -rf build/ && d2-manifest package.json manifest.webapp && react-scripts build && yarn run manifest && cp -r i18n icon.png build",
         "build": "yarn build-folder && rm -f $npm_package_name.zip && cd build && zip --quiet -r ../$npm_package_name.zip *",
         "build-report": "yarn build && gulp build-report",
         "build-nhwa-metadata": "npx ts-node -P tsconfig-cli.json src/scripts/build-nhwa-metadata.ts",
