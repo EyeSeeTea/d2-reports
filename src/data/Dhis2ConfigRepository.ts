@@ -1,61 +1,58 @@
 import _ from "lodash";
 import { keyById, NamedRef } from "../domain/common/entities/Base";
 import { Config } from "../domain/common/entities/Config";
+import { ReportType } from "../domain/common/entities/ReportType";
 import { User } from "../domain/common/entities/User";
 import { ConfigRepository } from "../domain/common/repositories/ConfigRepository";
 import { D2Api, Id } from "../types/d2-api";
+import { getReportType } from "../webapp/utils/reportType";
 
-const SQL_VIEW_DATA_COMMENTS_NAME = "NHWA Data Comments";
-const SQL_VIEW_DATA_APPROVAL_NAME = "NHWA Data Approval Status";
-const SQL_VIEW_DATA_DUPLICATION_NAME = "MAL Data Approval Status";
-const SQL_VIEW_MAL_METADATA_NAME = "MAL Data approval header";
-const SQL_VIEW_MAL_DIFF_NAME = "MAL Data Approval Diff";
+export const SQL_VIEW_DATA_COMMENTS_NAME = "NHWA Data Comments";
+export const SQL_VIEW_DATA_APPROVAL_NAME = "NHWA Data Approval Status";
+
+export const SQL_VIEW_DATA_DUPLICATION_NAME = "MAL Data Approval Status";
+export const SQL_VIEW_MAL_METADATA_NAME = "MAL Data approval header";
+export const SQL_VIEW_MAL_DIFF_NAME = "MAL Data Approval Diff";
 
 const base = {
-    dataSets: { namePrefix: "MAL - WMR Form", nameExcluded: /-APVD$/ },
+    nhwa: {
+        dataSets: { namePrefix: "NHWA", nameExcluded: /old$/ },
+        sqlViewNames: [SQL_VIEW_DATA_COMMENTS_NAME, SQL_VIEW_DATA_APPROVAL_NAME],
+        constantCode: "NHWA_COMMENTS",
+        approvalWorkflows: { namePrefix: "NHWA" },
+    },
+    mal: {
+        dataSets: { namePrefix: "MAL - WMR Form", nameExcluded: /-APVD$/ },
 
-    sqlViewNames: [
-        SQL_VIEW_DATA_COMMENTS_NAME,
-        SQL_VIEW_DATA_APPROVAL_NAME,
-        SQL_VIEW_DATA_DUPLICATION_NAME,
-        SQL_VIEW_MAL_METADATA_NAME,
-        SQL_VIEW_MAL_DIFF_NAME,
-    ],
-    constantCode: "NHWA_COMMENTS",
-    approvalWorkflows: { namePrefix: "MAL" },
+        sqlViewNames: [SQL_VIEW_DATA_DUPLICATION_NAME, SQL_VIEW_MAL_METADATA_NAME, SQL_VIEW_MAL_DIFF_NAME],
+        constantCode: "NHWA_COMMENTS",
+        approvalWorkflows: { namePrefix: "MAL" },
+    },
 };
 
 export class Dhis2ConfigRepository implements ConfigRepository {
-    constructor(private api: D2Api) {}
+    constructor(private api: D2Api, private type: ReportType) {}
 
     async get(): Promise<Config> {
-        const { dataSets, constants, sqlViews, dataApprovalWorkflows } = await this.getMetadata();
+        const { dataSets, constants, sqlViews: existedSqlViews, dataApprovalWorkflows } = await this.getMetadata();
         const filteredDataSets = getFilteredDataSets(dataSets);
-        const dataCommentsSqlView = sqlViews.find(({ name }) => name === SQL_VIEW_DATA_COMMENTS_NAME);
-        const dataApprovalSqlView = sqlViews.find(({ name }) => name === SQL_VIEW_DATA_APPROVAL_NAME);
-        const dataDuplicationSqlView = sqlViews.find(({ name }) => name === SQL_VIEW_DATA_DUPLICATION_NAME);
-        const dataMalMetadataSqlView = sqlViews.find(({ name }) => name === SQL_VIEW_MAL_METADATA_NAME);
-        const dataMalDiffSqlView = sqlViews.find(({ name }) => name === SQL_VIEW_MAL_DIFF_NAME);
-        if (!dataCommentsSqlView) {
-            throw new Error(`Missing SQL views: ${SQL_VIEW_DATA_COMMENTS_NAME}`);
+
+        const expectedSqlViews = base[this.type].sqlViewNames;
+
+        const existedSqlViewNames = existedSqlViews.map(({ name }) => name);
+        const missingSQLViews = expectedSqlViews.filter(
+            expectedSqlView => !existedSqlViewNames.includes(expectedSqlView)
+        );
+
+        if (missingSQLViews.length > 0) {
+            throw new Error(`Missing SQL views: ${missingSQLViews.join("\n")}`);
         }
 
-        if (!dataApprovalSqlView) {
-            throw new Error(`Missing SQL views: ${SQL_VIEW_DATA_APPROVAL_NAME}`);
-        }
+        const sqlViews = existedSqlViews.reduce((acc, sqlView) => {
+            return { ...acc, [sqlView.name]: sqlView };
+        }, {});
 
-        if (!dataDuplicationSqlView) {
-            throw new Error(`Missing SQL views: ${SQL_VIEW_DATA_DUPLICATION_NAME}`);
-        }
-
-        if (!dataMalMetadataSqlView) {
-            throw new Error(`Missing SQL views: ${SQL_VIEW_MAL_METADATA_NAME}`);
-        }
-        if (!dataMalDiffSqlView) {
-            throw new Error(`Missing SQL views: ${SQL_VIEW_MAL_DIFF_NAME}`);
-        }
-
-        const constant = getNth(constants, 0, `Missing constant: ${base.constantCode}`);
+        const constant = getNth(constants, 0, `Missing constant: ${base[this.type].constantCode}`);
         const currentUser = await this.getCurrentUser();
         const pairedDataElements = getPairedMapping(filteredDataSets);
         const constantData = JSON.parse(constant.description || "{}") as Constant;
@@ -65,11 +62,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
         return {
             dataSets: keyById(filteredDataSets),
             currentUser,
-            dataCommentsSqlView,
-            dataApprovalSqlView,
-            dataDuplicationSqlView,
-            dataMalMetadataSqlView,
-            dataMalDiffSqlView,
+            sqlViews,
             pairedDataElementsByDataSet: pairedDataElements,
             sections: keyById(sections),
             sectionsByDataSet,
@@ -88,19 +81,19 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                         dataElement: { id: true, name: true },
                     },
                 },
-                filter: { name: { $ilike: base.dataSets.namePrefix } },
+                filter: { name: { $ilike: base[this.type].dataSets.namePrefix } },
             },
             constants: {
                 fields: { description: true },
-                filter: { code: { eq: base.constantCode } },
+                filter: { code: { eq: base[this.type].constantCode } },
             },
             sqlViews: {
                 fields: { id: true, name: true },
-                filter: { name: { in: base.sqlViewNames } },
+                filter: { name: { in: base[this.type].sqlViewNames } },
             },
             dataApprovalWorkflows: {
                 fields: { id: true, name: true },
-                filter: { name: { $ilike: base.approvalWorkflows.namePrefix } },
+                filter: { name: { $ilike: base[this.type].approvalWorkflows.namePrefix } },
             },
         });
 
@@ -232,7 +225,8 @@ function getSectionsInfo(constantData: Constant) {
 }
 
 function getFilteredDataSets<DataSet extends NamedRef>(dataSets: DataSet[]): DataSet[] {
-    const { namePrefix, nameExcluded } = base.dataSets;
+    const type = getReportType();
+    const { namePrefix, nameExcluded } = base[type].dataSets;
     return dataSets.filter(({ name }) => name.startsWith(namePrefix) && !name.match(nameExcluded));
 }
 

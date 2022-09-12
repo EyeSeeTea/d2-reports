@@ -19,6 +19,12 @@ import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
 import { Dhis2SqlViews, SqlViewGetData } from "./Dhis2SqlViews";
 import { Instance } from "./entities/Instance";
 import { downloadFile } from "./utils/download-file";
+import { getSqlViewId } from "../domain/common/entities/Config";
+import {
+    SQL_VIEW_DATA_DUPLICATION_NAME,
+    SQL_VIEW_MAL_DIFF_NAME,
+    SQL_VIEW_MAL_METADATA_NAME,
+} from "./Dhis2ConfigRepository";
 
 export interface Pagination {
     page: number;
@@ -141,9 +147,10 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
         const allDataSetIds = _.values(config.dataSets).map(ds => ds.id); // ?
         const sqlViews = new Dhis2SqlViews(this.api);
         const paging_to_download = { page: 1, pageSize: 10000 };
+
         const { rows } = await sqlViews
             .query<VariablesDiff, SqlFieldDiff>(
-                config.dataMalDiffSqlView.id,
+                getSqlViewId(config, SQL_VIEW_MAL_DIFF_NAME),
                 {
                     orgUnits: sqlViewJoinIds(orgUnitIds),
                     periods: sqlViewJoinIds(periods),
@@ -179,7 +186,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
         const paging_to_download = { page: 1, pageSize: 10000 };
         const { rows: headerRows } = await sqlViews
             .query<VariableHeaders, SqlFieldHeaders>(
-                config.dataMalMetadataSqlView.id,
+                getSqlViewId(config, SQL_VIEW_MAL_METADATA_NAME),
                 {
                     dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
                 },
@@ -189,7 +196,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
 
         const { rows } = await sqlViews
             .query<Variables, SqlField>(
-                config.dataDuplicationSqlView.id,
+                getSqlViewId(config, SQL_VIEW_DATA_DUPLICATION_NAME),
                 {
                     orgUnitRoot: sqlViewJoinIds(config.currentUser.orgUnits.map(({ id }) => id)),
                     orgUnits: sqlViewJoinIds(orgUnitIds),

@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { getSqlViewId } from "../domain/common/entities/Config";
 import { DataApprovalItem, DataApprovalItemIdentifier } from "../domain/nhwa-approval-status/entities/DataApprovalItem";
 import {
     NHWADataApprovalRepository,
@@ -11,6 +12,7 @@ import { Namespaces } from "./clients/storage/Namespaces";
 import { StorageClient } from "./clients/storage/StorageClient";
 import { CsvData } from "./CsvDataSource";
 import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
+import { SQL_VIEW_DATA_APPROVAL_NAME } from "./Dhis2ConfigRepository";
 import { Dhis2SqlViews } from "./Dhis2SqlViews";
 import { Instance } from "./entities/Instance";
 import { downloadFile } from "./utils/download-file";
@@ -70,7 +72,7 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
 
         const { pager, rows } = await sqlViews
             .query<Variables, SqlField>(
-                config.dataApprovalSqlView.id,
+                getSqlViewId(config, SQL_VIEW_DATA_APPROVAL_NAME),
                 {
                     orgUnitRoot: sqlViewJoinIds(config.currentUser.orgUnits.map(({ id }) => id)),
                     orgUnits: sqlViewJoinIds(orgUnitIds),

@@ -22,9 +22,10 @@ import { SaveApprovalAndDuplicateColumnsUseCase } from "./domain/mal-dataset-dup
 import { SaveDataSetsDuplicationUseCase } from "./domain/mal-dataset-duplication/usecases/SaveDataSetsDuplicationUseCase";
 import { D2Api } from "./types/d2-api";
 import { GetDataDiffUseCase } from "./domain/mal-dataset-duplication/usecases/GetDataDiffUseCase";
+import { getReportType } from "./webapp/utils/reportType";
 
 export function getCompositionRoot(api: D2Api) {
-    const configRepository = new Dhis2ConfigRepository(api);
+    const configRepository = new Dhis2ConfigRepository(api, getReportType());
     const dataCommentsRepository = new NHWADataCommentsDefaultRepository(api);
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
     const dataDuplicationRepository = new MALDataDuplicationDefaultRepository(api);

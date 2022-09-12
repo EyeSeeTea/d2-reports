@@ -9,6 +9,8 @@ import { Dhis2SqlViews } from "./Dhis2SqlViews";
 import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
 import { downloadFile } from "./utils/download-file";
 import { CsvData } from "./CsvDataSource";
+import { SQL_VIEW_DATA_COMMENTS_NAME } from "./Dhis2ConfigRepository";
+import { getSqlViewId } from "../domain/common/entities/Config";
 
 interface Variables {
     orgUnitIds: string;
@@ -63,9 +65,10 @@ export class NHWADataCommentsDefaultRepository implements NHWADataCommentsReposi
                 .join("-") || "-";
 
         const sqlViews = new Dhis2SqlViews(this.api);
+
         const { pager, rows } = await sqlViews
             .query<Variables, SqlField>(
-                config.dataCommentsSqlView.id,
+                getSqlViewId(config, SQL_VIEW_DATA_COMMENTS_NAME),
                 {
                     orgUnitIds: sqlViewJoinIds(orgUnitIds),
                     periods: sqlViewJoinIds(_.isEmpty(periods) ? config.years : periods),
