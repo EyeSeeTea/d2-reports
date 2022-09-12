@@ -15,6 +15,8 @@ export interface MALDataDuplicationRepository {
     unapprove(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean>;
     getColumns(namespace: string): Promise<string[]>;
     saveColumns(namespace: string, columns: string[]): Promise<void>;
+    getSortOrder(): Promise<string[]>;
+    generateSortOrder(): Promise<void>;
 }
 
 export interface MALDataDuplicationRepositoryGetOptions {
