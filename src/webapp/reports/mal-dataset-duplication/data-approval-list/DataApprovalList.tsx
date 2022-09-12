@@ -31,6 +31,7 @@ import { DataApprovalViewModel, getDataApprovalViews } from "../DataApprovalView
 import { DataSetsFilter, Filters } from "./Filters";
 import { DataDifferencesList } from "../DataDifferencesList";
 import { PlaylistAddCheck, ThumbUp } from "@material-ui/icons";
+import { Namespaces } from "../../../../data/clients/storage/Namespaces";
 
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
@@ -65,9 +66,8 @@ export const DataApprovalList: React.FC = React.memo(() => {
             columns: [
                 { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
                 { name: "period", text: i18n.t("Period"), sortable: true },
-                { name: "dataSet", text: i18n.t("Data set"), sortable: true },
+                { name: "dataSet", text: i18n.t("Data set"), sortable: true, hidden: true },
                 { name: "attribute", text: i18n.t("Attribute"), sortable: true, hidden: true },
-                { name: "modificationCount", text: i18n.t("Modification Count"), sortable: true },
                 {
                     name: "completed",
                     text: i18n.t("Completion status"),
@@ -81,6 +81,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     getValue: row =>
                         row.validated ? "Submitted" : row.completed ? "Ready for submission" : "Not completed",
                 },
+                { name: "modificationCount", text: i18n.t("Modification Count"), sortable: true },
                 {
                     name: "lastUpdatedValue",
                     text: i18n.t("Last modification date"),
@@ -122,7 +123,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: (rows: DataApprovalViewModel[]) => {return _.every(rows, row => row.completed === false 
+                    isActive: (rows: DataApprovalViewModel[]) => { return _.every(rows, row => row.completed === false 
                         && row.lastUpdatedValue) 
                         && (isMalApprover || isMalAdmin)
                     },
@@ -157,8 +158,8 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: (rows: DataApprovalViewModel[]) => {return _.every(rows, row => row.validated === false 
-                        && row.lastUpdatedValue) 
+                    isActive: (rows: DataApprovalViewModel[]) => { return _.every(rows, row => row.validated === false 
+                        && row.lastUpdatedValue)
                         && (isMalApprover || isMalAdmin)
                     },
                 },
@@ -244,7 +245,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
         async (columnKeys: Array<keyof DataApprovalViewModel>) => {
             if (!visibleColumns) return;
 
-            await compositionRoot.dataDuplicate.saveColumns(columnKeys);
+            await compositionRoot.dataDuplicate.saveColumns(Namespaces.MAL_APPROVAL_STATUS_USER_COLUMNS, columnKeys);
         },
         [compositionRoot, visibleColumns]
     );
@@ -275,7 +276,19 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const filterOptions = React.useMemo(() => getFilterOptions(config, selectablePeriods), [config, selectablePeriods]);
 
     useEffect(() => {
-        compositionRoot.dataDuplicate.getColumns().then(columns => setVisibleColumns(columns));
+        compositionRoot.dataDuplicate.getColumns(Namespaces.MAL_APPROVAL_STATUS_USER_COLUMNS).then((columns) => {
+            columns = columns.length ? columns : [
+                "orgUnit",
+                "period",
+                "completed",
+                "validated",
+                "lastUpdatedValue",
+                "lastDateOfSubmission",
+                "lastDateOfApproval",
+                "modificationCount"
+            ];
+            setVisibleColumns(columns);
+        });
     }, [compositionRoot]);
 
     return (
