@@ -17,10 +17,14 @@ FROM ((SELECT datavalue.periodid,
               MAX(datavalue.lastupdated)                 AS lastupdated
        FROM datavalue
                 JOIN datasetelement USING (dataelementid)
-                JOIN dataset USING (datasetid)
-       /** TODO: Filter by DEs, remove totals **/
+                JOIN dataelement    USING (dataelementid)
+                JOIN dataset        USING (datasetid)
        WHERE dataset.uid ~ ('^' || replace('${dataSets}', '-', '|') || '$')
-       GROUP BY datavalue.periodid, datavalue.sourceid, datavalue.attributeoptioncomboid, dataset.datasetid, dataset.workflowid) AS entries
+         AND dataelement.uid NOT IN (
+           SELECT * FROM jsonb_array_elements_text((SELECT description::jsonb FROM constant WHERE code = 'NHWA_TOTALS'))
+       )
+       GROUP BY datavalue.periodid, datavalue.sourceid, datavalue.attributeoptioncomboid, dataset.datasetid,
+                dataset.workflowid) AS entries
          INNER JOIN _periodstructure USING (periodid)
          INNER JOIN organisationunit USING (organisationunitid)
          INNER JOIN _orgunitstructure USING (organisationunitid)
@@ -43,12 +47,11 @@ WHERE organisationunit.path ~ (replace('${orgUnitRoot}', '-', '|'))
   AND _periodstructure.iso ~ ('^' || replace('${periods}', '-', '|') || '$')
   AND (completedatasetregistration.completed IS NOT NULL)::text ~ ('^' || replace('${completed}', '-', '|') || '$')
   AND (dataapproval.accepted IS NOT NULL)::text ~ ('^' || replace('${approved}', '-', '|') || '$')
-ORDER BY
-    ${orderByColumn} ${orderByDirection},
-    orgunit ASC,
-    period DESC,
-    dataset ASC,
-    attribute ASC,
-    completed ASC,
-    validated ASC,
-    lastupdatedvalue DESC;
+ORDER BY ${orderByColumn} ${orderByDirection},
+         orgunit ASC,
+         period DESC,
+         dataset ASC,
+         attribute ASC,
+         completed ASC,
+         validated ASC,
+         lastupdatedvalue DESC;
