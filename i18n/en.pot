@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2022-01-10T15:10:22.978Z\n"
-"PO-Revision-Date: 2022-01-10T15:10:22.978Z\n"
+"POT-Creation-Date: 2022-02-02T18:22:48.596Z\n"
+"PO-Revision-Date: 2022-02-02T18:22:48.596Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -72,6 +72,39 @@ msgid "lastUpdated"
 msgstr ""
 
 msgid "created"
+msgstr ""
+
+msgid "Data quality"
+msgstr ""
+
+msgid "Indicators"
+msgstr ""
+
+msgid "ProgramIndicators"
+msgstr ""
+
+msgid "denominator"
+msgstr ""
+
+msgid "Valid Denominator"
+msgstr ""
+
+msgid "numerator"
+msgstr ""
+
+msgid "Valid Numerator"
+msgstr ""
+
+msgid "expression"
+msgstr ""
+
+msgid "Valid Expression"
+msgstr ""
+
+msgid "filter"
+msgstr ""
+
+msgid "Valid Filter"
 msgstr ""
 
 msgid "NHWA Data Approval Status Report"
