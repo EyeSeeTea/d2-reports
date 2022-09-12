@@ -4,7 +4,7 @@ import { MALDataDuplicationRepository } from "../repositories/MALDataDuplication
 export class SaveApprovalAndDuplicateColumnsUseCase implements UseCase {
     constructor(private approvalRepository: MALDataDuplicationRepository) {}
 
-    execute(columns: string[]): Promise<void> {
-        return this.approvalRepository.saveColumns(columns);
+    execute(namespace: string, columns: string[]): Promise<void> {
+        return this.approvalRepository.saveColumns(namespace, columns);
     }
 }
