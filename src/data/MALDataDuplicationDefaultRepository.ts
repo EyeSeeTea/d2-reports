@@ -424,14 +424,14 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
         }
     }
 
-    async getColumns(): Promise<string[]> {
-        const columns = await this.storageClient.getObject<string[]>(Namespaces.MAL_APPROVAL_STATUS_USER_COLUMNS);
+    async getColumns(namespace: string): Promise<string[]> {
+        const columns = await this.storageClient.getObject<string[]>(namespace);
 
         return columns ?? [];
     }
 
-    async saveColumns(columns: string[]): Promise<void> {
-        return this.storageClient.saveObject<string[]>(Namespaces.MAL_APPROVAL_STATUS_USER_COLUMNS, columns);
+    async saveColumns(namespace: string, columns: string[]): Promise<void> {
+        return this.storageClient.saveObject<string[]>(namespace, columns);
     }
 }
 
