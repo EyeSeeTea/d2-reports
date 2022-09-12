@@ -1,16 +1,16 @@
 import _ from "lodash";
-import { DataCommentsItem } from "../domain/reports/nhwa-comments/entities/DataCommentsItem";
+import { DataCommentsItem } from "../../../domain/reports/nhwa-comments/entities/DataCommentsItem";
 import {
     NHWADataCommentsRepository,
     NHWADataCommentsRepositoryGetOptions,
-} from "../domain/reports/nhwa-comments/repositories/NHWADataCommentsRepository";
-import { D2Api, PaginatedObjects, Id } from "../types/d2-api";
-import { Dhis2SqlViews } from "./Dhis2SqlViews";
-import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
-import { downloadFile } from "./utils/download-file";
-import { CsvData } from "./CsvDataSource";
-import { SQL_VIEW_DATA_COMMENTS_NAME } from "./Dhis2ConfigRepository";
-import { getSqlViewId } from "../domain/common/entities/Config";
+} from "../../../domain/reports/nhwa-comments/repositories/NHWADataCommentsRepository";
+import { D2Api, PaginatedObjects, Id } from "../../../types/d2-api";
+import { Dhis2SqlViews } from "../../common/Dhis2SqlViews";
+import { CsvWriterDataSource } from "../../common/CsvWriterCsvDataSource";
+import { downloadFile } from "../../common/utils/download-file";
+import { CsvData } from "../../common/CsvDataSource";
+import { SQL_VIEW_DATA_COMMENTS_NAME } from "../../common/Dhis2ConfigRepository";
+import { getSqlViewId } from "../../../domain/common/entities/Config";
 
 interface Variables {
     orgUnitIds: string;

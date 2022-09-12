@@ -1,5 +1,5 @@
 import { createObjectCsvStringifier } from "csv-writer";
-import { CsvDataSource, CsvData } from "../data/CsvDataSource";
+import { CsvDataSource, CsvData } from "./CsvDataSource";
 
 //
 export class CsvWriterDataSource implements CsvDataSource {

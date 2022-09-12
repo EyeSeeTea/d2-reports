@@ -1,4 +1,4 @@
-import { D2Api, DataStore } from "../../../types/d2-api";
+import { D2Api, DataStore } from "../../../../types/d2-api";
 import { Instance } from "../../entities/Instance";
 import { getD2APiFromInstance } from "../../utils/d2-api";
 import { dataStoreNamespace } from "./Namespaces";

@@ -9,7 +9,7 @@ import {
 } from "@eyeseetea/d2-ui-components";
 import _ from "lodash";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Namespaces } from "../../../data/clients/storage/Namespaces";
+import { Namespaces } from "../../../data/common/clients/storage/Namespaces";
 import { parseDataDiffItemId } from "../../../domain/reports/mal-dataset-duplication/entities/DataDiffItem";
 
 import i18n from "../../../locales";

@@ -1,11 +1,11 @@
 import _ from "lodash";
-import { keyById, NamedRef } from "../domain/common/entities/Base";
-import { Config } from "../domain/common/entities/Config";
-import { ReportType } from "../domain/common/entities/ReportType";
-import { User } from "../domain/common/entities/User";
-import { ConfigRepository } from "../domain/common/repositories/ConfigRepository";
-import { D2Api, Id } from "../types/d2-api";
-import { getReportType } from "../webapp/utils/reportType";
+import { keyById, NamedRef } from "../../domain/common/entities/Base";
+import { Config } from "../../domain/common/entities/Config";
+import { ReportType } from "../../domain/common/entities/ReportType";
+import { User } from "../../domain/common/entities/User";
+import { ConfigRepository } from "../../domain/common/repositories/ConfigRepository";
+import { D2Api, Id } from "../../types/d2-api";
+import { getReportType } from "../../webapp/utils/reportType";
 
 export const SQL_VIEW_DATA_COMMENTS_NAME = "NHWA Data Comments";
 export const SQL_VIEW_DATA_APPROVAL_NAME = "NHWA Data Approval Status";

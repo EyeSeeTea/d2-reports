@@ -1,29 +1,29 @@
 import _ from "lodash";
 import { format } from "date-fns";
-import { DataDiffItem } from "../domain/reports/mal-dataset-duplication/entities/DataDiffItem";
+import { DataDiffItem } from "../../../domain/reports/mal-dataset-duplication/entities/DataDiffItem";
 import {
     DataDuplicationItem,
     DataDuplicationItemIdentifier,
-} from "../domain/reports/mal-dataset-duplication/entities/DataDuplicationItem";
+} from "../../../domain/reports/mal-dataset-duplication/entities/DataDuplicationItem";
 import {
     MALDataDuplicationRepository,
     MALDataDuplicationRepositoryGetOptions,
-} from "../domain/reports/mal-dataset-duplication/repositories/MALDataDuplicationRepository";
-import { D2Api, Id, PaginatedObjects } from "../types/d2-api";
-import { promiseMap } from "../utils/promises";
-import { DataStoreStorageClient } from "./clients/storage/DataStoreStorageClient";
-import { StorageClient } from "./clients/storage/StorageClient";
-import { CsvData } from "./CsvDataSource";
-import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
-import { Dhis2SqlViews, SqlViewGetData } from "./Dhis2SqlViews";
-import { Instance } from "./entities/Instance";
-import { downloadFile } from "./utils/download-file";
-import { getSqlViewId } from "../domain/common/entities/Config";
+} from "../../../domain/reports/mal-dataset-duplication/repositories/MALDataDuplicationRepository";
+import { D2Api, Id, PaginatedObjects } from "../../../types/d2-api";
+import { promiseMap } from "../../../utils/promises";
+import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
+import { StorageClient } from "../../common/clients/storage/StorageClient";
+import { CsvData } from "../../common/CsvDataSource";
+import { CsvWriterDataSource } from "../../common/CsvWriterCsvDataSource";
+import { Dhis2SqlViews, SqlViewGetData } from "../../common/Dhis2SqlViews";
+import { Instance } from "../../common/entities/Instance";
+import { downloadFile } from "../../common/utils/download-file";
+import { getSqlViewId } from "../../../domain/common/entities/Config";
 import {
     SQL_VIEW_DATA_DUPLICATION_NAME,
     SQL_VIEW_MAL_DIFF_NAME,
     SQL_VIEW_MAL_METADATA_NAME,
-} from "./Dhis2ConfigRepository";
+} from "../../common/Dhis2ConfigRepository";
 
 export interface Pagination {
     page: number;

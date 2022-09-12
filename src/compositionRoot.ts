@@ -1,9 +1,9 @@
-import { Dhis2ConfigRepository } from "./data/Dhis2ConfigRepository";
-import { Dhis2OrgUnitsRepository } from "./data/Dhis2OrgUnitsRepository";
-import { NHWADataApprovalDefaultRepository } from "./data/NHWADataApprovalDefaultRepository";
-import { MALDataDuplicationDefaultRepository } from "./data/MALDataDuplicationDefaultRepository";
-import { NHWADataCommentsDefaultRepository } from "./data/NHWADataCommentsDefaultRepository";
-import { WIDPAdminDefaultRepository } from "./data/WIDPAdminDefaultRepository";
+import { Dhis2ConfigRepository } from "./data/common/Dhis2ConfigRepository";
+import { Dhis2OrgUnitsRepository } from "./data/common/Dhis2OrgUnitsRepository";
+import { NHWADataApprovalDefaultRepository } from "./data/reports/nhwa-approval-status/NHWADataApprovalDefaultRepository";
+import { MALDataDuplicationDefaultRepository } from "./data/reports/mal-dataset-duplication/MALDataDuplicationDefaultRepository";
+import { NHWADataCommentsDefaultRepository } from "./data/reports/nhwa-comments/NHWADataCommentsDefaultRepository";
+import { WIDPAdminDefaultRepository } from "./data/reports/admin/WIDPAdminDefaultRepository";
 import { GetWIDPAdminDefaultUseCase } from "./domain/reports/admin/usecases/GetWIDPAdminDefaultUseCase";
 import { SaveWIDPAdminDefaultCsvUseCase } from "./domain/reports/admin/usecases/SaveWIDPAdminDefaultCsvUseCase";
 import { GetConfig } from "./domain/common/usecases/GetConfig";

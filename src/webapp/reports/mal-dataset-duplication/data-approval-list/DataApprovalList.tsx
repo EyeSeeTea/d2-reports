@@ -31,7 +31,7 @@ import { DataApprovalViewModel, getDataApprovalViews } from "../DataApprovalView
 import { DataSetsFilter, Filters } from "./Filters";
 import { DataDifferencesList } from "../DataDifferencesList";
 import { PlaylistAddCheck, ThumbUp } from "@material-ui/icons";
-import { Namespaces } from "../../../../data/clients/storage/Namespaces";
+import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
 
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();

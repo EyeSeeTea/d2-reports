@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Ref } from "../../../domain/common/entities/Ref";
+import { Ref } from "../../../../domain/common/entities/Ref";
 import { Namespace, NamespaceProperties } from "./Namespaces";
 
 export abstract class StorageClient {

@@ -1,24 +1,24 @@
 import _ from "lodash";
-import { getSqlViewId } from "../domain/common/entities/Config";
+import { getSqlViewId } from "../../../domain/common/entities/Config";
 import {
     DataApprovalItem,
     DataApprovalItemIdentifier,
-} from "../domain/reports/nhwa-approval-status/entities/DataApprovalItem";
+} from "../../../domain/reports/nhwa-approval-status/entities/DataApprovalItem";
 import {
     NHWADataApprovalRepository,
     NHWADataApprovalRepositoryGetOptions,
-} from "../domain/reports/nhwa-approval-status/repositories/NHWADataApprovalRepository";
-import { D2Api, Id, PaginatedObjects } from "../types/d2-api";
-import { promiseMap } from "../utils/promises";
-import { DataStoreStorageClient } from "./clients/storage/DataStoreStorageClient";
-import { Namespaces } from "./clients/storage/Namespaces";
-import { StorageClient } from "./clients/storage/StorageClient";
-import { CsvData } from "./CsvDataSource";
-import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
-import { SQL_VIEW_DATA_APPROVAL_NAME } from "./Dhis2ConfigRepository";
-import { Dhis2SqlViews } from "./Dhis2SqlViews";
-import { Instance } from "./entities/Instance";
-import { downloadFile } from "./utils/download-file";
+} from "../../../domain/reports/nhwa-approval-status/repositories/NHWADataApprovalRepository";
+import { D2Api, Id, PaginatedObjects } from "../../../types/d2-api";
+import { promiseMap } from "../../../utils/promises";
+import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
+import { Namespaces } from "../../common/clients/storage/Namespaces";
+import { StorageClient } from "../../common/clients/storage/StorageClient";
+import { CsvData } from "../../common/CsvDataSource";
+import { CsvWriterDataSource } from "../../common/CsvWriterCsvDataSource";
+import { SQL_VIEW_DATA_APPROVAL_NAME } from "../../common/Dhis2ConfigRepository";
+import { Dhis2SqlViews } from "../../common/Dhis2SqlViews";
+import { Instance } from "../../common/entities/Instance";
+import { downloadFile } from "../../common/utils/download-file";
 
 interface Variables {
     orgUnitRoot: string;
