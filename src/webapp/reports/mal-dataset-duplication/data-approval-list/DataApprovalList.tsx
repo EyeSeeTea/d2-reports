@@ -282,10 +282,10 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 "period",
                 "completed",
                 "validated",
-                "modificationCount",
                 "lastUpdatedValue",
                 "lastDateOfSubmission",
-                "lastDateOfApproval"
+                "lastDateOfApproval",
+                "modificationCount"
             ];
             setVisibleColumns(columns);
         });
