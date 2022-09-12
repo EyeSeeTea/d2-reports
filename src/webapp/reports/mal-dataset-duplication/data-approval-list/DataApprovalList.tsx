@@ -21,7 +21,7 @@ import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import {
     DataDuplicationItem,
     parseDataDuplicationItemId,
-} from "../../../../domain/mal-dataset-duplication/entities/DataDuplicationItem";
+} from "../../../../domain/reports/mal-dataset-duplication/entities/DataDuplicationItem";
 import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
 import { ConfirmationDialog } from "@eyeseetea/d2-ui-components";
@@ -123,9 +123,11 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: (rows: DataApprovalViewModel[]) => { return _.every(rows, row => row.completed === false 
-                        && row.lastUpdatedValue) 
-                        && (isMalApprover || isMalAdmin)
+                    isActive: (rows: DataApprovalViewModel[]) => {
+                        return (
+                            _.every(rows, row => row.completed === false && row.lastUpdatedValue) &&
+                            (isMalApprover || isMalAdmin)
+                        );
                     },
                 },
                 {
@@ -158,9 +160,11 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: (rows: DataApprovalViewModel[]) => { return _.every(rows, row => row.validated === false 
-                        && row.lastUpdatedValue)
-                        && (isMalApprover || isMalAdmin)
+                    isActive: (rows: DataApprovalViewModel[]) => {
+                        return (
+                            _.every(rows, row => row.validated === false && row.lastUpdatedValue) &&
+                            (isMalApprover || isMalAdmin)
+                        );
                     },
                 },
                 {
@@ -276,17 +280,19 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const filterOptions = React.useMemo(() => getFilterOptions(config, selectablePeriods), [config, selectablePeriods]);
 
     useEffect(() => {
-        compositionRoot.dataDuplicate.getColumns(Namespaces.MAL_APPROVAL_STATUS_USER_COLUMNS).then((columns) => {
-            columns = columns.length ? columns : [
-                "orgUnit",
-                "period",
-                "completed",
-                "validated",
-                "lastUpdatedValue",
-                "lastDateOfSubmission",
-                "lastDateOfApproval",
-                "modificationCount"
-            ];
+        compositionRoot.dataDuplicate.getColumns(Namespaces.MAL_APPROVAL_STATUS_USER_COLUMNS).then(columns => {
+            columns = columns.length
+                ? columns
+                : [
+                      "orgUnit",
+                      "period",
+                      "completed",
+                      "validated",
+                      "lastUpdatedValue",
+                      "lastDateOfSubmission",
+                      "lastDateOfApproval",
+                      "modificationCount",
+                  ];
             setVisibleColumns(columns);
         });
     }, [compositionRoot]);

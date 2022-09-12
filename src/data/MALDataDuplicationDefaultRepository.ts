@@ -1,14 +1,14 @@
 import _ from "lodash";
 import { format } from "date-fns";
-import { DataDiffItem } from "../domain/mal-dataset-duplication/entities/DataDiffItem";
+import { DataDiffItem } from "../domain/reports/mal-dataset-duplication/entities/DataDiffItem";
 import {
     DataDuplicationItem,
     DataDuplicationItemIdentifier,
-} from "../domain/mal-dataset-duplication/entities/DataDuplicationItem";
+} from "../domain/reports/mal-dataset-duplication/entities/DataDuplicationItem";
 import {
     MALDataDuplicationRepository,
     MALDataDuplicationRepositoryGetOptions,
-} from "../domain/mal-dataset-duplication/repositories/MALDataDuplicationRepository";
+} from "../domain/reports/mal-dataset-duplication/repositories/MALDataDuplicationRepository";
 import { D2Api, Id, PaginatedObjects } from "../types/d2-api";
 import { promiseMap } from "../utils/promises";
 import { DataStoreStorageClient } from "./clients/storage/DataStoreStorageClient";

@@ -10,7 +10,8 @@ import {
 import _ from "lodash";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Namespaces } from "../../../data/clients/storage/Namespaces";
-import { parseDataDiffItemId } from "../../../domain/mal-dataset-duplication/entities/DataDiffItem";
+import { parseDataDiffItemId } from "../../../domain/reports/mal-dataset-duplication/entities/DataDiffItem";
+
 import i18n from "../../../locales";
 import { useAppContext } from "../../contexts/app-context";
 import { getSortingFromTableSorting } from "./data-approval-list/DataApprovalList";
@@ -94,14 +95,8 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
     }, [tableProps.columns, visibleColumns]);
 
     useEffect(() => {
-        compositionRoot.dataDuplicate.getColumns(Namespaces.MAL_DIFF_STATUS_USER_COLUMNS).then((columns) => {
-            columns = columns.length ? columns : [
-                "dataelement",
-                "value",
-                "comment",
-                "apvdvalue",
-                "apvdcomment"
-            ];
+        compositionRoot.dataDuplicate.getColumns(Namespaces.MAL_DIFF_STATUS_USER_COLUMNS).then(columns => {
+            columns = columns.length ? columns : ["dataelement", "value", "comment", "apvdvalue", "apvdcomment"];
             setVisibleColumns(columns);
         });
     }, [compositionRoot]);

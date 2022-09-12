@@ -2,8 +2,8 @@ import { Config } from "../../../domain/common/entities/Config";
 import {
     DataDuplicationItem,
     getDataDuplicationItemId,
-} from "../../../domain/mal-dataset-duplication/entities/DataDuplicationItem";
-import { toDate } from 'date-fns-tz';
+} from "../../../domain/reports/mal-dataset-duplication/entities/DataDuplicationItem";
+import { toDate } from "date-fns-tz";
 
 export interface DataApprovalViewModel {
     id: string;
@@ -38,8 +38,12 @@ export function getDataApprovalViews(_config: Config, items: DataDuplicationItem
             completed: item.completed,
             validated: item.validated,
             lastUpdatedValue: item.lastUpdatedValue ? toDate(item.lastUpdatedValue, { timeZone: "UTC" }) : undefined,
-            lastDateOfSubmission: item.lastDateOfSubmission ? toDate(item.lastDateOfSubmission, { timeZone: "UTC" }) : undefined,
-            lastDateOfApproval: item.lastDateOfApproval ? toDate(item.lastDateOfApproval, { timeZone: "UTC" }) : undefined,
+            lastDateOfSubmission: item.lastDateOfSubmission
+                ? toDate(item.lastDateOfSubmission, { timeZone: "UTC" })
+                : undefined,
+            lastDateOfApproval: item.lastDateOfApproval
+                ? toDate(item.lastDateOfApproval, { timeZone: "UTC" })
+                : undefined,
             modificationCount: item.modificationCount,
         };
     });

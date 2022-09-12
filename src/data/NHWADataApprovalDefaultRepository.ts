@@ -1,10 +1,13 @@
 import _ from "lodash";
 import { getSqlViewId } from "../domain/common/entities/Config";
-import { DataApprovalItem, DataApprovalItemIdentifier } from "../domain/nhwa-approval-status/entities/DataApprovalItem";
+import {
+    DataApprovalItem,
+    DataApprovalItemIdentifier,
+} from "../domain/reports/nhwa-approval-status/entities/DataApprovalItem";
 import {
     NHWADataApprovalRepository,
     NHWADataApprovalRepositoryGetOptions,
-} from "../domain/nhwa-approval-status/repositories/NHWADataApprovalRepository";
+} from "../domain/reports/nhwa-approval-status/repositories/NHWADataApprovalRepository";
 import { D2Api, Id, PaginatedObjects } from "../types/d2-api";
 import { promiseMap } from "../utils/promises";
 import { DataStoreStorageClient } from "./clients/storage/DataStoreStorageClient";

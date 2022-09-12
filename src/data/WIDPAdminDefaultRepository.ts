@@ -3,7 +3,10 @@ import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
 import { downloadFile } from "./utils/download-file";
 import { CsvData } from "../data/CsvDataSource";
 import { MetadataObject } from "../domain/common/entities/MetadataObject";
-import { WIDPAdminRepository, WIDPAdmiRepositoryGetOptions } from "../domain/admin/repositories/WIDPAdminRepository";
+import {
+    WIDPAdminRepository,
+    WIDPAdmiRepositoryGetOptions,
+} from "../domain/reports/admin/repositories/WIDPAdminRepository";
 import _ from "lodash";
 
 export class WIDPAdminDefaultRepository implements WIDPAdminRepository {
