@@ -199,48 +199,13 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
         },
     ];
 
-    Object.assign(process.env, { REACT_APP_REPORT_VARIANT: "nhwa-comments" });
-    run("yarn build-report");
-    const htmlComments = fs.readFileSync("dist/index.html", "utf8");
-
-    Object.assign(process.env, { REACT_APP_REPORT_VARIANT: "nhwa-approval-status" });
-    run("yarn build-report");
-    const htmlApproval = fs.readFileSync("dist/index.html", "utf8");
-
     Object.assign(process.env, { REACT_APP_REPORT_VARIANT: "mal-approval-status" });
     run("yarn build-report");
     const htmlDuplicate = fs.readFileSync("dist/index.html", "utf8");
 
     const reports: Partial<D2Report>[] = [
         {
-            id: "G2pzXQgTMgw",
-            name: "NHWA Comments",
-            type: "HTML",
-            cacheStrategy: "RESPECT_SYSTEM_SETTING",
-            reportParams: {
-                parentOrganisationUnit: false,
-                reportingPeriod: false,
-                organisationUnit: false,
-                grandParentOrganisationUnit: false,
-            },
-            designContent: htmlComments,
-            publicAccess: "--------",
-        },
-        {
-            id: "klA47Z2KS6s",
-            name: "NHWA Data Approval Status",
-            type: "HTML",
-            cacheStrategy: "RESPECT_SYSTEM_SETTING",
-            reportParams: {
-                parentOrganisationUnit: false,
-                reportingPeriod: false,
-                organisationUnit: false,
-                grandParentOrganisationUnit: false,
-            },
-            designContent: htmlApproval,
-        },
-        {
-            id: "fffffffffff",
+            id: "Ea875yWGwxT",
             name: "Malaria Data Approval Report",
             type: "HTML",
             cacheStrategy: "RESPECT_SYSTEM_SETTING",
