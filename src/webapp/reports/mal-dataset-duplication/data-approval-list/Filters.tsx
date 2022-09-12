@@ -1,9 +1,11 @@
 import { Dropdown, DropdownProps, MultipleDropdownProps } from "@eyeseetea/d2-ui-components";
-import React, { useMemo } from "react";
+import _ from "lodash";
+import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { Id, NamedRef } from "../../../../domain/common/entities/Base";
-import { getRootIds } from "../../../../domain/common/entities/OrgUnit";
+import { getRootIds, OrgUnit } from "../../../../domain/common/entities/OrgUnit";
 import i18n from "../../../../locales";
+import { D2Api } from "../../../../types/d2-api";
 import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
 import {
     OrgUnitsFilterButton,
@@ -38,6 +40,8 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
 
+    const [orgUnits, setOrgUnits] = useState<OrgUnit[]>();
+
     const completionStatusItems = React.useMemo(() => {
         return [
             { value: "true", text: i18n.t("Completed") },
@@ -52,9 +56,38 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         ];
     }, []);
 
+    useEffect(() => {
+        async function getOrganisationUnits(api: D2Api, levels: string[]): Promise<OrgUnit[]> {
+            const { organisationUnits } = await api.metadata
+                .get({
+                    organisationUnits: {
+                        filter: { level: { in: levels } },
+                        fields: { id: true, path: true, name: true, level: true },
+                    },
+                })
+                .getData();
+
+            return _.orderBy(organisationUnits, "level", "asc");
+        }
+        
+        const levels = ["1", "2", "3"];
+        getOrganisationUnits(api, levels).then(value => setOrgUnits(value));
+    }, [api]);
+
     const setOrgUnitPaths = React.useCallback<OrgUnitsFilterButtonProps["setSelected"]>(
-        paths => onChange(prev => ({ ...prev, orgUnitPaths: paths })),
-        [onChange]
+        paths => {
+            const newPaths: string[] = [];
+            paths.map(path => {
+                return orgUnits?.map(ou => {
+                    if (ou.path.includes(path)) {
+                        newPaths.push(ou.path);
+                    }
+                    return newPaths;
+                });
+            });
+            onChange(prev => ({ ...prev, orgUnitPaths: newPaths }));
+        },
+        [onChange, orgUnits]
     );
 
     const setDataSetIds = React.useCallback<DropdownHandler>(
