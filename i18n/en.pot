@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2022-08-31T15:59:31.462Z\n"
-"PO-Revision-Date: 2022-08-31T15:59:31.462Z\n"
+"POT-Creation-Date: 2022-09-12T13:38:39.668Z\n"
+"PO-Revision-Date: 2022-09-12T13:38:39.668Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -74,6 +74,24 @@ msgstr ""
 msgid "created"
 msgstr ""
 
+msgid "Data Element"
+msgstr ""
+
+msgid "Value entered"
+msgstr ""
+
+msgid "Comment"
+msgstr ""
+
+msgid "Approved value"
+msgstr ""
+
+msgid "Approved value comment"
+msgstr ""
+
+msgid "Error when trying to check difference in data values"
+msgstr ""
+
 msgid "Malaria Data Approval Report"
 msgstr ""
 
@@ -92,10 +110,16 @@ msgstr ""
 msgid "Submission status"
 msgstr ""
 
-msgid "Approval status"
+msgid "Modification Count"
 msgstr ""
 
-msgid "Last data approved date"
+msgid "Last modification date"
+msgstr ""
+
+msgid "Last date of submission"
+msgstr ""
+
+msgid "Last date of approval"
 msgstr ""
 
 msgid "Complete"
@@ -116,7 +140,7 @@ msgstr ""
 msgid "Error when trying to submit data set"
 msgstr ""
 
-msgid "Unsubmit"
+msgid "Revoke"
 msgstr ""
 
 msgid "Error when trying to unsubmit data set"
@@ -128,6 +152,24 @@ msgstr ""
 msgid "Error when trying to approve data values"
 msgstr ""
 
+msgid "Check Difference"
+msgstr ""
+
+msgid "Check differences"
+msgstr ""
+
+msgid "Completed"
+msgstr ""
+
+msgid "Not completed"
+msgstr ""
+
+msgid "Submitted"
+msgstr ""
+
+msgid "Ready for submission"
+msgstr ""
+
 msgid "Data sets"
 msgstr ""
 
@@ -135,6 +177,9 @@ msgid "Periods"
 msgstr ""
 
 msgid "NHWA Data Approval Status Report"
+msgstr ""
+
+msgid "Approval status"
 msgstr ""
 
 msgid "Last updated value"
@@ -155,16 +200,10 @@ msgstr ""
 msgid "Section"
 msgstr ""
 
-msgid "Data Element"
-msgstr ""
-
 msgid "Category option combo"
 msgstr ""
 
 msgid "Value"
-msgstr ""
-
-msgid "Comment"
 msgstr ""
 
 msgid "Last updated"

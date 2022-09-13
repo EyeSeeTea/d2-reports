@@ -12,7 +12,7 @@ import { sortByName } from "../../../../domain/common/entities/Base";
 import { Config, getMainUserPaths } from "../../../../domain/common/entities/Config";
 import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
-import { DataCommentsItem } from "../../../../domain/nhwa-comments/entities/DataCommentsItem";
+import { DataCommentsItem } from "../../../../domain/reports/nhwa-comments/entities/DataCommentsItem";
 import i18n from "../../../../locales";
 import { TableConfig, useObjectsTable } from "../../../components/objects-list/objects-list-hooks";
 import { ObjectsList } from "../../../components/objects-list/ObjectsList";
