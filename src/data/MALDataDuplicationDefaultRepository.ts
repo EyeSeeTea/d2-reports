@@ -343,19 +343,36 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
         try {
             const approvalDataSetId = process.env.REACT_APP_APPROVE_DATASET_ID ?? "fRrt4V8ImqD";
 
+            const dataValueSetsRaw: dataSetsValueType[] = await promiseMap(dataSets, async item =>
+                this.api.get<any>("/dataValueSets", {
+                    dataSet: item.dataSet,
+                    period: item.period,
+                    orgUnit: item.orgUnit,
+                }).getData()
+            );
+
+            const dataValueSets: dataSetsValueType[] = [];
+            dataValueSetsRaw.forEach(dataValueSet => {
+                if (dataValueSet.dataValues) {
+                    dataValueSets.push(dataValueSet);
+                }
+            });
+
+            if (_.isEmpty(dataValueSets)) throw new Error("All dataValueSet empty");
+
             const uniqueDataSets = _.uniqBy(dataSets, 'dataSet');
-            const DSDataElements = await promiseMap(uniqueDataSets, async item =>
+            const DSDataElements: { dataSetElements: dataSetElementsType[] }[] = await promiseMap(uniqueDataSets, async item =>
                 this.api
                     .get<any>(`/dataSets/${item.dataSet}`, { fields: "dataSetElements[dataElement[id,name]]" })
                     .getData()
             );
 
-            const ADSDataElementsRaw = await this.api
+            const ADSDataElementsRaw: { dataSetElements: dataSetElementsType[] } = await this.api
                 .get<any>(`/dataSets/${approvalDataSetId}`, { fields: "dataSetElements[dataElement[id,name]]" })
                 .getData();
 
-            const ADSDataElements = ADSDataElementsRaw.dataSetElements.map(
-                (element: { dataElement: { id: any; name: any } }) => {
+            const ADSDataElements: dataElementsType[] = ADSDataElementsRaw.dataSetElements.map(
+                (element) => {
                     return {
                         id: element.dataElement.id,
                         name: element.dataElement.name,
@@ -363,23 +380,13 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                 }
             );
 
-            const dataValueSets = await promiseMap(dataSets, async approval =>
-                this.api
-                    .get<any>("/dataValueSets", {
-                        dataSet: approval.dataSet,
-                        period: approval.period,
-                        orgUnit: approval.orgUnit,
-                    })
-                    .getData()
-            );
-
-            const copyResponse = await promiseMap(DSDataElements, async DSDataElement => {
-                const dataElementsMatchedArray: { origId: any; destId: any }[] = DSDataElement.dataSetElements.map(
-                    (element: { dataElement: any }) => {
+            const dataElementsMatchedArray: { origId: any; destId: any }[] = DSDataElements.flatMap(DSDataElement => {
+                return DSDataElement.dataSetElements.map(
+                    (element) => {
                         const dataElement = element.dataElement;
                         const othername = dataElement.name + "-APVD";
                         const ADSDataElement = ADSDataElements.find(
-                            (DataElement: { name: any }) => String(DataElement.name) === othername
+                            (DataElement) => String(DataElement.name) === othername
                         );
                         return {
                             origId: dataElement?.id,
@@ -387,42 +394,48 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                         };
                     }
                 );
+            })
 
-                const dataValues = dataValueSets
-                    .map(dataValueSet => {
-                        const data = dataValueSet.dataValues.map(
-                            (dataValue: { dataElement: any; lastUpdated: any; dataSet: any }) => {
-                                const data = { ...dataValue };
-                                const destId = dataElementsMatchedArray.find(
-                                    dataElementsMatchedObj => dataElementsMatchedObj.origId === dataValue.dataElement
-                                )?.destId;
-                                data.dataElement = destId;
-                                data.dataSet = approvalDataSetId;
-                                delete data.lastUpdated;
+            const dataValues = dataValueSets.map(dataValueSet => {
+                if (dataValueSet.dataValues) {
+                    const data = dataValueSet.dataValues.map(
+                        (dataValue) => {
+                            const data = { ...dataValue };
+                            const destId = dataElementsMatchedArray.find(
+                                dataElementsMatchedObj => dataElementsMatchedObj.origId === dataValue.dataElement
+                            )?.destId;
+                            data.dataElement = destId;
+                            data.dataSet = approvalDataSetId;
+                            delete data.lastUpdated;
 
-                                return data.dataElement ? data : {};
-                            }
-                        );
-                        return data;
-                    })
-                    .flat();
+                            return data.dataElement ? data : {};
+                        }
+                    );
+                    return data;
+                } else {
+                    return {};
+                }
+            }).flat();
 
+            dataSets.forEach(dataSet => {
                 dataValues.push({
                     dataSet: approvalDataSetId,
-                    period: dataValues[0].period,
-                    orgUnit: dataValues[0].orgUnit,
+                    period: dataSet.period,
+                    orgUnit: dataSet.orgUnit,
                     dataElement: "VqcXVXTPaZG",
                     categoryOptionCombo: "Xr12mI7VPn3",
+                    attributeOptionCombo: "Xr12mI7VPn3",
                     value: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
                 });
-
-                return this.api
-                    .post<any>("/dataValueSets.json", {}, { dataValues: _.reject(dataValues, _.isEmpty) })
-                    .getData();
             });
 
-            return _.every(copyResponse, item => item.status === "SUCCESS");
+            const copyResponse = await this.api
+                .post<any>("/dataValueSets.json", {}, { dataValues: _.reject(dataValues, _.isEmpty) })
+                .getData();
+
+            return copyResponse.status === "SUCCESS";
         } catch (error: any) {
+            console.debug(error);
             return false;
         }
     }
@@ -478,7 +491,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
     async generateSortOrder(): Promise<void> {
         try {
             const dataSetData: {
-                dataSetElements: { dataElement: { id: string, name: string } }[],
+                dataSetElements: dataSetElementsType[],
                 sections: { id: string }[]
             } = await this.api.get<any>(
                 `/dataSets/PWCUb3Se1Ie`,
@@ -489,7 +502,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                 return this.storageClient.saveObject<string[]>(Namespaces.MAL_DIFF_NAMES_SORT_ORDER, []);
             }
 
-            const dataSetElements: { id: string, name: string }[] = dataSetData.dataSetElements.map((item) =>
+            const dataSetElements: dataElementsType[] = dataSetData.dataSetElements.map((item) =>
                 (item.dataElement)
             );
 
