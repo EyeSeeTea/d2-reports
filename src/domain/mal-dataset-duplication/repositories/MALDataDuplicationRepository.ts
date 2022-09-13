@@ -13,8 +13,8 @@ export interface MALDataDuplicationRepository {
     duplicate(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean>;
     incomplete(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean>;
     unapprove(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean>;
-    getColumns(): Promise<string[]>;
-    saveColumns(columns: string[]): Promise<void>;
+    getColumns(namespace: string): Promise<string[]>;
+    saveColumns(namespace: string, columns: string[]): Promise<void>;
 }
 
 export interface MALDataDuplicationRepositoryGetOptions {

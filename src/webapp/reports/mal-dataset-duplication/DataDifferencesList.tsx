@@ -9,6 +9,7 @@ import {
 } from "@eyeseetea/d2-ui-components";
 import _ from "lodash";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Namespaces } from "../../../data/clients/storage/Namespaces";
 import { parseDataDiffItemId } from "../../../domain/mal-dataset-duplication/entities/DataDiffItem";
 import i18n from "../../../locales";
 import { useAppContext } from "../../contexts/app-context";
@@ -30,8 +31,8 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
             columns: [
                 { name: "dataelement", text: i18n.t("Data Element"), sortable: true },
                 { name: "value", text: i18n.t("Value entered"), sortable: false },
-                { name: "apvdvalue", text: i18n.t("Approved value"), sortable: false },
                 { name: "comment", text: i18n.t("Comment"), sortable: false },
+                { name: "apvdvalue", text: i18n.t("Approved value"), sortable: false },
                 { name: "apvdcomment", text: i18n.t("Approved value comment"), sortable: false },
             ],
             actions: [],
@@ -73,7 +74,7 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
 
     const saveReorderedColumns = useCallback(
         async (columnKeys: Array<keyof DataDiffViewModel>) => {
-            await compositionRoot.dataDuplicate.saveColumns(columnKeys);
+            await compositionRoot.dataDuplicate.saveColumns(Namespaces.MAL_DIFF_STATUS_USER_COLUMNS, columnKeys);
         },
         [compositionRoot]
     );
@@ -93,7 +94,16 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
     }, [tableProps.columns, visibleColumns]);
 
     useEffect(() => {
-        compositionRoot.dataDuplicate.getColumns().then(columns => setVisibleColumns(columns));
+        compositionRoot.dataDuplicate.getColumns(Namespaces.MAL_DIFF_STATUS_USER_COLUMNS).then((columns) => {
+            columns = columns.length ? columns : [
+                "dataelement",
+                "value",
+                "comment",
+                "apvdvalue",
+                "apvdcomment"
+            ];
+            setVisibleColumns(columns);
+        });
     }, [compositionRoot]);
 
     return (
