@@ -323,9 +323,10 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
         try {
             const approvalDataSetId = process.env.REACT_APP_APPROVE_DATASET_ID ?? "fRrt4V8ImqD";
 
-            const DSDataElements = await promiseMap(dataSets, async approval =>
+            const uniqueDataSets = _.uniqBy(dataSets, 'dataSet');
+            const DSDataElements = await promiseMap(uniqueDataSets, async item =>
                 this.api
-                    .get<any>(`/dataSets/${approval.dataSet}`, { fields: "dataSetElements[dataElement[id,name]]" })
+                    .get<any>(`/dataSets/${item.dataSet}`, { fields: "dataSetElements[dataElement[id,name]]" })
                     .getData()
             );
 
