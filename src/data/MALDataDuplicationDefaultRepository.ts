@@ -80,6 +80,26 @@ type completeDataSetRegistrationsType = {
 
 type completeCheckresponseType = completeDataSetRegistrationsType[];
 
+type dataElementsType = { id: string, name: string };
+
+type dataSetElementsType = { dataElement: dataElementsType };
+
+type dataValueType = {
+    dataElement: string;
+    period: string;
+    orgUnit: string;
+    value: string;
+    [key: string]: string;
+}
+
+type dataSetsValueType = {
+    dataSet: string;
+    period: string;
+    orgUnit: string;
+    completeDate?: string;
+    dataValues: dataValueType[],
+};
+
 type SqlFieldDiff =
     | "datasetuid"
     | "dataset"
