@@ -169,15 +169,19 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
 
         const dataElementOrderArray = await this.getSortOrder();
 
-        const sortedItems = items.sort((a, b) => {
-            if (a.dataelement && b.dataelement) {
-                return dataElementOrderArray.indexOf(a.dataelement) - dataElementOrderArray.indexOf(b.dataelement);
-            } else {
-                return 0;
-            }
-        });
+        if (!_.isEmpty(dataElementOrderArray)) {
+            const sortedItems = items.sort((a, b) => {
+                if (a.dataelement && b.dataelement) {
+                    return dataElementOrderArray.indexOf(a.dataelement) - dataElementOrderArray.indexOf(b.dataelement);
+                } else {
+                    return 0;
+                }
+            });
+            return paginate(sortedItems, paging_to_download);
+        } else {
+            return paginate(items, paging_to_download);
+        }
 
-        return paginate(sortedItems, paging_to_download);
     }
 
     async get(options: MALDataDuplicationRepositoryGetOptions): Promise<PaginatedObjects<DataDuplicationItem>> {
@@ -459,6 +463,10 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
                 `/dataSets/PWCUb3Se1Ie`,
                 { fields: "sections,dataSetElements[dataElement[id,name]]" }
             ).getData();
+
+            if (_.isEmpty(dataSetData.sections) || _.isEmpty(dataSetData.dataSetElements)) {
+                return this.storageClient.saveObject<string[]>(Namespaces.MAL_DIFF_NAMES_SORT_ORDER, []);
+            }
 
             const dataSetElements: { id: string, name: string }[] = dataSetData.dataSetElements.map((item) =>
                 (item.dataElement)
