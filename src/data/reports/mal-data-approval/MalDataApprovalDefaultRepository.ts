@@ -349,6 +349,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
     async duplicate(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean> {
         try {
             const approvalDataSetId = process.env.REACT_APP_APPROVE_DATASET_ID ?? "fRrt4V8ImqD";
+            const dataSetsCopy: MalDataApprovalItemIdentifier[] = [...dataSets];
 
             const dataValueSetsRaw: dataSetsValueType[] = await promiseMap(dataSets, async item =>
                 this.api.get<any>("/dataValueSets", {
@@ -360,14 +361,25 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
             const dataValueSets: dataSetsValueType[] = [];
             dataValueSetsRaw.forEach(dataValueSet => {
-                if (dataValueSet.dataValues) {
+                if (!_.isEmpty(dataValueSet.dataValues)) {
+                    dataValueSet.dataValues.splice(
+                        dataValueSet.dataValues.findIndex(dataValue => dataValue.dataElement === "RvS8hSy27Ou"), 1
+                    );
+                }
+
+                if (!_.isEmpty(dataValueSet.dataValues)) {
                     dataValueSets.push(dataValueSet);
+                } else {
+                    dataSetsCopy.splice(dataSetsCopy.findIndex(dataSet =>
+                        dataSet.period === dataValueSet.period &&
+                        dataSet.orgUnit === dataValueSet.orgUnit
+                    ), 1);
                 }
             });
 
             if (_.isEmpty(dataValueSets)) throw new Error("All dataValueSet empty");
 
-            const uniqueDataSets = _.uniqBy(dataSets, 'dataSet');
+            const uniqueDataSets = _.uniqBy(dataSetsCopy, 'dataSet');
             const DSDataElements: { dataSetElements: dataSetElementsType[] }[] = await promiseMap(uniqueDataSets, async item =>
                 this.api
                     .get<any>(`/dataSets/${item.dataSet}`, { fields: "dataSetElements[dataElement[id,name]]" })
@@ -424,7 +436,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                 }
             }).flat();
 
-            dataSets.forEach(dataSet => {
+            dataSetsCopy.forEach(dataSet => {
                 dataValues.push({
                     dataSet: approvalDataSetId,
                     period: dataSet.period,
