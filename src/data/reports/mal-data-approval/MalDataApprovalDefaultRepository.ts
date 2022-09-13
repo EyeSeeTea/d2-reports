@@ -1,14 +1,6 @@
 import _ from "lodash";
 import { format } from "date-fns";
-import { DataDiffItem } from "../../../domain/reports/mal-dataset-duplication/entities/DataDiffItem";
-import {
-    DataDuplicationItem,
-    DataDuplicationItemIdentifier,
-} from "../../../domain/reports/mal-dataset-duplication/entities/DataDuplicationItem";
-import {
-    MALDataDuplicationRepository,
-    MALDataDuplicationRepositoryGetOptions,
-} from "../../../domain/reports/mal-dataset-duplication/repositories/MALDataDuplicationRepository";
+import { DataDiffItem } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
 import { D2Api, Id, PaginatedObjects } from "../../../types/d2-api";
 import { promiseMap } from "../../../utils/promises";
 import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
@@ -24,6 +16,14 @@ import {
     SQL_VIEW_MAL_DIFF_NAME,
     SQL_VIEW_MAL_METADATA_NAME,
 } from "../../common/Dhis2ConfigRepository";
+import {
+    MalDataApprovalItem,
+    MalDataApprovalItemIdentifier,
+} from "../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
+import {
+    MalDataApprovalOptions,
+    MalDataApprovalRepository,
+} from "../../../domain/reports/mal-data-approval/repositories/MalDataApprovalRepository";
 
 export interface Pagination {
     page: number;
@@ -114,7 +114,7 @@ type SqlField =
     | "lastdateofapproval"
     | "diff";
 
-const fieldMapping: Record<keyof DataDuplicationItem, SqlField> = {
+const fieldMapping: Record<keyof MalDataApprovalItem, SqlField> = {
     dataSetUid: "datasetuid",
     dataSet: "dataset",
     orgUnitUid: "orgunit",
@@ -131,7 +131,7 @@ const fieldMapping: Record<keyof DataDuplicationItem, SqlField> = {
     modificationCount: "diff",
 };
 
-export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRepository {
+export class MalDataApprovalDefaultRepository implements MalDataApprovalRepository {
     private storageClient: StorageClient;
 
     constructor(private api: D2Api) {
@@ -139,7 +139,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
         this.storageClient = new DataStoreStorageClient("user", instance);
     }
 
-    async getDiff(options: MALDataDuplicationRepositoryGetOptions): Promise<PaginatedObjects<DataDiffItem>> {
+    async getDiff(options: MalDataApprovalOptions): Promise<PaginatedObjects<DataDiffItem>> {
         const { config } = options; // ?
         const { dataSetIds, orgUnitIds, periods } = options; // ?
 
@@ -176,7 +176,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
         return paginate(items, paging_to_download);
     }
 
-    async get(options: MALDataDuplicationRepositoryGetOptions): Promise<PaginatedObjects<DataDuplicationItem>> {
+    async get(options: MalDataApprovalOptions): Promise<PaginatedObjects<MalDataApprovalItem>> {
         const { config } = options; // ?
         const { sorting, dataSetIds, orgUnitIds, periods } = options; // ?
 
@@ -215,7 +215,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
         // through the data element (1 data value -> 1 data element -> N data sets).
     }
 
-    async save(filename: string, dataSets: DataDuplicationItem[]): Promise<void> {
+    async save(filename: string, dataSets: MalDataApprovalItem[]): Promise<void> {
         const headers = csvFields.map(field => ({ id: field, text: field }));
         const rows = dataSets.map(
             (dataSet): DataSetRow => ({
@@ -233,7 +233,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
         await downloadFile(csvContents, filename, "text/csv");
     }
 
-    async complete(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean> {
+    async complete(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean> {
         const completeDataSetRegistrations = dataSets.map(ds => ({
             dataSet: ds.dataSet,
             period: ds.period,
@@ -252,7 +252,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
         }
     }
 
-    async approve(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean> {
+    async approve(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean> {
         try {
             const dataValues = dataSets.map(ds => ({
                 dataSet: ds.dataSet,
@@ -311,7 +311,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
         }
     }
 
-    async duplicate(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean> {
+    async duplicate(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean> {
         try {
             const approvalDataSetId = process.env.REACT_APP_APPROVE_DATASET_ID ?? "fRrt4V8ImqD";
 
@@ -398,7 +398,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
         }
     }
 
-    async incomplete(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean> {
+    async incomplete(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean> {
         try {
             const response = await promiseMap(dataSets, item =>
                 this.api
@@ -416,7 +416,7 @@ export class MALDataDuplicationDefaultRepository implements MALDataDuplicationRe
         }
     }
 
-    async unapprove(dataSets: DataDuplicationItemIdentifier[]): Promise<boolean> {
+    async unapprove(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean> {
         try {
             const response = await promiseMap(dataSets, async approval =>
                 this.api
@@ -455,14 +455,14 @@ function sqlViewJoinIds(ids: Id[]): string {
 }
 
 function mergeHeadersAndData(
-    options: MALDataDuplicationRepositoryGetOptions,
+    options: MalDataApprovalOptions,
     selectablePeriods: string[],
     headers: SqlViewGetData<SqlFieldHeaders>["rows"],
     data: SqlViewGetData<SqlField>["rows"]
 ) {
     const { sorting, paging, orgUnitIds, periods, approvalStatus, completionStatus } = options; // ?
     const activePeriods = periods.length > 0 ? periods : selectablePeriods;
-    const rows: Array<DataDuplicationItem> = [];
+    const rows: Array<MalDataApprovalItem> = [];
 
     const mapping = _(data)
         .keyBy(dv => {
@@ -474,7 +474,7 @@ function mergeHeadersAndData(
         for (const header of headers) {
             const datavalue = mapping[[header.orgunituid, period].join(".")];
 
-            const row: DataDuplicationItem = {
+            const row: MalDataApprovalItem = {
                 dataSetUid: header.datasetuid,
                 dataSet: header.dataset,
                 orgUnitUid: header.orgunituid,

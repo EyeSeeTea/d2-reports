@@ -19,9 +19,9 @@ import { Config } from "../../../../domain/common/entities/Config";
 import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import {
-    DataDuplicationItem,
+    MalDataApprovalItem,
     parseDataDuplicationItemId,
-} from "../../../../domain/reports/mal-dataset-duplication/entities/DataDuplicationItem";
+} from "../../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
 import { ConfirmationDialog } from "@eyeseetea/d2-ui-components";
@@ -118,7 +118,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
                         if (items.length === 0) return;
 
-                        const result = await compositionRoot.dataDuplicate.updateStatus(items, "complete");
+                        const result = await compositionRoot.malDataApproval.updateStatus(items, "complete");
                         if (!result) snackbar.error(i18n.t("Error when trying to complete data set"));
 
                         reload();
@@ -139,7 +139,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
                         if (items.length === 0) return;
 
-                        const result = await compositionRoot.dataDuplicate.updateStatus(items, "incomplete");
+                        const result = await compositionRoot.malDataApproval.updateStatus(items, "incomplete");
                         if (!result) snackbar.error(i18n.t("Error when trying to incomplete data set"));
 
                         reload();
@@ -155,7 +155,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
                         if (items.length === 0) return;
 
-                        const result = await compositionRoot.dataDuplicate.updateStatus(items, "approve");
+                        const result = await compositionRoot.malDataApproval.updateStatus(items, "approve");
                         if (!result) snackbar.error(i18n.t("Error when trying to submit data set"));
 
                         reload();
@@ -176,7 +176,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
                         if (items.length === 0) return;
 
-                        const result = await compositionRoot.dataDuplicate.updateStatus(items, "unapprove");
+                        const result = await compositionRoot.malDataApproval.updateStatus(items, "unapprove");
                         if (!result) snackbar.error(i18n.t("Error when trying to unsubmit data set"));
 
                         reload();
@@ -192,7 +192,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
                         if (items.length === 0) return;
 
-                        const result = await compositionRoot.dataDuplicate.updateStatus(items, "duplicate");
+                        const result = await compositionRoot.malDataApproval.updateStatus(items, "duplicate");
                         if (!result) snackbar.error(i18n.t("Error when trying to approve data values"));
 
                         reload();
@@ -220,12 +220,12 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot.dataDuplicate, isMalAdmin, isMalApprover, openDialog, reload, snackbar]
+        [compositionRoot.malDataApproval, isMalAdmin, isMalApprover, openDialog, reload, snackbar]
     );
 
     const getRows = useMemo(
         () => async (_search: string, paging: TablePagination, sorting: TableSorting<DataApprovalViewModel>) => {
-            const { pager, objects } = await compositionRoot.dataDuplicate.get({
+            const { pager, objects } = await compositionRoot.malDataApproval.get({
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
@@ -249,7 +249,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
         async (columnKeys: Array<keyof DataApprovalViewModel>) => {
             if (!visibleColumns) return;
 
-            await compositionRoot.dataDuplicate.saveColumns(Namespaces.MAL_APPROVAL_STATUS_USER_COLUMNS, columnKeys);
+            await compositionRoot.malDataApproval.saveColumns(Namespaces.MAL_APPROVAL_STATUS_USER_COLUMNS, columnKeys);
         },
         [compositionRoot, visibleColumns]
     );
@@ -280,7 +280,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const filterOptions = React.useMemo(() => getFilterOptions(config, selectablePeriods), [config, selectablePeriods]);
 
     useEffect(() => {
-        compositionRoot.dataDuplicate.getColumns(Namespaces.MAL_APPROVAL_STATUS_USER_COLUMNS).then(columns => {
+        compositionRoot.malDataApproval.getColumns(Namespaces.MAL_APPROVAL_STATUS_USER_COLUMNS).then(columns => {
             columns = columns.length
                 ? columns
                 : [
@@ -321,7 +321,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
     );
 });
 
-export function getSortingFromTableSorting(sorting: TableSorting<DataApprovalViewModel>): Sorting<DataDuplicationItem> {
+export function getSortingFromTableSorting(sorting: TableSorting<DataApprovalViewModel>): Sorting<MalDataApprovalItem> {
     return {
         field: sorting.field === "id" ? "period" : sorting.field,
         direction: sorting.order,

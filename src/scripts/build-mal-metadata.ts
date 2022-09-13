@@ -201,7 +201,7 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
 
     Object.assign(process.env, { REACT_APP_REPORT_VARIANT: "mal-approval-status" });
     run("yarn build-report");
-    const htmlDuplicate = fs.readFileSync("dist/index.html", "utf8");
+    const htmlMalDataApproval = fs.readFileSync("dist/index.html", "utf8");
 
     const reports: Partial<D2Report>[] = [
         {
@@ -215,7 +215,7 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
                 organisationUnit: false,
                 grandParentOrganisationUnit: false,
             },
-            designContent: htmlDuplicate,
+            designContent: htmlMalDataApproval,
         },
     ];
 

@@ -1,7 +1,7 @@
 import { Dhis2ConfigRepository } from "./data/common/Dhis2ConfigRepository";
 import { Dhis2OrgUnitsRepository } from "./data/common/Dhis2OrgUnitsRepository";
 import { NHWADataApprovalDefaultRepository } from "./data/reports/nhwa-approval-status/NHWADataApprovalDefaultRepository";
-import { MALDataDuplicationDefaultRepository } from "./data/reports/mal-dataset-duplication/MALDataDuplicationDefaultRepository";
+import { MalDataApprovalDefaultRepository } from "./data/reports/mal-data-approval/MalDataApprovalDefaultRepository";
 import { NHWADataCommentsDefaultRepository } from "./data/reports/nhwa-comments/NHWADataCommentsDefaultRepository";
 import { WIDPAdminDefaultRepository } from "./data/reports/admin/WIDPAdminDefaultRepository";
 import { GetWIDPAdminDefaultUseCase } from "./domain/reports/admin/usecases/GetWIDPAdminDefaultUseCase";
@@ -15,20 +15,20 @@ import { SaveApprovalColumnsUseCase } from "./domain/reports/nhwa-approval-statu
 import { SaveDataSetsUseCase } from "./domain/reports/nhwa-approval-status/usecases/SaveDataSetsCsvUseCase";
 import { GetDataValuesUseCase } from "./domain/reports/nhwa-comments/usecases/GetDataValuesUseCase";
 import { SaveDataValuesUseCase } from "./domain/reports/nhwa-comments/usecases/SaveDataValuesCsvUseCase";
-import { UpdateStatusAndDuplicateUseCase } from "./domain/reports/mal-dataset-duplication/usecases/CompleteAndDuplicateDataSetsUseCase";
-import { GetApprovalAndDuplicateColumnsUseCase } from "./domain/reports/mal-dataset-duplication/usecases/GetApprovalAndDuplicateColumnsUseCase";
-import { GetDataSetsDuplicationUseCase } from "./domain/reports/mal-dataset-duplication/usecases/GetDataSetsDuplicationUseCaseOptions";
-import { SaveApprovalAndDuplicateColumnsUseCase } from "./domain/reports/mal-dataset-duplication/usecases/SaveApprovalDuplicateColumnsUseCase";
-import { SaveDataSetsDuplicationUseCase } from "./domain/reports/mal-dataset-duplication/usecases/SaveDataSetsDuplicationUseCase";
+import { UpdateMalApprovalStatusUseCase } from "./domain/reports/mal-data-approval/usecases/UpdateMalApprovalStatusUseCase";
+import { GetMalDataSetsUseCase } from "./domain/reports/mal-data-approval/usecases/GetMalDataSetsUseCase";
+import { SaveMalDataApprovalColumnsUseCase } from "./domain/reports/mal-data-approval/usecases/SaveMalDataApprovalColumnsUseCase";
+import { SaveMalDataSetsUseCase } from "./domain/reports/mal-data-approval/usecases/SaveMalDataSetsUseCase";
 import { D2Api } from "./types/d2-api";
-import { GetDataDiffUseCase } from "./domain/reports/mal-dataset-duplication/usecases/GetDataDiffUseCase";
+import { GetMalDataDiffUseCase } from "./domain/reports/mal-data-approval/usecases/GetMalDataDiffUseCase";
 import { getReportType } from "./webapp/utils/reportType";
+import { GetMalDataApprovalColumnsUseCase } from "./domain/reports/mal-data-approval/usecases/GetMalDataApprovalColumnsUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
     const dataCommentsRepository = new NHWADataCommentsDefaultRepository(api);
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
-    const dataDuplicationRepository = new MALDataDuplicationDefaultRepository(api);
+    const dataDuplicationRepository = new MalDataApprovalDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
 
@@ -48,13 +48,13 @@ export function getCompositionRoot(api: D2Api) {
             saveColumns: new SaveApprovalColumnsUseCase(dataApprovalRepository),
             updateStatus: new UpdateStatusUseCase(dataApprovalRepository),
         }),
-        dataDuplicate: getExecute({
-            get: new GetDataSetsDuplicationUseCase(dataDuplicationRepository),
-            getDiff: new GetDataDiffUseCase(dataDuplicationRepository),
-            save: new SaveDataSetsDuplicationUseCase(dataDuplicationRepository),
-            getColumns: new GetApprovalAndDuplicateColumnsUseCase(dataDuplicationRepository),
-            saveColumns: new SaveApprovalAndDuplicateColumnsUseCase(dataDuplicationRepository),
-            updateStatus: new UpdateStatusAndDuplicateUseCase(dataDuplicationRepository),
+        malDataApproval: getExecute({
+            get: new GetMalDataSetsUseCase(dataDuplicationRepository),
+            getDiff: new GetMalDataDiffUseCase(dataDuplicationRepository),
+            save: new SaveMalDataSetsUseCase(dataDuplicationRepository),
+            getColumns: new GetMalDataApprovalColumnsUseCase(dataDuplicationRepository),
+            saveColumns: new SaveMalDataApprovalColumnsUseCase(dataDuplicationRepository),
+            updateStatus: new UpdateMalApprovalStatusUseCase(dataDuplicationRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),

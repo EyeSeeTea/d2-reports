@@ -1,8 +1,8 @@
 import { Config } from "../../../domain/common/entities/Config";
 import {
-    DataDuplicationItem,
+    MalDataApprovalItem,
     getDataDuplicationItemId,
-} from "../../../domain/reports/mal-dataset-duplication/entities/DataDuplicationItem";
+} from "../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import { toDate } from "date-fns-tz";
 
 export interface DataApprovalViewModel {
@@ -23,7 +23,7 @@ export interface DataApprovalViewModel {
     modificationCount: string | undefined;
 }
 
-export function getDataApprovalViews(_config: Config, items: DataDuplicationItem[]): DataApprovalViewModel[] {
+export function getDataApprovalViews(_config: Config, items: MalDataApprovalItem[]): DataApprovalViewModel[] {
     return items.map(item => {
         return {
             id: getDataDuplicationItemId(item),

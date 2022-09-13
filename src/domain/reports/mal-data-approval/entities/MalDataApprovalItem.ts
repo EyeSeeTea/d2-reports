@@ -1,4 +1,4 @@
-export interface DataDuplicationItem {
+export interface MalDataApprovalItem {
     dataSetUid: string;
     dataSet: string;
     orgUnitUid: string;
@@ -15,18 +15,18 @@ export interface DataDuplicationItem {
     modificationCount: string | undefined;
 }
 
-export interface DataDuplicationItemIdentifier {
+export interface MalDataApprovalItemIdentifier {
     dataSet: string;
     orgUnit: string;
     period: string;
     workflow: string;
 }
 
-export function getDataDuplicationItemId(dataSet: DataDuplicationItem): string {
+export function getDataDuplicationItemId(dataSet: MalDataApprovalItem): string {
     return [dataSet.dataSetUid, dataSet.approvalWorkflowUid, dataSet.period, dataSet.orgUnitUid].join("-");
 }
 
-export function parseDataDuplicationItemId(string: string): DataDuplicationItemIdentifier | undefined {
+export function parseDataDuplicationItemId(string: string): MalDataApprovalItemIdentifier | undefined {
     const [dataSet, workflow, period, orgUnit] = string.split("-");
     if (!dataSet || !workflow || !period || !orgUnit) return undefined;
 

@@ -1,5 +1,5 @@
 import { Config } from "../../../domain/common/entities/Config";
-import { DataDiffItem, getDatiffItemId } from "../../../domain/reports/mal-dataset-duplication/entities/DataDiffItem";
+import { DataDiffItem, getDatiffItemId } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
 
 export interface DataDiffViewModel {
     id: string;

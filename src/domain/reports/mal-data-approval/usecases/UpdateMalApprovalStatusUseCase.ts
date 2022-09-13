@@ -1,10 +1,10 @@
-import { DataDuplicationItemIdentifier } from "../entities/DataDuplicationItem";
-import { MALDataDuplicationRepository } from "../repositories/MALDataDuplicationRepository";
+import { MalDataApprovalItemIdentifier } from "../entities/MalDataApprovalItem";
+import { MalDataApprovalRepository } from "../repositories/MalDataApprovalRepository";
 
-export class UpdateStatusAndDuplicateUseCase {
-    constructor(private approvalRepository: MALDataDuplicationRepository) { }
+export class UpdateMalApprovalStatusUseCase {
+    constructor(private approvalRepository: MalDataApprovalRepository) {}
 
-    async execute(items: DataDuplicationItemIdentifier[], action: UpdateAction): Promise<boolean> {
+    async execute(items: MalDataApprovalItemIdentifier[], action: UpdateAction): Promise<boolean> {
         switch (action) {
             case "complete":
                 return this.approvalRepository.complete(items);

@@ -10,7 +10,7 @@ import {
 import _ from "lodash";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Namespaces } from "../../../data/common/clients/storage/Namespaces";
-import { parseDataDiffItemId } from "../../../domain/reports/mal-dataset-duplication/entities/DataDiffItem";
+import { parseDataDiffItemId } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
 
 import i18n from "../../../locales";
 import { useAppContext } from "../../contexts/app-context";
@@ -54,7 +54,7 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
             const items = _.compact(selectedIds.map(item => parseDataDiffItemId(item)));
             if (items.length === 0) return;
 
-            const { pager, objects } = await compositionRoot.dataDuplicate.getDiff({
+            const { pager, objects } = await compositionRoot.malDataApproval.getDiff({
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
@@ -67,7 +67,7 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
 
             return { pager, objects: getDataADiffViews(config, objects) };
         },
-        [compositionRoot.dataDuplicate, config, selectedIds, snackbar]
+        [compositionRoot.malDataApproval, config, selectedIds, snackbar]
     );
 
     // @ts-ignore
@@ -75,7 +75,7 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
 
     const saveReorderedColumns = useCallback(
         async (columnKeys: Array<keyof DataDiffViewModel>) => {
-            await compositionRoot.dataDuplicate.saveColumns(Namespaces.MAL_DIFF_STATUS_USER_COLUMNS, columnKeys);
+            await compositionRoot.malDataApproval.saveColumns(Namespaces.MAL_DIFF_STATUS_USER_COLUMNS, columnKeys);
         },
         [compositionRoot]
     );
@@ -95,7 +95,7 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
     }, [tableProps.columns, visibleColumns]);
 
     useEffect(() => {
-        compositionRoot.dataDuplicate.getColumns(Namespaces.MAL_DIFF_STATUS_USER_COLUMNS).then(columns => {
+        compositionRoot.malDataApproval.getColumns(Namespaces.MAL_DIFF_STATUS_USER_COLUMNS).then(columns => {
             columns = columns.length ? columns : ["dataelement", "value", "comment", "apvdvalue", "apvdcomment"];
             setVisibleColumns(columns);
         });
