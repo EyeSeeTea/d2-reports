@@ -205,7 +205,7 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
 
     const reports: Partial<D2Report>[] = [
         {
-            id: "Ea875yWGwxT",
+            id: "FQyoZzClRY7",
             name: "Malaria Data Approval Report",
             type: "HTML",
             cacheStrategy: "RESPECT_SYSTEM_SETTING",
