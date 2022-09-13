@@ -7,7 +7,7 @@ import { GetWIDPAdminDefaultUseCase } from "./domain/reports/admin/usecases/GetW
 import { SaveWIDPAdminDefaultCsvUseCase } from "./domain/reports/admin/usecases/SaveWIDPAdminDefaultCsvUseCase";
 import { GetConfig } from "./domain/common/usecases/GetConfig";
 import { GetOrgUnitsUseCase } from "./domain/common/usecases/GetOrgUnitsUseCase";
-import { UpdateStatusUseCase } from "./domain/reports/nhwa-approval-status/usecases/CompleteDataSetsUseCase";
+import { UpdateStatusUseCase } from "./domain/reports/nhwa-approval-status/usecases/UpdateStatusUseCase";
 import { GetApprovalColumnsUseCase } from "./domain/reports/nhwa-approval-status/usecases/GetApprovalColumnsUseCase";
 import { GetDataSetsUseCase } from "./domain/reports/nhwa-approval-status/usecases/GetDataSetsUseCase";
 import { SaveApprovalColumnsUseCase } from "./domain/reports/nhwa-approval-status/usecases/SaveApprovalColumnsUseCase";
