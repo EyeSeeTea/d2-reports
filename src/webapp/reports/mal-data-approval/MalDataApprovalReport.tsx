@@ -1,9 +1,16 @@
 import { Typography, makeStyles } from "@material-ui/core";
+import { useEffect } from "react";
 import i18n from "../../../locales";
+import { useAppContext } from "../../contexts/app-context";
 import { DataApprovalList } from "./data-approval-list/DataApprovalList";
 
-const MALDataApprovalStatusReport: React.FC = () => {
+const MalDataApprovalStatusReport: React.FC = () => {
     const classes = useStyles();
+    const { compositionRoot } = useAppContext();
+
+    useEffect(() => {
+        compositionRoot.malDataApproval.generateSortOrder();
+    });
 
     return (
         <div className={classes.wrapper}>
@@ -20,4 +27,4 @@ const useStyles = makeStyles({
     wrapper: { padding: 20 },
 });
 
-export default MALDataApprovalStatusReport;
+export default MalDataApprovalStatusReport;

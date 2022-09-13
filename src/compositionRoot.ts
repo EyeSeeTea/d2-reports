@@ -1,7 +1,6 @@
 import { Dhis2ConfigRepository } from "./data/common/Dhis2ConfigRepository";
 import { Dhis2OrgUnitsRepository } from "./data/common/Dhis2OrgUnitsRepository";
 import { NHWADataApprovalDefaultRepository } from "./data/reports/nhwa-approval-status/NHWADataApprovalDefaultRepository";
-import { MalDataApprovalDefaultRepository } from "./data/reports/mal-data-approval/MalDataApprovalDefaultRepository";
 import { NHWADataCommentsDefaultRepository } from "./data/reports/nhwa-comments/NHWADataCommentsDefaultRepository";
 import { WIDPAdminDefaultRepository } from "./data/reports/admin/WIDPAdminDefaultRepository";
 import { GetWIDPAdminDefaultUseCase } from "./domain/reports/admin/usecases/GetWIDPAdminDefaultUseCase";
@@ -23,6 +22,9 @@ import { D2Api } from "./types/d2-api";
 import { GetMalDataDiffUseCase } from "./domain/reports/mal-data-approval/usecases/GetMalDataDiffUseCase";
 import { getReportType } from "./webapp/utils/reportType";
 import { GetMalDataApprovalColumnsUseCase } from "./domain/reports/mal-data-approval/usecases/GetMalDataApprovalColumnsUseCase";
+import { MalDataApprovalDefaultRepository } from "./data/reports/mal-data-approval/MalDataApprovalDefaultRepository";
+import { GetSortOrderUseCase } from "./domain/reports/mal-data-approval/usecases/GetSortOrderUseCase";
+import { GenerateSortOrderUseCase } from "./domain/reports/mal-data-approval/usecases/GenerateSortOrderUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -55,6 +57,8 @@ export function getCompositionRoot(api: D2Api) {
             getColumns: new GetMalDataApprovalColumnsUseCase(dataDuplicationRepository),
             saveColumns: new SaveMalDataApprovalColumnsUseCase(dataDuplicationRepository),
             updateStatus: new UpdateMalApprovalStatusUseCase(dataDuplicationRepository),
+            getSortOrder: new GetSortOrderUseCase(dataDuplicationRepository),
+            generateSortOrder: new GenerateSortOrderUseCase(dataDuplicationRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),
