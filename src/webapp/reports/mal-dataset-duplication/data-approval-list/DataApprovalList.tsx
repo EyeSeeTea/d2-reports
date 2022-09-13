@@ -142,7 +142,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.completed === true),
+                    isActive: rows => _.every(rows, row => row.completed === true && !row.validated),
                 },
                 {
                     name: "submit",
