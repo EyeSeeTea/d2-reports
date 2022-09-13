@@ -2,7 +2,7 @@ import { Config } from "../../../domain/common/entities/Config";
 import {
     DataApprovalItem,
     getDataApprovalItemId,
-} from "../../../domain/nhwa-approval-status/entities/DataApprovalItem";
+} from "../../../domain/reports/nhwa-approval-status/entities/DataApprovalItem";
 
 export interface DataApprovalViewModel {
     id: string;
