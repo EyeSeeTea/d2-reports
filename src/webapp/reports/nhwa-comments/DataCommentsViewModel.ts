@@ -1,5 +1,8 @@
 import { Config } from "../../../domain/common/entities/Config";
-import { DataCommentsItem, getDataCommentsItemId } from "../../../domain/nhwa-comments/entities/DataCommentsItem";
+import {
+    DataCommentsItem,
+    getDataCommentsItemId,
+} from "../../../domain/reports/nhwa-comments/entities/DataCommentsItem";
 
 export interface DataCommentsViewModel {
     id: string;
