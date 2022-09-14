@@ -605,9 +605,18 @@ function mergeHeadersAndData(
     const rowsFiltered = rowsSorted.filter(row => {
         //aproval is submission, ready -> truefalse
         return (
-            (approvalStatus === undefined || approvalStatus === row.validated) &&
-            (completionStatus === undefined || completionStatus === row.completed) &&
-            (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)
+           ( (approvalStatus === undefined && completionStatus === undefined) &&
+            (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1) ) ||
+
+            ((approvalStatus === true &&  row.validated && row.completed) &&
+             (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
+
+             
+            ((completionStatus ===  row.completed) &&
+            (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
+
+            ((approvalStatus === false && row.validated === false) &&
+            (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1))
         );
     });
     return paginate(rowsFiltered, paging);
