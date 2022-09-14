@@ -603,9 +603,6 @@ function mergeHeadersAndData(
 
     const filterOrgUnitIds = orgUnitIds.length > 0 ? orgUnitIds : undefined;
     const rowsFiltered = rowsSorted.filter(row => {
-        //aproval is submission, ready -> truefalse
-        //ready for sumbitions no working proplertly
-        //row.validated ? "Submitted" : row.completed ? "Ready for submission" : "Not completed",
         return (
             ((approvalStatus === true && row.validated && row.completed) &&
              (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
