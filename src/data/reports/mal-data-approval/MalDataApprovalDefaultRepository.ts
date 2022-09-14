@@ -604,19 +604,24 @@ function mergeHeadersAndData(
     const filterOrgUnitIds = orgUnitIds.length > 0 ? orgUnitIds : undefined;
     const rowsFiltered = rowsSorted.filter(row => {
         //aproval is submission, ready -> truefalse
+        //ready for sumbitions no working proplertly
+        //row.validated ? "Submitted" : row.completed ? "Ready for submission" : "Not completed",
         return (
+            ((approvalStatus === true && row.validated && row.completed) &&
+             (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
+
+             ((approvalStatus === false && !row.validated && row.completed) &&
+             (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
+
            ( (approvalStatus === undefined && completionStatus === undefined) &&
             (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1) ) ||
 
-            ((approvalStatus === true &&  row.validated && row.completed) &&
-             (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
-
              
-            ((completionStatus ===  row.completed) &&
+            ((approvalStatus === undefined && completionStatus === true && row.completed) &&
             (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
-
-            ((approvalStatus === false && row.validated === false) &&
-            (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1))
+             
+            ((approvalStatus === undefined && completionStatus === false && !row.completed) &&
+            (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1))  
         );
     });
     return paginate(rowsFiltered, paging);
