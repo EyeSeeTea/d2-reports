@@ -171,6 +171,14 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
         "src/data/reports/mal-dataset-duplication/sql-views/mal-data-approval-status.sql",
         "utf8"
     );
+    const sqlMALDataDiff = fs.readFileSync(
+        "src/data/reports/mal-dataset-duplication/sql-views/mal-data-approval-diff.sql",
+        "utf8"
+    );
+    const sqlMALDataHeader = fs.readFileSync(
+        "src/data/reports/mal-dataset-duplication/sql-views/mal-data-approval-header.sql",
+        "utf8"
+    );
 
     const sqlViews: Partial<D2SqlView>[] = [
         {
@@ -195,6 +203,22 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
             cacheStrategy: "RESPECT_SYSTEM_SETTING",
             type: "QUERY",
             sqlQuery: sqlMALDataApproval,
+            publicAccess: "--------",
+        },
+        {
+            id: "RZV5DSxqDUc",
+            name: "MAL Data approval header",
+            cacheStrategy: "RESPECT_SYSTEM_SETTING",
+            type: "QUERY",
+            sqlQuery: sqlMALDataHeader,
+            publicAccess: "--------",
+        },
+        {
+            id: "QuNQs2bFGHW",
+            name: "MAL Data Approval Diff",
+            cacheStrategy: "RESPECT_SYSTEM_SETTING",
+            type: "QUERY",
+            sqlQuery: sqlMALDataDiff,
             publicAccess: "--------",
         },
     ];
