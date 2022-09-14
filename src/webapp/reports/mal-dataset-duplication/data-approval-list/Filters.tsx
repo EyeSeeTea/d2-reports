@@ -3,7 +3,7 @@ import _ from "lodash";
 import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { Id, NamedRef } from "../../../../domain/common/entities/Base";
-import { getRootIds, OrgUnit } from "../../../../domain/common/entities/OrgUnit";
+import { getRootIds } from "../../../../domain/common/entities/OrgUnit";
 import i18n from "../../../../locales";
 import { D2Api } from "../../../../types/d2-api";
 import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
@@ -30,6 +30,17 @@ export interface DataSetsFilter {
 interface FilterOptions {
     dataSets: NamedRef[];
     periods: string[];
+}
+
+interface OrgUnit {
+    id: Id;
+    path: string;
+    name: string;
+    level: number;
+    children: {
+        level: number;
+        path: string;
+    }[];
 }
 
 export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
@@ -62,30 +73,59 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 .get({
                     organisationUnits: {
                         filter: { level: { in: levels } },
-                        fields: { id: true, path: true, name: true, level: true },
+                        fields: {
+                            id: true,
+                            path: true,
+                            name: true,
+                            level: true,
+                            children: { level: true, path: true },
+                        },
                     },
                 })
                 .getData();
 
             return _.orderBy(organisationUnits, "level", "asc");
         }
-        
+
         const levels = ["1", "2", "3"];
         getOrganisationUnits(api, levels).then(value => setOrgUnits(value));
     }, [api]);
 
     const setOrgUnitPaths = React.useCallback<OrgUnitsFilterButtonProps["setSelected"]>(
         paths => {
-            const newPaths: string[] = [];
+            const childrenPaths: string[] = [];
+            const childrenPathsSelected: string[] = [];
+            
             paths.map(path => {
-                return orgUnits?.map(ou => {
-                    if (ou.path.includes(path)) {
-                        newPaths.push(ou.path);
+                orgUnits?.map(ou => {
+                    if (ou.path === path) {
+                        childrenPaths.push(ou.path);
+                        if (childrenPathsSelected.includes(path)) {
+                            childrenPathsSelected.filter(s => !s.includes(path));
+                        } else if (!childrenPathsSelected.includes(path)) {
+                            childrenPathsSelected.push(ou.path);
+                        }
+                        ou.children.map(child => {
+                            if (child.level <= 3) {
+                                childrenPaths.push(child.path);
+                                if (childrenPathsSelected.includes(child.path)) {
+                                    childrenPathsSelected.filter(s => s !== child.path);
+                                } else {
+                                    childrenPathsSelected.push(child.path);
+                                }
+                            }
+                            return childrenPathsSelected;
+                        });
                     }
-                    return newPaths;
+                    return childrenPathsSelected;
                 });
+                return childrenPathsSelected;
             });
-            onChange(prev => ({ ...prev, orgUnitPaths: newPaths }));
+
+            onChange(prev => ({
+                ...prev,
+                orgUnitPaths: childrenPathsSelected,
+            }));
         },
         [onChange, orgUnits]
     );
