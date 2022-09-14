@@ -448,11 +448,25 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                 });
             });
 
-            const copyResponse = await this.api
-                .post<any>("/dataValueSets.json", {}, { dataValues: _.reject(dataValues, _.isEmpty) })
-                .getData();
+            const chunkSize = 3000;
+            if (dataValues.length > chunkSize) {
+                const copyResponse = [];
+                for (let i = 0; i < dataValues.length; i += chunkSize) {
+                    const chunk = dataValues.slice(i, i + chunkSize);
+                    const response = await this.api
+                        .post<any>("/dataValueSets.json", {}, { dataValues: _.reject(chunk, _.isEmpty) })
+                        .getData();
 
-            return copyResponse.status === "SUCCESS";
+                    copyResponse.push(response)
+                }
+                return _.every(copyResponse, item => item.status === "SUCCESS");
+            } else {
+                const copyResponse = await this.api
+                    .post<any>("/dataValueSets.json", {}, { dataValues: _.reject(dataValues, _.isEmpty) })
+                    .getData();
+
+                return copyResponse.status === "SUCCESS";
+            }
         } catch (error: any) {
             console.debug(error);
             return false;
