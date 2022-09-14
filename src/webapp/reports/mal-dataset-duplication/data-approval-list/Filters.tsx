@@ -95,7 +95,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         paths => {
             const childrenPaths: string[] = [];
             const childrenPathsSelected: string[] = [];
-            
+
             paths.map(path => {
                 orgUnits?.map(ou => {
                     if (ou.path === path) {
