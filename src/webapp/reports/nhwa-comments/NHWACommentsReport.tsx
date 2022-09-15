@@ -2,7 +2,7 @@ import { Typography, makeStyles } from "@material-ui/core";
 import i18n from "../../../locales";
 import { DataCommentsList } from "./data-comments-list/DataCommentsList";
 
-const NHWACommentsReport: React.FC = () => {
+export const NHWACommentsReport: React.FC = () => {
     const classes = useStyles();
 
     return (
@@ -19,5 +19,3 @@ const NHWACommentsReport: React.FC = () => {
 const useStyles = makeStyles({
     wrapper: { padding: 20 },
 });
-
-export default NHWACommentsReport;

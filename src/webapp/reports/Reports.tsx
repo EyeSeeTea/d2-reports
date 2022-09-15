@@ -1,8 +1,9 @@
 import React from "react";
-import AdminReport from "./admin/AdminReport";
-import NHWACommentsReport from "./nhwa-comments/NHWACommentsReport";
-import NHWADataApprovalStatusReport from "./nhwa-approval-status/NHWADataApprovalStatusReport";
+import { AdminReport } from "./admin/AdminReport";
 import MalDataApprovalStatusReport from "./mal-data-approval/MalDataApprovalReport";
+import { NHWADataApprovalStatusReport } from "./nhwa-approval-status/NHWADataApprovalStatusReport";
+import { NHWACommentsReport } from "./nhwa-comments/NHWACommentsReport";
+import { WMRNationalPolicies } from "./wmr-national-policies/WMRNationalPolicies";
 
 const widget = process.env.REACT_APP_REPORT_VARIANT || "";
 
@@ -19,6 +20,9 @@ const Component: React.FC = () => {
         }
         case "admin": {
             return <AdminReport />;
+        }
+        case "wmr-national-policies": {
+            return <WMRNationalPolicies />;
         }
         default: {
             return <p>{`Please provide a valid REACT_APP_REPORT_VARIANT`}</p>;
