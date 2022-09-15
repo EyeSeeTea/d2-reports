@@ -51,7 +51,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
 
-    const [orgUnits, setOrgUnits] = useState<OrgUnit[]>();
+    const [orgUnits, setOrgUnits] = useState<OrgUnit[]>([]);
 
     const completionStatusItems = React.useMemo(() => {
         return [
@@ -78,7 +78,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                             path: true,
                             name: true,
                             level: true,
-                            children: { level: true, path: true },
+                            children: { level: true, path: true, children: { level: true } },
                         },
                     },
                 })
@@ -93,38 +93,35 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
 
     const setOrgUnitPaths = React.useCallback<OrgUnitsFilterButtonProps["setSelected"]>(
         paths => {
-            const childrenPaths: string[] = [];
-            const childrenPathsSelected: string[] = [];
-            
+            const newPaths: string[] = [];
+
             paths.map(path => {
-                orgUnits?.map(ou => {
+                orgUnits.map(ou => {
                     if (ou.path === path) {
-                        childrenPaths.push(ou.path);
-                        if (childrenPathsSelected.includes(path)) {
-                            childrenPathsSelected.filter(s => !s.includes(path));
-                        } else if (!childrenPathsSelected.includes(path)) {
-                            childrenPathsSelected.push(ou.path);
+                        if (newPaths.includes(path)) {
+                            newPaths.filter(s => !s.includes(path));
+                        } else if (!newPaths.includes(path)) {
+                            newPaths.push(ou.path);
                         }
                         ou.children.map(child => {
                             if (child.level <= 3) {
-                                childrenPaths.push(child.path);
-                                if (childrenPathsSelected.includes(child.path)) {
-                                    childrenPathsSelected.filter(s => s !== child.path);
+                                if (newPaths.includes(child.path)) {
+                                    newPaths.filter(s => !s.includes(path));
                                 } else {
-                                    childrenPathsSelected.push(child.path);
+                                    newPaths.push(child.path);
                                 }
                             }
-                            return childrenPathsSelected;
+                            return newPaths;
                         });
                     }
-                    return childrenPathsSelected;
+                    return newPaths;
                 });
-                return childrenPathsSelected;
+                return newPaths;
             });
 
             onChange(prev => ({
                 ...prev,
-                orgUnitPaths: childrenPathsSelected,
+                orgUnitPaths: newPaths,
             }));
         },
         [onChange, orgUnits]
