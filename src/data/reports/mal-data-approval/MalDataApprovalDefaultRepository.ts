@@ -86,7 +86,7 @@ type completeDataSetRegistrationsType = {
 
 type completeCheckresponseType = completeDataSetRegistrationsType[];
 
-type dataElementsType = { id: string, name: string };
+type dataElementsType = { id: string; name: string };
 
 type dataSetElementsType = { dataElement: dataElementsType };
 
@@ -96,14 +96,14 @@ type dataValueType = {
     orgUnit: string;
     value: string;
     [key: string]: string;
-}
+};
 
 type dataSetsValueType = {
     dataSet: string;
     period: string;
     orgUnit: string;
     completeDate?: string;
-    dataValues: dataValueType[],
+    dataValues: dataValueType[];
 };
 
 type SqlFieldDiff =
@@ -208,7 +208,6 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         } else {
             return paginate(items, paging_to_download);
         }
-
     }
 
     async get(options: MalDataApprovalOptions): Promise<PaginatedObjects<MalDataApprovalItem>> {
@@ -236,8 +235,8 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                     orgUnits: sqlViewJoinIds(orgUnitIds),
                     periods: sqlViewJoinIds(periods),
                     dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
-                    completed: options.completionStatus === undefined ? "-" : options.completionStatus.toString(),
-                    approved: options.approvalStatus === undefined ? "-" : options.approvalStatus.toString(),
+                    completed: "-",
+                    approved: "-",
                     orderByColumn: fieldMapping[sorting.field],
                     orderByDirection: sorting.direction,
                 },
@@ -351,53 +350,51 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             const approvalDataSetId = process.env.REACT_APP_APPROVE_DATASET_ID ?? "fRrt4V8ImqD";
 
             const dataValueSets: dataSetsValueType[] = await promiseMap(dataSets, async item =>
-                this.api.get<any>("/dataValueSets", {
-                    dataSet: item.dataSet,
-                    period: item.period,
-                    orgUnit: item.orgUnit,
-                }).getData()
+                this.api
+                    .get<any>("/dataValueSets", {
+                        dataSet: item.dataSet,
+                        period: item.period,
+                        orgUnit: item.orgUnit,
+                    })
+                    .getData()
             );
 
-            const uniqueDataSets = _.uniqBy(dataSets, 'dataSet');
-            const DSDataElements: { dataSetElements: dataSetElementsType[] }[] = await promiseMap(uniqueDataSets, async item =>
-                this.api
-                    .get<any>(`/dataSets/${item.dataSet}`, { fields: "dataSetElements[dataElement[id,name]]" })
-                    .getData()
+            const uniqueDataSets = _.uniqBy(dataSets, "dataSet");
+            const DSDataElements: { dataSetElements: dataSetElementsType[] }[] = await promiseMap(
+                uniqueDataSets,
+                async item =>
+                    this.api
+                        .get<any>(`/dataSets/${item.dataSet}`, { fields: "dataSetElements[dataElement[id,name]]" })
+                        .getData()
             );
 
             const ADSDataElementsRaw: { dataSetElements: dataSetElementsType[] } = await this.api
                 .get<any>(`/dataSets/${approvalDataSetId}`, { fields: "dataSetElements[dataElement[id,name]]" })
                 .getData();
 
-            const ADSDataElements: dataElementsType[] = ADSDataElementsRaw.dataSetElements.map(
-                (element) => {
-                    return {
-                        id: element.dataElement.id,
-                        name: element.dataElement.name,
-                    };
-                }
-            );
+            const ADSDataElements: dataElementsType[] = ADSDataElementsRaw.dataSetElements.map(element => {
+                return {
+                    id: element.dataElement.id,
+                    name: element.dataElement.name,
+                };
+            });
 
             const dataElementsMatchedArray: { origId: any; destId: any }[] = DSDataElements.flatMap(DSDataElement => {
-                return DSDataElement.dataSetElements.map(
-                    (element) => {
-                        const dataElement = element.dataElement;
-                        const othername = dataElement.name + "-APVD";
-                        const ADSDataElement = ADSDataElements.find(
-                            (DataElement) => String(DataElement.name) === othername
-                        );
-                        return {
-                            origId: dataElement?.id,
-                            destId: ADSDataElement?.id,
-                        };
-                    }
-                );
-            })
+                return DSDataElement.dataSetElements.map(element => {
+                    const dataElement = element.dataElement;
+                    const othername = dataElement.name + "-APVD";
+                    const ADSDataElement = ADSDataElements.find(DataElement => String(DataElement.name) === othername);
+                    return {
+                        origId: dataElement?.id,
+                        destId: ADSDataElement?.id,
+                    };
+                });
+            });
 
-            const dataValues = dataValueSets.map(dataValueSet => {
-                if (dataValueSet.dataValues) {
-                    const data = dataValueSet.dataValues.map(
-                        (dataValue) => {
+            const dataValues = dataValueSets
+                .map(dataValueSet => {
+                    if (dataValueSet.dataValues) {
+                        const data = dataValueSet.dataValues.map(dataValue => {
                             const data = { ...dataValue };
                             const destId = dataElementsMatchedArray.find(
                                 dataElementsMatchedObj => dataElementsMatchedObj.origId === dataValue.dataElement
@@ -407,13 +404,13 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                             delete data.lastUpdated;
 
                             return data.dataElement ? data : {};
-                        }
-                    );
-                    return data;
-                } else {
-                    return {};
-                }
-            }).flat();
+                        });
+                        return data;
+                    } else {
+                        return {};
+                    }
+                })
+                .flat();
 
             dataSets.forEach(dataSet => {
                 dataValues.push({
@@ -436,7 +433,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                         .post<any>("/dataValueSets.json", {}, { dataValues: _.reject(chunk, _.isEmpty) })
                         .getData();
 
-                    copyResponse.push(response)
+                    copyResponse.push(response);
                 }
                 return _.every(copyResponse, item => item.status === "SUCCESS");
             } else {
@@ -503,20 +500,17 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
     async generateSortOrder(): Promise<void> {
         try {
             const dataSetData: {
-                dataSetElements: dataSetElementsType[],
-                sections: { id: string }[]
-            } = await this.api.get<any>(
-                `/dataSets/PWCUb3Se1Ie`,
-                { fields: "sections,dataSetElements[dataElement[id,name]]" }
-            ).getData();
+                dataSetElements: dataSetElementsType[];
+                sections: { id: string }[];
+            } = await this.api
+                .get<any>(`/dataSets/PWCUb3Se1Ie`, { fields: "sections,dataSetElements[dataElement[id,name]]" })
+                .getData();
 
             if (_.isEmpty(dataSetData.sections) || _.isEmpty(dataSetData.dataSetElements)) {
                 return this.storageClient.saveObject<string[]>(Namespaces.MAL_DIFF_NAMES_SORT_ORDER, []);
             }
 
-            const dataSetElements: dataElementsType[] = dataSetData.dataSetElements.map((item) =>
-                (item.dataElement)
-            );
+            const dataSetElements: dataElementsType[] = dataSetData.dataSetElements.map(item => item.dataElement);
 
             const sectionsDEs = await promiseMap(dataSetData.sections, async sections => {
                 return this.api.get<any>(`/sections/${sections.id}`, { fields: "dataElements" }).getData();
@@ -604,21 +598,25 @@ function mergeHeadersAndData(
     const filterOrgUnitIds = orgUnitIds.length > 0 ? orgUnitIds : undefined;
     const rowsFiltered = rowsSorted.filter(row => {
         return (
-            ((approvalStatus === true && row.validated && row.completed) &&
-             (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
-
-             ((approvalStatus === false && !row.validated && row.completed) &&
-             (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
-
-           ( (approvalStatus === undefined && completionStatus === undefined) &&
-            (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1) ) ||
-
-             
-            ((approvalStatus === undefined && completionStatus === true && row.completed) &&
-            (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
-             
-            ((approvalStatus === undefined && completionStatus === false && !row.completed) &&
-            (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1))  
+            (approvalStatus === undefined &&
+                completionStatus === true &&
+                row.completed &&
+                (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
+            (approvalStatus === undefined &&
+                completionStatus === false &&
+                !row.completed &&
+                (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
+            (approvalStatus === true &&
+                row.validated &&
+                row.completed &&
+                (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
+            (approvalStatus === false &&
+                !row.validated &&
+                row.completed &&
+                (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
+            (approvalStatus === undefined &&
+                completionStatus === undefined &&
+                (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1))
         );
     });
     return paginate(rowsFiltered, paging);
