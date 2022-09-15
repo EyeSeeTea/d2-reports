@@ -3,7 +3,7 @@ import i18n from "../../../locales";
 import { MetadataObjectsWithInvalidSSList } from "./metadata-list/MetadataObjectsWithInvalidSSList";
 import { MetadataPublicObjectsList } from "./metadata-list/MetadataPublicObjectsList";
 
-const AdminReport: React.FC = () => {
+export const AdminReport: React.FC = () => {
     const classes = useStyles();
 
     return (
@@ -28,5 +28,3 @@ const AdminReport: React.FC = () => {
 const useStyles = makeStyles({
     wrapper: { padding: 10 },
 });
-
-export default AdminReport;
