@@ -95,7 +95,7 @@ msgstr ""
 msgid "Malaria Data Approval Report"
 msgstr ""
 
-msgid "Period"
+msgid "Data set"
 msgstr ""
 
 msgid "Data set"
