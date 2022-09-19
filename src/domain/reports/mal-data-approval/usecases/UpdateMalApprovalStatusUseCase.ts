@@ -12,7 +12,7 @@ export class UpdateMalApprovalStatusUseCase {
                 return this.approvalRepository.approve(items);
             case "duplicate":
                 return this.approvalRepository.duplicate(items);
-            case "unapprove":
+            case "revoke":
                 return this.approvalRepository.unapprove(items);
             case "incomplete":
                 return this.approvalRepository.incomplete(items);
@@ -22,4 +22,4 @@ export class UpdateMalApprovalStatusUseCase {
     }
 }
 
-type UpdateAction = "complete" | "approve" | "duplicate" | "incomplete" | "unapprove";
+type UpdateAction = "complete" | "approve" | "duplicate" | "incomplete" | "revoke";

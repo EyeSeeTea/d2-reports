@@ -168,7 +168,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     },
                 },
                 {
-                    name: "unapprove",
+                    name: "revoke",
                     text: i18n.t("Revoke"),
                     icon: <ClearAllIcon />,
                     multiple: true,
@@ -176,7 +176,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
                         if (items.length === 0) return;
 
-                        const result = await compositionRoot.malDataApproval.updateStatus(items, "unapprove");
+                        const result = await compositionRoot.malDataApproval.updateStatus(items, "revoke");
                         if (!result) snackbar.error(i18n.t("Error when trying to unsubmit data set"));
 
                         reload();
