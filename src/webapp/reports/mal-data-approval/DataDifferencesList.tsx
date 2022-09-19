@@ -17,28 +17,52 @@ import { useAppContext } from "../../contexts/app-context";
 import { getSortingFromTableSorting } from "./data-approval-list/DataApprovalList";
 import { DataApprovalViewModel } from "./DataApprovalViewModel";
 import { DataDiffViewModel, getDataADiffViews } from "./DataDiffViewModel";
+import { ThumbUp } from "@material-ui/icons";
+import { useReload } from "../../utils/use-reload";
+import { parseDataDuplicationItemId } from "../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 
 interface DataDifferencesListProps {
     selectedIds: string[];
+    isMalAdmin: boolean;
+    isUpadted: () => void;
 }
 
-export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ selectedIds }) => {
+export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ selectedIds, isMalAdmin, isUpadted }) => {
     const { compositionRoot, config } = useAppContext();
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const snackbar = useSnackbar();
+    const [reloadKey, reload] = useReload();
 
     const baseConfig: TableConfig<DataDiffViewModel> = useMemo(
         () => ({
             columns: [
-                { name: "dataelement", text: i18n.t("Data Element"), sortable: true },
+                { name: "dataElement", text: i18n.t("Data Element"), sortable: true },
                 { name: "value", text: i18n.t("Value entered"), sortable: false },
                 { name: "comment", text: i18n.t("Comment"), sortable: false },
-                { name: "apvdvalue", text: i18n.t("Approved value"), sortable: false },
-                { name: "apvdcomment", text: i18n.t("Approved value comment"), sortable: false },
+                { name: "apvdValue", text: i18n.t("Approved value"), sortable: false },
+                { name: "apvdComment", text: i18n.t("Approved value comment"), sortable: false },
             ],
-            actions: [],
+            actions: [
+                {
+                    name: "approve_value",
+                    text: i18n.t("Approve value"),
+                    icon: <ThumbUp />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseDataDiffItemId(item)));
+                        if (items.length === 0) return;
+
+                        const result = await compositionRoot.malDataApproval.duplicateValue(items);
+                        if (!result) snackbar.error(i18n.t("Error when trying to approve data values"));
+
+                        reload();
+                        isUpadted();
+                    },
+                    isActive: () => isMalAdmin,
+                },
+            ],
             initialSorting: {
-                field: "dataelement" as const,
+                field: "dataElement" as const,
                 order: "asc" as const,
             },
             paginationOptions: {
@@ -46,12 +70,12 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
                 pageSizeInitialValue: 10,
             },
         }),
-        []
+        [compositionRoot.malDataApproval, isMalAdmin, isUpadted, reload, snackbar]
     );
 
     const getRows = useMemo(
         () => async (_search: string, paging: TablePagination, sorting: TableSorting<DataApprovalViewModel>) => {
-            const items = _.compact(selectedIds.map(item => parseDataDiffItemId(item)));
+            const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
             if (items.length === 0) return;
 
             const { pager, objects } = await compositionRoot.malDataApproval.getDiff({
@@ -65,9 +89,10 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
 
             if (!pager || !objects) snackbar.error(i18n.t("Error when trying to check difference in data values"));
 
+            console.debug("Reloading", reloadKey);
             return { pager, objects: getDataADiffViews(config, objects) };
         },
-        [compositionRoot.malDataApproval, config, selectedIds, snackbar]
+        [compositionRoot.malDataApproval, config, reloadKey, selectedIds, snackbar]
     );
 
     // @ts-ignore
@@ -96,7 +121,7 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
 
     useEffect(() => {
         compositionRoot.malDataApproval.getColumns(Namespaces.MAL_DIFF_STATUS_USER_COLUMNS).then(columns => {
-            columns = columns.length ? columns : ["dataelement", "value", "comment", "apvdvalue", "apvdcomment"];
+            columns = columns.length ? columns : ["dataElement", "value", "comment", "apvdValue", "apvdComment"];
             setVisibleColumns(columns);
         });
     }, [compositionRoot]);
