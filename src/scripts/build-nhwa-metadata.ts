@@ -244,8 +244,8 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
         },
     ];
 
-    const sqlDataComments = fs.readFileSync("src/data/data-values-with-comments.sql", "utf8");
-    const sqlDataApproval = fs.readFileSync("src/data/data-approval-status.sql", "utf8");
+    const sqlDataComments = fs.readFileSync("src/data/common/sql-views/data-values-with-comments.sql", "utf8");
+    const sqlDataApproval = fs.readFileSync("src/data/common/sql-views/data-approval-status.sql", "utf8");
 
     const sqlViews: Partial<D2SqlView>[] = [
         {

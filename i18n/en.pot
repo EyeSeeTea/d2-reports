@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2022-01-10T15:10:22.978Z\n"
-"PO-Revision-Date: 2022-01-10T15:10:22.978Z\n"
+"POT-Creation-Date: 2022-09-16T08:44:53.398Z\n"
+"PO-Revision-Date: 2022-09-16T08:44:53.398Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -74,7 +74,25 @@ msgstr ""
 msgid "created"
 msgstr ""
 
-msgid "NHWA Data Approval Status Report"
+msgid "Data Element"
+msgstr ""
+
+msgid "Value entered"
+msgstr ""
+
+msgid "Comment"
+msgstr ""
+
+msgid "Approved value"
+msgstr ""
+
+msgid "Approved value comment"
+msgstr ""
+
+msgid "Error when trying to check difference in data values"
+msgstr ""
+
+msgid "Malaria Data Approval Report"
 msgstr ""
 
 msgid "Period"
@@ -89,10 +107,19 @@ msgstr ""
 msgid "Completion status"
 msgstr ""
 
-msgid "Approval status"
+msgid "Submission status"
 msgstr ""
 
-msgid "Last updated value"
+msgid "Modification Count"
+msgstr ""
+
+msgid "Last modification date"
+msgstr ""
+
+msgid "Last date of submission"
+msgstr ""
+
+msgid "Last date of approval"
 msgstr ""
 
 msgid "Complete"
@@ -107,7 +134,55 @@ msgstr ""
 msgid "Error when trying to incomplete data set"
 msgstr ""
 
+msgid "Submit"
+msgstr ""
+
+msgid "Error when trying to submit data set"
+msgstr ""
+
+msgid "Revoke"
+msgstr ""
+
+msgid "Error when trying to unsubmit data set"
+msgstr ""
+
 msgid "Approve"
+msgstr ""
+
+msgid "Error when trying to approve data values"
+msgstr ""
+
+msgid "Check Difference"
+msgstr ""
+
+msgid "Check differences"
+msgstr ""
+
+msgid "Completed"
+msgstr ""
+
+msgid "Not completed"
+msgstr ""
+
+msgid "Submitted"
+msgstr ""
+
+msgid "Ready for submission"
+msgstr ""
+
+msgid "Data sets"
+msgstr ""
+
+msgid "Periods"
+msgstr ""
+
+msgid "NHWA Data Approval Status Report"
+msgstr ""
+
+msgid "Approval status"
+msgstr ""
+
+msgid "Last updated value"
 msgstr ""
 
 msgid "Error when trying to approve data set"
@@ -119,28 +194,16 @@ msgstr ""
 msgid "Error when trying to unapprove data set"
 msgstr ""
 
-msgid "Data sets"
-msgstr ""
-
-msgid "Periods"
-msgstr ""
-
 msgid "NHWA Comments Report"
 msgstr ""
 
 msgid "Section"
 msgstr ""
 
-msgid "Data Element"
-msgstr ""
-
 msgid "Category option combo"
 msgstr ""
 
 msgid "Value"
-msgstr ""
-
-msgid "Comment"
 msgstr ""
 
 msgid "Last updated"
