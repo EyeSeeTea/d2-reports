@@ -79,7 +79,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                             path: true,
                             name: true,
                             level: true,
-                            children: { level: true, path: true },
+                            children: { level: true, path: true, children: { level: true } },
                         },
                     },
                 })
@@ -92,43 +92,38 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         getOrganisationUnits(api, levels).then(value => setOrgUnits(value));
     }, [api]);
 
-    const setOrgUnitPaths = React.useCallback<OrgUnitsFilterButtonProps["setSelected"]>(
-        paths => {
-            const childrenPaths: string[] = [];
-            const childrenPathsSelected: string[] = [];
+    const { orgUnitPaths } = filter;
+    const orgUnitsByPath = React.useMemo(() => _.keyBy(orgUnits, ou => ou.path), [orgUnits]);
 
-            paths.map(path => {
-                orgUnits.map(ou => {
-                    if (ou.path === path) {
-                        childrenPaths.push(ou.path);
-                        if (childrenPathsSelected.includes(path)) {
-                            childrenPathsSelected.filter(s => !s.includes(path));
-                        } else if (!childrenPathsSelected.includes(path)) {
-                            childrenPathsSelected.push(ou.path);
-                        }
-                        ou.children.map(child => {
-                            if (child.level <= 3) {
-                                childrenPaths.push(child.path);
-                                if (childrenPathsSelected.includes(child.path)) {
-                                    childrenPathsSelected.filter(s => s !== child.path);
-                                } else {
-                                    childrenPathsSelected.push(child.path);
-                                }
-                            }
-                            return childrenPathsSelected;
-                        });
-                    }
-                    return childrenPathsSelected;
-                });
-                return childrenPathsSelected;
+    const setOrgUnitPaths = React.useCallback<OrgUnitsFilterButtonProps["setSelected"]>(
+        newSelectedPaths => {
+            const prevSelectedPaths = orgUnitPaths;
+            const addedPaths = _.difference(newSelectedPaths, prevSelectedPaths);
+            const removedPaths = _.difference(prevSelectedPaths, newSelectedPaths);
+
+            const pathsToAdd = _.flatMap(addedPaths, addedPath => {
+                const orgUnit = orgUnitsByPath[addedPath];
+
+                if (orgUnit && orgUnit.level < countryLevel) {
+                    return [orgUnit, ...orgUnit.children].map(ou => ou.path);
+                } else {
+                    return [addedPath];
+                }
             });
 
-            onChange(prev => ({
-                ...prev,
-                orgUnitPaths: childrenPathsSelected,
-            }));
+            const pathsToRemove = _.flatMap(removedPaths, pathToRemove => {
+                return prevSelectedPaths.filter(path => path.startsWith(pathToRemove));
+            });
+
+            const newSelectedPathsWithChildren = _(prevSelectedPaths)
+                .union(pathsToAdd)
+                .difference(pathsToRemove)
+                .uniq()
+                .value();
+
+            onChange(prev => ({ ...prev, orgUnitPaths: newSelectedPathsWithChildren }));
         },
-        [onChange, orgUnits]
+        [onChange, orgUnitPaths, orgUnitsByPath]
     );
 
     const setDataSetIds = React.useCallback<DropdownHandler>(
@@ -232,3 +227,5 @@ function fromBool(value: boolean | undefined): string | undefined {
 
 type DropdownHandler = MultipleDropdownProps["onChange"];
 type SingleDropdownHandler = DropdownProps["onChange"];
+
+const countryLevel = 3;
