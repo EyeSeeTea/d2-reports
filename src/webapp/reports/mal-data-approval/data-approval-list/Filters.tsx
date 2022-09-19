@@ -3,7 +3,7 @@ import _ from "lodash";
 import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { Id, NamedRef } from "../../../../domain/common/entities/Base";
-import { getRootIds } from "../../../../domain/common/entities/OrgUnit";
+import { getOrgUnitsFromId, getRootIds } from "../../../../domain/common/entities/OrgUnit";
 import i18n from "../../../../locales";
 import { D2Api } from "../../../../types/d2-api";
 import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
@@ -48,10 +48,11 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { values: filter, options: filterOptions, onChange } = props;
 
     const dataSetItems = useMemoOptionsFromNamedRef(filterOptions.dataSets);
-    const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
 
-    const [orgUnits, setOrgUnits] = useState<OrgUnit[]>();
+    const [orgUnits, setOrgUnits] = useState<OrgUnit[]>([]);
+    const dataSetOrgUnits = getOrgUnitsFromId(config.orgUnits, orgUnits);
+    const rootIds = React.useMemo(() => getRootIds(dataSetOrgUnits), [dataSetOrgUnits]);
 
     const completionStatusItems = React.useMemo(() => {
         return [
@@ -95,9 +96,9 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         paths => {
             const childrenPaths: string[] = [];
             const childrenPathsSelected: string[] = [];
-            
+
             paths.map(path => {
-                orgUnits?.map(ou => {
+                orgUnits.map(ou => {
                     if (ou.path === path) {
                         childrenPaths.push(ou.path);
                         if (childrenPathsSelected.includes(path)) {

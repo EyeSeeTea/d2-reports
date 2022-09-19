@@ -11,6 +11,7 @@ export interface Config {
     pairedDataElementsByDataSet: {
         [dataSetId: string]: Array<{ dataValueVal: Id; dataValueComment: Id }>;
     };
+    orgUnits: string[];
     sectionsByDataSet: {
         [dataSetId: string]: NamedRef[];
     };
