@@ -203,7 +203,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     name: "getDiff",
                     text: i18n.t("Check Difference"),
                     icon: <PlaylistAddCheck />,
-                    multiple: true,
                     onClick: async (selectedIds: string[]) => {
                         openDialog();
                         setSelected(selectedIds);
