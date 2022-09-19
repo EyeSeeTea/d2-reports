@@ -1,5 +1,4 @@
 import _ from "lodash";
-import { format } from "date-fns";
 import { D2Api, Id, PaginatedObjects } from "../../../types/d2-api";
 import { promiseMap } from "../../../utils/promises";
 import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
@@ -298,7 +297,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                 orgUnit: ds.orgUnit,
                 dataElement: "RvS8hSy27Ou",
                 categoryOptionCombo: "Xr12mI7VPn3",
-                value: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+                value: getISODate(),
             }));
 
             const dateResponse = await this.api.post<any>("/dataValueSets.json", {}, { dataValues }).getData();
@@ -426,7 +425,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                     dataElement: "VqcXVXTPaZG",
                     categoryOptionCombo: "Xr12mI7VPn3",
                     attributeOptionCombo: "Xr12mI7VPn3",
-                    value: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+                    value: getISODate(),
                 });
             });
 
@@ -537,7 +536,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                     dataElement: "VqcXVXTPaZG",
                     categoryOptionCombo: "Xr12mI7VPn3",
                     attributeOptionCombo: "Xr12mI7VPn3",
-                    value: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+                    value: getISODate(),
                 });
             });
 
@@ -663,6 +662,11 @@ const csvFields = ["dataSet", "orgUnit", "period", "completed"] as const;
 type CsvField = typeof csvFields[number];
 
 type DataSetRow = Record<CsvField, string>;
+
+function getISODate() {
+    const date = new Date().toISOString();
+    return date.slice(0, date.lastIndexOf(":"))
+}
 
 /* From the docs: "The variables must contain alphanumeric, dash, underscore and
    whitespace characters only.". Use "-" as id separator and also "-" as empty value.
