@@ -1,5 +1,5 @@
 import { Config } from "../../../domain/common/entities/Config";
-import { DataDiffItem, getDatiffItemId } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
+import { DataDiffItem, getDataDiffItemId } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
 
 export interface DataDiffViewModel {
     id: string;
@@ -7,26 +7,26 @@ export interface DataDiffViewModel {
     orgUnitUid: string;
     period: string;
     value: string | undefined;
-    apvdvalue: string | undefined;
-    dataelement: string | undefined;
-    apvddataelement: string | undefined;
+    apvdValue: string | undefined;
+    dataElement: string | undefined;
+    apvdDataElement: string | undefined;
     comment: string | undefined;
-    apvdcomment: string | undefined;
+    apvdComment: string | undefined;
 }
 
 export function getDataADiffViews(_config: Config, items: DataDiffItem[]): DataDiffViewModel[] {
     return items.map(item => {
         return {
-            id: getDatiffItemId(item),
-            dataSetUid: item.datasetuid,
-            orgUnitUid: item.orgunituid,
+            id: getDataDiffItemId(item),
+            dataSetUid: item.dataSetUid,
+            orgUnitUid: item.orgUnitUid,
             period: item.period,
             value: item.value,
-            apvdvalue: item.apvdvalue,
-            dataelement: item.dataelement,
-            apvddataelement: item.apvddataelement,
+            apvdValue: item.apvdValue,
+            dataElement: item.dataElement,
+            apvdDataElement: item.apvdDataElement,
             comment: item.comment,
-            apvdcomment: item.apvdcomment,
+            apvdComment: item.apvdComment,
         };
     });
 }
