@@ -235,8 +235,8 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                     orgUnits: sqlViewJoinIds(orgUnitIds),
                     periods: sqlViewJoinIds(periods),
                     dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
-                    completed: "-",
-                    approved: "-",
+                    completed: options.completionStatus === undefined ? "-" : options.completionStatus ? "true" : "-",
+                    approved: options.approvalStatus === undefined ? "-" : options.approvalStatus.toString(),
                     orderByColumn: fieldMapping[sorting.field],
                     orderByDirection: sorting.direction,
                 },
@@ -567,8 +567,13 @@ function mergeHeadersAndData(
         })
         .value();
 
+    const filterOrgUnitIds = orgUnitIds.length > 0 ? orgUnitIds : undefined;
+
     for (const period of activePeriods) {
         for (const header of headers) {
+            if (filterOrgUnitIds !== undefined && filterOrgUnitIds.indexOf(header.orgunituid) === -1) {
+                continue;
+            }
             const datavalue = mapping[[header.orgunituid, period].join(".")];
 
             const row: MalDataApprovalItem = {
@@ -595,28 +600,18 @@ function mergeHeadersAndData(
         .orderBy([row => row[sorting.field]], [sorting.direction])
         .value();
 
-    const filterOrgUnitIds = orgUnitIds.length > 0 ? orgUnitIds : undefined;
     const rowsFiltered = rowsSorted.filter(row => {
         return (
-            (approvalStatus === undefined &&
-                completionStatus === true &&
-                row.completed &&
-                (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
-            (approvalStatus === undefined &&
-                completionStatus === false &&
-                !row.completed &&
-                (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
-            (approvalStatus === true &&
-                row.validated &&
-                row.completed &&
-                (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
-            (approvalStatus === false &&
-                !row.validated &&
-                row.completed &&
-                (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
-            (approvalStatus === undefined &&
-                completionStatus === undefined &&
-                (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1))
+            //completed
+            (approvalStatus === undefined && completionStatus === true && row.completed) ||
+            //not completed
+            (approvalStatus === undefined && completionStatus === false && !row.completed) ||
+            //submitted
+            (approvalStatus === true && row.validated && row.completed) ||
+            //ready for sumbitted
+            (approvalStatus === false && !row.validated && row.completed) ||
+            //no filter
+            (approvalStatus === undefined && completionStatus === undefined)
         );
     });
     return paginate(rowsFiltered, paging);
