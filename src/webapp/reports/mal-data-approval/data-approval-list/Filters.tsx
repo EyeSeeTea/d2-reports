@@ -91,40 +91,38 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         getOrganisationUnits(api, levels).then(value => setOrgUnits(value));
     }, [api]);
 
-    const setOrgUnitPaths = React.useCallback<OrgUnitsFilterButtonProps["setSelected"]>(
-        paths => {
-            const newPaths: string[] = [];
+    const { orgUnitPaths } = filter;
+    const orgUnitsByPath = React.useMemo(() => _.keyBy(orgUnits, ou => ou.path), [orgUnits]);
 
-            paths.map(path => {
-                orgUnits.map(ou => {
-                    if (ou.path === path) {
-                        if (newPaths.includes(path)) {
-                            newPaths.filter(s => !s.includes(path));
-                        } else if (!newPaths.includes(path)) {
-                            newPaths.push(ou.path);
-                        }
-                        ou.children.map(child => {
-                            if (child.level <= 3) {
-                                if (newPaths.includes(child.path)) {
-                                    newPaths.filter(s => !s.includes(path));
-                                } else {
-                                    newPaths.push(child.path);
-                                }
-                            }
-                            return newPaths;
-                        });
-                    }
-                    return newPaths;
-                });
-                return newPaths;
+    const setOrgUnitPaths = React.useCallback<OrgUnitsFilterButtonProps["setSelected"]>(
+        newSelectedPaths => {
+            const prevSelectedPaths = orgUnitPaths;
+            const addedPaths = _.difference(newSelectedPaths, prevSelectedPaths);
+            const removedPaths = _.difference(prevSelectedPaths, newSelectedPaths);
+
+            const pathsToAdd = _.flatMap(addedPaths, addedPath => {
+                const orgUnit = orgUnitsByPath[addedPath];
+
+                if (orgUnit && orgUnit.level < countryLevel) {
+                    return [orgUnit, ...orgUnit.children].map(ou => ou.path);
+                } else {
+                    return [addedPath];
+                }
             });
 
-            onChange(prev => ({
-                ...prev,
-                orgUnitPaths: newPaths,
-            }));
+            const pathsToRemove = _.flatMap(removedPaths, pathToRemove => {
+                return prevSelectedPaths.filter(path => path.startsWith(pathToRemove));
+            });
+
+            const newSelectedPathsWithChildren = _(prevSelectedPaths)
+                .union(pathsToAdd)
+                .difference(pathsToRemove)
+                .uniq()
+                .value();
+
+            onChange(prev => ({ ...prev, orgUnitPaths: newSelectedPathsWithChildren }));
         },
-        [onChange, orgUnits]
+        [onChange, orgUnitPaths, orgUnitsByPath]
     );
 
     const setDataSetIds = React.useCallback<DropdownHandler>(
@@ -228,3 +226,5 @@ function fromBool(value: boolean | undefined): string | undefined {
 
 type DropdownHandler = MultipleDropdownProps["onChange"];
 type SingleDropdownHandler = DropdownProps["onChange"];
+
+const countryLevel = 3;
