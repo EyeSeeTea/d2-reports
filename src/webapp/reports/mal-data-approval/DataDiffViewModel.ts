@@ -14,7 +14,7 @@ export interface DataDiffViewModel {
     apvdComment: string | undefined;
 }
 
-export function getDataADiffViews(_config: Config, items: DataDiffItem[]): DataDiffViewModel[] {
+export function getDataDiffViews(_config: Config, items: DataDiffItem[]): DataDiffViewModel[] {
     return items.map(item => {
         return {
             id: getDataDiffItemId(item),

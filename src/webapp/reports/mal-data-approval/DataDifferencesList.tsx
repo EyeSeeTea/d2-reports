@@ -16,7 +16,7 @@ import i18n from "../../../locales";
 import { useAppContext } from "../../contexts/app-context";
 import { getSortingFromTableSorting } from "./data-approval-list/DataApprovalList";
 import { DataApprovalViewModel } from "./DataApprovalViewModel";
-import { DataDiffViewModel, getDataADiffViews } from "./DataDiffViewModel";
+import { DataDiffViewModel, getDataDiffViews } from "./DataDiffViewModel";
 import { ThumbUp } from "@material-ui/icons";
 import { useReload } from "../../utils/use-reload";
 import { parseDataDuplicationItemId } from "../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
@@ -90,7 +90,7 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
             if (!pager || !objects) snackbar.error(i18n.t("Error when trying to check difference in data values"));
 
             console.debug("Reloading", reloadKey);
-            return { pager, objects: getDataADiffViews(config, objects) };
+            return { pager, objects: getDataDiffViews(config, objects) };
         },
         [compositionRoot.malDataApproval, config, reloadKey, selectedIds, snackbar]
     );
