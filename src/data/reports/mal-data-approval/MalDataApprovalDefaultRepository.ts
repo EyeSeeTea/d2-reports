@@ -182,15 +182,15 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
         const items: Array<DataDiffItem> = rows.map(
             (item): DataDiffItem => ({
-                datasetuid: item.datasetuid,
-                orgunituid: item.orgunituid,
+                dataSetUid: item.datasetuid,
+                orgUnitUid: item.orgunituid,
                 period: item.period,
                 value: item.value,
-                apvdvalue: item.apvdvalue,
-                dataelement: item.dataelement,
-                apvddataelement: item.apvddataelement,
+                apvdValue: item.apvdvalue,
+                dataElement: item.dataelement,
+                apvdDataElement: item.apvddataelement,
                 comment: item.comment,
-                apvdcomment: item.apvdcomment,
+                apvdComment: item.apvdcomment,
             })
         );
 
@@ -198,15 +198,15 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
         if (!_.isEmpty(dataElementOrderArray)) {
             const sortedItems = items.sort((a, b) => {
-                if (a.dataelement && b.dataelement) {
-                    return dataElementOrderArray.indexOf(a.dataelement) - dataElementOrderArray.indexOf(b.dataelement);
+                if (a.dataElement && b.dataElement) {
+                    return dataElementOrderArray.indexOf(a.dataElement) - dataElementOrderArray.indexOf(b.dataElement);
                 } else {
                     return 0;
                 }
             });
-            return paginate(sortedItems, paging_to_download);
+            return paginate(sortedItems, options.paging);
         } else {
-            return paginate(items, paging_to_download);
+            return paginate(items, options.paging);
         }
 
     }
@@ -605,20 +605,20 @@ function mergeHeadersAndData(
     const rowsFiltered = rowsSorted.filter(row => {
         return (
             ((approvalStatus === true && row.validated && row.completed) &&
-             (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
+                (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
 
-             ((approvalStatus === false && !row.validated && row.completed) &&
-             (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
+            ((approvalStatus === false && !row.validated && row.completed) &&
+                (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
 
-           ( (approvalStatus === undefined && completionStatus === undefined) &&
-            (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1) ) ||
+            ((approvalStatus === undefined && completionStatus === undefined) &&
+                (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
 
-             
+
             ((approvalStatus === undefined && completionStatus === true && row.completed) &&
-            (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
-             
+                (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1)) ||
+
             ((approvalStatus === undefined && completionStatus === false && !row.completed) &&
-            (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1))  
+                (filterOrgUnitIds === undefined || filterOrgUnitIds.indexOf(row.orgUnitUid) > -1))
         );
     });
     return paginate(rowsFiltered, paging);
