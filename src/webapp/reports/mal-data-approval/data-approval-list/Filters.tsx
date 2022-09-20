@@ -52,7 +52,12 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
 
     const [orgUnits, setOrgUnits] = useState<OrgUnit[]>([]);
     const dataSetOrgUnits = getOrgUnitsFromId(config.orgUnits, orgUnits);
-    const rootIds = React.useMemo(() => getRootIds(dataSetOrgUnits), [dataSetOrgUnits]);
+    const selectableOUs = _.union(
+        orgUnits.filter(org => org.level < 3),
+        dataSetOrgUnits
+    );
+    const selectableIds = selectableOUs.map(ou => ou.id)
+    const rootIds = React.useMemo(() => getRootIds(selectableOUs), [selectableOUs]);
 
     const completionStatusItems = React.useMemo(() => {
         return [
@@ -79,7 +84,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                             path: true,
                             name: true,
                             level: true,
-                            children: { level: true, path: true, children: { level: true } },
+                            children: { level: true, path: true },
                         },
                     },
                 })
@@ -157,6 +162,8 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 rootIds={rootIds}
                 selected={filter.orgUnitPaths}
                 setSelected={setOrgUnitPaths}
+                selectableLevels={[1, 2, 3]}
+                selectableIds={selectableIds}
             />
 
             <DropdownStyled
