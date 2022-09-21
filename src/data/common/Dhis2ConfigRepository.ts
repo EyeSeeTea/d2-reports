@@ -55,6 +55,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
         const constant = getNth(constants, 0, `Missing constant: ${base[this.type].constantCode}`);
         const currentUser = await this.getCurrentUser();
         const pairedDataElements = getPairedMapping(filteredDataSets);
+        const orgUnitList = getPairedOrgunitsMapping(filteredDataSets);
         const constantData = JSON.parse(constant.description || "{}") as Constant;
         const { sections, sectionsByDataSet } = getSectionsInfo(constantData);
         const currentYear = new Date().getFullYear();
@@ -64,6 +65,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             currentUser,
             sqlViews,
             pairedDataElementsByDataSet: pairedDataElements,
+            orgUnits: orgUnitList,
             sections: keyById(sections),
             sectionsByDataSet,
             years: _.range(currentYear - 10, currentYear + 1).map(n => n.toString()),
@@ -80,6 +82,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                     dataSetElements: {
                         dataElement: { id: true, name: true },
                     },
+                    organisationUnits: { id: true },
                 },
                 filter: { name: { $ilike: base[this.type].dataSets.namePrefix } },
             },
@@ -134,6 +137,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
 interface DataSet {
     id: Id;
     dataSetElements: Array<{ dataElement: NamedRef }>;
+    organisationUnits: Array<{ id: Id }>;
 }
 
 type Constant = Partial<{
@@ -168,6 +172,15 @@ function getPairedMapping(dataSets: DataSet[]): Config["pairedDataElementsByData
         })
         .fromPairs()
         .value();
+}
+
+function getPairedOrgunitsMapping(dataSets: DataSet[]) {
+    const orgUnitList = _(dataSets)
+        .flatMap(dataSet => dataSet.organisationUnits)
+        .map(ou => ou.id)
+        .value();
+
+    return orgUnitList;
 }
 
 function getMappingForDataSet(dataSet: DataSet, dataElementsByName: Record<string, NamedRef>) {
