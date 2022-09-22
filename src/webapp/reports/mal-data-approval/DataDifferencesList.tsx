@@ -18,7 +18,6 @@ import { getSortingFromTableSorting } from "./data-approval-list/DataApprovalLis
 import { DataApprovalViewModel } from "./DataApprovalViewModel";
 import { DataDiffViewModel, getDataDiffViews } from "./DataDiffViewModel";
 import { ThumbUp } from "@material-ui/icons";
-import { useReload } from "../../utils/use-reload";
 import { parseDataDuplicationItemId } from "../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 
 interface DataDifferencesListProps {
@@ -26,12 +25,10 @@ interface DataDifferencesListProps {
     isMalAdmin: boolean;
     isUpdated: () => void;
 }
-
 export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ selectedIds, isMalAdmin, isUpdated }) => {
     const { compositionRoot, config } = useAppContext();
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const snackbar = useSnackbar();
-    const [reloadKey, reload] = useReload();
 
     const baseConfig: TableConfig<DataDiffViewModel> = useMemo(
         () => ({
@@ -56,7 +53,6 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
                         if (!result) snackbar.error(i18n.t("Error when trying to approve data values"));
 
                         isUpdated();
-                        reload();
                     },
                     isActive: () => isMalAdmin,
                 },
@@ -70,7 +66,7 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot.malDataApproval, isMalAdmin, isUpdated, reload, snackbar]
+        [compositionRoot.malDataApproval, isMalAdmin, isUpdated, snackbar]
     );
 
     const getRows = useMemo(
@@ -89,10 +85,9 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
 
             if (!pager || !objects) snackbar.error(i18n.t("Error when trying to check difference in data values"));
 
-            console.debug("Reloading", reloadKey);
             return { pager, objects: getDataDiffViews(config, objects) };
         },
-        [compositionRoot.malDataApproval, config, reloadKey, selectedIds, snackbar]
+        [compositionRoot.malDataApproval, config, selectedIds, snackbar]
     );
 
     // @ts-ignore

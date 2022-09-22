@@ -55,6 +55,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const [selected, setSelected] = useState<string[]>([""]);
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [reloadKey, reload] = useReload();
+    const [dummy, setDummy] = useState<string>("");
 
     const selectablePeriods = React.useMemo(() => {
         const currentYear = new Date().getFullYear();
@@ -296,6 +297,11 @@ export const DataApprovalList: React.FC = React.memo(() => {
         });
     }, [compositionRoot]);
 
+    function closeDiffDialog() {
+        closeDialog();
+        reload();
+    }
+
     return (
         <React.Fragment>
             <ObjectsList<DataApprovalViewModel>
@@ -309,12 +315,17 @@ export const DataApprovalList: React.FC = React.memo(() => {
             <ConfirmationDialog
                 isOpen={isDialogOpen}
                 title={i18n.t("Check differences")}
-                onCancel={closeDialog}
+                onCancel={closeDiffDialog}
                 cancelText={i18n.t("Close")}
                 maxWidth="md"
                 fullWidth
             >
-                <DataDifferencesList selectedIds={selected} isMalAdmin={isMalAdmin} isUpdated={reload} />
+                <DataDifferencesList
+                    selectedIds={selected}
+                    isMalAdmin={isMalAdmin}
+                    isUpdated={() => setDummy(`${new Date().getTime()}`)}
+                    key={new Date().getTime()} 
+                />
             </ConfirmationDialog>
         </React.Fragment>
     );
