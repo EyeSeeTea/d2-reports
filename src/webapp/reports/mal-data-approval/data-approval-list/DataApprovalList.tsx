@@ -314,7 +314,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 maxWidth="md"
                 fullWidth
             >
-                <DataDifferencesList selectedIds={selected} isMalAdmin={isMalAdmin} isUpadted={reload} />
+                <DataDifferencesList selectedIds={selected} isMalAdmin={isMalAdmin} isUpdated={reload} />
             </ConfirmationDialog>
         </React.Fragment>
     );
