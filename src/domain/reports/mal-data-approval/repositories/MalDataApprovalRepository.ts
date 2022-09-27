@@ -12,6 +12,7 @@ export interface MalDataApprovalRepository {
     approve(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean>;
     duplicateDataSets(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean>;
     duplicateDataValues(dataSets: DataDiffItemIdentifier[]): Promise<boolean>;
+    duplicateDataValuesAndRevoke(dataSets: DataDiffItemIdentifier[]): Promise<boolean>;
     incomplete(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean>;
     unapprove(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean>;
     getColumns(namespace: string): Promise<string[]>;

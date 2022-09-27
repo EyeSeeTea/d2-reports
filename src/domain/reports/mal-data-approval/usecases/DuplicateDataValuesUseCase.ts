@@ -5,7 +5,11 @@ import { MalDataApprovalRepository } from "../repositories/MalDataApprovalReposi
 export class DuplicateDataValuesUseCase implements UseCase {
     constructor(private approvalRepository: MalDataApprovalRepository) { }
 
-    async execute(items: DataDiffItemIdentifier[]): Promise<boolean> {
-        return this.approvalRepository.duplicateDataValues(items);
+    async execute(items: DataDiffItemIdentifier[], revoke?: boolean): Promise<boolean> {
+        if (revoke) {
+            return this.approvalRepository.duplicateDataValuesAndRevoke(items);
+        } else {
+            return this.approvalRepository.duplicateDataValues(items);
+        }
     }
 }

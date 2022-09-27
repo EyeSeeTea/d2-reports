@@ -565,6 +565,27 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         }
     }
 
+    async duplicateDataValuesAndRevoke(dataValues: DataDiffItemIdentifier[]): Promise<boolean> {
+        try {
+            const duplicateResponse = await this.duplicateDataValues(dataValues);
+
+            const revokeData: MalDataApprovalItemIdentifier = {
+                dataSet: dataValues[0]?.dataSet ?? "",
+                period: dataValues[0]?.period ?? "",
+                orgUnit: dataValues[0]?.orgUnit ?? "",
+                workflow: "",
+            };
+
+            const revokeResponse = await this.api
+                .delete<any>("/dataApprovals", { ds: revokeData.dataSet, pe: revokeData.period, ou: revokeData.orgUnit })
+                .getData();
+
+            return duplicateResponse && revokeResponse === "";
+        } catch (error: any) {
+            return false;
+        }
+    }
+
     async incomplete(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean> {
         try {
             const response = await promiseMap(dataSets, item =>

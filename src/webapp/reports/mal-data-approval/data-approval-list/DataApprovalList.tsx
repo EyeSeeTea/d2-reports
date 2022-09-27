@@ -55,7 +55,8 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const [selected, setSelected] = useState<string[]>([""]);
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [reloadKey, reload] = useReload();
-    const [dummy, setDummy] = useState<string>("");
+    const [revoke, { enable: enableRevoke, disable: disableRevoke }] = useBooleanState(false);
+    const [__, setDiffState] = useState<string>("");
 
     const selectablePeriods = React.useMemo(() => {
         const currentYear = new Date().getFullYear();
@@ -205,10 +206,24 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     text: i18n.t("Check Difference"),
                     icon: <PlaylistAddCheck />,
                     onClick: async (selectedIds: string[]) => {
+                        disableRevoke();
                         openDialog();
                         setSelected(selectedIds);
                     },
-                    isActive: rows => _.every(rows, row => row.lastUpdatedValue) && (isMalApprover || isMalAdmin),
+                    isActive: rows => _.every(rows, row => row.lastUpdatedValue && row.validated === false)
+                        && (isMalApprover || isMalAdmin),
+                },
+                {
+                    name: "getDiffAndRevoke",
+                    text: i18n.t("Check Difference"),
+                    icon: <PlaylistAddCheck />,
+                    onClick: async (selectedIds: string[]) => {
+                        enableRevoke();
+                        openDialog();
+                        setSelected(selectedIds);
+                    },
+                    isActive: rows => _.every(rows, row => row.lastUpdatedValue && row.validated === true)
+                        && (isMalApprover || isMalAdmin),
                 },
             ],
             initialSorting: {
@@ -220,7 +235,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot.malDataApproval, isMalAdmin, isMalApprover, openDialog, reload, snackbar]
+        [compositionRoot.malDataApproval, isMalAdmin, isMalApprover, openDialog, reload, snackbar, disableRevoke, enableRevoke]
     );
 
     const getRows = useMemo(
@@ -299,6 +314,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
     function closeDiffDialog() {
         closeDialog();
+        disableRevoke();
         reload();
     }
 
@@ -322,8 +338,9 @@ export const DataApprovalList: React.FC = React.memo(() => {
             >
                 <DataDifferencesList
                     selectedIds={selected}
+                    revoke={revoke}
                     isMalAdmin={isMalAdmin}
-                    isUpdated={() => setDummy(`${new Date().getTime()}`)}
+                    isUpdated={() => setDiffState(`${new Date().getTime()}`)}
                     key={new Date().getTime()} 
                 />
             </ConfirmationDialog>

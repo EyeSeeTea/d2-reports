@@ -22,10 +22,12 @@ import { parseDataDuplicationItemId } from "../../../domain/reports/mal-data-app
 
 interface DataDifferencesListProps {
     selectedIds: string[];
+    revoke: boolean;
     isMalAdmin: boolean;
     isUpdated: () => void;
 }
-export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ selectedIds, isMalAdmin, isUpdated }) => {
+
+export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ selectedIds, revoke, isMalAdmin, isUpdated }) => {
     const { compositionRoot, config } = useAppContext();
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const snackbar = useSnackbar();
@@ -49,7 +51,7 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
                         const items = _.compact(selectedIds.map(item => parseDataDiffItemId(item)));
                         if (items.length === 0) return;
 
-                        const result = await compositionRoot.malDataApproval.duplicateValue(items);
+                        const result = await compositionRoot.malDataApproval.duplicateValue(items, revoke);
                         if (!result) snackbar.error(i18n.t("Error when trying to approve data values"));
 
                         isUpdated();
@@ -66,7 +68,7 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot.malDataApproval, isMalAdmin, isUpdated, snackbar]
+        [compositionRoot.malDataApproval, isMalAdmin, isUpdated, revoke, snackbar]
     );
 
     const getRows = useMemo(
