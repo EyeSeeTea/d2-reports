@@ -435,13 +435,22 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
                     copyResponse.push(response);
                 }
-                return _.every(copyResponse, item => item.status === "SUCCESS");
+
+                const copyResponseStatus = _.every(copyResponse, item => item.status === "SUCCESS");
+                if (copyResponseStatus) {
+                    this.duplicateUnapprove(dataSets);
+                }
+                return copyResponseStatus;
             } else {
                 const copyResponse = await this.api
                     .post<any>("/dataValueSets.json", {}, { dataValues: _.reject(dataValues, _.isEmpty) })
                     .getData();
 
-                return copyResponse.status === "SUCCESS";
+                const copyResponseStatus = copyResponse.status === "SUCCESS";
+                if (copyResponseStatus) {
+                    this.duplicateUnapprove(dataSets);
+                }
+                return copyResponseStatus;
             }
         } catch (error: any) {
             console.debug(error);
@@ -474,6 +483,31 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                     .delete<any>("/dataApprovals", { wf: approval.workflow, pe: approval.period, ou: approval.orgUnit })
                     .getData()
             );
+
+            return _.every(response, item => item === "");
+        } catch (error: any) {
+            return false;
+        }
+    }
+
+    async duplicateUnapprove(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean> {
+        try {
+            const response: any[] = [];
+            dataSets.forEach(async dataSet => {
+                const isApproved = await this.api.get<any>(
+                    "/dataApprovals",
+                    { wf: dataSet.workflow, pe: dataSet.period, ou: dataSet.orgUnit }
+                ).getData();
+
+                if (isApproved.state === "APPROVED_HERE") {
+                    response.push(
+                        await this.api.delete<any>(
+                            "/dataApprovals",
+                            { wf: dataSet.workflow, pe: dataSet.period, ou: dataSet.orgUnit }
+                        ).getData()
+                    );
+                }
+            });
 
             return _.every(response, item => item === "");
         } catch (error: any) {
