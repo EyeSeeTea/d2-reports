@@ -16,7 +16,7 @@ import i18n from "../../../locales";
 import { useAppContext } from "../../contexts/app-context";
 import { getSortingFromTableSorting } from "./data-approval-list/DataApprovalList";
 import { DataApprovalViewModel } from "./DataApprovalViewModel";
-import { DataDiffViewModel, getDataADiffViews } from "./DataDiffViewModel";
+import { DataDiffViewModel, getDataDiffViews } from "./DataDiffViewModel";
 
 interface DataDifferencesListProps {
     selectedIds: string[];
@@ -30,15 +30,15 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
     const baseConfig: TableConfig<DataDiffViewModel> = useMemo(
         () => ({
             columns: [
-                { name: "dataelement", text: i18n.t("Data Element"), sortable: true },
+                { name: "dataElement", text: i18n.t("Data Element"), sortable: true },
                 { name: "value", text: i18n.t("Value entered"), sortable: false },
                 { name: "comment", text: i18n.t("Comment"), sortable: false },
-                { name: "apvdvalue", text: i18n.t("Approved value"), sortable: false },
-                { name: "apvdcomment", text: i18n.t("Approved value comment"), sortable: false },
+                { name: "apvdValue", text: i18n.t("Approved value"), sortable: false },
+                { name: "apvdComment", text: i18n.t("Approved value comment"), sortable: false },
             ],
             actions: [],
             initialSorting: {
-                field: "dataelement" as const,
+                field: "dataElement" as const,
                 order: "asc" as const,
             },
             paginationOptions: {
@@ -65,7 +65,7 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
 
             if (!pager || !objects) snackbar.error(i18n.t("Error when trying to check difference in data values"));
 
-            return { pager, objects: getDataADiffViews(config, objects) };
+            return { pager, objects: getDataDiffViews(config, objects) };
         },
         [compositionRoot.malDataApproval, config, selectedIds, snackbar]
     );
@@ -96,7 +96,7 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
 
     useEffect(() => {
         compositionRoot.malDataApproval.getColumns(Namespaces.MAL_DIFF_STATUS_USER_COLUMNS).then(columns => {
-            columns = columns.length ? columns : ["dataelement", "value", "comment", "apvdvalue", "apvdcomment"];
+            columns = columns.length ? columns : ["dataElement", "value", "comment", "apvdValue", "apvdComment"];
             setVisibleColumns(columns);
         });
     }, [compositionRoot]);

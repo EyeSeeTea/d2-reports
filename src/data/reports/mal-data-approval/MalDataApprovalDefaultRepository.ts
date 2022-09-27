@@ -1,5 +1,4 @@
 import _ from "lodash";
-import { format } from "date-fns";
 import { DataDiffItem } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
 import { D2Api, Id, PaginatedObjects } from "../../../types/d2-api";
 import { promiseMap } from "../../../utils/promises";
@@ -182,15 +181,15 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
         const items: Array<DataDiffItem> = rows.map(
             (item): DataDiffItem => ({
-                datasetuid: item.datasetuid,
-                orgunituid: item.orgunituid,
+                dataSetUid: item.datasetuid,
+                orgUnitUid: item.orgunituid,
                 period: item.period,
                 value: item.value,
-                apvdvalue: item.apvdvalue,
-                dataelement: item.dataelement,
-                apvddataelement: item.apvddataelement,
+                apvdValue: item.apvdvalue,
+                dataElement: item.dataelement,
+                apvdDataElement: item.apvddataelement,
                 comment: item.comment,
-                apvdcomment: item.apvdcomment,
+                apvdComment: item.apvdcomment,
             })
         );
 
@@ -198,8 +197,8 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
         if (!_.isEmpty(dataElementOrderArray)) {
             const sortedItems = items.sort((a, b) => {
-                if (a.dataelement && b.dataelement) {
-                    return dataElementOrderArray.indexOf(a.dataelement) - dataElementOrderArray.indexOf(b.dataelement);
+                if (a.dataElement && b.dataElement) {
+                    return dataElementOrderArray.indexOf(a.dataElement) - dataElementOrderArray.indexOf(b.dataElement);
                 } else {
                     return 0;
                 }
@@ -294,7 +293,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                 orgUnit: ds.orgUnit,
                 dataElement: "RvS8hSy27Ou",
                 categoryOptionCombo: "Xr12mI7VPn3",
-                value: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+                value: getISODate(),
             }));
 
             const dateResponse = await this.api.post<any>("/dataValueSets.json", {}, { dataValues }).getData();
@@ -420,7 +419,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                     dataElement: "VqcXVXTPaZG",
                     categoryOptionCombo: "Xr12mI7VPn3",
                     attributeOptionCombo: "Xr12mI7VPn3",
-                    value: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+                    value: getISODate(),
                 });
             });
 
@@ -577,6 +576,11 @@ const csvFields = ["dataSet", "orgUnit", "period", "completed"] as const;
 type CsvField = typeof csvFields[number];
 
 type DataSetRow = Record<CsvField, string>;
+
+function getISODate() {
+    const date = new Date().toISOString();
+    return date.slice(0, date.lastIndexOf(":"))
+}
 
 /* From the docs: "The variables must contain alphanumeric, dash, underscore and
    whitespace characters only.". Use "-" as id separator and also "-" as empty value.

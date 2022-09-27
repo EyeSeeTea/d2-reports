@@ -1,13 +1,13 @@
 export interface DataDiffItem {
-    datasetuid: string;
-    orgunituid: string;
+    dataSetUid: string;
+    orgUnitUid: string;
     period: string;
     value: string | undefined;
-    apvdvalue: string | undefined;
-    dataelement: string | undefined;
-    apvddataelement: string | undefined;
+    apvdValue: string | undefined;
+    dataElement: string | undefined;
+    apvdDataElement: string | undefined;
     comment: string | undefined;
-    apvdcomment: string | undefined;
+    apvdComment: string | undefined;
 }
 
 export interface DataDiffItemIdentifier {
@@ -17,8 +17,8 @@ export interface DataDiffItemIdentifier {
     period: string;
 }
 
-export function getDatiffItemId(dataSet: DataDiffItem): string {
-    return [dataSet.datasetuid, dataSet.period, dataSet.orgunituid].join("-");
+export function getDataDiffItemId(dataSet: DataDiffItem): string {
+    return [dataSet.dataSetUid, dataSet.period, dataSet.orgUnitUid].join("-");
 }
 
 export function parseDataDiffItemId(string: string): DataDiffItemIdentifier | undefined {
