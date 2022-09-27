@@ -17,12 +17,17 @@ import { useAppContext } from "../../contexts/app-context";
 import { getSortingFromTableSorting } from "./data-approval-list/DataApprovalList";
 import { DataApprovalViewModel } from "./DataApprovalViewModel";
 import { DataDiffViewModel, getDataDiffViews } from "./DataDiffViewModel";
+import { ThumbUp } from "@material-ui/icons";
+import { parseDataDuplicationItemId } from "../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 
 interface DataDifferencesListProps {
     selectedIds: string[];
+    revoke: boolean;
+    isMalAdmin: boolean;
+    isUpdated: () => void;
 }
 
-export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ selectedIds }) => {
+export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ selectedIds, revoke, isMalAdmin, isUpdated }) => {
     const { compositionRoot, config } = useAppContext();
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const snackbar = useSnackbar();
@@ -36,7 +41,24 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
                 { name: "apvdValue", text: i18n.t("Approved value"), sortable: false },
                 { name: "apvdComment", text: i18n.t("Approved value comment"), sortable: false },
             ],
-            actions: [],
+            actions: [
+                {
+                    name: "approve_value",
+                    text: i18n.t("Approve value"),
+                    icon: <ThumbUp />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseDataDiffItemId(item)));
+                        if (items.length === 0) return;
+
+                        const result = await compositionRoot.malDataApproval.duplicateValue(items, revoke);
+                        if (!result) snackbar.error(i18n.t("Error when trying to approve data values"));
+
+                        isUpdated();
+                    },
+                    isActive: () => isMalAdmin,
+                },
+            ],
             initialSorting: {
                 field: "dataElement" as const,
                 order: "asc" as const,
@@ -46,12 +68,12 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
                 pageSizeInitialValue: 10,
             },
         }),
-        []
+        [compositionRoot.malDataApproval, isMalAdmin, isUpdated, revoke, snackbar]
     );
 
     const getRows = useMemo(
         () => async (_search: string, paging: TablePagination, sorting: TableSorting<DataApprovalViewModel>) => {
-            const items = _.compact(selectedIds.map(item => parseDataDiffItemId(item)));
+            const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
             if (items.length === 0) return;
 
             const { pager, objects } = await compositionRoot.malDataApproval.getDiff({

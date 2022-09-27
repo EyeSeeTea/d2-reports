@@ -11,7 +11,7 @@ export class UpdateMalApprovalStatusUseCase {
             case "approve":
                 return this.approvalRepository.approve(items);
             case "duplicate":
-                return this.approvalRepository.duplicate(items);
+                return this.approvalRepository.duplicateDataSets(items);
             case "revoke":
                 return this.approvalRepository.unapprove(items);
             case "incomplete":

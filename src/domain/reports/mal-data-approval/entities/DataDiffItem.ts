@@ -12,18 +12,35 @@ export interface DataDiffItem {
 
 export interface DataDiffItemIdentifier {
     dataSet: string;
-    approval: string;
     orgUnit: string;
     period: string;
+    dataElement: string;
+    value: string;
+    comment?: string;
 }
 
-export function getDataDiffItemId(dataSet: DataDiffItem): string {
-    return [dataSet.dataSetUid, dataSet.period, dataSet.orgUnitUid].join("-");
+export function getDataDiffItemId(item: DataDiffItem): string {
+    return [
+        item.dataSetUid,
+        item.period,
+        item.orgUnitUid,
+        item.dataElement,
+        item.value,
+        item.comment,
+    ].join("|||");
 }
 
 export function parseDataDiffItemId(string: string): DataDiffItemIdentifier | undefined {
-    const [dataSet, approval, period, orgUnit] = string.split("-");
-    if (!dataSet || !period || !approval || !orgUnit) return undefined;
+    const [
+        dataSet,
+        period,
+        orgUnit,
+        dataElement,
+        value,
+        comment,
+    ] = string.split("|||");
 
-    return { dataSet, period, orgUnit, approval };
+    if (!dataSet || !period || !orgUnit || !dataElement || !value) return undefined;
+
+    return { dataSet, period, orgUnit, dataElement, value, comment };
 }
