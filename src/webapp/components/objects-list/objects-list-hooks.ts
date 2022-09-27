@@ -1,13 +1,13 @@
-import React from "react";
 import {
-    TableColumn,
-    TableSorting,
-    ReferenceObject,
-    PaginationOptions,
-    TablePagination,
     ObjectsTableDetailField,
+    PaginationOptions,
+    ReferenceObject,
+    TableColumn,
+    TablePagination,
+    TableSorting,
     TableState,
-} from "d2-ui-components";
+} from "@eyeseetea/d2-ui-components";
+import React from "react";
 import { ObjectsListProps } from "./ObjectsList";
 
 export interface TableConfig<Obj extends ReferenceObject> {
@@ -20,7 +20,7 @@ export interface TableConfig<Obj extends ReferenceObject> {
 type GetRows<Obj extends ReferenceObject> = (
     paging: TablePagination,
     sorting: TableSorting<Obj>
-) => Promise<{ objects: Obj[]; pager: Partial<TablePagination> } | undefined>;
+) => Promise<{ objects: Obj[]; pager?: Partial<TablePagination> } | undefined>;
 
 const initialPagination: TablePagination = { page: 1, pageSize: 20, total: 0 };
 

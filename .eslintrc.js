@@ -1,23 +1,17 @@
 /** @format */
 
 module.exports = {
-    extends: [
-        "react-app",
-        "prettier",
-        "eslint:recommended",
-        "plugin:react/recommended",
-        "plugin:cypress/recommended",
-        "plugin:@typescript-eslint/recommended",
-        "prettier/@typescript-eslint",
-        "plugin:prettier/recommended",
-    ],
+    extends: ["react-app", "eslint:recommended", "plugin:react/recommended", "plugin:@typescript-eslint/recommended"],
+    parser: "@typescript-eslint/parser",
     rules: {
-        "no-console": "off",
+        "no-console": ["warn", { allow: ["debug", "warn", "error"] }],
         "@typescript-eslint/camelcase": "off",
         "@typescript-eslint/explicit-function-return-type": ["off"],
-        "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
+        "unused-imports/no-unused-imports": "warn",
+        "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
         "react/prop-types": "off",
         "react/display-name": "off",
+        "react/react-in-jsx-scope": "off",
         "no-unused-expressions": "off",
         "no-useless-concat": "off",
         "no-useless-constructor": "off",
@@ -35,15 +29,15 @@ module.exports = {
         "@typescript-eslint/indent": "off",
         "@typescript-eslint/member-delimiter-style": "off",
         "@typescript-eslint/type-annotation-spacing": "off",
-        "@typescript-eslint/no-use-before-define": "off",
         "@typescript-eslint/explicit-function-return-type": "off",
+        "no-use-before-define": "off",
+        "no-debugger": "warn",
         "no-extra-semi": "off",
         "no-mixed-spaces-and-tabs": "off",
         "react-hooks/rules-of-hooks": "error",
         "react-hooks/exhaustive-deps": "warn",
     },
-    plugins: ["cypress", "@typescript-eslint", "react-hooks"],
-    env: { "cypress/globals": true },
+    plugins: ["@typescript-eslint", "react-hooks", "unused-imports"],
     settings: {
         react: {
             pragma: "React",

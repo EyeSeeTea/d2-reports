@@ -1,6 +1,6 @@
-import { D2Api } from "d2-api/2.32";
-import { getMockApiFromClass } from "d2-api";
-export { CancelableResponse } from "d2-api/repositories/CancelableResponse";
+import { D2Api } from "@eyeseetea/d2-api/2.34";
+import { getMockApiFromClass } from "@eyeseetea/d2-api";
+export { CancelableResponse } from "@eyeseetea/d2-api/repositories/CancelableResponse";
 
-export * from "d2-api/2.32";
+export * from "@eyeseetea/d2-api/2.34";
 export const getMockApi = getMockApiFromClass(D2Api);
