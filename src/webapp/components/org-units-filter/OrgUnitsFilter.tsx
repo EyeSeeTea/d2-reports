@@ -11,12 +11,14 @@ export interface OrgUnitsFilterProps {
     rootIds: Id[];
     selected: OrgUnitPath[];
     setSelected(newPaths: OrgUnitPath[]): void;
+    selectableLevels?: number[];
+    selectableIds?: Id[];
 }
 
 const orgUnitsSelectorControls = {};
 
 export const OrgUnitsFilter: React.FC<OrgUnitsFilterProps> = React.memo(props => {
-    const { api, rootIds, selected, setSelected } = props;
+    const { api, rootIds, selected, setSelected, selectableIds, selectableLevels } = props;
     const classes = useStyles();
     const initiallyExpanded = React.useMemo(() => _.compact(selected.map(getOrgUnitParentPath)), [selected]);
 
@@ -33,8 +35,10 @@ export const OrgUnitsFilter: React.FC<OrgUnitsFilterProps> = React.memo(props =>
                 rootIds={rootIds}
                 onChange={setSelected}
                 selected={selected}
-                selectOnClick={true}
+                selectOnClick={false}
                 initiallyExpanded={initiallyExpanded}
+                selectableIds={selectableIds}
+                selectableLevels={selectableLevels}
             />
         </div>
     );

@@ -3,7 +3,7 @@ import _ from "lodash";
 import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { Id, NamedRef } from "../../../../domain/common/entities/Base";
-import { getRootIds } from "../../../../domain/common/entities/OrgUnit";
+import { getOrgUnitsFromId, getRootIds } from "../../../../domain/common/entities/OrgUnit";
 import i18n from "../../../../locales";
 import { D2Api } from "../../../../types/d2-api";
 import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
@@ -48,10 +48,16 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { values: filter, options: filterOptions, onChange } = props;
 
     const dataSetItems = useMemoOptionsFromNamedRef(filterOptions.dataSets);
-    const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
 
     const [orgUnits, setOrgUnits] = useState<OrgUnit[]>([]);
+    const dataSetOrgUnits = getOrgUnitsFromId(config.orgUnits, orgUnits);
+    const selectableOUs = _.union(
+        orgUnits.filter(org => org.level < 3),
+        dataSetOrgUnits
+    );
+    const selectableIds = selectableOUs.map(ou => ou.id)
+    const rootIds = React.useMemo(() => getRootIds(selectableOUs), [selectableOUs]);
 
     const completionStatusItems = React.useMemo(() => {
         return [
@@ -78,7 +84,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                             path: true,
                             name: true,
                             level: true,
-                            children: { level: true, path: true, children: { level: true } },
+                            children: { level: true, path: true },
                         },
                     },
                 })
@@ -156,6 +162,8 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 rootIds={rootIds}
                 selected={filter.orgUnitPaths}
                 setSelected={setOrgUnitPaths}
+                selectableLevels={[1, 2, 3]}
+                selectableIds={selectableIds}
             />
 
             <DropdownStyled
