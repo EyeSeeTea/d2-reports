@@ -19,6 +19,7 @@ import {
 import {
     MalDataApprovalItem,
     MalDataApprovalItemIdentifier,
+    Monitoring,
 } from "../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import {
     MalDataApprovalOptions,
@@ -154,10 +155,12 @@ const fieldMapping: Record<keyof MalDataApprovalItem, SqlField> = {
 
 export class MalDataApprovalDefaultRepository implements MalDataApprovalRepository {
     private storageClient: StorageClient;
+    private globalStorageClient: StorageClient;
 
     constructor(private api: D2Api) {
         const instance = new Instance({ url: this.api.baseUrl });
         this.storageClient = new DataStoreStorageClient("user", instance);
+        this.globalStorageClient = new DataStoreStorageClient("global", instance);
     }
 
     async getDiff(options: MalDataApprovalOptions): Promise<PaginatedObjects<DataDiffItem>> {
@@ -489,6 +492,16 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
     async saveColumns(namespace: string, columns: string[]): Promise<void> {
         return this.storageClient.saveObject<string[]>(namespace, columns);
+    }
+
+    async getMonitoring(namespace: string): Promise<Monitoring[]> {
+        const monitoring = await this.globalStorageClient.getObject<Monitoring[]>(namespace);
+
+        return monitoring ?? [];
+    }
+
+    async saveMonitoring(namespace: string, monitoring: Monitoring[]): Promise<void> {
+        return await this.globalStorageClient.saveObject<Monitoring[]>(namespace, monitoring);
     }
 
     async getSortOrder(): Promise<string[]> {

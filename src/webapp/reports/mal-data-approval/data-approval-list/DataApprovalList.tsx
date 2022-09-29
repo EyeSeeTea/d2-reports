@@ -30,7 +30,7 @@ import { useReload } from "../../../utils/use-reload";
 import { DataApprovalViewModel, getDataApprovalViews } from "../DataApprovalViewModel";
 import { DataSetsFilter, Filters } from "./Filters";
 import { DataDifferencesList } from "../DataDifferencesList";
-import { PlaylistAddCheck, ThumbUp } from "@material-ui/icons";
+import { Notifications, NotificationsOff, PlaylistAddCheck, ThumbUp } from "@material-ui/icons";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
 
 export const DataApprovalList: React.FC = React.memo(() => {
@@ -192,8 +192,78 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
                         if (items.length === 0) return;
 
+                        const monitoringValues = items.map(item => {
+                            return {
+                                orgUnit: item.orgUnit,
+                                period: item.period,
+                                monitoring: true,
+                            };
+                        });
+
+                        await compositionRoot.malDataApproval.saveMonitoring(Namespaces.MONITORING, monitoringValues);
+
+                        compositionRoot.malDataApproval.getMonitoring(Namespaces.MONITORING).then(monitoringValue => {
+                            monitoringValue = monitoringValue.length ? monitoringValue : [];
+                            console.log(monitoringValue);
+                        });
                         const result = await compositionRoot.malDataApproval.updateStatus(items, "duplicate");
                         if (!result) snackbar.error(i18n.t("Error when trying to approve data values"));
+
+                        reload();
+                    },
+                    isActive: rows => _.every(rows, row => row.lastUpdatedValue) && isMalAdmin,
+                },
+                {
+                    name: "activate",
+                    text: i18n.t("Activate monitoring"),
+                    icon: <Notifications />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
+                        if (items.length === 0) return;
+
+                        const monitoringValues = items.map(item => {
+                            return {
+                                orgUnit: item.orgUnit,
+                                period: item.period,
+                                monitoring: true,
+                            };
+                        });
+
+                        await compositionRoot.malDataApproval.saveMonitoring(Namespaces.MONITORING, monitoringValues);
+
+                        compositionRoot.malDataApproval.getMonitoring(Namespaces.MONITORING).then(monitoringValue => {
+                            monitoringValue = monitoringValue.length ? monitoringValue : [];
+                            console.log(monitoringValue);
+                        });
+
+                        reload();
+                    },
+                    isActive: rows => _.every(rows, row => row.lastUpdatedValue) && isMalAdmin,
+                },
+                {
+                    name: "deactivate",
+                    text: i18n.t("Deactivate monitoring"),
+                    icon: <NotificationsOff />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
+                        if (items.length === 0) return;
+
+                        const monitoringValues = items.map(item => {
+                            return {
+                                orgUnit: item.orgUnit,
+                                period: item.period,
+                                monitoring: false,
+                            };
+                        });
+
+                        await compositionRoot.malDataApproval.saveMonitoring(Namespaces.MONITORING, monitoringValues);
+
+                        compositionRoot.malDataApproval.getMonitoring(Namespaces.MONITORING).then(monitoringValue => {
+                            monitoringValue = monitoringValue.length ? monitoringValue : [];
+                            console.log(monitoringValue);
+                        });
 
                         reload();
                     },

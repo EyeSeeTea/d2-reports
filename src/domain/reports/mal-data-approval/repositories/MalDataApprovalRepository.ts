@@ -2,7 +2,7 @@ import { Id } from "../../../common/entities/Base";
 import { Config } from "../../../common/entities/Config";
 import { PaginatedObjects, Paging, Sorting } from "../../../common/entities/PaginatedObjects";
 import { DataDiffItem } from "../entities/DataDiffItem";
-import { MalDataApprovalItem, MalDataApprovalItemIdentifier } from "../entities/MalDataApprovalItem";
+import { MalDataApprovalItem, MalDataApprovalItemIdentifier, Monitoring } from "../entities/MalDataApprovalItem";
 
 export interface MalDataApprovalRepository {
     get(options: MalDataApprovalOptions): Promise<PaginatedObjects<MalDataApprovalItem>>;
@@ -15,6 +15,8 @@ export interface MalDataApprovalRepository {
     unapprove(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean>;
     getColumns(namespace: string): Promise<string[]>;
     saveColumns(namespace: string, columns: string[]): Promise<void>;
+    getMonitoring(namespace: string): Promise<Monitoring[]>;
+    saveMonitoring(namespace: string, monitoring: Monitoring[]): Promise<void>;
     getSortOrder(): Promise<string[]>;
     generateSortOrder(): Promise<void>;
 }
