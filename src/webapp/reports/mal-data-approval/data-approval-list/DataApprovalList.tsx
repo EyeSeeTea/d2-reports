@@ -20,6 +20,7 @@ import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUn
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import {
     MalDataApprovalItem,
+    Monitoring,
     parseDataDuplicationItemId,
 } from "../../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import i18n from "../../../../locales";
@@ -60,6 +61,18 @@ export const DataApprovalList: React.FC = React.memo(() => {
         const currentYear = new Date().getFullYear();
         return _.range(currentYear - 5, currentYear).map(n => n.toString());
     }, []);
+
+    const [monitoring, setMonitoring] = useState<Monitoring[]>([]);
+
+    useEffect(() => {
+        async function getMonitoringValues() {
+            compositionRoot.malDataApproval.getMonitoring(Namespaces.MONITORING).then(monitoringValue => {
+                monitoringValue = monitoringValue.length ? monitoringValue : [];
+                setMonitoring(monitoringValue);
+            });
+        }
+        getMonitoringValues();
+    }, [compositionRoot.malDataApproval]);
 
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
@@ -200,7 +213,10 @@ export const DataApprovalList: React.FC = React.memo(() => {
                             };
                         });
 
-                        await compositionRoot.malDataApproval.saveMonitoring(Namespaces.MONITORING, monitoringValues);
+                        await compositionRoot.malDataApproval.saveMonitoring(
+                            Namespaces.MONITORING,
+                            combineMonitoringValues(monitoring, monitoringValues)
+                        );
 
                         compositionRoot.malDataApproval.getMonitoring(Namespaces.MONITORING).then(monitoringValue => {
                             monitoringValue = monitoringValue.length ? monitoringValue : [];
@@ -230,7 +246,10 @@ export const DataApprovalList: React.FC = React.memo(() => {
                             };
                         });
 
-                        await compositionRoot.malDataApproval.saveMonitoring(Namespaces.MONITORING, monitoringValues);
+                        await compositionRoot.malDataApproval.saveMonitoring(
+                            Namespaces.MONITORING,
+                            combineMonitoringValues(monitoring, monitoringValues)
+                        );
 
                         compositionRoot.malDataApproval.getMonitoring(Namespaces.MONITORING).then(monitoringValue => {
                             monitoringValue = monitoringValue.length ? monitoringValue : [];
@@ -258,7 +277,10 @@ export const DataApprovalList: React.FC = React.memo(() => {
                             };
                         });
 
-                        await compositionRoot.malDataApproval.saveMonitoring(Namespaces.MONITORING, monitoringValues);
+                        await compositionRoot.malDataApproval.saveMonitoring(
+                            Namespaces.MONITORING,
+                            combineMonitoringValues(monitoring, monitoringValues)
+                        );
 
                         compositionRoot.malDataApproval.getMonitoring(Namespaces.MONITORING).then(monitoringValue => {
                             monitoringValue = monitoringValue.length ? monitoringValue : [];
@@ -290,7 +312,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot.malDataApproval, isMalAdmin, isMalApprover, openDialog, reload, snackbar]
+        [compositionRoot.malDataApproval, isMalAdmin, isMalApprover, monitoring, openDialog, reload, snackbar]
     );
 
     const getRows = useMemo(
@@ -366,6 +388,21 @@ export const DataApprovalList: React.FC = React.memo(() => {
             setVisibleColumns(columns);
         });
     }, [compositionRoot]);
+
+    function combineMonitoringValues(
+        initialMonitoringValues: Monitoring[],
+        addedMonitoringValues: Monitoring[]
+    ): Monitoring[] {
+        const combinedMonitoringValues = addedMonitoringValues.map(added => {
+            return initialMonitoringValues.filter(
+                initial => initial.orgUnit !== added.orgUnit || initial.period !== added.period
+            );
+        });
+        const combinedMonitoring = _.union(_.intersection(...combinedMonitoringValues), addedMonitoringValues);
+
+        setMonitoring(combinedMonitoring);
+        return _.union(combinedMonitoring);
+    }
 
     return (
         <React.Fragment>
