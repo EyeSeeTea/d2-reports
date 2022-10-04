@@ -359,7 +359,7 @@ function getEmptyDataValuesFilter(_config: Config): DataSetsFilter {
     return {
         dataSetIds: [],
         orgUnitPaths: [],
-        periods: [],
+        periods: ["2021"],
         completionStatus: undefined,
         approvalStatus: undefined,
     };
