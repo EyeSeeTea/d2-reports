@@ -63,6 +63,12 @@ export const DataApprovalList: React.FC = React.memo(() => {
         return _.range(currentYear - 5, currentYear).map(n => n.toString());
     }, []);
 
+    useEffect(() => {
+        compositionRoot.malDataApproval.getColumns(Namespaces.MAL_APPROVAL_STATUS_USER_COLUMNS).then(columns => {
+            setVisibleColumns(columns);
+        });
+    }, [compositionRoot]);
+
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
             columns: [
@@ -293,24 +299,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
         };
     }
     const filterOptions = React.useMemo(() => getFilterOptions(config, selectablePeriods), [config, selectablePeriods]);
-
-    useEffect(() => {
-        compositionRoot.malDataApproval.getColumns(Namespaces.MAL_APPROVAL_STATUS_USER_COLUMNS).then(columns => {
-            columns = columns.length
-                ? columns
-                : [
-                      "orgUnit",
-                      "period",
-                      "completed",
-                      "validated",
-                      "lastUpdatedValue",
-                      "lastDateOfSubmission",
-                      "lastDateOfApproval",
-                      "modificationCount",
-                  ];
-            setVisibleColumns(columns);
-        });
-    }, [compositionRoot]);
 
     function closeDiffDialog() {
         closeDialog();
