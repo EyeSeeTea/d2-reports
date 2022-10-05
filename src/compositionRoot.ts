@@ -27,6 +27,7 @@ import { GetSortOrderUseCase } from "./domain/reports/mal-data-approval/usecases
 import { GenerateSortOrderUseCase } from "./domain/reports/mal-data-approval/usecases/GenerateSortOrderUseCase";
 import { GetMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/GetMonitoringUseCase";
 import { SaveMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/SaveMonitoringUseCase";
+import { DuplicateDataValuesUseCase } from "./domain/reports/mal-data-approval/usecases/DuplicateDataValuesUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -61,6 +62,7 @@ export function getCompositionRoot(api: D2Api) {
             getMonitoring: new GetMonitoringUseCase(dataDuplicationRepository),
             saveMonitoring: new SaveMonitoringUseCase(dataDuplicationRepository),
             updateStatus: new UpdateMalApprovalStatusUseCase(dataDuplicationRepository),
+            duplicateValue: new DuplicateDataValuesUseCase(dataDuplicationRepository),
             getSortOrder: new GetSortOrderUseCase(dataDuplicationRepository),
             generateSortOrder: new GenerateSortOrderUseCase(dataDuplicationRepository),
         }),

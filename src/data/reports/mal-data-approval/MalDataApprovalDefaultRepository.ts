@@ -1,6 +1,4 @@
 import _ from "lodash";
-import { format } from "date-fns";
-import { DataDiffItem } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
 import { D2Api, Id, PaginatedObjects } from "../../../types/d2-api";
 import { promiseMap } from "../../../utils/promises";
 import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
@@ -25,6 +23,10 @@ import {
     MalDataApprovalOptions,
     MalDataApprovalRepository,
 } from "../../../domain/reports/mal-data-approval/repositories/MalDataApprovalRepository";
+import {
+    DataDiffItem,
+    DataDiffItemIdentifier
+} from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 
 export interface Pagination {
@@ -185,15 +187,15 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
         const items: Array<DataDiffItem> = rows.map(
             (item): DataDiffItem => ({
-                datasetuid: item.datasetuid,
-                orgunituid: item.orgunituid,
+                dataSetUid: item.datasetuid,
+                orgUnitUid: item.orgunituid,
                 period: item.period,
                 value: item.value,
-                apvdvalue: item.apvdvalue,
-                dataelement: item.dataelement,
-                apvddataelement: item.apvddataelement,
+                apvdValue: item.apvdvalue,
+                dataElement: item.dataelement,
+                apvdDataElement: item.apvddataelement,
                 comment: item.comment,
-                apvdcomment: item.apvdcomment,
+                apvdComment: item.apvdcomment,
             })
         );
 
@@ -201,15 +203,15 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
         if (!_.isEmpty(dataElementOrderArray)) {
             const sortedItems = items.sort((a, b) => {
-                if (a.dataelement && b.dataelement) {
-                    return dataElementOrderArray.indexOf(a.dataelement) - dataElementOrderArray.indexOf(b.dataelement);
+                if (a.dataElement && b.dataElement) {
+                    return dataElementOrderArray.indexOf(a.dataElement) - dataElementOrderArray.indexOf(b.dataElement);
                 } else {
                     return 0;
                 }
             });
-            return paginate(sortedItems, paging_to_download);
+            return paginate(sortedItems, options.paging);
         } else {
-            return paginate(items, paging_to_download);
+            return paginate(items, options.paging);
         }
     }
 
@@ -297,7 +299,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                 orgUnit: ds.orgUnit,
                 dataElement: "RvS8hSy27Ou",
                 categoryOptionCombo: "Xr12mI7VPn3",
-                value: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+                value: getISODate(),
             }));
 
             const dateResponse = await this.api.post<any>("/dataValueSets.json", {}, { dataValues }).getData();
@@ -348,7 +350,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         }
     }
 
-    async duplicate(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean> {
+    async duplicateDataSets(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean> {
         try {
             const approvalDataSetId = process.env.REACT_APP_APPROVE_DATASET_ID ?? "fRrt4V8ImqD";
 
@@ -423,7 +425,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                     dataElement: "VqcXVXTPaZG",
                     categoryOptionCombo: "Xr12mI7VPn3",
                     attributeOptionCombo: "Xr12mI7VPn3",
-                    value: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+                    value: getISODate(),
                 });
             });
 
@@ -438,16 +440,157 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
                     copyResponse.push(response);
                 }
-                return _.every(copyResponse, item => item.status === "SUCCESS");
+
+                const copyResponseStatus = _.every(copyResponse, item => item.status === "SUCCESS");
+                if (copyResponseStatus) {
+                    this.duplicateUnapprove(dataSets);
+                }
+                return copyResponseStatus;
             } else {
                 const copyResponse = await this.api
                     .post<any>("/dataValueSets.json", {}, { dataValues: _.reject(dataValues, _.isEmpty) })
+                    .getData();
+
+                const copyResponseStatus = copyResponse.status === "SUCCESS";
+                if (copyResponseStatus) {
+                    this.duplicateUnapprove(dataSets);
+                }
+                return copyResponseStatus;
+            }
+        } catch (error: any) {
+            console.debug(error);
+            return false;
+        }
+    }
+
+    async duplicateDataValues(dataValues: DataDiffItemIdentifier[]): Promise<boolean> {
+        try {
+            const approvalDataSetId = process.env.REACT_APP_APPROVE_DATASET_ID ?? "fRrt4V8ImqD";
+            const uniqueDataSets = _.uniqBy(dataValues, 'dataSet');
+            const uniqueDataElementsNames = _.uniq(_.map(dataValues, 'dataElement'));
+
+            const DSDataElements: { dataSetElements: dataSetElementsType[] }[] = await promiseMap(uniqueDataSets, async item =>
+                this.api
+                    .get<any>(`/dataSets/${item.dataSet}`, { fields: "dataSetElements[dataElement[id,name]]" })
+                    .getData()
+            );
+
+            const dataValueSets: dataSetsValueType[] = await promiseMap(uniqueDataSets, async item =>
+                this.api.get<any>("/dataValueSets", {
+                    dataSet: item.dataSet,
+                    period: item.period,
+                    orgUnit: item.orgUnit,
+                }).getData()
+            );
+
+            const ADSDataElementsRaw: { dataSetElements: dataSetElementsType[] } = await this.api
+                .get<any>(`/dataSets/${approvalDataSetId}`, { fields: "dataSetElements[dataElement[id,name]]" })
+                .getData();
+
+            const ADSDataElements: dataElementsType[] = ADSDataElementsRaw.dataSetElements.map(
+                (element) => {
+                    return {
+                        id: element.dataElement.id,
+                        name: element.dataElement.name,
+                    };
+                }
+            );
+
+            const dataElementsMatchedArray: { [key: string]: any }[] = DSDataElements.flatMap(DSDataElement => {
+                return DSDataElement.dataSetElements.flatMap((element) => {
+                    const dataElement = element.dataElement;
+                    if (uniqueDataElementsNames.includes(dataElement.name)) {
+                        const othername = dataElement.name + "-APVD";
+                        const ADSDataElement = ADSDataElements.find(
+                            (DataElement) => DataElement.name === othername
+                        );
+                        return {
+                            origId: dataElement?.id,
+                            destId: ADSDataElement?.id,
+                            name: dataElement.name,
+                        };
+                    } else {
+                        return [];
+                    }
+                });
+            })
+
+            const apvdDataValues = dataValueSets.flatMap(dataValueSet => {
+                if (dataValueSet.dataValues) {
+                    const data = dataValueSet.dataValues.flatMap(
+                        (dataValue) => {
+                            const data = { ...dataValue };
+                            const destId = dataElementsMatchedArray.find(
+                                dataElementsMatchedObj => dataElementsMatchedObj.origId === dataValue.dataElement
+                            )?.destId;
+                            data.dataElement = destId;
+                            data.dataSet = approvalDataSetId;
+                            delete data.lastUpdated;
+                            delete data.comment;
+
+                            return data.dataElement ? data : [];
+                        }
+                    );
+                    return data;
+                } else {
+                    return [];
+                }
+            });
+
+            uniqueDataSets.forEach(item => {
+                apvdDataValues.push({
+                    dataSet: approvalDataSetId,
+                    period: item.period,
+                    orgUnit: item.orgUnit,
+                    dataElement: "VqcXVXTPaZG",
+                    categoryOptionCombo: "Xr12mI7VPn3",
+                    attributeOptionCombo: "Xr12mI7VPn3",
+                    value: getISODate(),
+                });
+            });
+
+            const chunkSize = 3000;
+            if (apvdDataValues.length > chunkSize) {
+                const copyResponse = [];
+                for (let i = 0; i < apvdDataValues.length; i += chunkSize) {
+                    const chunk = apvdDataValues.slice(i, i + chunkSize);
+                    const response = await this.api
+                        .post<any>("/dataValueSets.json", {}, { dataValues: _.reject(chunk, _.isEmpty) })
+                        .getData();
+
+                    copyResponse.push(response)
+                }
+                return _.every(copyResponse, item => item.status === "SUCCESS");
+            } else {
+                const copyResponse = await this.api
+                    .post<any>("/dataValueSets.json", {}, { dataValues: _.reject(apvdDataValues, _.isEmpty) })
                     .getData();
 
                 return copyResponse.status === "SUCCESS";
             }
         } catch (error: any) {
             console.debug(error);
+            return false;
+        }
+    }
+
+    async duplicateDataValuesAndRevoke(dataValues: DataDiffItemIdentifier[]): Promise<boolean> {
+        try {
+            const duplicateResponse = await this.duplicateDataValues(dataValues);
+
+            const revokeData: MalDataApprovalItemIdentifier = {
+                dataSet: dataValues[0]?.dataSet ?? "",
+                period: dataValues[0]?.period ?? "",
+                orgUnit: dataValues[0]?.orgUnit ?? "",
+                workflow: "",
+            };
+
+            const revokeResponse = await this.api
+                .delete<any>("/dataApprovals", { ds: revokeData.dataSet, pe: revokeData.period, ou: revokeData.orgUnit })
+                .getData();
+
+            return duplicateResponse && revokeResponse === "";
+        } catch (error: any) {
             return false;
         }
     }
@@ -477,6 +620,31 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                     .delete<any>("/dataApprovals", { wf: approval.workflow, pe: approval.period, ou: approval.orgUnit })
                     .getData()
             );
+
+            return _.every(response, item => item === "");
+        } catch (error: any) {
+            return false;
+        }
+    }
+
+    async duplicateUnapprove(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean> {
+        try {
+            const response: any[] = [];
+            dataSets.forEach(async dataSet => {
+                const isApproved = await this.api.get<any>(
+                    "/dataApprovals",
+                    { wf: dataSet.workflow, pe: dataSet.period, ou: dataSet.orgUnit }
+                ).getData();
+
+                if (isApproved.state === "APPROVED_HERE") {
+                    response.push(
+                        await this.api.delete<any>(
+                            "/dataApprovals",
+                            { wf: dataSet.workflow, pe: dataSet.period, ou: dataSet.orgUnit }
+                        ).getData()
+                    );
+                }
+            });
 
             return _.every(response, item => item === "");
         } catch (error: any) {
@@ -556,6 +724,11 @@ const csvFields = ["dataSet", "orgUnit", "period", "completed"] as const;
 type CsvField = typeof csvFields[number];
 
 type DataSetRow = Record<CsvField, string>;
+
+function getISODate() {
+    const date = new Date().toISOString();
+    return date.slice(0, date.lastIndexOf(":"))
+}
 
 /* From the docs: "The variables must contain alphanumeric, dash, underscore and
    whitespace characters only.". Use "-" as id separator and also "-" as empty value.

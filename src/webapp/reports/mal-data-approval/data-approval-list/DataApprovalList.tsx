@@ -56,6 +56,8 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const [selected, setSelected] = useState<string[]>([""]);
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [reloadKey, reload] = useReload();
+    const [revoke, { enable: enableRevoke, disable: disableRevoke }] = useBooleanState(false);
+    const [__, setDiffState] = useState<string>("");
 
     const selectablePeriods = React.useMemo(() => {
         const currentYear = new Date().getFullYear();
@@ -73,6 +75,12 @@ export const DataApprovalList: React.FC = React.memo(() => {
         }
         getMonitoringValues();
     }, [compositionRoot.malDataApproval]);
+
+    useEffect(() => {
+        compositionRoot.malDataApproval.getColumns(Namespaces.MAL_APPROVAL_STATUS_USER_COLUMNS).then(columns => {
+            setVisibleColumns(columns);
+        });
+    }, [compositionRoot]);
 
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
@@ -181,7 +189,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     },
                 },
                 {
-                    name: "unapprove",
+                    name: "revoke",
                     text: i18n.t("Revoke"),
                     icon: <ClearAllIcon />,
                     multiple: true,
@@ -189,7 +197,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
                         if (items.length === 0) return;
 
-                        const result = await compositionRoot.malDataApproval.updateStatus(items, "unapprove");
+                        const result = await compositionRoot.malDataApproval.updateStatus(items, "revoke");
                         if (!result) snackbar.error(i18n.t("Error when trying to unsubmit data set"));
 
                         reload();
@@ -278,12 +286,25 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     name: "getDiff",
                     text: i18n.t("Check Difference"),
                     icon: <PlaylistAddCheck />,
-                    multiple: true,
                     onClick: async (selectedIds: string[]) => {
+                        disableRevoke();
                         openDialog();
                         setSelected(selectedIds);
                     },
-                    isActive: rows => _.every(rows, row => row.lastUpdatedValue) && (isMalApprover || isMalAdmin),
+                    isActive: rows => _.every(rows, row => row.lastUpdatedValue && row.validated === false)
+                        && (isMalApprover || isMalAdmin),
+                },
+                {
+                    name: "getDiffAndRevoke",
+                    text: i18n.t("Check Difference"),
+                    icon: <PlaylistAddCheck />,
+                    onClick: async (selectedIds: string[]) => {
+                        enableRevoke();
+                        openDialog();
+                        setSelected(selectedIds);
+                    },
+                    isActive: rows => _.every(rows, row => row.lastUpdatedValue && row.validated === true)
+                        && (isMalApprover || isMalAdmin),
                 },
             ],
             initialSorting: {
@@ -295,7 +316,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot.malDataApproval, isMalAdmin, isMalApprover, monitoring, openDialog, reload, snackbar]
+        [compositionRoot.malDataApproval, isMalAdmin, isMalApprover, monitoring, openDialog, reload, snackbar, disableRevoke, enableRevoke]
     );
 
     const getRows = useMemo(
@@ -354,23 +375,11 @@ export const DataApprovalList: React.FC = React.memo(() => {
     }
     const filterOptions = React.useMemo(() => getFilterOptions(config, selectablePeriods), [config, selectablePeriods]);
 
-    useEffect(() => {
-        compositionRoot.malDataApproval.getColumns(Namespaces.MAL_APPROVAL_STATUS_USER_COLUMNS).then(columns => {
-            columns = columns.length
-                ? columns
-                : [
-                      "orgUnit",
-                      "period",
-                      "completed",
-                      "validated",
-                      "lastUpdatedValue",
-                      "lastDateOfSubmission",
-                      "lastDateOfApproval",
-                      "modificationCount",
-                  ];
-            setVisibleColumns(columns);
-        });
-    }, [compositionRoot]);
+    function closeDiffDialog() {
+        closeDialog();
+        disableRevoke();
+        reload();
+    }
 
     function combineMonitoringValues(
         initialMonitoringValues: Monitoring[],
@@ -400,12 +409,18 @@ export const DataApprovalList: React.FC = React.memo(() => {
             <ConfirmationDialog
                 isOpen={isDialogOpen}
                 title={i18n.t("Check differences")}
-                onCancel={closeDialog}
+                onCancel={closeDiffDialog}
                 cancelText={i18n.t("Close")}
                 maxWidth="md"
                 fullWidth
             >
-                <DataDifferencesList selectedIds={selected} />
+                <DataDifferencesList
+                    selectedIds={selected}
+                    revoke={revoke}
+                    isMalAdmin={isMalAdmin}
+                    isUpdated={() => setDiffState(`${new Date().getTime()}`)}
+                    key={new Date().getTime()} 
+                />
             </ConfirmationDialog>
         </React.Fragment>
     );
@@ -422,7 +437,7 @@ function getEmptyDataValuesFilter(_config: Config): DataSetsFilter {
     return {
         dataSetIds: [],
         orgUnitPaths: [],
-        periods: [],
+        periods: ["2021"],
         completionStatus: undefined,
         approvalStatus: undefined,
     };
