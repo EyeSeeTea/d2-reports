@@ -3,6 +3,7 @@ import { Config } from "../../../common/entities/Config";
 import { PaginatedObjects, Paging, Sorting } from "../../../common/entities/PaginatedObjects";
 import { DataDiffItem } from "../entities/DataDiffItem";
 import { MalDataApprovalItem, MalDataApprovalItemIdentifier, Monitoring } from "../entities/MalDataApprovalItem";
+import { DataDiffItemIdentifier } from "../entities/DataDiffItem";
 
 export interface MalDataApprovalRepository {
     get(options: MalDataApprovalOptions): Promise<PaginatedObjects<MalDataApprovalItem>>;
