@@ -212,16 +212,11 @@ export const DataApprovalList: React.FC = React.memo(() => {
                                 monitoring: true,
                             };
                         });
-
                         await compositionRoot.malDataApproval.saveMonitoring(
                             Namespaces.MONITORING,
                             combineMonitoringValues(monitoring, monitoringValues)
                         );
 
-                        compositionRoot.malDataApproval.getMonitoring(Namespaces.MONITORING).then(monitoringValue => {
-                            monitoringValue = monitoringValue.length ? monitoringValue : [];
-                            console.log(monitoringValue);
-                        });
                         const result = await compositionRoot.malDataApproval.updateStatus(items, "duplicate");
                         if (!result) snackbar.error(i18n.t("Error when trying to approve data values"));
 
@@ -245,16 +240,10 @@ export const DataApprovalList: React.FC = React.memo(() => {
                                 monitoring: true,
                             };
                         });
-
                         await compositionRoot.malDataApproval.saveMonitoring(
                             Namespaces.MONITORING,
                             combineMonitoringValues(monitoring, monitoringValues)
                         );
-
-                        compositionRoot.malDataApproval.getMonitoring(Namespaces.MONITORING).then(monitoringValue => {
-                            monitoringValue = monitoringValue.length ? monitoringValue : [];
-                            console.log(monitoringValue);
-                        });
 
                         reload();
                     },
@@ -276,16 +265,10 @@ export const DataApprovalList: React.FC = React.memo(() => {
                                 monitoring: false,
                             };
                         });
-
                         await compositionRoot.malDataApproval.saveMonitoring(
                             Namespaces.MONITORING,
                             combineMonitoringValues(monitoring, monitoringValues)
                         );
-
-                        compositionRoot.malDataApproval.getMonitoring(Namespaces.MONITORING).then(monitoringValue => {
-                            monitoringValue = monitoringValue.length ? monitoringValue : [];
-                            console.log(monitoringValue);
-                        });
 
                         reload();
                     },
@@ -399,8 +382,8 @@ export const DataApprovalList: React.FC = React.memo(() => {
             );
         });
         const combinedMonitoring = _.union(_.intersection(...combinedMonitoringValues), addedMonitoringValues);
-
         setMonitoring(combinedMonitoring);
+
         return _.union(combinedMonitoring);
     }
 
