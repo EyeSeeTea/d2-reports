@@ -5,7 +5,7 @@ import { User } from "./User";
 
 export interface Config {
     dataSets: Record<Id, NamedRef>;
-    sections: Record<Id, NamedRef>;
+    sections: Record<Id, NamedRef> | undefined;
     currentUser: User;
     sqlViews: Record<string, NamedRef>;
     pairedDataElementsByDataSet: {
@@ -13,8 +13,8 @@ export interface Config {
     };
     orgUnits: string[];
     sectionsByDataSet: {
-        [dataSetId: string]: NamedRef[];
-    };
+        [dataSetId: string]: NamedRef[] 
+    }| undefined;
     years: string[];
     approvalWorkflow: NamedRef[];
 }
