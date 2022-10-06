@@ -22,6 +22,12 @@ export interface MalDataApprovalItemIdentifier {
     workflow: string;
 }
 
+export interface Monitoring {
+    orgUnit: string;
+    period: string;
+    monitoring: boolean;
+}
+
 export function getDataDuplicationItemId(dataSet: MalDataApprovalItem): string {
     return [dataSet.dataSetUid, dataSet.approvalWorkflowUid, dataSet.period, dataSet.orgUnitUid].join("-");
 }
