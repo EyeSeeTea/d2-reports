@@ -25,7 +25,7 @@ const base = {
         dataSets: { namePrefix: "MAL - WMR Form", nameExcluded: /-APVD$/ },
 
         sqlViewNames: [SQL_VIEW_DATA_DUPLICATION_NAME, SQL_VIEW_MAL_METADATA_NAME, SQL_VIEW_MAL_DIFF_NAME],
-        constantCode: "NHWA_COMMENTS",
+        constantCode: "",
         approvalWorkflows: { namePrefix: "MAL" },
     },
 };
@@ -52,25 +52,41 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             return { ...acc, [sqlView.name]: sqlView };
         }, {});
 
-        const constant = getNth(constants, 0, `Missing constant: ${base[this.type].constantCode}`);
         const currentUser = await this.getCurrentUser();
         const pairedDataElements = getPairedMapping(filteredDataSets);
         const orgUnitList = getPairedOrgunitsMapping(filteredDataSets);
-        const constantData = JSON.parse(constant.description || "{}") as Constant;
-        const { sections, sectionsByDataSet } = getSectionsInfo(constantData);
         const currentYear = new Date().getFullYear();
+        if  (base[this.type].constantCode !== ""){
+            const constant = getNth(constants, 0, `Missing constant: ${base[this.type].constantCode}`);
+            const constantData = JSON.parse(constant.description || "{}") as Constant;
+            const { sections, sectionsByDataSet } = getSectionsInfo(constantData);
 
-        return {
-            dataSets: keyById(filteredDataSets),
-            currentUser,
-            sqlViews,
-            pairedDataElementsByDataSet: pairedDataElements,
-            orgUnits: orgUnitList,
-            sections: keyById(sections),
-            sectionsByDataSet,
-            years: _.range(currentYear - 10, currentYear + 1).map(n => n.toString()),
-            approvalWorkflow: dataApprovalWorkflows,
-        };
+            return {
+                dataSets: keyById(filteredDataSets),
+                currentUser,
+                sqlViews,
+                pairedDataElementsByDataSet: pairedDataElements,
+                orgUnits: orgUnitList,
+                sections: keyById(sections),
+                sectionsByDataSet,
+                years: _.range(currentYear - 10, currentYear + 1).map(n => n.toString()),
+                approvalWorkflow: dataApprovalWorkflows,
+            };
+        }else{
+
+            return {
+                dataSets: keyById(filteredDataSets),
+                currentUser,
+                sqlViews,
+                pairedDataElementsByDataSet: pairedDataElements,
+                orgUnits: orgUnitList,
+                sections: undefined,
+                sectionsByDataSet: undefined,
+                years: _.range(currentYear - 10, currentYear + 1).map(n => n.toString()),
+                approvalWorkflow: dataApprovalWorkflows,
+            };
+
+        }
     }
 
     getMetadata() {
