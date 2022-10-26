@@ -27,7 +27,12 @@ interface DataDifferencesListProps {
     isUpdated: () => void;
 }
 
-export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ selectedIds, revoke, isMalAdmin, isUpdated }) => {
+export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({
+    selectedIds,
+    revoke,
+    isMalAdmin,
+    isUpdated,
+}) => {
     const { compositionRoot, config } = useAppContext();
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const snackbar = useSnackbar();
@@ -40,6 +45,11 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
                 { name: "comment", text: i18n.t("Comment"), sortable: false },
                 { name: "apvdValue", text: i18n.t("Approved value"), sortable: false },
                 { name: "apvdComment", text: i18n.t("Approved value comment"), sortable: false },
+                { name: "lastUpdated", text: i18n.t("Last updated"), sortable: false },
+                { name: "lastUpdatedBy", text: i18n.t("Last updated by"), sortable: false },
+                { name: "lastSubmissionDate", text: i18n.t("Last submission date"), sortable: false },
+                { name: "lastSubmittedBy", text: i18n.t("Last submitted by"), sortable: false },
+                { name: "categoryOption", text: i18n.t("Category Option"), sortable: false },
             ],
             actions: [
                 {
