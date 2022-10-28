@@ -227,6 +227,10 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
     run("yarn build-report");
     const htmlMalDataApproval = fs.readFileSync("dist/index.html", "utf8");
 
+    Object.assign(process.env, { REACT_APP_REPORT_VARIANT: "mal-subscription-status" });
+    run("yarn build-report");
+    const htmlMalDataSubscription = fs.readFileSync("dist/index.html", "utf8");
+
     const reports: Partial<D2Report>[] = [
         {
             id: "FQyoZzClRY7",
@@ -240,6 +244,19 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
                 grandParentOrganisationUnit: false,
             },
             designContent: htmlMalDataApproval,
+        },
+        {
+            id: "bcB6fNYRQFQ",
+            name: "Malaria Data Subscription Report",
+            type: "HTML",
+            cacheStrategy: "RESPECT_SYSTEM_SETTING",
+            reportParams: {
+                parentOrganisationUnit: false,
+                reportingPeriod: false,
+                organisationUnit: false,
+                grandParentOrganisationUnit: false,
+            },
+            designContent: htmlMalDataSubscription,
         },
     ];
 

@@ -23,6 +23,7 @@ import { GetMalDataDiffUseCase } from "./domain/reports/mal-data-approval/usecas
 import { getReportType } from "./webapp/utils/reportType";
 import { GetMalDataApprovalColumnsUseCase } from "./domain/reports/mal-data-approval/usecases/GetMalDataApprovalColumnsUseCase";
 import { MalDataApprovalDefaultRepository } from "./data/reports/mal-data-approval/MalDataApprovalDefaultRepository";
+import { MalDataSubscriptionDefaultRepository } from "./data/reports/mal-data-subscription/MalDataSubscriptionDefaultRepository";
 import { GetSortOrderUseCase } from "./domain/reports/mal-data-approval/usecases/GetSortOrderUseCase";
 import { GenerateSortOrderUseCase } from "./domain/reports/mal-data-approval/usecases/GenerateSortOrderUseCase";
 import { GetMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/GetMonitoringUseCase";
@@ -34,6 +35,7 @@ export function getCompositionRoot(api: D2Api) {
     const dataCommentsRepository = new NHWADataCommentsDefaultRepository(api);
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
     const dataDuplicationRepository = new MalDataApprovalDefaultRepository(api);
+    const dataSubscriptionRepository = new MalDataSubscriptionDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
 
@@ -65,6 +67,19 @@ export function getCompositionRoot(api: D2Api) {
             duplicateValue: new DuplicateDataValuesUseCase(dataDuplicationRepository),
             getSortOrder: new GetSortOrderUseCase(dataDuplicationRepository),
             generateSortOrder: new GenerateSortOrderUseCase(dataDuplicationRepository),
+        }),
+        malDataSubscription: getExecute({
+            get: new GetMalDataSetsUseCase(dataSubscriptionRepository),
+            getDiff: new GetMalDataDiffUseCase(dataSubscriptionRepository),
+            save: new SaveMalDataSetsUseCase(dataSubscriptionRepository),
+            getColumns: new GetMalDataApprovalColumnsUseCase(dataSubscriptionRepository),
+            saveColumns: new SaveMalDataApprovalColumnsUseCase(dataSubscriptionRepository),
+            getMonitoring: new GetMonitoringUseCase(dataSubscriptionRepository),
+            saveMonitoring: new SaveMonitoringUseCase(dataSubscriptionRepository),
+            updateStatus: new UpdateMalApprovalStatusUseCase(dataSubscriptionRepository),
+            duplicateValue: new DuplicateDataValuesUseCase(dataSubscriptionRepository),
+            getSortOrder: new GetSortOrderUseCase(dataSubscriptionRepository),
+            generateSortOrder: new GenerateSortOrderUseCase(dataSubscriptionRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),
