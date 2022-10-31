@@ -119,9 +119,9 @@ type SqlFieldDiff =
     | "comment"
     | "apvdcomment"
     | "lastupdated"
-    | "lastupdatedby"
-    | "lastsubmissiondate"
-    | "lastsubmittedby"
+    | "apvdlastupdated"
+    | "apvdstoredby"
+    | "storedby"
     | "categoryoption";
 
 type SqlField =
@@ -199,9 +199,9 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                 comment: item.comment,
                 apvdComment: item.apvdcomment,
                 lastUpdated: item.lastupdated,
-                lastUpdatedBy: item.lastupdatedby,
-                lastSubmissionDate: item.lastsubmissiondate,
-                lastSubmittedBy: item.lastsubmittedby,
+                lastUpdatedBy: item.storedby,
+                lastSubmissionDate: item.apvdlastupdated,
+                lastSubmittedBy: item.apvdstoredby,
                 categoryOption: item.categoryoption,
             })
         );
