@@ -13,6 +13,7 @@ export interface MalDataApprovalItem {
     lastDateOfSubmission: string | undefined;
     lastDateOfApproval: string | undefined;
     modificationCount: string | undefined;
+    monitoring?: boolean | undefined;
 }
 
 export interface MalDataApprovalItemIdentifier {
@@ -30,6 +31,16 @@ export interface Monitoring {
 
 export function getDataDuplicationItemId(dataSet: MalDataApprovalItem): string {
     return [dataSet.dataSetUid, dataSet.approvalWorkflowUid, dataSet.period, dataSet.orgUnitUid].join("-");
+}
+
+export function getDataDuplicationItemMonitoringValue(dataSet: MalDataApprovalItem, monitoring: Monitoring[]): boolean {
+    const monitoringValue =
+        monitoring.find(
+            monitoringValue =>
+                monitoringValue.orgUnit === dataSet.orgUnitUid && monitoringValue.period === dataSet.period
+        )?.monitoring ?? false;
+
+    return monitoringValue;
 }
 
 export function parseDataDuplicationItemId(string: string): MalDataApprovalItemIdentifier | undefined {

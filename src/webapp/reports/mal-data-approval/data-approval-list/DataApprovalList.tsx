@@ -255,7 +255,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.lastUpdatedValue) && isMalAdmin,
+                    isActive: rows => _.every(rows, row => !row.monitoring) && isMalAdmin,
                 },
                 {
                     name: "deactivate",
@@ -280,7 +280,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.lastUpdatedValue) && isMalAdmin,
+                    isActive: rows => _.every(rows, row => row.monitoring) && isMalAdmin,
                 },
                 {
                     name: "getDiff",
@@ -291,8 +291,9 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         openDialog();
                         setSelected(selectedIds);
                     },
-                    isActive: rows => _.every(rows, row => row.lastUpdatedValue && row.validated === false)
-                        && (isMalApprover || isMalAdmin),
+                    isActive: rows =>
+                        _.every(rows, row => row.lastUpdatedValue && row.validated === false) &&
+                        (isMalApprover || isMalAdmin),
                 },
                 {
                     name: "getDiffAndRevoke",
@@ -303,8 +304,9 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         openDialog();
                         setSelected(selectedIds);
                     },
-                    isActive: rows => _.every(rows, row => row.lastUpdatedValue && row.validated === true)
-                        && (isMalApprover || isMalAdmin),
+                    isActive: rows =>
+                        _.every(rows, row => row.lastUpdatedValue && row.validated === true) &&
+                        (isMalApprover || isMalAdmin),
                 },
             ],
             initialSorting: {
@@ -316,7 +318,17 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot.malDataApproval, isMalAdmin, isMalApprover, monitoring, openDialog, reload, snackbar, disableRevoke, enableRevoke]
+        [
+            compositionRoot.malDataApproval,
+            snackbar,
+            reload,
+            isMalApprover,
+            isMalAdmin,
+            monitoring,
+            disableRevoke,
+            openDialog,
+            enableRevoke,
+        ]
     );
 
     const getRows = useMemo(
@@ -329,9 +341,9 @@ export const DataApprovalList: React.FC = React.memo(() => {
             });
 
             console.debug("Reloading", reloadKey);
-            return { pager, objects: getDataApprovalViews(config, objects) };
+            return { pager, objects: getDataApprovalViews(config, objects, monitoring) };
         },
-        [config, compositionRoot, filters, reloadKey, selectablePeriods]
+        [compositionRoot.malDataApproval, config, filters, selectablePeriods, monitoring, reloadKey]
     );
 
     function getUseCaseOptions(filter: DataSetsFilter, selectablePeriods: string[]) {
@@ -419,7 +431,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     revoke={revoke}
                     isMalAdmin={isMalAdmin}
                     isUpdated={() => setDiffState(`${new Date().getTime()}`)}
-                    key={new Date().getTime()} 
+                    key={new Date().getTime()}
                 />
             </ConfirmationDialog>
         </React.Fragment>
