@@ -56,7 +56,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         orgUnits.filter(org => org.level < 3),
         dataSetOrgUnits
     );
-    const selectableIds = selectableOUs.map(ou => ou.id)
+    const selectableIds = selectableOUs.map(ou => ou.id);
     const rootIds = React.useMemo(() => getRootIds(selectableOUs), [selectableOUs]);
 
     const completionStatusItems = React.useMemo(() => {

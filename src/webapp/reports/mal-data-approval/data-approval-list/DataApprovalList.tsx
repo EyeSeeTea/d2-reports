@@ -291,8 +291,9 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         openDialog();
                         setSelected(selectedIds);
                     },
-                    isActive: rows => _.every(rows, row => row.lastUpdatedValue && row.validated === false)
-                        && (isMalApprover || isMalAdmin),
+                    isActive: rows =>
+                        _.every(rows, row => row.lastUpdatedValue && row.validated === false) &&
+                        (isMalApprover || isMalAdmin),
                 },
                 {
                     name: "getDiffAndRevoke",
@@ -303,8 +304,9 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         openDialog();
                         setSelected(selectedIds);
                     },
-                    isActive: rows => _.every(rows, row => row.lastUpdatedValue && row.validated === true)
-                        && (isMalApprover || isMalAdmin),
+                    isActive: rows =>
+                        _.every(rows, row => row.lastUpdatedValue && row.validated === true) &&
+                        (isMalApprover || isMalAdmin),
                 },
             ],
             initialSorting: {
@@ -316,7 +318,17 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot.malDataApproval, isMalAdmin, isMalApprover, monitoring, openDialog, reload, snackbar, disableRevoke, enableRevoke]
+        [
+            compositionRoot.malDataApproval,
+            isMalAdmin,
+            isMalApprover,
+            monitoring,
+            openDialog,
+            reload,
+            snackbar,
+            disableRevoke,
+            enableRevoke,
+        ]
     );
 
     const getRows = useMemo(
@@ -419,7 +431,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     revoke={revoke}
                     isMalAdmin={isMalAdmin}
                     isUpdated={() => setDiffState(`${new Date().getTime()}`)}
-                    key={new Date().getTime()} 
+                    key={new Date().getTime()}
                 />
             </ConfirmationDialog>
         </React.Fragment>

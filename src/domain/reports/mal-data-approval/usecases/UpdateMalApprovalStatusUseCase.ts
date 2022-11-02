@@ -30,4 +30,12 @@ export class UpdateMalApprovalStatusUseCase {
     }
 }
 
-type UpdateAction = "complete" | "approve" | "duplicate" | "incomplete" | "unapprove" | "activate" | "deactivate" | "revoke";
+type UpdateAction =
+    | "complete"
+    | "approve"
+    | "duplicate"
+    | "incomplete"
+    | "unapprove"
+    | "activate"
+    | "deactivate"
+    | "revoke";

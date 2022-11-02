@@ -23,10 +23,7 @@ import {
     MalDataApprovalOptions,
     MalDataApprovalRepository,
 } from "../../../domain/reports/mal-data-approval/repositories/MalDataApprovalRepository";
-import {
-    DataDiffItem,
-    DataDiffItemIdentifier
-} from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
+import { DataDiffItem, DataDiffItemIdentifier } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 
 export interface Pagination {
@@ -586,7 +583,11 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             };
 
             const revokeResponse = await this.api
-                .delete<any>("/dataApprovals", { ds: revokeData.dataSet, pe: revokeData.period, ou: revokeData.orgUnit })
+                .delete<any>("/dataApprovals", {
+                    ds: revokeData.dataSet,
+                    pe: revokeData.period,
+                    ou: revokeData.orgUnit,
+                })
                 .getData();
 
             return duplicateResponse && revokeResponse === "";
@@ -631,17 +632,19 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         try {
             const response: any[] = [];
             dataSets.forEach(async dataSet => {
-                const isApproved = await this.api.get<any>(
-                    "/dataApprovals",
-                    { wf: dataSet.workflow, pe: dataSet.period, ou: dataSet.orgUnit }
-                ).getData();
+                const isApproved = await this.api
+                    .get<any>("/dataApprovals", { wf: dataSet.workflow, pe: dataSet.period, ou: dataSet.orgUnit })
+                    .getData();
 
                 if (isApproved.state === "APPROVED_HERE") {
                     response.push(
-                        await this.api.delete<any>(
-                            "/dataApprovals",
-                            { wf: dataSet.workflow, pe: dataSet.period, ou: dataSet.orgUnit }
-                        ).getData()
+                        await this.api
+                            .delete<any>("/dataApprovals", {
+                                wf: dataSet.workflow,
+                                pe: dataSet.period,
+                                ou: dataSet.orgUnit,
+                            })
+                            .getData()
                     );
                 }
             });
@@ -727,7 +730,7 @@ type DataSetRow = Record<CsvField, string>;
 
 function getISODate() {
     const date = new Date().toISOString();
-    return date.slice(0, date.lastIndexOf(":"))
+    return date.slice(0, date.lastIndexOf(":"));
 }
 
 /* From the docs: "The variables must contain alphanumeric, dash, underscore and
