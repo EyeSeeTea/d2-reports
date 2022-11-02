@@ -2,6 +2,8 @@ import { Config } from "../../../domain/common/entities/Config";
 import {
     MalDataApprovalItem,
     getDataDuplicationItemId,
+    getDataDuplicationItemMonitoringValue,
+    Monitoring,
 } from "../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import { toDate } from "date-fns-tz";
 
@@ -21,9 +23,14 @@ export interface DataApprovalViewModel {
     lastDateOfSubmission: Date | undefined;
     lastDateOfApproval: Date | undefined;
     modificationCount: string | undefined;
+    monitoring: boolean | undefined;
 }
 
-export function getDataApprovalViews(_config: Config, items: MalDataApprovalItem[]): DataApprovalViewModel[] {
+export function getDataApprovalViews(
+    _config: Config,
+    items: MalDataApprovalItem[],
+    monitoring: Monitoring[]
+): DataApprovalViewModel[] {
     return items.map(item => {
         return {
             id: getDataDuplicationItemId(item),
@@ -45,6 +52,7 @@ export function getDataApprovalViews(_config: Config, items: MalDataApprovalItem
                 ? toDate(item.lastDateOfApproval, { timeZone: "UTC" })
                 : undefined,
             modificationCount: item.modificationCount,
+            monitoring: getDataDuplicationItemMonitoringValue(item, monitoring),
         };
     });
 }
