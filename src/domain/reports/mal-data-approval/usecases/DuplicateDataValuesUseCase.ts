@@ -3,7 +3,7 @@ import { DataDiffItemIdentifier } from "../entities/DataDiffItem";
 import { MalDataApprovalRepository } from "../repositories/MalDataApprovalRepository";
 
 export class DuplicateDataValuesUseCase implements UseCase {
-    constructor(private approvalRepository: MalDataApprovalRepository) { }
+    constructor(private approvalRepository: MalDataApprovalRepository) {}
 
     async execute(items: DataDiffItemIdentifier[], revoke?: boolean): Promise<boolean> {
         if (revoke) {
