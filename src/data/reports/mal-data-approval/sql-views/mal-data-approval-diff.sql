@@ -4,11 +4,13 @@ SELECT
 '${periods}' as period,
 sourceid,
 periodid,
+categoryoptioncomboid,
 (select name from dataelement where dataelementid = datavalue.dataelementid) as dataelement,
 datavalue.value as value,
 datavalue.storedby as storedby,
 datavalue.lastupdated as lastupdated,
 datavalue.comment as comment,
+(select name from categoryoptioncombo where categoryoptioncomboid = datavalue.categoryoptioncomboid) as categoryoptioncomboname,
 
 (select dva.value from datavalue dva 
 where dva.dataelementid=(select dataelementid from dataelement where uid = UPPER((select uid from dataelement where dataelementid = datavalue.dataelementid)))

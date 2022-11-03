@@ -122,7 +122,7 @@ type SqlFieldDiff =
     | "apvdlastupdated"
     | "apvdstoredby"
     | "storedby"
-    | "categoryoption";
+    | "categoryoptioncomboname";
 
 type SqlField =
     | "datasetuid"
@@ -202,7 +202,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                 lastUpdatedBy: item.storedby,
                 lastSubmissionDate: item.apvdlastupdated,
                 lastSubmittedBy: item.apvdstoredby,
-                categoryOption: item.categoryoption,
+                categoryOption: item.categoryoptioncomboname,
             })
         );
 
