@@ -12,6 +12,11 @@ export interface DataDiffViewModel {
     apvdDataElement: string | undefined;
     comment: string | undefined;
     apvdComment: string | undefined;
+    lastUpdated: string | undefined;
+    lastUpdatedBy: string | undefined;
+    lastSubmissionDate: string | undefined;
+    lastSubmittedBy: string | undefined;
+    categoryOption: string | undefined;
 }
 
 export function getDataDiffViews(_config: Config, items: DataDiffItem[]): DataDiffViewModel[] {
@@ -27,6 +32,11 @@ export function getDataDiffViews(_config: Config, items: DataDiffItem[]): DataDi
             apvdDataElement: item.apvdDataElement,
             comment: item.comment,
             apvdComment: item.apvdComment,
+            lastUpdated: item.lastUpdated,
+            lastUpdatedBy: item.lastUpdatedBy,
+            lastSubmissionDate: item.lastSubmissionDate,
+            lastSubmittedBy: item.lastSubmittedBy,
+            categoryOption: item.categoryOption,
         };
     });
 }
