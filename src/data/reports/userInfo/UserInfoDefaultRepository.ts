@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { User } from "../../../domain/common/entities/User";
-import { UserInfoOptions, UserInfoRepository } from "../../../domain/reports/userinfo/repositories/UserInfoRepository";
+import { UserInfoRepository } from "../../../domain/reports/userinfo/repositories/UserInfoRepository";
 import { D2Api, PaginatedObjects } from "../../../types/d2-api";
 import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
@@ -45,10 +45,10 @@ export class UserInfoDefaultRepository implements UserInfoRepository {
         this.storageClient = new DataStoreStorageClient("user", instance);
     }
 
-    async getUserTwoFactorInfo(options: UserInfoOptions): Promise<PaginatedObjects<User>> {
+    async getUserTwoFactorInfo(): Promise<PaginatedObjects<User>> {
         const paging = { page: 1, pageSize: 10000 };
 
-        const { sorting } = options; //options
+        //const { sorting } = options; //options
         const metadataResult: any = await this.api.metadata.d2Api
             .get(
                 "users.json?fields=userCredentials[id,username,email,name,shortName,disabled,externalAuth,twoFA]&paging=false&filter=userCredentials.disabled:eq:false&filter=userCredentials.externalAuth:eq:false&filter=userCredentials.twoFA:eq:false&rootJunction=AND&order=firstName:asc"
@@ -68,11 +68,11 @@ export class UserInfoDefaultRepository implements UserInfoRepository {
             };
             rows.push(row);
         }
-        const rowsSorted = _(rows)
+        /*         const rowsSorted = _(rows)
             .orderBy([row => row[sorting.field]], [sorting.direction])
-            .value();
+            .value(); */
 
-        return this.paginate(rowsSorted, paging);
+        return this.paginate(rows, paging);
     }
 
     paginate<Obj>(objects: Obj[], pagination: Pagination) {
@@ -108,7 +108,7 @@ export class UserInfoDefaultRepository implements UserInfoRepository {
         const csvData: CsvData<CsvField> = { headers, rows };
         const csvContents = csvDataSource.toString(csvData);
 
-        await downloadFile(csvContents, filename, "text/csv");
+        return await downloadFile(csvContents, filename, "text/csv");
     }
 
     async saveColumns(columns: string[]): Promise<void> {

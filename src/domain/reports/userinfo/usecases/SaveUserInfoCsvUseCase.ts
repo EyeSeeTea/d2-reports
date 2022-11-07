@@ -1,4 +1,3 @@
-import { MetadataObject } from "../../../common/entities/MetadataObject";
 import { User } from "../../../common/entities/User";
 import { UserInfoRepository } from "../repositories/UserInfoRepository";
 

@@ -10,18 +10,10 @@ import {
 import DoneIcon from "@material-ui/icons/Done";
 import _ from "lodash";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { sortByName } from "../../../../domain/common/entities/Base";
-import { Config } from "../../../../domain/common/entities/Config";
-import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
-import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
-import {
-    parseDataApprovalItemId,
-} from "../../../../domain/reports/nhwa-approval-status/entities/DataApprovalItem";
 import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
 import { useReload } from "../../../utils/use-reload";
-import { UserInfoViewModel, getUserInfolViews } from "../UserInfoViewModel";
-import { DataSetsFilter, Filters } from "./Filters";
+import { getUserInfolViews, UserInfoViewModel } from "../UserInfoViewModel";
 
 export const UserInfoList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
@@ -47,16 +39,15 @@ export const UserInfoList: React.FC = React.memo(() => {
                     text: i18n.t("save"),
                     icon: <DoneIcon />,
                     multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        compositionRoot.user2fa.save(
-                            "user-info-list.csv",
-                            await compositionRoot.user2fa.get()º
-                        );
+                    onClick: async () => {
+                        // FUTURE: create a single use case that performs the get+saveCSV
+                        const { objects: users } = await compositionRoot.user2fa.get();
+                        compositionRoot.user2fa.save("users.csv", users);
                     },
                 },
             ],
             initialSorting: {
-                field: "dataSet" as const,
+                field: "id" as const,
                 order: "asc" as const,
             },
             paginationOptions: {
@@ -69,14 +60,13 @@ export const UserInfoList: React.FC = React.memo(() => {
 
     const getRows = useMemo(
         () => async (_search: string, paging: TablePagination, sorting: TableSorting<UserInfoViewModel>) => {
-            const { pager, objects } = await compositionRoot.user2fa.get({
-                config,
-                paging: { page: paging.page, pageSize: paging.pageSize },
-            });
+            const { objects } = await compositionRoot.user2fa.get();
 
             console.debug("Reloading", reloadKey);
-
-            return { pager, objects: getUserInfolViews(config, objects) };
+            return {
+                pager: { pageSize: 10000, page: 1, total: objects.length, pageCount: 1 },
+                objects: getUserInfolViews(objects),
+            };
         },
         [config, compositionRoot, reloadKey]
     );
@@ -106,8 +96,6 @@ export const UserInfoList: React.FC = React.memo(() => {
             .value();
     }, [tableProps.columns, visibleColumns]);
 
-    const filterOptions = useMemo(() => getFilterOptions(config), [config]);
-
     useEffect(() => {
         compositionRoot.dataApproval.getColumns().then(columns => setVisibleColumns(columns));
     }, [compositionRoot]);
@@ -118,30 +106,6 @@ export const UserInfoList: React.FC = React.memo(() => {
             columns={columnsToShow}
             onChangeSearch={undefined}
             onReorderColumns={saveReorderedColumns}
-        >
-            <Filters values={filters} options={filterOptions} onChange={setFilters} />
-        </ObjectsList>
+        ></ObjectsList>
     );
 });
-
-function getUseCaseOptions(filter: DataSetsFilter) {
-    return {
-        ...filter,
-        orgUnitIds: getOrgUnitIdsFromPaths(filter.orgUnitPaths),
-    };
-}
-
-function getSortingFromTableSorting(sorting: TableSorting<UserInfoViewModel>): Sorting<UserInfoViewModel> {
-    return {
-        field: sorting.field === "id" ? "username" : sorting.field,
-        direction: sorting.order,
-    };
-}
-
-function getFilterOptions(config: Config) {
-    return {
-        dataSets: sortByName(_.values(config.dataSets)),
-        periods: config.years,
-        approvalWorkflow: config.approvalWorkflow,
-    };
-}
