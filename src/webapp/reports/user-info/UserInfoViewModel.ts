@@ -16,10 +16,10 @@ export function getUserInfolViews(items: User[]): UserInfoViewModel[] {
             id: item.id,
             name: item.name,
             username: item.username,
-            externalAuth: item.externalAuth ? String(item.externalAuth) : "-",
-            disabled: item.disabled ? String(item.disabled) : "-",
-            email: item.email ? String(item.email) : "-",
-            twoFA: item.twoFA ? String(item.twoFA) : "-",
+            externalAuth: item.externalAuth !== undefined ? String(item.externalAuth) : "-",
+            disabled: item.disabled !== undefined ? String(item.disabled) : "-",
+            email: item.email !== undefined ? String(item.email) : "-",
+            twoFA: item.twoFA !== undefined ? String(item.twoFA) : "-",
         };
     });
 }

@@ -19,7 +19,7 @@ export class UserInfoDefaultRepository implements UserInfoRepository {
         this.storageClient = new DataStoreStorageClient("user", instance);
     }
 
-    async getUserTwoFactorInfo(): Promise<PaginatedObjects<User>> {
+    async getUserTwoFactorInfo(): Promise<PaginatedObjects<User>> {                                                                                                                                                                                                                                                                                                                                                                                                                                          
         const paging = { page: 1, pageSize: 10000 };
 
         //const { sorting } = options; //options
@@ -30,15 +30,15 @@ export class UserInfoDefaultRepository implements UserInfoRepository {
             .getData();
 
         const rows: Array<User> = [];
-        for (const user of metadataResult) {
+        for (const user of metadataResult["users"]) {
             const row: User = {
-                id: user.id,
-                name: user.name,
-                username: user.username,
-                externalAuth: user.externalAuth,
-                disabled: user.disabled,
-                email: user.email,
-                twoFA: user.twoFA,
+                id: user["userCredentials"].id,
+                name: user["userCredentials"].name,
+                username: user["userCredentials"].username,
+                externalAuth: user["userCredentials"].externalAuth,
+                disabled: user["userCredentials"].disabled,
+                email: user["userCredentials"].email,
+                twoFA: user["userCredentials"].twoFA,
             };
             rows.push(row);
         }
