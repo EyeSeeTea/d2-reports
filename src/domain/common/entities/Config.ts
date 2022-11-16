@@ -12,15 +12,18 @@ export interface Config {
         [dataSetId: string]: Array<{ dataValueVal: Id; dataValueComment: Id }>;
     };
     orgUnits: string[];
-    sectionsByDataSet: {
-        [dataSetId: string]: NamedRef[] 
-    }| undefined;
+    sectionsByDataSet:
+        | {
+              [dataSetId: string]: NamedRef[];
+          }
+        | undefined;
     years: string[];
     approvalWorkflow: NamedRef[];
 }
 
 export function getMainUserPaths(config: Config) {
-    return _.compact([getPath(config.currentUser.orgUnits)]);
+    const orgunits = config.currentUser.orgUnits ? config.currentUser.orgUnits : [];
+    return _.compact([getPath(orgunits)]);
 }
 
 export function getSqlViewId(config: Config, name: string): string {

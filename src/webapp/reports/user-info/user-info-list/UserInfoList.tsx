@@ -1,12 +1,4 @@
-import {
-    ObjectsList,
-    TableColumn,
-    TableConfig,
-    TablePagination,
-    TableSorting,
-    useObjectsTable,
-    useSnackbar,
-} from "@eyeseetea/d2-ui-components";
+import { ObjectsList, TableColumn, TableConfig, useObjectsTable } from "@eyeseetea/d2-ui-components";
 import DoneIcon from "@material-ui/icons/Done";
 import _ from "lodash";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -16,11 +8,9 @@ import { useReload } from "../../../utils/use-reload";
 import { getUserInfolViews, UserInfoViewModel } from "../UserInfoViewModel";
 
 export const UserInfoList: React.FC = React.memo(() => {
-    const { compositionRoot, config } = useAppContext();
-    const snackbar = useSnackbar();
-
+    const { compositionRoot } = useAppContext();
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
-    const [reloadKey, reload] = useReload();
+    useReload();
 
     const baseConfig: TableConfig<UserInfoViewModel> = useMemo(
         () => ({
@@ -55,20 +45,19 @@ export const UserInfoList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot, reload, snackbar]
+        [compositionRoot]
     );
 
     const getRows = useMemo(
-        () => async (_search: string, paging: TablePagination, sorting: TableSorting<UserInfoViewModel>) => {
+        () => async (_search: string) => {
             const { objects } = await compositionRoot.user2fa.get();
 
-            console.debug("Reloading", reloadKey);
             return {
                 pager: { pageSize: 10000, page: 1, total: objects.length, pageCount: 1 },
                 objects: getUserInfolViews(objects),
             };
         },
-        [config, compositionRoot, reloadKey]
+        [compositionRoot]
     );
 
     const saveReorderedColumns = useCallback(

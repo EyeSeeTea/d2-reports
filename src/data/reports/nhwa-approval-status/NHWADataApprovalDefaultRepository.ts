@@ -73,11 +73,12 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
         const allDataSetIds = _.values(config.dataSets).map(ds => ds.id); // ?
         const sqlViews = new Dhis2SqlViews(this.api);
 
+        const orgunits = config.currentUser.orgUnits ? config.currentUser.orgUnits.map(({ id }) => id) : [];
         const { pager, rows } = await sqlViews
             .query<Variables, SqlField>(
                 getSqlViewId(config, SQL_VIEW_DATA_APPROVAL_NAME),
                 {
-                    orgUnitRoot: sqlViewJoinIds(config.currentUser.orgUnits.map(({ id }) => id)),
+                    orgUnitRoot: sqlViewJoinIds(orgunits),
                     orgUnits: sqlViewJoinIds(orgUnitIds),
                     periods: sqlViewJoinIds(periods),
                     dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),

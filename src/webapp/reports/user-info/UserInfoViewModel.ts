@@ -1,4 +1,3 @@
-import { Config } from "../../../domain/common/entities/Config";
 import { User } from "../../../domain/common/entities/User";
 
 export interface UserInfoViewModel {

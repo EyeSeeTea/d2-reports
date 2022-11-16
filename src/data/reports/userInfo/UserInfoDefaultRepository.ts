@@ -11,32 +11,6 @@ import { Instance } from "../../common/entities/Instance";
 import { downloadFile } from "../../common/utils/download-file";
 import { Pagination } from "../mal-data-approval/MalDataApprovalDefaultRepository";
 
-interface Variables {
-    id: string;
-    name: string;
-    username: string;
-    externalAuth: string;
-    disabled: string;
-    email: string;
-    twoFA: string;
-    orderByColumn: SqlField;
-    orderByDirection: "asc" | "desc";
-}
-
-type UserRow = Record<CsvField, string>;
-
-type SqlField = "id" | "name" | "username" | "externalAuth" | "disabled" | "email" | "twoFA";
-
-const fieldMapping: Record<keyof UserRow, SqlField> = {
-    id: "id",
-    name: "name",
-    username: "username",
-    externalAuth: "externalAuth",
-    disabled: "disabled",
-    email: "email",
-    twoFA: "twoFA",
-};
-
 export class UserInfoDefaultRepository implements UserInfoRepository {
     private storageClient: StorageClient;
 
