@@ -13,6 +13,7 @@ export interface MalDataApprovalItem {
     lastDateOfSubmission: string | undefined;
     lastDateOfApproval: string | undefined;
     modificationCount: string | undefined;
+    notificationActive: boolean;
 }
 
 export interface MalDataApprovalItemIdentifier {

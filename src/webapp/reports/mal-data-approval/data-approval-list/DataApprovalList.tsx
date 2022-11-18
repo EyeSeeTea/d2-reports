@@ -255,7 +255,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.lastUpdatedValue) && isMalAdmin,
+                    isActive: rows => _.every(rows, row => row.lastUpdatedValue && !row.notificationActive) && isMalAdmin,
                 },
                 {
                     name: "deactivate",
@@ -280,7 +280,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.lastUpdatedValue) && isMalAdmin,
+                    isActive: rows => _.every(rows, row => row.notificationActive) && isMalAdmin,
                 },
                 {
                     name: "getDiff",

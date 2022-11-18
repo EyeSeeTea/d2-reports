@@ -21,6 +21,7 @@ export interface DataApprovalViewModel {
     lastDateOfSubmission: Date | undefined;
     lastDateOfApproval: Date | undefined;
     modificationCount: string | undefined;
+    notificationActive: boolean;
 }
 
 export function getDataApprovalViews(_config: Config, items: MalDataApprovalItem[]): DataApprovalViewModel[] {
@@ -45,6 +46,7 @@ export function getDataApprovalViews(_config: Config, items: MalDataApprovalItem
                 ? toDate(item.lastDateOfApproval, { timeZone: "UTC" })
                 : undefined,
             modificationCount: item.modificationCount,
+            notificationActive: item.notificationActive
         };
     });
 }
