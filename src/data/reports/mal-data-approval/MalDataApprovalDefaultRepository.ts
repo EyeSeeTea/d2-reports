@@ -136,7 +136,8 @@ type SqlField =
     | "lastupdatedvalue"
     | "lastdateofsubmission"
     | "lastdateofapproval"
-    | "diff";
+    | "diff"
+    | "notificationActive";
 
 const fieldMapping: Record<keyof MalDataApprovalItem, SqlField> = {
     dataSetUid: "datasetuid",
@@ -153,6 +154,7 @@ const fieldMapping: Record<keyof MalDataApprovalItem, SqlField> = {
     lastDateOfSubmission: "lastdateofsubmission",
     lastDateOfApproval: "lastdateofapproval",
     modificationCount: "diff",
+    notificationActive: "notificationActive",
 };
 
 export class MalDataApprovalDefaultRepository implements MalDataApprovalRepository {
@@ -231,7 +233,11 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                 paging_to_download
             )
             .getData();
+        
+        const monitoring:Monitoring[]|void = 
+            await this.getMonitoring(Namespaces.MONITORING)
 
+        const monitoringlist = monitoring?? []
         const { rows } = await sqlViews
             .query<Variables, SqlField>(
                 getSqlViewId(config, SQL_VIEW_DATA_DUPLICATION_NAME),
@@ -248,8 +254,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                 paging_to_download
             )
             .getData();
-
-        return mergeHeadersAndData(options, periods, headerRows, rows);
+        return mergeHeadersAndData(options, periods, headerRows, rows, monitoringlist);
         // A data value is not associated to a specific data set, but we can still map it
         // through the data element (1 data value -> 1 data element -> N data sets).
     }
@@ -741,7 +746,8 @@ function mergeHeadersAndData(
     options: MalDataApprovalOptions,
     selectablePeriods: string[],
     headers: SqlViewGetData<SqlFieldHeaders>["rows"],
-    data: SqlViewGetData<SqlField>["rows"]
+    data: SqlViewGetData<SqlField>["rows"],
+    monitoring: Monitoring[]
 ) {
     const { sorting, paging, orgUnitIds, periods, approvalStatus, completionStatus } = options; // ?
     const activePeriods = periods.length > 0 ? periods : selectablePeriods;
@@ -756,7 +762,11 @@ function mergeHeadersAndData(
     const filterOrgUnitIds = orgUnitIds.length > 0 ? orgUnitIds : undefined;
 
     for (const period of activePeriods) {
-        for (const header of headers) {
+        for (const header of headers) { 
+            const hasMonitoring = monitoring.filter((monitor) => {
+                return monitor.orgUnit === header.orgunituid && monitor.period === period;
+              })[0];
+             
             if (filterOrgUnitIds !== undefined && filterOrgUnitIds.indexOf(header.orgunituid) === -1) {
                 continue;
             }
@@ -777,6 +787,7 @@ function mergeHeadersAndData(
                 lastDateOfSubmission: datavalue?.lastdateofsubmission,
                 lastDateOfApproval: datavalue?.lastdateofapproval,
                 modificationCount: datavalue?.diff,
+                notificationActive:  hasMonitoring?hasMonitoring.monitoring:false,
             };
             rows.push(row);
         }
