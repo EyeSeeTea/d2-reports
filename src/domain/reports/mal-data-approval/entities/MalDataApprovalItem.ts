@@ -20,7 +20,7 @@ export interface MalDataApprovalItemIdentifier {
     dataSet: string;
     orgUnit: string;
     period: string;
-    workflow: string;
+    workflow: string | undefined;
 }
 
 export interface Monitoring {
@@ -30,7 +30,7 @@ export interface Monitoring {
 }
 
 export function getDataDuplicationItemId(dataSet: MalDataApprovalItem): string {
-    return [dataSet.dataSetUid, dataSet.approvalWorkflowUid, dataSet.period, dataSet.orgUnitUid].join("-");
+    return [dataSet.dataSetUid, dataSet.approvalWorkflowUid ?? "undefined", dataSet.period, dataSet.orgUnitUid].join("-");
 }
 
 export function parseDataDuplicationItemId(string: string): MalDataApprovalItemIdentifier | undefined {
