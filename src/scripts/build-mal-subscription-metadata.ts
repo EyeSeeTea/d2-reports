@@ -1,6 +1,5 @@
 import { ArgumentParser } from "argparse";
 import { execSync } from "child_process";
-import "dotenv-flow/config";
 import fs from "fs";
 import _ from "lodash";
 import { parse } from "node-html-parser";
@@ -27,6 +26,7 @@ interface DataElement {
     id: Id;
     categoryCombo: { categoryOptionCombos: Ref[] };
 }
+
 interface Entry {
     dataSetId: Id;
     dataElementId: Id;
@@ -153,6 +153,7 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
             },
         },
     });
+
     const { dataSets } = await metadata$.getData();
 
     const mapping = getMapping(dataSets);
@@ -165,72 +166,27 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
         value: 0,
     };
 
-    const sqlDataComments = fs.readFileSync("src/data/common/sql-views/data-values-with-comments.sql", "utf8");
-    const sqlDataApproval = fs.readFileSync("src/data/common/sql-views/data-approval-status.sql", "utf8");
-    const sqlMALDataApproval = fs.readFileSync(
-        "src/data/reports/mal-dataset-duplication/sql-views/mal-data-approval-status.sql",
-        "utf8"
-    );
-    const sqlMALDataDiff = fs.readFileSync(
-        "src/data/reports/mal-dataset-duplication/sql-views/mal-data-approval-diff.sql",
-        "utf8"
-    );
-    const sqlMALDataHeader = fs.readFileSync(
-        "src/data/reports/mal-dataset-duplication/sql-views/mal-data-approval-header.sql",
-        "utf8"
-    );
+    const sqlMALDataSubscription = fs.readFileSync("src/data/common/sql-views/data-approval-status.sql", "utf8");
 
     const sqlViews: Partial<D2SqlView>[] = [
         {
-            id: "gCvQF1yeC9f",
-            name: "NHWA Data Comments",
-            cacheStrategy: "RESPECT_SYSTEM_SETTING",
-            type: "QUERY",
-            sqlQuery: sqlDataComments,
-            publicAccess: "--------",
-        },
-        {
-            id: "QTKlHcbGQRh",
-            name: "NHWA Data Approval Status",
-            cacheStrategy: "RESPECT_SYSTEM_SETTING",
-            type: "QUERY",
-            sqlQuery: sqlDataApproval,
-            publicAccess: "--------",
-        },
-        {
             id: "i2eh7Zfe9LW",
-            name: "MAL Data Approval Status",
+            name: "MAL Data Subscription Status",
             cacheStrategy: "RESPECT_SYSTEM_SETTING",
             type: "QUERY",
-            sqlQuery: sqlMALDataApproval,
-            publicAccess: "--------",
-        },
-        {
-            id: "RZV5DSxqDUc",
-            name: "MAL Data approval header",
-            cacheStrategy: "RESPECT_SYSTEM_SETTING",
-            type: "QUERY",
-            sqlQuery: sqlMALDataHeader,
-            publicAccess: "--------",
-        },
-        {
-            id: "QuNQs2bFGHW",
-            name: "MAL Data Approval Diff",
-            cacheStrategy: "RESPECT_SYSTEM_SETTING",
-            type: "QUERY",
-            sqlQuery: sqlMALDataDiff,
+            sqlQuery: sqlMALDataSubscription,
             publicAccess: "--------",
         },
     ];
 
-    Object.assign(process.env, { REACT_APP_REPORT_VARIANT: "mal-approval-status" });
+    Object.assign(process.env, { REACT_APP_REPORT_VARIANT: "mal-subscription-status" });
     run("yarn build-report");
-    const htmlMalDataApproval = fs.readFileSync("dist/index.html", "utf8");
+    const htmlMalDataSubscription = fs.readFileSync("dist/index.html", "utf8");
 
     const reports: Partial<D2Report>[] = [
         {
-            id: "FQyoZzClRY7",
-            name: "Malaria Data Approval Report",
+            id: "bcB6fNYRQFQ",
+            name: "Malaria Data Subscription Report",
             type: "HTML",
             cacheStrategy: "RESPECT_SYSTEM_SETTING",
             reportParams: {
@@ -239,7 +195,7 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
                 organisationUnit: false,
                 grandParentOrganisationUnit: false,
             },
-            designContent: htmlMalDataApproval,
+            designContent: htmlMalDataSubscription,
         },
     ];
 
