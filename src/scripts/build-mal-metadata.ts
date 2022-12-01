@@ -171,6 +171,10 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
         "src/data/reports/mal-dataset-duplication/sql-views/mal-data-approval-status.sql",
         "utf8"
     );
+    const sqlMALDataSubscription = fs.readFileSync(
+        "src/data/reports/mal-dataset-duplication/sql-views/mal-data-approval-status.sql",
+        "utf8"
+    );
     const sqlMALDataDiff = fs.readFileSync(
         "src/data/reports/mal-dataset-duplication/sql-views/mal-data-approval-diff.sql",
         "utf8"
@@ -203,6 +207,14 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
             cacheStrategy: "RESPECT_SYSTEM_SETTING",
             type: "QUERY",
             sqlQuery: sqlMALDataApproval,
+            publicAccess: "--------",
+        },
+        {
+            id: "i2eh7Zfe9LW",
+            name: "MAL Data Subscription Status",
+            cacheStrategy: "RESPECT_SYSTEM_SETTING",
+            type: "QUERY",
+            sqlQuery: sqlMALDataSubscription,
             publicAccess: "--------",
         },
         {
