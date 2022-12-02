@@ -1,6 +1,9 @@
 import _ from "lodash";
 import { User } from "../../../domain/common/entities/User";
-import { UserInfoRepository } from "../../../domain/reports/userinfo/repositories/UserInfoRepository";
+import {
+    UserInfoRepository,
+    UserInfoRepositoryGetOptions,
+} from "../../../domain/reports/userinfo/repositories/UserInfoRepository";
 import { D2Api, PaginatedObjects } from "../../../types/d2-api";
 import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
@@ -19,8 +22,10 @@ export class UserInfoDefaultRepository implements UserInfoRepository {
         this.storageClient = new DataStoreStorageClient("user", instance);
     }
 
-    async getUserTwoFactorInfo(): Promise<PaginatedObjects<User>> {                                                                                                                                                                                                                                                                                                                                                                                                                                          
-        const paging = { page: 1, pageSize: 10000 };
+    async getUserTwoFactorInfo(options: UserInfoRepositoryGetOptions): Promise<PaginatedObjects<User>> {
+        const { config } = options;
+        const { paging, sorting } = options;
+        //const paging = { page: 1, pageSize: 10000 };
 
         //const { sorting } = options; //options
         const metadataResult: any = await this.api.metadata.d2Api
