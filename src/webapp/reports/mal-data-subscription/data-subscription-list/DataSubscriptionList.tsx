@@ -7,43 +7,36 @@ import {
     useObjectsTable,
     useSnackbar,
 } from "@eyeseetea/d2-ui-components";
-import DoneIcon from "@material-ui/icons/Done";
+import DoneAllIcon from "@material-ui/icons/DoneAll";
 import _ from "lodash";
-import { format } from "date-fns";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { sortByName } from "../../../../domain/common/entities/Base";
 import { Config } from "../../../../domain/common/entities/Config";
 import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import {
     MalDataSubscriptionItem,
-    parseDataDuplicationItemId,
+    parseDataSubscriptionItemId,
 } from "../../../../domain/reports/mal-data-subscription/entities/MalDataSubscriptionItem";
 import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
 import { useReload } from "../../../utils/use-reload";
 import { DataSubscriptionViewModel, getDataSubscriptionViews } from "../DataSubscriptionViewModel";
-import { DataSetsFilter, Filters } from "./Filters";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
+import { Id } from "../../../../domain/common/entities/Base";
+
+interface DataSetsFilter {
+    dataSetIds: Id[];
+    orgUnitPaths: Id[];
+    periods: string[];
+    completionStatus?: boolean;
+    approvalStatus?: boolean;
+}
 
 export const DataSubscriptionList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
-    const { currentUser } = config;
     const snackbar = useSnackbar();
 
-    const isMalApprover =
-        _.intersection(
-            currentUser.userGroups.map(userGroup => userGroup.name),
-            ["MAL_Country Approver"]
-        ).length > 0;
-
-    const isMalAdmin =
-        _.intersection(
-            currentUser.userGroups.map(userGroup => userGroup.name),
-            ["MAL_Malaria admin"]
-        ).length > 0;
-
-    const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
+    const [filters, _setFilters] = useState(() => getEmptyDataValuesFilter(config));
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [reloadKey, reload] = useReload();
 
@@ -61,45 +54,24 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
     const baseConfig: TableConfig<DataSubscriptionViewModel> = useMemo(
         () => ({
             columns: [
-                { name: "orgUnit", text: i18n.t("Data Element"), sortable: true },
-                {
-                    name: "validated",
-                    text: i18n.t("Subscription status"),
-                    sortable: true,
-                    getValue: row =>
-                        row.validated ? "Submitted" : row.completed ? "Ready for submission" : "Not completed",
-                },
-                { name: "dataSet", text: i18n.t("Section"), sortable: true, hidden: true },
-                {
-                    name: "lastDateOfSubmission",
-                    text: i18n.t("Last date of subscription"),
-                    sortable: true,
-                    getValue: row =>
-                        row.lastDateOfSubmission
-                            ? format(row.lastDateOfSubmission, "yyyy-MM-dd' 'HH:mm:ss")
-                            : "Never submitted",
-                },
+                { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
+                { name: "period", text: i18n.t("Period"), sortable: true },
+                { name: "dataSet", text: i18n.t("Data set"), sortable: true, hidden: true },
             ],
             actions: [
                 {
-                    name: "complete",
-                    text: i18n.t("Complete"),
-                    icon: <DoneIcon />,
+                    name: "submit",
+                    text: i18n.t("Submit"),
+                    icon: <DoneAllIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
+                        const items = _.compact(selectedIds.map(item => parseDataSubscriptionItemId(item)));
                         if (items.length === 0) return;
 
-                        const result = await compositionRoot.malDataSubscription.updateStatus(items, "complete");
-                        if (!result) snackbar.error(i18n.t("Error when trying to complete data set"));
+                        const result = await compositionRoot.malDataSubscription.updateStatus(items, "approve");
+                        if (!result) snackbar.error(i18n.t("Error when trying to submit data set"));
 
                         reload();
-                    },
-                    isActive: (rows: DataSubscriptionViewModel[]) => {
-                        return (
-                            _.every(rows, row => row.completed === false && row.lastUpdatedValue) &&
-                            (isMalApprover || isMalAdmin)
-                        );
                     },
                 },
             ],
@@ -112,7 +84,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot.malDataSubscription, isMalAdmin, isMalApprover, reload, snackbar]
+        [compositionRoot.malDataSubscription, reload, snackbar]
     );
 
     const getRows = useMemo(
@@ -165,30 +137,17 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
             .value();
     }, [tableProps.columns, visibleColumns]);
 
-    function getFilterOptions(config: Config, selectablePeriods: string[]) {
-        return {
-            dataSets: sortByName(_.values(config.dataSets)),
-            periods: selectablePeriods,
-            approvalWorkflow: config.approvalWorkflow,
-        };
-    }
-    const filterOptions = React.useMemo(() => getFilterOptions(config, selectablePeriods), [config, selectablePeriods]);
-
     return (
-        <React.Fragment>
-            <ObjectsList<DataSubscriptionViewModel>
-                {...tableProps}
-                columns={columnsToShow}
-                onChangeSearch={undefined}
-                onReorderColumns={saveReorderedColumns}
-            >
-                <Filters values={filters} options={filterOptions} onChange={setFilters} />
-            </ObjectsList>
-        </React.Fragment>
+        <ObjectsList<DataSubscriptionViewModel>
+            {...tableProps}
+            columns={columnsToShow}
+            onChangeSearch={undefined}
+            onReorderColumns={saveReorderedColumns}
+        />
     );
 });
 
-export function getSortingFromTableSorting(
+function getSortingFromTableSorting(
     sorting: TableSorting<DataSubscriptionViewModel>
 ): Sorting<MalDataSubscriptionItem> {
     return {

@@ -4,15 +4,8 @@ export interface MalDataSubscriptionItem {
     orgUnitUid: string;
     orgUnit: string;
     period: string;
-    attribute: string | undefined;
-    approvalWorkflowUid: string | undefined;
-    approvalWorkflow: string | undefined;
     completed: boolean;
     validated: boolean;
-    lastUpdatedValue: string | undefined;
-    lastDateOfSubmission: string | undefined;
-    lastDateOfApproval: string | undefined;
-    modificationCount: string | undefined;
 }
 
 export interface MalDataSubscriptionItemIdentifier {
@@ -22,17 +15,11 @@ export interface MalDataSubscriptionItemIdentifier {
     workflow: string;
 }
 
-export interface Monitoring {
-    orgUnit: string;
-    period: string;
-    monitoring: boolean;
+export function getDataSubscriptionItemId(dataSet: MalDataSubscriptionItem): string {
+    return [dataSet.dataSetUid, dataSet.period, dataSet.orgUnitUid].join("-");
 }
 
-export function getDataDuplicationItemId(dataSet: MalDataSubscriptionItem): string {
-    return [dataSet.dataSetUid, dataSet.approvalWorkflowUid, dataSet.period, dataSet.orgUnitUid].join("-");
-}
-
-export function parseDataDuplicationItemId(string: string): MalDataSubscriptionItemIdentifier | undefined {
+export function parseDataSubscriptionItemId(string: string): MalDataSubscriptionItemIdentifier | undefined {
     const [dataSet, workflow, period, orgUnit] = string.split("-");
     if (!dataSet || !workflow || !period || !orgUnit) return undefined;
 

@@ -8,7 +8,7 @@ import {
 
 type DataSetsOptions = MalDataSubscriptionOptions;
 
-export class GetMalDataSetsUseCase implements UseCase {
+export class GetMalSubscriptionDataSetsUseCase implements UseCase {
     constructor(private dataSetRepository: MalDataSubscriptionRepository) {}
 
     execute(options: DataSetsOptions): Promise<PaginatedObjects<MalDataSubscriptionItem>> {
