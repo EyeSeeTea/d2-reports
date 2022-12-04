@@ -7,10 +7,7 @@ import {
     useObjectsTable,
     useSnackbar,
 } from "@eyeseetea/d2-ui-components";
-import ClearAllIcon from "@material-ui/icons/ClearAll";
 import DoneIcon from "@material-ui/icons/Done";
-import DoneAllIcon from "@material-ui/icons/DoneAll";
-import RemoveIcon from "@material-ui/icons/Remove";
 import _ from "lodash";
 import { format } from "date-fns";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -20,24 +17,18 @@ import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUn
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import {
     MalDataSubscriptionItem,
-    Monitoring,
     parseDataDuplicationItemId,
 } from "../../../../domain/reports/mal-data-subscription/entities/MalDataSubscriptionItem";
 import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
-import { ConfirmationDialog } from "@eyeseetea/d2-ui-components";
-import { useBooleanState } from "../../../utils/use-boolean";
 import { useReload } from "../../../utils/use-reload";
 import { DataSubscriptionViewModel, getDataSubscriptionViews } from "../DataSubscriptionViewModel";
 import { DataSetsFilter, Filters } from "./Filters";
-import { DataDifferencesList } from "../DataDifferencesList";
-import { Notifications, NotificationsOff, PlaylistAddCheck, ThumbUp } from "@material-ui/icons";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
 
 export const DataSubscriptionList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
     const { currentUser } = config;
-    const [isDialogOpen, { enable: openDialog, disable: closeDialog }] = useBooleanState(false);
     const snackbar = useSnackbar();
 
     const isMalApprover =
@@ -53,28 +44,13 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
         ).length > 0;
 
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
-    const [selected, setSelected] = useState<string[]>([""]);
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [reloadKey, reload] = useReload();
-    const [revoke, { enable: enableRevoke, disable: disableRevoke }] = useBooleanState(false);
-    const [__, setDiffState] = useState<string>("");
 
     const selectablePeriods = React.useMemo(() => {
         const currentYear = new Date().getFullYear();
         return _.range(currentYear - 5, currentYear).map(n => n.toString());
     }, []);
-
-    const [monitoring, setMonitoring] = useState<Monitoring[]>([]);
-
-    useEffect(() => {
-        async function getMonitoringValues() {
-            compositionRoot.malDataSubscription.getMonitoring(Namespaces.MONITORING).then(monitoringValue => {
-                monitoringValue = monitoringValue.length ? monitoringValue : [];
-                setMonitoring(monitoringValue);
-            });
-        }
-        getMonitoringValues();
-    }, [compositionRoot.malDataSubscription]);
 
     useEffect(() => {
         compositionRoot.malDataSubscription.getColumns(Namespaces.MAL_APPROVAL_STATUS_USER_COLUMNS).then(columns => {
@@ -85,48 +61,23 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
     const baseConfig: TableConfig<DataSubscriptionViewModel> = useMemo(
         () => ({
             columns: [
-                { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
-                { name: "period", text: i18n.t("Period"), sortable: true },
-                { name: "dataSet", text: i18n.t("Data set"), sortable: true, hidden: true },
-                { name: "attribute", text: i18n.t("Attribute"), sortable: true, hidden: true },
-                {
-                    name: "completed",
-                    text: i18n.t("Completion status"),
-                    sortable: true,
-                    getValue: row => (row.completed ? "Completed" : "Not completed"),
-                },
+                { name: "orgUnit", text: i18n.t("Data Element"), sortable: true },
                 {
                     name: "validated",
-                    text: i18n.t("Submission status"),
+                    text: i18n.t("Subscription status"),
                     sortable: true,
                     getValue: row =>
                         row.validated ? "Submitted" : row.completed ? "Ready for submission" : "Not completed",
                 },
-                { name: "modificationCount", text: i18n.t("Modification Count"), sortable: true },
-                {
-                    name: "lastUpdatedValue",
-                    text: i18n.t("Last modification date"),
-                    sortable: true,
-                    getValue: row =>
-                        row.lastUpdatedValue ? format(row.lastUpdatedValue, "yyyy-MM-dd' 'HH:mm:ss") : "No data",
-                },
+                { name: "dataSet", text: i18n.t("Section"), sortable: true, hidden: true },
                 {
                     name: "lastDateOfSubmission",
-                    text: i18n.t("Last date of submission"),
+                    text: i18n.t("Last date of subscription"),
                     sortable: true,
                     getValue: row =>
                         row.lastDateOfSubmission
                             ? format(row.lastDateOfSubmission, "yyyy-MM-dd' 'HH:mm:ss")
                             : "Never submitted",
-                },
-                {
-                    name: "lastDateOfApproval",
-                    text: i18n.t("Last date of approval"),
-                    sortable: true,
-                    getValue: row =>
-                        row.lastDateOfApproval
-                            ? format(row.lastDateOfApproval, "yyyy-MM-dd' 'HH:mm:ss")
-                            : "Never approved",
                 },
             ],
             actions: [
@@ -151,163 +102,6 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                         );
                     },
                 },
-                {
-                    name: "incomplete",
-                    text: i18n.t("Incomplete"),
-                    icon: <RemoveIcon />,
-                    multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
-                        if (items.length === 0) return;
-
-                        const result = await compositionRoot.malDataSubscription.updateStatus(items, "incomplete");
-                        if (!result) snackbar.error(i18n.t("Error when trying to incomplete data set"));
-
-                        reload();
-                    },
-                    isActive: rows => _.every(rows, row => row.completed === true && !row.validated),
-                },
-                {
-                    name: "submit",
-                    text: i18n.t("Submit"),
-                    icon: <DoneAllIcon />,
-                    multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
-                        if (items.length === 0) return;
-
-                        const result = await compositionRoot.malDataSubscription.updateStatus(items, "approve");
-                        if (!result) snackbar.error(i18n.t("Error when trying to submit data set"));
-
-                        reload();
-                    },
-                    isActive: (rows: DataSubscriptionViewModel[]) => {
-                        return (
-                            _.every(rows, row => row.validated === false && row.lastUpdatedValue) &&
-                            (isMalApprover || isMalAdmin)
-                        );
-                    },
-                },
-                {
-                    name: "revoke",
-                    text: i18n.t("Revoke"),
-                    icon: <ClearAllIcon />,
-                    multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
-                        if (items.length === 0) return;
-
-                        const result = await compositionRoot.malDataSubscription.updateStatus(items, "revoke");
-                        if (!result) snackbar.error(i18n.t("Error when trying to unsubmit data set"));
-
-                        reload();
-                    },
-                    isActive: rows => _.every(rows, row => row.validated === true),
-                },
-                {
-                    name: "approve",
-                    text: i18n.t("Approve"),
-                    icon: <ThumbUp />,
-                    multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
-                        if (items.length === 0) return;
-
-                        const monitoringValues = items.map(item => {
-                            return {
-                                orgUnit: item.orgUnit,
-                                period: item.period,
-                                monitoring: true,
-                            };
-                        });
-                        await compositionRoot.malDataSubscription.saveMonitoring(
-                            Namespaces.MONITORING,
-                            combineMonitoringValues(monitoring, monitoringValues)
-                        );
-
-                        const result = await compositionRoot.malDataSubscription.updateStatus(items, "duplicate");
-                        if (!result) snackbar.error(i18n.t("Error when trying to approve data values"));
-
-                        reload();
-                    },
-                    isActive: rows => _.every(rows, row => row.lastUpdatedValue) && isMalAdmin,
-                },
-                {
-                    name: "activate",
-                    text: i18n.t("Activate monitoring"),
-                    icon: <Notifications />,
-                    multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
-                        if (items.length === 0) return;
-
-                        const monitoringValues = items.map(item => {
-                            return {
-                                orgUnit: item.orgUnit,
-                                period: item.period,
-                                monitoring: true,
-                            };
-                        });
-                        await compositionRoot.malDataSubscription.saveMonitoring(
-                            Namespaces.MONITORING,
-                            combineMonitoringValues(monitoring, monitoringValues)
-                        );
-
-                        reload();
-                    },
-                    isActive: rows => _.every(rows, row => row.lastUpdatedValue) && isMalAdmin,
-                },
-                {
-                    name: "deactivate",
-                    text: i18n.t("Deactivate monitoring"),
-                    icon: <NotificationsOff />,
-                    multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
-                        if (items.length === 0) return;
-
-                        const monitoringValues = items.map(item => {
-                            return {
-                                orgUnit: item.orgUnit,
-                                period: item.period,
-                                monitoring: false,
-                            };
-                        });
-                        await compositionRoot.malDataSubscription.saveMonitoring(
-                            Namespaces.MONITORING,
-                            combineMonitoringValues(monitoring, monitoringValues)
-                        );
-
-                        reload();
-                    },
-                    isActive: rows => _.every(rows, row => row.lastUpdatedValue) && isMalAdmin,
-                },
-                {
-                    name: "getDiff",
-                    text: i18n.t("Check Difference"),
-                    icon: <PlaylistAddCheck />,
-                    onClick: async (selectedIds: string[]) => {
-                        disableRevoke();
-                        openDialog();
-                        setSelected(selectedIds);
-                    },
-                    isActive: rows =>
-                        _.every(rows, row => row.lastUpdatedValue && row.validated === false) &&
-                        (isMalApprover || isMalAdmin),
-                },
-                {
-                    name: "getDiffAndRevoke",
-                    text: i18n.t("Check Difference"),
-                    icon: <PlaylistAddCheck />,
-                    onClick: async (selectedIds: string[]) => {
-                        enableRevoke();
-                        openDialog();
-                        setSelected(selectedIds);
-                    },
-                    isActive: rows =>
-                        _.every(rows, row => row.lastUpdatedValue && row.validated === true) &&
-                        (isMalApprover || isMalAdmin),
-                },
             ],
             initialSorting: {
                 field: "orgUnit" as const,
@@ -318,17 +112,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [
-            compositionRoot.malDataSubscription,
-            isMalAdmin,
-            isMalApprover,
-            monitoring,
-            openDialog,
-            reload,
-            snackbar,
-            disableRevoke,
-            enableRevoke,
-        ]
+        [compositionRoot.malDataSubscription, isMalAdmin, isMalApprover, reload, snackbar]
     );
 
     const getRows = useMemo(
@@ -390,27 +174,6 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
     }
     const filterOptions = React.useMemo(() => getFilterOptions(config, selectablePeriods), [config, selectablePeriods]);
 
-    function closeDiffDialog() {
-        closeDialog();
-        disableRevoke();
-        reload();
-    }
-
-    function combineMonitoringValues(
-        initialMonitoringValues: Monitoring[],
-        addedMonitoringValues: Monitoring[]
-    ): Monitoring[] {
-        const combinedMonitoringValues = addedMonitoringValues.map(added => {
-            return initialMonitoringValues.filter(
-                initial => initial.orgUnit !== added.orgUnit || initial.period !== added.period
-            );
-        });
-        const combinedMonitoring = _.union(_.intersection(...combinedMonitoringValues), addedMonitoringValues);
-        setMonitoring(combinedMonitoring);
-
-        return _.union(combinedMonitoring);
-    }
-
     return (
         <React.Fragment>
             <ObjectsList<DataSubscriptionViewModel>
@@ -421,22 +184,6 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
             >
                 <Filters values={filters} options={filterOptions} onChange={setFilters} />
             </ObjectsList>
-            <ConfirmationDialog
-                isOpen={isDialogOpen}
-                title={i18n.t("Check differences")}
-                onCancel={closeDiffDialog}
-                cancelText={i18n.t("Close")}
-                maxWidth="md"
-                fullWidth
-            >
-                <DataDifferencesList
-                    selectedIds={selected}
-                    revoke={revoke}
-                    isMalAdmin={isMalAdmin}
-                    isUpdated={() => setDiffState(`${new Date().getTime()}`)}
-                    key={new Date().getTime()}
-                />
-            </ConfirmationDialog>
         </React.Fragment>
     );
 });

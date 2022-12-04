@@ -48,7 +48,6 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { values: filter, options: filterOptions, onChange } = props;
 
     const dataSetItems = useMemoOptionsFromNamedRef(filterOptions.dataSets);
-    const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
 
     const [orgUnits, setOrgUnits] = useState<OrgUnit[]>([]);
     const dataSetOrgUnits = getOrgUnitsFromId(config.orgUnits, orgUnits);
@@ -56,15 +55,9 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         orgUnits.filter(org => org.level < 3),
         dataSetOrgUnits
     );
-    const selectableIds = selectableOUs.map(ou => ou.id)
+    const selectableIds = selectableOUs.map(ou => ou.id);
     const rootIds = React.useMemo(() => getRootIds(selectableOUs), [selectableOUs]);
 
-    const completionStatusItems = React.useMemo(() => {
-        return [
-            { value: "true", text: i18n.t("Completed") },
-            { value: "false", text: i18n.t("Not completed") },
-        ];
-    }, []);
 
     const approvalStatusItems = React.useMemo(() => {
         return [
@@ -136,18 +129,6 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         [onChange]
     );
 
-    const setPeriods = React.useCallback<DropdownHandler>(
-        periods => onChange(prev => ({ ...prev, periods })),
-        [onChange]
-    );
-
-    const setCompletionStatus = React.useCallback<SingleDropdownHandler>(
-        completionStatus => {
-            onChange(filter => ({ ...filter, completionStatus: toBool(completionStatus) }));
-        },
-        [onChange]
-    );
-
     const setApprovalStatus = React.useCallback<SingleDropdownHandler>(
         approvalStatus => {
             onChange(filter => ({ ...filter, approvalStatus: toBool(approvalStatus) }));
@@ -165,6 +146,13 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 selectableLevels={[1, 2, 3]}
                 selectableIds={selectableIds}
             />
+            
+            <SingleDropdownStyled
+                items={approvalStatusItems}
+                value={fromBool(filter.approvalStatus)}
+                onChange={setApprovalStatus}
+                label={i18n.t("Submission status")}
+            />
 
             <DropdownStyled
                 items={dataSetItems}
@@ -172,36 +160,9 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 onChange={setDataSetIds}
                 label={i18n.t("Data sets")}
             />
-
-            <DropdownStyled
-                items={periodItems}
-                values={filter.periods}
-                onChange={setPeriods}
-                label={i18n.t("Periods")}
-            />
-
-            <SingleDropdownStyled
-                items={completionStatusItems}
-                value={fromBool(filter.completionStatus)}
-                onChange={setCompletionStatus}
-                label={i18n.t("Completion status")}
-            />
-
-            <SingleDropdownStyled
-                items={approvalStatusItems}
-                value={fromBool(filter.approvalStatus)}
-                onChange={setApprovalStatus}
-                label={i18n.t("Submission status")}
-            />
         </Container>
     );
 });
-
-function useMemoOptionsFromStrings(options: string[]) {
-    return useMemo(() => {
-        return options.map(option => ({ value: option, text: option }));
-    }, [options]);
-}
 
 function useMemoOptionsFromNamedRef(options: NamedRef[]) {
     return useMemo(() => {

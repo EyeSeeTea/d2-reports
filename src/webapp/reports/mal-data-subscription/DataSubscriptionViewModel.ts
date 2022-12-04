@@ -11,10 +11,6 @@ export interface DataSubscriptionViewModel {
     dataSet: string;
     orgUnitUid: string;
     orgUnit: string;
-    period: string;
-    attribute: string;
-    approvalWorkflowUid: string;
-    approvalWorkflow: string;
     completed: boolean;
     validated: boolean;
     lastUpdatedValue: Date | undefined;
@@ -34,10 +30,6 @@ export function getDataSubscriptionViews(
             dataSet: item.dataSet,
             orgUnitUid: item.orgUnitUid,
             orgUnit: item.orgUnit,
-            period: item.period,
-            attribute: item.attribute ?? "-",
-            approvalWorkflowUid: item.approvalWorkflowUid ?? "-",
-            approvalWorkflow: item.approvalWorkflow ?? "-",
             completed: item.completed,
             validated: item.validated,
             lastUpdatedValue: item.lastUpdatedValue ? toDate(item.lastUpdatedValue, { timeZone: "UTC" }) : undefined,
