@@ -31,7 +31,7 @@ export const Filters: React.FC<DataValuesFiltersProps> = React.memo(props => {
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
     const dataSetItems = useMemoOptionsFromNamedRef(filterOptions.dataSets);
     const sectionItems = useMemoOptionsFromNamedRef(filterOptions.sections);
-    const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
+    const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits ?? []), [config]);
 
     return (
         <div>

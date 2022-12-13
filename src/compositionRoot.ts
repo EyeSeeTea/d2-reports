@@ -28,12 +28,16 @@ import { GenerateSortOrderUseCase } from "./domain/reports/mal-data-approval/use
 import { GetMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/GetMonitoringUseCase";
 import { SaveMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/SaveMonitoringUseCase";
 import { DuplicateDataValuesUseCase } from "./domain/reports/mal-data-approval/usecases/DuplicateDataValuesUseCase";
+import { UserInfoDefaultRepository } from "./data/reports/userInfo/UserInfoDefaultRepository";
+import { GetUserInfoUseCase } from "./domain/reports/userinfo/usecases/GetUserInfoUseCase";
+import { SaveUserInfoCsvUseCase } from "./domain/reports/userinfo/usecases/SaveUserInfoCsvUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
     const dataCommentsRepository = new NHWADataCommentsDefaultRepository(api);
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
     const dataDuplicationRepository = new MalDataApprovalDefaultRepository(api);
+    const getUserInfoRepository = new UserInfoDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
 
@@ -52,6 +56,10 @@ export function getCompositionRoot(api: D2Api) {
             getColumns: new GetApprovalColumnsUseCase(dataApprovalRepository),
             saveColumns: new SaveApprovalColumnsUseCase(dataApprovalRepository),
             updateStatus: new UpdateStatusUseCase(dataApprovalRepository),
+        }),
+        user2fa: getExecute({
+            get: new GetUserInfoUseCase(getUserInfoRepository),
+            save: new SaveUserInfoCsvUseCase(getUserInfoRepository),
         }),
         malDataApproval: getExecute({
             get: new GetMalDataSetsUseCase(dataDuplicationRepository),
