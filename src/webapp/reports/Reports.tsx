@@ -1,5 +1,6 @@
 import React from "react";
 import { AdminReport } from "./admin/AdminReport";
+import DataQualityReport from "./data-quality/DataQualityReport";
 import MalDataApprovalStatusReport from "./mal-data-approval/MalDataApprovalReport";
 import { NHWADataApprovalStatusReport } from "./nhwa-approval-status/NHWADataApprovalStatusReport";
 import { NHWACommentsReport } from "./nhwa-comments/NHWACommentsReport";
@@ -23,6 +24,9 @@ const Component: React.FC = () => {
         }
         case "wmr-national-policies": {
             return <WMRNationalPolicies />;
+        }
+        case "data-quality": {
+            return <DataQualityReport />;
         }
         default: {
             return <p>{`Please provide a valid REACT_APP_REPORT_VARIANT`}</p>;
