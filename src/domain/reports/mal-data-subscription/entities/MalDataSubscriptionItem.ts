@@ -1,27 +1,22 @@
 export interface MalDataSubscriptionItem {
-    dataSetUid: string;
-    dataSet: string;
-    orgUnitUid: string;
-    orgUnit: string;
-    period: string;
-    completed: boolean;
-    validated: boolean;
+    dataElementName: string;
+    subscription: string;
+    sectionName: string;
+    lastDateOfSubscription: string;
 }
 
 export interface MalDataSubscriptionItemIdentifier {
-    dataSet: string;
-    orgUnit: string;
-    period: string;
-    workflow: string;
+    dataElementName: string;
+    sectionName: string;
 }
 
 export function getDataSubscriptionItemId(dataSet: MalDataSubscriptionItem): string {
-    return [dataSet.dataSetUid, dataSet.period, dataSet.orgUnitUid].join("-");
+    return [dataSet.dataElementName, dataSet.sectionName, dataSet.lastDateOfSubscription].join("-");
 }
 
 export function parseDataSubscriptionItemId(string: string): MalDataSubscriptionItemIdentifier | undefined {
-    const [dataSet, workflow, period, orgUnit] = string.split("-");
-    if (!dataSet || !workflow || !period || !orgUnit) return undefined;
+    const [dataElementName, sectionName] = string.split("-");
+    if (!dataElementName || !sectionName) return undefined;
 
-    return { dataSet, workflow, period, orgUnit };
+    return { dataElementName, sectionName };
 }

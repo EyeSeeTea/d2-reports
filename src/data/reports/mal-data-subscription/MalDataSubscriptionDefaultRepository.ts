@@ -5,15 +5,12 @@ import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreSt
 import { StorageClient } from "../../common/clients/storage/StorageClient";
 import { CsvData } from "../../common/CsvDataSource";
 import { CsvWriterDataSource } from "../../common/CsvWriterCsvDataSource";
-import { Dhis2SqlViews, SqlViewGetData } from "../../common/Dhis2SqlViews";
+import { Dhis2SqlViews } from "../../common/Dhis2SqlViews";
 import { Instance } from "../../common/entities/Instance";
 import { downloadFile } from "../../common/utils/download-file";
 import { getSqlViewId } from "../../../domain/common/entities/Config";
-import { SQL_VIEW_DATA_DUPLICATION_NAME, SQL_VIEW_MAL_METADATA_NAME } from "../../common/Dhis2ConfigRepository";
-import {
-    MalDataSubscriptionItem,
-    MalDataSubscriptionItemIdentifier,
-} from "../../../domain/reports/mal-data-subscription/entities/MalDataSubscriptionItem";
+import { SQL_VIEW_MAL_DATAELEMENTS_NAME } from "../../common/Dhis2ConfigRepository";
+import { MalDataSubscriptionItem } from "../../../domain/reports/mal-data-subscription/entities/MalDataSubscriptionItem";
 import {
     MalDataSubscriptionOptions,
     MalDataSubscriptionRepository,
@@ -42,43 +39,26 @@ export function paginate<Obj>(objects: Obj[], pagination: Pagination) {
     return { pager: pager, objects: paginatedObjects };
 }
 
-interface VariableHeaders {
-    dataSets: string;
-}
 interface Variables {
-    orgUnitRoot: string;
     dataSets: string;
-    orgUnits: string;
-    periods: string;
-    completed: string;
-    approved: string;
+    dataElementName: string;
+    sectionName: string;
+    lastDateOfSubscription: string;
     orderByColumn: SqlField;
     orderByDirection: "asc" | "desc";
 }
-
-type SqlFieldHeaders = "datasetuid" | "dataset" | "orgunituid" | "orgunit";
 
 type dataElementsType = { id: string; name: string };
 
 type dataSetElementsType = { dataElement: dataElementsType };
 
-type SqlField =
-    | "datasetuid"
-    | "dataset"
-    | "orgunituid"
-    | "orgunit"
-    | "period"
-    | "completed"
-    | "validated";
+type SqlField = "dataelementname" | "sectionname" | "lastdateofsubscription" | "subscription";
 
 const fieldMapping: Record<keyof MalDataSubscriptionItem, SqlField> = {
-    dataSetUid: "datasetuid",
-    dataSet: "dataset",
-    orgUnitUid: "orgunit",
-    orgUnit: "orgunit",
-    period: "period",
-    completed: "completed",
-    validated: "validated",
+    dataElementName: "dataelementname",
+    subscription: "subscription",
+    sectionName: "sectionname",
+    lastDateOfSubscription: "lastdateofsubscription",
 };
 
 export class MalDataSubscriptionDefaultRepository implements MalDataSubscriptionRepository {
@@ -92,52 +72,46 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
     }
 
     async get(options: MalDataSubscriptionOptions): Promise<PaginatedObjects<MalDataSubscriptionItem>> {
-        const { config } = options; // ?
-        const { sorting, dataSetIds, orgUnitIds, periods } = options; // ?
+        const { config, dataElementNames, sectionNames, lastDateOfSubscription } = options; // ?
+        const { sorting, paging } = options; // ?
 
-        const allDataSetIds = _.values(config.dataSets).map(ds => ds.id); // ?
         const sqlViews = new Dhis2SqlViews(this.api);
-        const paging_to_download = { page: 1, pageSize: 10000 };
-        const { rows: headerRows } = await sqlViews
-            .query<VariableHeaders, SqlFieldHeaders>(
-                getSqlViewId(config, SQL_VIEW_MAL_METADATA_NAME),
-                {
-                    dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
-                },
-                paging_to_download
-            )
-            .getData();
+        const allDataSetIds = _.values(config.dataSets).map(ds => ds.id); // ?
 
-        const { rows } = await sqlViews
+        const { pager, rows } = await sqlViews
             .query<Variables, SqlField>(
-                getSqlViewId(config, SQL_VIEW_DATA_DUPLICATION_NAME),
+                getSqlViewId(config, SQL_VIEW_MAL_DATAELEMENTS_NAME),
                 {
-                    orgUnitRoot: sqlViewJoinIds(config.currentUser.orgUnits.map(({ id }) => id)),
-                    orgUnits: sqlViewJoinIds(orgUnitIds),
-                    periods: sqlViewJoinIds(periods),
-                    dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
-                    completed: options.completionStatus === undefined ? "-" : options.completionStatus ? "true" : "-",
-                    approved: options.approvalStatus === undefined ? "-" : options.approvalStatus.toString(),
+                    dataSets: sqlViewJoinIds(allDataSetIds),
+                    dataElementName: sqlViewJoinIds(dataElementNames),
+                    sectionName: sqlViewJoinIds(sectionNames),
+                    lastDateOfSubscription: sqlViewJoinIds(lastDateOfSubscription),
                     orderByColumn: fieldMapping[sorting.field],
                     orderByDirection: sorting.direction,
                 },
-                paging_to_download
+                paging
             )
             .getData();
 
-        return mergeHeadersAndData(options, periods, headerRows, rows);
-        // A data value is not associated to a specific data set, but we can still map it
-        // through the data element (1 data value -> 1 data element -> N data sets).
+        const items: Array<MalDataSubscriptionItem> = rows.map(
+            (item): MalDataSubscriptionItem => ({
+                dataElementName: item.dataelementname,
+                subscription: "",
+                sectionName: item.sectionname,
+                lastDateOfSubscription: item.lastdateofsubscription,
+            })
+        );
+
+        return { pager, objects: items };
     }
 
     async save(filename: string, dataSets: MalDataSubscriptionItem[]): Promise<void> {
         const headers = csvFields.map(field => ({ id: field, text: field }));
         const rows = dataSets.map(
             (dataSet): DataSetRow => ({
-                dataSet: dataSet.dataSet,
-                orgUnit: dataSet.orgUnit,
-                period: dataSet.period,
-                completed: String(dataSet.completed),
+                dataElementName: dataSet.dataElementName,
+                subscription: dataSet.subscription,
+                sectionName: dataSet.sectionName,
             })
         );
 
@@ -146,25 +120,6 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
         const csvContents = csvDataSource.toString(csvData);
 
         await downloadFile(csvContents, filename, "text/csv");
-    }
-
-    async complete(dataSets: MalDataSubscriptionItemIdentifier[]): Promise<boolean> {
-        const completeDataSetRegistrations = dataSets.map(ds => ({
-            dataSet: ds.dataSet,
-            period: ds.period,
-            organisationUnit: ds.orgUnit,
-            completed: true,
-        }));
-
-        try {
-            const response = await this.api
-                .post<any>("/completeDataSetRegistrations", {}, { completeDataSetRegistrations })
-                .getData();
-
-            return response.status === "SUCCESS";
-        } catch (error: any) {
-            return false;
-        }
     }
 
     async getColumns(namespace: string): Promise<string[]> {
@@ -224,7 +179,7 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
     }
 }
 
-const csvFields = ["dataSet", "orgUnit", "period", "completed"] as const;
+const csvFields = ["dataElementName", "sectionName", "subscription"] as const;
 
 type CsvField = typeof csvFields[number];
 
@@ -235,63 +190,4 @@ type DataSetRow = Record<CsvField, string>;
 */
 function sqlViewJoinIds(ids: Id[]): string {
     return ids.join("-") || "-";
-}
-
-function mergeHeadersAndData(
-    options: MalDataSubscriptionOptions,
-    selectablePeriods: string[],
-    headers: SqlViewGetData<SqlFieldHeaders>["rows"],
-    data: SqlViewGetData<SqlField>["rows"]
-) {
-    const { sorting, paging, orgUnitIds, periods, approvalStatus, completionStatus } = options; // ?
-    const activePeriods = periods.length > 0 ? periods : selectablePeriods;
-    const rows: Array<MalDataSubscriptionItem> = [];
-
-    const mapping = _(data)
-        .keyBy(dv => {
-            return [dv.orgunituid, dv.period].join(".");
-        })
-        .value();
-
-    const filterOrgUnitIds = orgUnitIds.length > 0 ? orgUnitIds : undefined;
-
-    for (const period of activePeriods) {
-        for (const header of headers) {
-            if (filterOrgUnitIds !== undefined && filterOrgUnitIds.indexOf(header.orgunituid) === -1) {
-                continue;
-            }
-            const datavalue = mapping[[header.orgunituid, period].join(".")];
-
-            const row: MalDataSubscriptionItem = {
-                dataSetUid: header.datasetuid,
-                dataSet: header.dataset,
-                orgUnitUid: header.orgunituid,
-                orgUnit: header.orgunit,
-                period: period,
-                completed: Boolean(datavalue?.completed),
-                validated: Boolean(datavalue?.validated),
-            };
-            rows.push(row);
-        }
-    }
-
-    const rowsSorted = _(rows)
-        .orderBy([row => row[sorting.field]], [sorting.direction])
-        .value();
-
-    const rowsFiltered = rowsSorted.filter(row => {
-        return (
-            //completed
-            (approvalStatus === undefined && completionStatus === true && row.completed) ||
-            //not completed
-            (approvalStatus === undefined && completionStatus === false && !row.completed) ||
-            //submitted
-            (approvalStatus === true && row.validated && row.completed) ||
-            //ready for sumbitted
-            (approvalStatus === false && !row.validated && row.completed) ||
-            //no filter
-            (approvalStatus === undefined && completionStatus === undefined)
-        );
-    });
-    return paginate(rowsFiltered, paging);
 }

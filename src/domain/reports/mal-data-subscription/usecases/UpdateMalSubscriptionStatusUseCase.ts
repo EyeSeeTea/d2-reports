@@ -6,8 +6,6 @@ export class UpdateMalSubscriptionStatusUseCase {
 
     async execute(items: MalDataSubscriptionItemIdentifier[], action: UpdateAction): Promise<boolean> {
         switch (action) {
-            case "complete":
-                return this.approvalRepository.complete(items);
             default:
                 return false;
         }

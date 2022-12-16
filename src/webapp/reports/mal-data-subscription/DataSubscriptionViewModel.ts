@@ -6,11 +6,10 @@ import {
 
 export interface DataSubscriptionViewModel {
     id: string;
-    dataSetUid: string;
-    dataSet: string;
-    orgUnitUid: string;
-    orgUnit: string;
-    period: string;
+    dataElementName: string;
+    sectionName: string;
+    subscription: string;
+    lastDateOfSubscription: string;
 }
 
 export function getDataSubscriptionViews(
@@ -20,11 +19,10 @@ export function getDataSubscriptionViews(
     return items.map(item => {
         return {
             id: getDataSubscriptionItemId(item),
-            dataSetUid: item.dataSetUid,
-            dataSet: item.dataSet,
-            orgUnitUid: item.orgUnitUid,
-            orgUnit: item.orgUnit,
-            period: item.period,
+            subscription: item.subscription,
+            dataElementName: item.dataElementName,
+            sectionName: item.sectionName,
+            lastDateOfSubscription: item.lastDateOfSubscription,
         };
     });
 }
