@@ -16,17 +16,13 @@ import { useAppContext } from "../../../contexts/app-context";
 import { useReload } from "../../../utils/use-reload";
 import { DataSubscriptionViewModel, getDataSubscriptionViews } from "../DataSubscriptionViewModel";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
-
-interface DataSetsFilter {
-    dataElementNames: string[];
-    sectionNames: string[];
-    lastDateOfSubscription: string[];
-}
+import { DataSetsFilter, Filters } from "./Filters";
+import { sortByName } from "../../../../domain/common/entities/Base";
 
 export const DataSubscriptionList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
 
-    const [filters, _setFilters] = useState(() => getEmptyDataValuesFilter(config));
+    const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [reloadKey] = useReload();
 
@@ -68,14 +64,21 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
-                ...filters,
+                ...getUseCaseOptions(filters),
             });
 
             console.debug("Reloading", reloadKey);
             return { pager, objects: getDataSubscriptionViews(config, objects) };
         },
-        [config, compositionRoot, filters, reloadKey]
+        [compositionRoot.malDataSubscription, config, filters, reloadKey]
     );
+
+    function getUseCaseOptions(filter: DataSetsFilter) {
+        return {
+            ...filter,
+            elementType: ["Data Elements"],
+        };
+    }
 
     const saveReorderedColumns = useCallback(
         async (columnKeys: Array<keyof DataSubscriptionViewModel>) => {
@@ -105,13 +108,31 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
             .value();
     }, [tableProps.columns, visibleColumns]);
 
+    function getFilterOptions(config: Config) {
+        const sections = _(config.sectionsByDataSet)
+            .at(["PWCUb3Se1Ie"])
+            .flatten()
+            .compact()
+            .uniqBy(section => section.id)
+            .value();
+
+        return {
+            sectionNames: sortByName(sections),
+            elementType: ["Data Elements"],
+            subscription: ["Subscribed", "Not Subscribed"],
+        };
+    }
+    const filterOptions = React.useMemo(() => getFilterOptions(config), [config]);
+
     return (
         <ObjectsList<DataSubscriptionViewModel>
             {...tableProps}
             columns={columnsToShow}
             onChangeSearch={undefined}
             onReorderColumns={saveReorderedColumns}
-        />
+        >
+            <Filters values={filters} options={filterOptions} onChange={setFilters} />
+        </ObjectsList>
     );
 });
 
@@ -129,5 +150,6 @@ function getEmptyDataValuesFilter(_config: Config): DataSetsFilter {
         dataElementNames: [],
         sectionNames: [],
         lastDateOfSubscription: [],
+        dataSetId: [],
     };
 }
