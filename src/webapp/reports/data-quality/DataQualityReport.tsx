@@ -1,5 +1,6 @@
 import { Typography, makeStyles } from "@material-ui/core";
 import i18n from "../../../locales";
+import { DataQualityList } from "./DataQualityList";
 
 const DataQualityReport: React.FC = () => {
     const classes = useStyles();
@@ -7,10 +8,10 @@ const DataQualityReport: React.FC = () => {
     return (
         <div className={classes.wrapper}>
             <Typography variant="h5" gutterBottom>
-                {i18n.t("Data Quality Report")}
+                {i18n.t("Data quality")}
             </Typography>
 
-            <p>hi</p>
+            <DataQualityList />
         </div>
     );
 };

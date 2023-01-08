@@ -28,12 +28,18 @@ import { GenerateSortOrderUseCase } from "./domain/reports/mal-data-approval/use
 import { GetMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/GetMonitoringUseCase";
 import { SaveMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/SaveMonitoringUseCase";
 import { DuplicateDataValuesUseCase } from "./domain/reports/mal-data-approval/usecases/DuplicateDataValuesUseCase";
+import { DataQualityDefaultRepository } from "./data/reports/data-quality/DataQualityDefaultRepository";
+import { GetIndicatorsUseCase } from "./domain/reports/data-quality/usecases/GetIndicatorsUseCase";
+import { GetProgramIndicatorsUseCase } from "./domain/reports/data-quality/usecases/GetProgramIndicatorsUseCase";
+import { SaveDataQualityColumnsUseCase } from "./domain/reports/data-quality/usecases/SaveDataQualityColumnsUseCase";
+import { GetDataQualityColumnsUseCase } from "./domain/reports/data-quality/usecases/GetDataQualityColumnsUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
     const dataCommentsRepository = new NHWADataCommentsDefaultRepository(api);
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
     const dataDuplicationRepository = new MalDataApprovalDefaultRepository(api);
+    const dataQualityRepository = new DataQualityDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
 
@@ -65,6 +71,12 @@ export function getCompositionRoot(api: D2Api) {
             duplicateValue: new DuplicateDataValuesUseCase(dataDuplicationRepository),
             getSortOrder: new GetSortOrderUseCase(dataDuplicationRepository),
             generateSortOrder: new GenerateSortOrderUseCase(dataDuplicationRepository),
+        }),
+        dataQuality: getExecute({
+            getIndicators: new GetIndicatorsUseCase(dataQualityRepository),
+            getProgramIndicators: new GetProgramIndicatorsUseCase(dataQualityRepository),
+            getColumns: new GetDataQualityColumnsUseCase(dataQualityRepository),
+            saveColumns: new SaveDataQualityColumnsUseCase(dataQualityRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),
