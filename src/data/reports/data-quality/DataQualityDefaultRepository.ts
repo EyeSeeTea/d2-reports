@@ -1,10 +1,11 @@
+import _ from "lodash";
 import { PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
 import { DataQualityConfig, DataQualityItem } from "../../../domain/reports/data-quality/entities/DataQualityItem";
 import {
     DataQualityOptions,
     DataQualityRepository,
 } from "../../../domain/reports/data-quality/repositories/DataQualityRepository";
-import { D2Api } from "../../../types/d2-api";
+import { D2Api, Pager } from "../../../types/d2-api";
 import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
 import { StorageClient } from "../../common/clients/storage/StorageClient";
 import { Instance } from "../../common/entities/Instance";
@@ -21,15 +22,27 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
 
     async getIndicators(options: DataQualityOptions, namespace: string): Promise<PaginatedObjects<DataQualityItem>> {
         const dataQuality = await this.globalStorageClient.getObject<DataQualityConfig>(namespace);
+        const { paging, sorting } = options;
 
         const dataQualityIndicatorErrors =
             dataQuality?.validationResults.filter(
                 r => (!r.denominatorresult || !r.numeratorresult) && r.metadataType === "Indicator"
             ) ?? [];
 
-        const pager = { page: 1, pageSize: 10, pageCount: 100000, total: dataQualityIndicatorErrors.length };
+        const dataQualityIndicatorErrorsInPage = _(dataQualityIndicatorErrors)
+            .orderBy([row => row[sorting.field]], [sorting.direction])
+            .drop((paging.page - 1) * paging.pageSize)
+            .take(paging.pageSize)
+            .value();
 
-        return { pager: pager, objects: dataQualityIndicatorErrors };
+        const pager: Pager = {
+            page: paging.page,
+            pageSize: paging.pageSize,
+            pageCount: Math.ceil(dataQualityIndicatorErrors.length / paging.pageSize),
+            total: dataQualityIndicatorErrors.length,
+        };
+
+        return { pager: pager, objects: dataQualityIndicatorErrorsInPage };
     }
 
     async getProgramIndicators(
@@ -37,15 +50,26 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         namespace: string
     ): Promise<PaginatedObjects<DataQualityItem>> {
         const dataQuality = await this.globalStorageClient.getObject<DataQualityConfig>(namespace);
+        const { paging, sorting } = options;
 
         const dataQualityProgramIndicatorErrors =
             dataQuality?.validationResults.filter(
                 r => (!r.expressionresult || !r.filterresult) && r.metadataType === "ProgramIndicator"
             ) ?? [];
 
-        const pager = { page: 1, pageSize: 10, pageCount: 100000, total: dataQualityProgramIndicatorErrors.length };
+        const dataQualityIndicatorErrorsInPage = _(dataQualityProgramIndicatorErrors)
+            .orderBy([row => row[sorting.field]], [sorting.direction])
+            .drop((paging.page - 1) * paging.pageSize)
+            .take(paging.pageSize)
+            .value();
 
-        return { pager: pager, objects: dataQualityProgramIndicatorErrors };
+        const pager: Pager = {
+            page: paging.page,
+            pageSize: paging.pageSize,
+            pageCount: Math.ceil(dataQualityProgramIndicatorErrors.length / paging.pageSize),
+            total: dataQualityProgramIndicatorErrors.length,
+        };
+        return { pager: pager, objects: dataQualityIndicatorErrorsInPage };
     }
 
     async getColumns(namespace: string): Promise<string[]> {
