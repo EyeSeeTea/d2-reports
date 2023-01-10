@@ -3,11 +3,8 @@ import { D2Api, Id, PaginatedObjects } from "../../../types/d2-api";
 import { promiseMap } from "../../../utils/promises";
 import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
 import { StorageClient } from "../../common/clients/storage/StorageClient";
-import { CsvData } from "../../common/CsvDataSource";
-import { CsvWriterDataSource } from "../../common/CsvWriterCsvDataSource";
 import { Dhis2SqlViews } from "../../common/Dhis2SqlViews";
 import { Instance } from "../../common/entities/Instance";
-import { downloadFile } from "../../common/utils/download-file";
 import { getSqlViewId } from "../../../domain/common/entities/Config";
 import { SQL_VIEW_MAL_DATAELEMENTS_NAME } from "../../common/Dhis2ConfigRepository";
 import { MalDataSubscriptionItem } from "../../../domain/reports/mal-data-subscription/entities/MalDataSubscriptionItem";
@@ -105,22 +102,6 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
         return { pager, objects: items };
     }
 
-    async save(filename: string, dataSets: MalDataSubscriptionItem[]): Promise<void> {
-        const headers = csvFields.map(field => ({ id: field, text: field }));
-        const rows = dataSets.map(
-            (dataSet): DataSetRow => ({
-                dataElementName: dataSet.dataElementName,
-                subscription: dataSet.subscription,
-                sectionName: dataSet.sectionName,
-            })
-        );
-
-        const csvDataSource = new CsvWriterDataSource();
-        const csvData: CsvData<CsvField> = { headers, rows };
-        const csvContents = csvDataSource.toString(csvData);
-
-        await downloadFile(csvContents, filename, "text/csv");
-    }
 
     async getColumns(namespace: string): Promise<string[]> {
         const columns = await this.storageClient.getObject<string[]>(namespace);
@@ -178,12 +159,6 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
         }
     }
 }
-
-const csvFields = ["dataElementName", "sectionName", "subscription"] as const;
-
-type CsvField = typeof csvFields[number];
-
-type DataSetRow = Record<CsvField, string>;
 
 /* From the docs: "The variables must contain alphanumeric, dash, underscore and
    whitespace characters only.". Use "-" as id separator and also "-" as empty value.

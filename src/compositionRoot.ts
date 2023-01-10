@@ -32,10 +32,8 @@ import { DuplicateDataValuesUseCase } from "./domain/reports/mal-data-approval/u
 import { GetMalSubscriptionDataSetsUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalSubscriptionDataSetsUseCase";
 import { SaveMalDataSubscriptionColumnsUseCase } from "./domain/reports/mal-data-subscription/usecases/SaveMalDataSubscriptionColumnsUseCase";
 import { GetMalDataSubscriptionColumnsUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalDataSubscriptionColumnsUseCase";
-import { SaveMalDataSetsSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/SaveMalDataSetsSubscriptionUseCase";
 import { GetSubscriptionSortOrderUseCase } from "./domain/reports/mal-data-subscription/usecases/GetSubscriptionSortOrderUseCase";
 import { GenerateSubscriptionSortOrderUseCase } from "./domain/reports/mal-data-subscription/usecases/GenerateSubscriptionSortOrderUseCase";
-import { UpdateMalSubscriptionStatusUseCase } from "./domain/reports/mal-data-subscription/usecases/UpdateMalSubscriptionStatusUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -76,11 +74,8 @@ export function getCompositionRoot(api: D2Api) {
             generateSortOrder: new GenerateSortOrderUseCase(dataDuplicationRepository),
         }),
         malDataSubscription: getExecute({
-            get: new GetMalSubscriptionDataSetsUseCase(dataSubscriptionRepository),
-            save: new SaveMalDataSetsSubscriptionUseCase(dataSubscriptionRepository),
-            getColumns: new GetMalDataSubscriptionColumnsUseCase(dataSubscriptionRepository),
+            get: new GetMalSubscriptionDataSetsUseCase(dataSubscriptionRepository),            getColumns: new GetMalDataSubscriptionColumnsUseCase(dataSubscriptionRepository),
             saveColumns: new SaveMalDataSubscriptionColumnsUseCase(dataSubscriptionRepository),
-            updateStatus: new UpdateMalSubscriptionStatusUseCase(dataSubscriptionRepository),
             getSortOrder: new GetSubscriptionSortOrderUseCase(dataSubscriptionRepository),
             generateSortOrder: new GenerateSubscriptionSortOrderUseCase(dataSubscriptionRepository),
         }),

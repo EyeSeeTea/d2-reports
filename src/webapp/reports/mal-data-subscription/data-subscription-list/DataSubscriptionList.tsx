@@ -27,9 +27,11 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
     const [reloadKey] = useReload();
 
     useEffect(() => {
-        compositionRoot.malDataSubscription.getColumns(Namespaces.MAL_APPROVAL_STATUS_USER_COLUMNS).then(columns => {
-            setVisibleColumns(columns);
-        });
+        compositionRoot.malDataSubscription
+            .getColumns(Namespaces.MAL_SUBSCRIPTION_STATUS_USER_COLUMNS)
+            .then(columns => {
+                setVisibleColumns(columns);
+            });
     }, [compositionRoot]);
 
     const baseConfig: TableConfig<DataSubscriptionViewModel> = useMemo(
@@ -85,7 +87,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
             if (!visibleColumns) return;
 
             await compositionRoot.malDataSubscription.saveColumns(
-                Namespaces.MAL_APPROVAL_STATUS_USER_COLUMNS,
+                Namespaces.MAL_SUBSCRIPTION_STATUS_USER_COLUMNS,
                 columnKeys
             );
         },
