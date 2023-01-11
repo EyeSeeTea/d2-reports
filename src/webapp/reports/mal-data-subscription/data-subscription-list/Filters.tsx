@@ -1,38 +1,37 @@
 import { MultipleDropdownProps } from "@eyeseetea/d2-ui-components";
 import React, { useMemo } from "react";
 import styled from "styled-components";
-import { NamedRef } from "../../../../domain/common/entities/Base";
 import i18n from "../../../../locales";
 import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
+import { NamedRef } from "../../../../domain/common/entities/Base";
 
-export interface DataSetsFiltersProps {
-    values: DataSetsFilter;
+export interface DataElementsFiltersProps {
+    values: DataElementsFilter;
     options: FilterOptions;
-    onChange: React.Dispatch<React.SetStateAction<DataSetsFilter>>;
+    onChange: React.Dispatch<React.SetStateAction<DataElementsFilter>>;
 }
 
-export interface DataSetsFilter {
-    dataSetId: string[]
-    dataElementNames: string[];
-    sectionNames: string[];
-    lastDateOfSubscription: string[];
+export interface DataElementsFilter {
+    elementTypes: string[];
+    dataElementIds: string[];
+    sections: string[];
 }
 
 interface FilterOptions {
-    sectionNames: NamedRef[];
+    sections: NamedRef[];
     elementType: string[];
     subscription: string[];
 }
 
-export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
+export const Filters: React.FC<DataElementsFiltersProps> = React.memo(props => {
     const { values: filter, options: filterOptions, onChange } = props;
 
-    const sectionItems = useMemoOptionsFromNamedRef(filterOptions.sectionNames);
+    const sectionItems = useMemoOptionsFromNamedRef(filterOptions.sections);
     const elementTypeItems = useMemoOptionsFromStrings(filterOptions.elementType);
     const subscriptionTypeItems = useMemoOptionsFromStrings(filterOptions.subscription);
 
-    const setSectionNames = React.useCallback<DropdownHandler>(
-        sectionNames => onChange(prev => ({ ...prev, sectionNames })),
+    const setSections = React.useCallback<DropdownHandler>(
+        sections => onChange(prev => ({ ...prev, sections })),
         [onChange]
     );
 
@@ -42,7 +41,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     );
 
     const setSubscriptionStatus = React.useCallback<DropdownHandler>(
-        subscriptionStatus => onChange(prev => ({ ...prev, elementTypes: subscriptionStatus })),
+        subscriptionStatus => onChange(prev => ({ ...prev, subscriptionStatus })),
         [onChange]
     );
 
@@ -50,22 +49,22 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         <Container>
             <DropdownStyled
                 items={elementTypeItems}
-                values={filter.dataElementNames}
+                values={filter.sections}
                 onChange={setElementType}
                 label={i18n.t("Element Type")}
             />
 
             <DropdownStyled
                 items={subscriptionTypeItems}
-                values={filter.sectionNames}
+                values={filter.sections}
                 onChange={setSubscriptionStatus}
                 label={i18n.t("Subscription Status")}
             />
 
             <DropdownStyled
                 items={sectionItems}
-                values={filter.sectionNames}
-                onChange={setSectionNames}
+                values={filter.sections}
+                onChange={setSections}
                 label={i18n.t("Section")}
             />
         </Container>
@@ -82,15 +81,15 @@ const DropdownStyled = styled(MultipleDropdown)`
     margin-left: -10px;
 `;
 
-function useMemoOptionsFromStrings(options: string[]) {
-    return useMemo(() => {
-        return options.map(option => ({ value: option, text: option }));
-    }, [options]);
-}
-
 function useMemoOptionsFromNamedRef(options: NamedRef[]) {
     return useMemo(() => {
         return options.map(option => ({ value: option.id, text: option.name }));
+    }, [options]);
+}
+
+function useMemoOptionsFromStrings(options: string[]) {
+    return useMemo(() => {
+        return options.map(option => ({ value: option, text: option }));
     }, [options]);
 }
 

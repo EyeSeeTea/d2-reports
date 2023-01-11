@@ -2,6 +2,7 @@ export interface MalDataSubscriptionItem {
     dataElementName: string;
     subscription: string;
     sectionName: string;
+    sectionId: string;
     lastDateOfSubscription: string;
 }
 

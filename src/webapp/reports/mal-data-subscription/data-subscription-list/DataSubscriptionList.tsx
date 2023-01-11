@@ -16,14 +16,16 @@ import { useAppContext } from "../../../contexts/app-context";
 import { useReload } from "../../../utils/use-reload";
 import { DataSubscriptionViewModel, getDataSubscriptionViews } from "../DataSubscriptionViewModel";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
-import { DataSetsFilter, Filters } from "./Filters";
-import { sortByName } from "../../../../domain/common/entities/Base";
+import { DataElementsFilter, Filters } from "./Filters";
+import { NamedRef } from "../../../../domain/common/entities/Base";
 
 export const DataSubscriptionList: React.FC = React.memo(() => {
-    const { compositionRoot, config } = useAppContext();
+    const { compositionRoot, config, api } = useAppContext();
 
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
+    const [sections, setSections] = useState<NamedRef[]>([]);
+
     const [reloadKey] = useReload();
 
     useEffect(() => {
@@ -75,10 +77,10 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
         [compositionRoot.malDataSubscription, config, filters, reloadKey]
     );
 
-    function getUseCaseOptions(filter: DataSetsFilter) {
+
+    function getUseCaseOptions(filter: DataElementsFilter) {
         return {
             ...filter,
-            elementType: ["Data Elements"],
         };
     }
 
@@ -110,21 +112,26 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
             .value();
     }, [tableProps.columns, visibleColumns]);
 
-    function getFilterOptions(config: Config) {
-        const sections = _(config.sectionsByDataSet)
-            .at(["PWCUb3Se1Ie"])
-            .flatten()
-            .compact()
-            .uniqBy(section => section.id)
-            .value();
+    const getDatasetSections = useCallback(async () => {
+        const { sections } = await api.get<any>(`/dataSets/PWCUb3Se1Ie`, { fields: "sections[name, id]" }).getData();
 
-        return {
-            sectionNames: sortByName(sections),
-            elementType: ["Data Elements"],
-            subscription: ["Subscribed", "Not Subscribed"],
-        };
-    }
-    const filterOptions = React.useMemo(() => getFilterOptions(config), [config]);
+        return sections;
+    }, [api]);
+
+    const getFilterOptions = useCallback(
+        (_config: Config) => {
+            getDatasetSections().then(sections => setSections(sections));
+
+            return {
+                sections: sections,
+                elementType: ["Data Elements"],
+                subscription: ["Subscribed", "Not Subscribed"],
+            };
+        },
+        [getDatasetSections, sections]
+    );
+
+    const filterOptions = React.useMemo(() => getFilterOptions(config), [config, getFilterOptions]);
 
     return (
         <ObjectsList<DataSubscriptionViewModel>
@@ -147,11 +154,10 @@ function getSortingFromTableSorting(
     };
 }
 
-function getEmptyDataValuesFilter(_config: Config): DataSetsFilter {
+function getEmptyDataValuesFilter(_config: Config): DataElementsFilter {
     return {
-        dataElementNames: [],
-        sectionNames: [],
-        lastDateOfSubscription: [],
-        dataSetId: [],
+        sections: [],
+        dataElementIds: [],
+        elementTypes: [],
     };
 }

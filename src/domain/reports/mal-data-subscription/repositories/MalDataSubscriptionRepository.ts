@@ -14,7 +14,7 @@ export interface MalDataSubscriptionOptions {
     config: Config;
     paging: Paging;
     sorting: Sorting<MalDataSubscriptionItem>;
-    dataElementNames: string[];
-    sectionNames: string[];
-    lastDateOfSubscription: string[];
+    elementTypes: string[];
+    dataElementIds: string[];
+    sections: string[];
 }

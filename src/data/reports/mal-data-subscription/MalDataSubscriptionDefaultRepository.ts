@@ -38,9 +38,9 @@ export function paginate<Obj>(objects: Obj[], pagination: Pagination) {
 
 interface Variables {
     dataSets: string;
-    dataElementName: string;
-    sectionName: string;
-    lastDateOfSubscription: string;
+    dataElementId: string;
+    sectionId: string;
+    elementType: string;
     orderByColumn: SqlField;
     orderByDirection: "asc" | "desc";
 }
@@ -49,12 +49,13 @@ type dataElementsType = { id: string; name: string };
 
 type dataSetElementsType = { dataElement: dataElementsType };
 
-type SqlField = "dataelementname" | "sectionname" | "lastdateofsubscription" | "subscription";
+type SqlField = "dataelementname" | "sectionname" | "sectionuid" | "lastdateofsubscription" | "subscription";
 
 const fieldMapping: Record<keyof MalDataSubscriptionItem, SqlField> = {
     dataElementName: "dataelementname",
     subscription: "subscription",
     sectionName: "sectionname",
+    sectionId: "sectionuid",
     lastDateOfSubscription: "lastdateofsubscription",
 };
 
@@ -69,7 +70,7 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
     }
 
     async get(options: MalDataSubscriptionOptions): Promise<PaginatedObjects<MalDataSubscriptionItem>> {
-        const { config, dataElementNames, sectionNames, lastDateOfSubscription } = options; // ?
+        const { config, elementTypes, dataElementIds, sections } = options; // ?
         const { sorting, paging } = options; // ?
 
         const sqlViews = new Dhis2SqlViews(this.api);
@@ -80,9 +81,9 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                 getSqlViewId(config, SQL_VIEW_MAL_DATAELEMENTS_NAME),
                 {
                     dataSets: sqlViewJoinIds(allDataSetIds),
-                    dataElementName: sqlViewJoinIds(dataElementNames),
-                    sectionName: sqlViewJoinIds(sectionNames),
-                    lastDateOfSubscription: sqlViewJoinIds(lastDateOfSubscription),
+                    elementType: sqlViewJoinIds(elementTypes),
+                    sectionId: sqlViewJoinIds(sections),
+                    dataElementId: sqlViewJoinIds(dataElementIds),
                     orderByColumn: fieldMapping[sorting.field],
                     orderByDirection: sorting.direction,
                 },
@@ -95,13 +96,13 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                 dataElementName: item.dataelementname,
                 subscription: "",
                 sectionName: item.sectionname,
+                sectionId: item.sectionuid,
                 lastDateOfSubscription: item.lastdateofsubscription,
             })
         );
 
         return { pager, objects: items };
     }
-
 
     async getColumns(namespace: string): Promise<string[]> {
         const columns = await this.storageClient.getObject<string[]>(namespace);
