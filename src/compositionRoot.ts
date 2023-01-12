@@ -34,6 +34,8 @@ import { SaveMalDataSubscriptionColumnsUseCase } from "./domain/reports/mal-data
 import { GetMalDataSubscriptionColumnsUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalDataSubscriptionColumnsUseCase";
 import { GetSubscriptionSortOrderUseCase } from "./domain/reports/mal-data-subscription/usecases/GetSubscriptionSortOrderUseCase";
 import { GenerateSubscriptionSortOrderUseCase } from "./domain/reports/mal-data-subscription/usecases/GenerateSubscriptionSortOrderUseCase";
+import { SaveSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/SaveSubscriptionUseCase";
+import { GetSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/GetSubscriptionUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -74,10 +76,13 @@ export function getCompositionRoot(api: D2Api) {
             generateSortOrder: new GenerateSortOrderUseCase(dataDuplicationRepository),
         }),
         malDataSubscription: getExecute({
-            get: new GetMalSubscriptionDataSetsUseCase(dataSubscriptionRepository),            getColumns: new GetMalDataSubscriptionColumnsUseCase(dataSubscriptionRepository),
+            get: new GetMalSubscriptionDataSetsUseCase(dataSubscriptionRepository),
+            getColumns: new GetMalDataSubscriptionColumnsUseCase(dataSubscriptionRepository),
             saveColumns: new SaveMalDataSubscriptionColumnsUseCase(dataSubscriptionRepository),
             getSortOrder: new GetSubscriptionSortOrderUseCase(dataSubscriptionRepository),
             generateSortOrder: new GenerateSubscriptionSortOrderUseCase(dataSubscriptionRepository),
+            getSubscription: new GetSubscriptionUseCase(dataSubscriptionRepository),
+            saveSubscription: new SaveSubscriptionUseCase(dataSubscriptionRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),

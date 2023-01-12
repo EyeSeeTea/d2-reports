@@ -10,6 +10,7 @@ export const Namespaces = {
     MAL_DIFF_NAMES_SORT_ORDER: "mal-diff-names-sort-order",
     MONITORING: "monitoring",
     MAL_SUBSCRIPTION_STATUS_USER_COLUMNS: "mal-subscription-status-user-columns",
+    MAL_SUBSCRIPTION_STATUS: "mal-subscription-status",
 };
 
 export const NamespaceProperties: Record<Namespace, string[]> = {
@@ -18,4 +19,5 @@ export const NamespaceProperties: Record<Namespace, string[]> = {
     [Namespaces.MAL_DIFF_STATUS_USER_COLUMNS]: [],
     [Namespaces.MAL_DIFF_NAMES_SORT_ORDER]: [],
     [Namespaces.MONITORING]: [],
+    [Namespaces.MAL_SUBSCRIPTION_STATUS]: [],
 };

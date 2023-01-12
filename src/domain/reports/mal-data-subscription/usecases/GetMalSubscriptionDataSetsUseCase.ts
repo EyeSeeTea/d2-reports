@@ -9,10 +9,10 @@ import {
 type DataSetsOptions = MalDataSubscriptionOptions;
 
 export class GetMalSubscriptionDataSetsUseCase implements UseCase {
-    constructor(private dataSetRepository: MalDataSubscriptionRepository) {}
+    constructor(private subscriptionRepository: MalDataSubscriptionRepository) {}
 
     execute(options: DataSetsOptions): Promise<PaginatedObjects<MalDataSubscriptionItem>> {
         // FUTURE: Return a Future-like instead, to allow better error handling and cancellation.
-        return this.dataSetRepository.get(options);
+        return this.subscriptionRepository.get(options);
     }
 }

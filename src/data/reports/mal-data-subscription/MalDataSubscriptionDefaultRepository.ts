@@ -7,7 +7,10 @@ import { Dhis2SqlViews } from "../../common/Dhis2SqlViews";
 import { Instance } from "../../common/entities/Instance";
 import { getSqlViewId } from "../../../domain/common/entities/Config";
 import { SQL_VIEW_MAL_DATAELEMENTS_NAME } from "../../common/Dhis2ConfigRepository";
-import { MalDataSubscriptionItem } from "../../../domain/reports/mal-data-subscription/entities/MalDataSubscriptionItem";
+import {
+    MalDataSubscriptionItem,
+    SubscriptionStatus,
+} from "../../../domain/reports/mal-data-subscription/entities/MalDataSubscriptionItem";
 import {
     MalDataSubscriptionOptions,
     MalDataSubscriptionRepository,
@@ -49,10 +52,17 @@ type dataElementsType = { id: string; name: string };
 
 type dataSetElementsType = { dataElement: dataElementsType };
 
-type SqlField = "dataelementname" | "sectionname" | "sectionuid" | "lastdateofsubscription" | "subscription";
+type SqlField =
+    | "dataelementname"
+    | "dataelementuid"
+    | "sectionname"
+    | "sectionuid"
+    | "lastdateofsubscription"
+    | "subscription";
 
 const fieldMapping: Record<keyof MalDataSubscriptionItem, SqlField> = {
     dataElementName: "dataelementname",
+    dataElementId: "dataelementuid",
     subscription: "subscription",
     sectionName: "sectionname",
     sectionId: "sectionuid",
@@ -94,9 +104,10 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
         const items: Array<MalDataSubscriptionItem> = rows.map(
             (item): MalDataSubscriptionItem => ({
                 dataElementName: item.dataelementname,
-                subscription: "",
+                subscription: Boolean(item.subscription),
                 sectionName: item.sectionname,
                 sectionId: item.sectionuid,
+                dataElementId: item.dataelementuid,
                 lastDateOfSubscription: item.lastdateofsubscription,
             })
         );
@@ -158,6 +169,16 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
         } catch (error: any) {
             console.debug(error);
         }
+    }
+
+    async getSubscription(namespace: string): Promise<any[]> {
+        const subscription = await this.globalStorageClient.getObject<SubscriptionStatus[]>(namespace);
+
+        return subscription ?? [];
+    }
+
+    async saveSubscription(namespace: string, subscription: SubscriptionStatus[]): Promise<void> {
+        return await this.globalStorageClient.saveObject<SubscriptionStatus[]>(namespace, subscription);
     }
 }
 

@@ -1,23 +1,37 @@
 export interface MalDataSubscriptionItem {
     dataElementName: string;
-    subscription: string;
+    dataElementId: string;
+    subscription: boolean;
     sectionName: string;
     sectionId: string;
     lastDateOfSubscription: string;
 }
 
 export interface MalDataSubscriptionItemIdentifier {
-    dataElementName: string;
-    sectionName: string;
+    dataElementId: string;
+    sectionId: string;
+}
+
+export interface SubscriptionStatus {
+    dataElementId: string;
+    subscribed: boolean;
 }
 
 export function getDataSubscriptionItemId(dataSet: MalDataSubscriptionItem): string {
-    return [dataSet.dataElementName, dataSet.sectionName, dataSet.lastDateOfSubscription].join("-");
+    return [dataSet.dataElementId, dataSet.sectionId].join("-");
+}
+
+export function getSubscriptionValue(dataSet: MalDataSubscriptionItem, subscription: SubscriptionStatus[]): boolean {
+    const subscriptionValue =
+        subscription.find(subscriptionValue => subscriptionValue.dataElementId === dataSet.dataElementId)?.subscribed ??
+        false;
+
+    return subscriptionValue;
 }
 
 export function parseDataSubscriptionItemId(string: string): MalDataSubscriptionItemIdentifier | undefined {
-    const [dataElementName, sectionName] = string.split("-");
-    if (!dataElementName || !sectionName) return undefined;
+    const [dataElementId, sectionId] = string.split("-");
+    if (!dataElementId || !sectionId) return undefined;
 
-    return { dataElementName, sectionName };
+    return { dataElementId, sectionId };
 }
