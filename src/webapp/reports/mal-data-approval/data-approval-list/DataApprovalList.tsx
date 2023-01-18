@@ -2,6 +2,7 @@ import {
     ObjectsList,
     TableColumn,
     TableConfig,
+    TableGlobalAction,
     TablePagination,
     TableSorting,
     useObjectsTable,
@@ -11,6 +12,7 @@ import ClearAllIcon from "@material-ui/icons/ClearAll";
 import DoneIcon from "@material-ui/icons/Done";
 import DoneAllIcon from "@material-ui/icons/DoneAll";
 import RemoveIcon from "@material-ui/icons/Remove";
+import RestartAltIcon from "@material-ui/icons/Storage";
 import _ from "lodash";
 import { format } from "date-fns";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -59,10 +61,15 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const [revoke, { enable: enableRevoke, disable: disableRevoke }] = useBooleanState(false);
     const [__, setDiffState] = useState<string>("");
 
+    const [oldPeriods, setOldPeriods] = useState(false);
+
     const selectablePeriods = React.useMemo(() => {
         const currentYear = new Date().getFullYear();
-        return _.range(currentYear - 5, currentYear).map(n => n.toString());
-    }, []);
+
+        return oldPeriods
+            ? _.range(2000, currentYear - 5).map(n => n.toString())
+            : _.range(currentYear - 5, currentYear).map(n => n.toString());
+    }, [oldPeriods]);
 
     const [monitoring, setMonitoring] = useState<Monitoring[]>([]);
 
@@ -294,6 +301,9 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     isActive: rows =>
                         _.every(rows, row => row.lastUpdatedValue && row.validated === false) &&
                         (isMalApprover || isMalAdmin),
+                    isActive: rows =>
+                        _.every(rows, row => row.lastUpdatedValue && row.validated === false) &&
+                        (isMalApprover || isMalAdmin),
                 },
                 {
                     name: "getDiffAndRevoke",
@@ -304,6 +314,9 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         openDialog();
                         setSelected(selectedIds);
                     },
+                    isActive: rows =>
+                        _.every(rows, row => row.lastUpdatedValue && row.validated === true) &&
+                        (isMalApprover || isMalAdmin),
                     isActive: rows =>
                         _.every(rows, row => row.lastUpdatedValue && row.validated === true) &&
                         (isMalApprover || isMalAdmin),
@@ -320,13 +333,13 @@ export const DataApprovalList: React.FC = React.memo(() => {
         }),
         [
             compositionRoot.malDataApproval,
-            snackbar,
-            reload,
-            isMalApprover,
             isMalAdmin,
+            isMalApprover,
             monitoring,
-            disableRevoke,
             openDialog,
+            reload,
+            snackbar,
+            disableRevoke,
             enableRevoke,
         ]
     );
@@ -408,10 +421,21 @@ export const DataApprovalList: React.FC = React.memo(() => {
         return _.union(combinedMonitoring);
     }
 
+    const periodsToggle: TableGlobalAction = {
+        name: "switchPeriods",
+        text: i18n.t(oldPeriods ? "Use recent periods" : "Use old periods"),
+        icon: <RestartAltIcon />,
+        onClick: async () => {
+            setOldPeriods(oldYears => !oldYears);
+            setFilters(currentFilters => ({ ...currentFilters, periods: [] }));
+        },
+    };
+
     return (
         <React.Fragment>
             <ObjectsList<DataApprovalViewModel>
                 {...tableProps}
+                globalActions={[periodsToggle]}
                 columns={columnsToShow}
                 onChangeSearch={undefined}
                 onReorderColumns={saveReorderedColumns}
@@ -431,6 +455,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     revoke={revoke}
                     isMalAdmin={isMalAdmin}
                     isUpdated={() => setDiffState(`${new Date().getTime()}`)}
+                    key={new Date().getTime()}
                     key={new Date().getTime()}
                 />
             </ConfirmationDialog>
