@@ -33,6 +33,7 @@ import { GetIndicatorsUseCase } from "./domain/reports/data-quality/usecases/Get
 import { GetProgramIndicatorsUseCase } from "./domain/reports/data-quality/usecases/GetProgramIndicatorsUseCase";
 import { SaveDataQualityColumnsUseCase } from "./domain/reports/data-quality/usecases/SaveDataQualityColumnsUseCase";
 import { GetDataQualityColumnsUseCase } from "./domain/reports/data-quality/usecases/GetDataQualityColumnsUseCase";
+import { SaveDataQualityUseCase } from "./domain/reports/data-quality/usecases/SaveDataQualityUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -74,6 +75,7 @@ export function getCompositionRoot(api: D2Api) {
         }),
         dataQuality: getExecute({
             getIndicators: new GetIndicatorsUseCase(dataQualityRepository),
+            saveDataQualityUseCase: new SaveDataQualityUseCase(dataQualityRepository),
             getProgramIndicators: new GetProgramIndicatorsUseCase(dataQualityRepository),
             getColumns: new GetDataQualityColumnsUseCase(dataQualityRepository),
             saveColumns: new SaveDataQualityColumnsUseCase(dataQualityRepository),

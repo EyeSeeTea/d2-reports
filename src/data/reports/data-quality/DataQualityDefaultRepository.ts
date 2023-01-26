@@ -45,6 +45,10 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         return { pager: pager, objects: dataQualityIndicatorErrorsInPage };
     }
 
+    async saveDataQuality(namespace: string, dataQuality: DataQualityItem[]): Promise<void> {
+        return await this.globalStorageClient.saveObject<DataQualityItem[]>(namespace, dataQuality);
+    }
+
     async getProgramIndicators(
         options: DataQualityOptions,
         namespace: string

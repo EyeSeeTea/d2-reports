@@ -6,7 +6,7 @@ import {
     TableSorting,
     useObjectsTable,
 } from "@eyeseetea/d2-ui-components";
-import { Typography } from "@material-ui/core";
+import { Button, Typography } from "@material-ui/core";
 import _ from "lodash";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Namespaces } from "../../../data/common/clients/storage/Namespaces";
@@ -19,12 +19,14 @@ import {
     getDataQualityIndicatorViews,
     getDataQualityProgramIndicatorViews,
 } from "./DataQualityViewModel";
+import { useReload } from "../../utils/use-reload";
 
 export const DataQualityList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
 
     const [visibleIndicatorColumns, setVisibleIndicatorColumns] = useState<string[]>();
     const [visibleProgramIndicatorColumns, setVisibleProgramIndicatorColumns] = useState<string[]>();
+    const [_reloadKey, reload] = useReload();
 
     useEffect(() => {
         compositionRoot.dataQuality.getColumns(Namespaces.INDICATOR_STATUS_USER_COLUMNS).then(columns => {
@@ -195,6 +197,15 @@ export const DataQualityList: React.FC = React.memo(() => {
 
     return (
         <React.Fragment>
+            <Button
+                onClick={async () => {
+                    await compositionRoot.malDataApproval.saveMonitoring(Namespaces.DATA_QUALITY, []);
+                    reload();
+                }}
+            >
+                Reload Validation
+            </Button>
+            
             <Typography variant="h6" gutterBottom>
                 {i18n.t("Indicators")}
             </Typography>
