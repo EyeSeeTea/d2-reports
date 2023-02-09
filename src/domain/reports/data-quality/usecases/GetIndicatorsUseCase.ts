@@ -9,7 +9,6 @@ export class GetIndicatorsUseCase implements UseCase {
     constructor(private dataQualityRepository: DataQualityRepository) {}
 
     execute(options: DataElementsOptions, namespace: string): Promise<PaginatedObjects<DataQualityItem>> {
-        // FUTURE: Return a Future-like instead, to allow better error handling and cancellation.
         return this.dataQualityRepository.getIndicators(options, namespace);
     }
 }
