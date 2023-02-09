@@ -3,11 +3,13 @@ import React from "react";
 import { Radio } from "@dhis2/ui";
 import { Maybe } from "../../../../utils/ts-utils";
 import i18n from "@eyeseetea/d2-ui-components/locales";
+import { WidgetFeedback, WidgetState } from "../WidgetFeedback";
 
 export interface BooleanWidgetProps {
     value: Maybe<string>;
     onValueChange(value: Maybe<string>): void;
     disabled: boolean;
+    state: WidgetState;
 }
 
 const BooleanWidget: React.FC<BooleanWidgetProps> = props => {
@@ -27,7 +29,7 @@ const BooleanWidget: React.FC<BooleanWidgetProps> = props => {
     );
 
     return (
-        <>
+        <WidgetFeedback state={props.state}>
             <Radio
                 dense
                 label={i18n.t("Yes")}
@@ -46,7 +48,7 @@ const BooleanWidget: React.FC<BooleanWidgetProps> = props => {
                 checked={stateValue === "false"}
                 disabled={disabled}
             />
-        </>
+        </WidgetFeedback>
     );
 };
 

@@ -3,12 +3,14 @@ import React from "react";
 import { SingleSelect, SingleSelectOption } from "@dhis2/ui";
 import { Option } from "../../../../domain/common/entities/DataForm";
 import { Maybe } from "../../../../utils/ts-utils";
+import { WidgetFeedback, WidgetState } from "../WidgetFeedback";
 
 export interface SelectWidgetProps {
     value: Maybe<string>;
     options: Option[];
     onValueChange(value: Maybe<string>): void;
     disabled: boolean;
+    state: WidgetState;
 }
 
 const SelectWidget: React.FC<SelectWidgetProps> = props => {
@@ -27,11 +29,13 @@ const SelectWidget: React.FC<SelectWidgetProps> = props => {
     );
 
     return (
-        <SingleSelect onChange={notifyChange} selected={stateValue} disabled={disabled}>
-            {options.map(({ id, name, code }) => (
-                <SingleSelectOption key={`option-${id}`} label={name} value={code} />
-            ))}
-        </SingleSelect>
+        <WidgetFeedback state={props.state}>
+            <SingleSelect onChange={notifyChange} selected={stateValue} disabled={disabled}>
+                {options.map(({ id, name, code }) => (
+                    <SingleSelectOption key={`option-${id}`} label={name} value={code} />
+                ))}
+            </SingleSelect>
+        </WidgetFeedback>
     );
 };
 

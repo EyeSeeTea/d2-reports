@@ -22,7 +22,7 @@ export const WMRNationalPolicies: React.FC = () => {
 
     const saveValue = useCallback(
         (dataValue: ItemDataValue) => {
-            compositionRoot.dataForms.saveValue(dataValue, { orgUnitId, period });
+            return compositionRoot.dataForms.saveValue(dataValue, { orgUnitId, period });
         },
         [orgUnitId, period, compositionRoot]
     );

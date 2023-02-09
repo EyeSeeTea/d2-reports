@@ -7,6 +7,7 @@ import { Maybe } from "../../../utils/ts-utils";
 import BooleanWidget from "./widgets/BooleanWidget";
 import NumberWidget from "./widgets/NumberWidget";
 import TextWidget from "./widgets/TextWidget";
+import { WidgetState } from "./WidgetFeedback";
 
 export interface ItemDataValue {
     dataElementId: Id;
@@ -19,7 +20,7 @@ type DataEntryItemProps = {
     data: DataFormValue[];
     dataElement: DataElement;
     categoryOptionComboId: string;
-    onValueChange: (dataValue: ItemDataValue) => void;
+    onValueChange: (dataValue: ItemDataValue) => Promise<void>;
     disabled: boolean;
 };
 
@@ -32,9 +33,15 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
 
     const optionSet = dataForm.optionSets.find(({ id }) => id === dataElement.optionSet?.id);
 
+    const [state, setState] = React.useState<WidgetState>("original");
+
     const notifyChange = React.useCallback<SelectWidgetProps["onValueChange"]>(
-        value => {
-            onValueChange({ dataElementId: dataElement.id, categoryOptionComboId, value });
+        async value => {
+            setState("saving");
+
+            onValueChange({ dataElementId: dataElement.id, categoryOptionComboId, value })
+                .then(() => setState("saveSuccessful"))
+                .catch(() => setState("saveError"));
         },
         [dataElement, categoryOptionComboId, onValueChange]
     );
@@ -46,6 +53,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                 options={optionSet.options}
                 onValueChange={notifyChange}
                 disabled={disabled}
+                state={state} //
             />
         );
     } else if (dataElement.valueType === "BOOLEAN") {
@@ -53,6 +61,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
             <BooleanWidget
                 value={dataValue?.value}
                 onValueChange={notifyChange}
+                state={state}
                 disabled={disabled} //
             />
         );
@@ -61,6 +70,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
             <NumberWidget
                 value={dataValue?.value}
                 onValueChange={notifyChange}
+                state={state}
                 disabled={disabled} //
             />
         );
@@ -69,6 +79,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
             <TextWidget
                 value={dataValue?.value}
                 onValueChange={notifyChange}
+                state={state}
                 disabled={disabled} //
             />
         );
