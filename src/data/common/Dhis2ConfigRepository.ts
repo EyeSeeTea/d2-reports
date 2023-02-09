@@ -56,7 +56,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
         const pairedDataElements = getPairedMapping(filteredDataSets);
         const orgUnitList = getPairedOrgunitsMapping(filteredDataSets);
         const currentYear = new Date().getFullYear();
-        if  (base[this.type].constantCode !== ""){
+        if (base[this.type].constantCode !== "") {
             const constant = getNth(constants, 0, `Missing constant: ${base[this.type].constantCode}`);
             const constantData = JSON.parse(constant.description || "{}") as Constant;
             const { sections, sectionsByDataSet } = getSectionsInfo(constantData);
@@ -72,8 +72,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                 years: _.range(currentYear - 10, currentYear + 1).map(n => n.toString()),
                 approvalWorkflow: dataApprovalWorkflows,
             };
-        }else{
-
+        } else {
             return {
                 dataSets: keyById(filteredDataSets),
                 currentUser,
@@ -85,7 +84,6 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                 years: _.range(currentYear - 10, currentYear + 1).map(n => n.toString()),
                 approvalWorkflow: dataApprovalWorkflows,
             };
-
         }
     }
 
@@ -207,6 +205,7 @@ function getMappingForDataSet(dataSet: DataSet, dataElementsByName: Record<strin
             const name = getNameOfDataElementWithValue(de.name);
             const cleanName = getCleanName(name);
             const valueDataElement = dataElementsByName[cleanName];
+
             if (!valueDataElement) {
                 console.error(`Value data element not found for comment:\n  ${name}`);
                 return null;

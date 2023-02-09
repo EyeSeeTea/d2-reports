@@ -28,6 +28,10 @@ import { GenerateSortOrderUseCase } from "./domain/reports/mal-data-approval/use
 import { GetMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/GetMonitoringUseCase";
 import { SaveMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/SaveMonitoringUseCase";
 import { DuplicateDataValuesUseCase } from "./domain/reports/mal-data-approval/usecases/DuplicateDataValuesUseCase";
+import { Dhis2DataFormRepository } from "./data/common/Dhis2DataFormRepository";
+import { SaveDataFormValueUseCase } from "./domain/common/usecases/SaveDataFormValue";
+import { GetDataFormUseCase } from "./domain/common/usecases/GetDataFormUseCase";
+import { GetDataFormValuesUseCase } from "./domain/common/usecases/GetDataFormValuesUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -36,6 +40,7 @@ export function getCompositionRoot(api: D2Api) {
     const dataDuplicationRepository = new MalDataApprovalDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
+    const dataFormRepository = new Dhis2DataFormRepository(api);
 
     return {
         admin: getExecute({
@@ -65,6 +70,11 @@ export function getCompositionRoot(api: D2Api) {
             duplicateValue: new DuplicateDataValuesUseCase(dataDuplicationRepository),
             getSortOrder: new GetSortOrderUseCase(dataDuplicationRepository),
             generateSortOrder: new GenerateSortOrderUseCase(dataDuplicationRepository),
+        }),
+        dataForms: getExecute({
+            get: new GetDataFormUseCase(dataFormRepository),
+            getValues: new GetDataFormValuesUseCase(dataFormRepository),
+            saveValue: new SaveDataFormValueUseCase(dataFormRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),

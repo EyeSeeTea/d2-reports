@@ -1,6 +1,4 @@
-export const DATASET_ID = "IXuqhJzEYP9";
-
-export const DATASET_COLUMNS = [
+const DATASET_COLUMNS = [
     "POLICY_ADOPTED",
     "IMPLEMENTED",
     "POLICY_SINCE",
@@ -19,7 +17,7 @@ interface Policy {
     }>;
 }
 
-export const policies: Policy[] = [
+const policies: Policy[] = [
     {
         code: "LLINS",
         items: [
@@ -690,7 +688,7 @@ export const policies: Policy[] = [
     },
 ];
 
-export const translations: Record<string, Record<string, string>> = {
+const translations: Record<string, Record<string, string>> = {
     LBL_FORM_TITLE: {
         en: "World Malaria Report",
         fr: "Rapport sur le paludisme modiale",
@@ -1238,3 +1236,5 @@ export const translations: Record<string, Record<string, string>> = {
         pt: "Dosagem de primaquina para tratamento radical de P. vivax",
     },
 };
+
+export {};

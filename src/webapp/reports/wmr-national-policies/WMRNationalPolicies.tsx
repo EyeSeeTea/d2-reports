@@ -1,4 +1,3 @@
-import { DataValueSetsDataValue, MetadataPayload } from "@eyeseetea/d2-api/2.34";
 import React, { useCallback, useEffect, useState } from "react";
 import { useAppContext } from "../../contexts/app-context";
 import {
@@ -11,122 +10,147 @@ import {
     // @ts-ignore
 } from "@dhis2/ui";
 import { useReload } from "../../utils/use-reload";
-import { DATASET_COLUMNS, DATASET_ID, policies, translations } from "./policies";
-import { DataEntryItem } from "./DataEntryItem";
+import { DataEntryItem, ItemDataValue } from "./DataEntryItem";
+import { Id } from "../../../domain/common/entities/Base";
+import { DataForm, DataFormValue } from "../../../domain/common/entities/DataForm";
+import { SectionTableM } from "./DataFormViewModels";
+
+interface Period {
+    startDate: string; // "YYYY-MM-DD"
+    endDate: string; // "YYYY-MM-DD"
+    id: string;
+    iso: string;
+    name: string;
+}
+
+declare global {
+    interface Window {
+        dhis2?: {
+            de: {
+                currentOrganisationUnitId: Id;
+                currentDataSetId: Id;
+                getSelectedPeriod: () => Period | undefined;
+                event: { dataValuesLoaded: string };
+            };
+            util: {
+                on: (event: string, action: () => void) => void;
+            };
+        };
+    }
+}
+
+function useDataEntrySelector(): { orgUnitId: Id; dataSetId: Id; period: string; reloadKey: string } {
+    const [reloadKey, reload] = useReload();
+    const { dhis2 } = window;
+    const isRunningInDataEntry = dhis2;
+
+    useEffect(() => {
+        if (!dhis2) return;
+        dhis2.util.on(dhis2.de.event.dataValuesLoaded, () => {
+            reload();
+        });
+    });
+
+    if (isRunningInDataEntry) {
+        return {
+            orgUnitId: dhis2.de.currentOrganisationUnitId,
+            dataSetId: dhis2.de.currentDataSetId,
+            period: dhis2.de.getSelectedPeriod()?.iso || "",
+            reloadKey,
+        };
+    } else {
+        const params = new URLSearchParams(window.location.search);
+
+        return {
+            orgUnitId: params.get("orgUnitId") || "jFOZHDZpjPL", // Angola
+            period: params.get("period") || "2019",
+            dataSetId: "r8DqSf2FDvP",
+            reloadKey,
+        };
+    }
+}
 
 export const WMRNationalPolicies: React.FC = () => {
-    const { api } = useAppContext();
-
-    const [metadata, setMetadata] = useState<MetadataPayload>();
-    const [data, setData] = useState<DataValueSetsDataValue[]>([]);
-    const [locale, setLocale] = useState<string>("en");
-    const [reloadKey, reload] = useReload();
-
-    const translate = (key: string) => translations[key]?.[locale] ?? translations[key]?.["en"] ?? key;
-
-    //@ts-ignore
-    const orgUnit = window.dhis2?.de.currentOrganisationUnitId;
-    //@ts-ignore
-    const period = window.dhis2?.de.getSelectedPeriod().name;
+    const { compositionRoot } = useAppContext();
+    const { orgUnitId, period, dataSetId, reloadKey } = useDataEntrySelector();
+    const [dataForm, setDataForm] = useState<DataForm>();
+    const [dataValues, setDataValues] = useState<DataFormValue[]>([]);
 
     const saveValue = useCallback(
-        (dataValue: Partial<DataValueSetsDataValue>) => {
-            api.dataValues
-                .post({
-                    ou: orgUnit,
-                    pe: period,
-                    de: dataValue.dataElement ?? "",
-                    value: dataValue.value,
-                })
-                .getData()
-                .then(() => {
-                    api.dataValues
-                        .getSet({ dataSet: [DATASET_ID], orgUnit: [orgUnit], period: [period] })
-                        .getData()
-                        .then(({ dataValues }) => setData(dataValues));
-                });
+        (dataValue: ItemDataValue) => {
+            compositionRoot.dataForms.saveValue(dataValue, { orgUnitId, period });
         },
-        [api, orgUnit, period]
+        [orgUnitId, period, compositionRoot]
     );
 
     useEffect(() => {
-        //@ts-ignore
-        window.dhis2?.util.on(window.dhis2?.de.event.dataValuesLoaded, () => reload());
-    });
+        compositionRoot.dataForms.get(dataSetId).then(setDataForm);
+    }, [compositionRoot, dataSetId]);
 
     useEffect(() => {
-        api.currentUser
-            .get({ fields: { settings: { keyUiLocale: true } } })
-            .getData()
-            .then(({ settings: { keyUiLocale } }) => setLocale(keyUiLocale ?? "en"));
+        compositionRoot.dataForms.getValues(dataSetId, { orgUnitId, period }).then(setDataValues);
+    }, [compositionRoot, orgUnitId, dataSetId, period, reloadKey]);
 
-        api.get<MetadataPayload>(`/dataSets/${DATASET_ID}/metadata.json`).getData().then(setMetadata);
-    }, [api]);
+    const sections = React.useMemo(
+        () => (dataForm ? SectionTableM.getSectionsFromDataForm(dataForm) : undefined),
+        [dataForm]
+    );
 
-    useEffect(() => {
-        console.debug("Reloading", reloadKey);
-        api.dataValues
-            .getSet({ dataSet: [DATASET_ID], orgUnit: [orgUnit], period: [period] })
-            .getData()
-            .then(({ dataValues }) => setData(dataValues));
-    }, [api, orgUnit, period, reloadKey]);
-
-    if (!metadata) return null;
+    if (!(dataForm && sections)) return null;
 
     return (
         <div>
-            {policies.map(({ code, items }) => (
-                <div key={`table-${code}`} style={{ margin: 10 }}>
+            {sections.map(section => (
+                <div key={`table-${section.id}`} style={styles.wrapper}>
                     <DataTable>
                         <TableHead>
                             <DataTableRow>
                                 <DataTableColumnHeader>
-                                    <span
-                                        style={{ fontWeight: "bold" }}
-                                        dangerouslySetInnerHTML={{ __html: translate(code) }}
-                                    />
+                                    <span style={styles.header}>{section.name}</span>
                                 </DataTableColumnHeader>
 
-                                {DATASET_COLUMNS.map((code, index) => (
-                                    <DataTableColumnHeader key={`column-${index}-${code}`}>
-                                        <span
-                                            style={{ fontWeight: "bold" }}
-                                            dangerouslySetInnerHTML={{ __html: translate(code) }}
-                                        />
+                                {section.columns.map(column => (
+                                    <DataTableColumnHeader key={`column-${column.name}`}>
+                                        <span style={styles.header}>{column.name}</span>
                                     </DataTableColumnHeader>
                                 ))}
                             </DataTableRow>
                         </TableHead>
 
                         <TableBody>
-                            {items
-                                .filter(({ hidden = false }) => !hidden)
-                                .map(({ code, columns }, rowIndex) => (
-                                    <DataTableRow key={`policy-${code}-${rowIndex}`}>
-                                        <DataTableCell>
-                                            <span dangerouslySetInnerHTML={{ __html: translate(code) }} />
-                                        </DataTableCell>
+                            {section.rows.map(row => (
+                                <DataTableRow key={`policy-${row.name}`}>
+                                    <DataTableCell>
+                                        <span>{row.name}</span>
+                                    </DataTableCell>
 
-                                        {DATASET_COLUMNS.map((column, index) => (
-                                            <DataTableCell key={`cell-${column}-${index}`}>
-                                                {columns[column] && (
-                                                    <DataEntryItem
-                                                        metadata={metadata}
-                                                        data={data}
-                                                        dataElement={columns[column]?.dataElement}
-                                                        categoryOptionCombo={columns[column]?.categoryOptionCombo}
-                                                        saveValue={saveValue}
-                                                        disabled={false} // TODO: Handle exclusion of implemented this year and policy discontinued
-                                                    />
-                                                )}
+                                    {row.items.map((item, idx) =>
+                                        item.dataElement ? (
+                                            <DataTableCell key={`cell-${item.dataElement.id}`}>
+                                                <DataEntryItem
+                                                    dataForm={dataForm}
+                                                    data={dataValues}
+                                                    dataElement={item.dataElement}
+                                                    categoryOptionComboId="Xr12mI7VPn3" // TODO
+                                                    onValueChange={saveValue}
+                                                    disabled={false} // TODO: Handle exclusion of implemented this year and policy discontinued
+                                                />
                                             </DataTableCell>
-                                        ))}
-                                    </DataTableRow>
-                                ))}
+                                        ) : (
+                                            <DataTableCell key={`cell-${idx}`}></DataTableCell>
+                                        )
+                                    )}
+                                </DataTableRow>
+                            ))}
                         </TableBody>
                     </DataTable>
                 </div>
             ))}
         </div>
     );
+};
+
+const styles = {
+    wrapper: { margin: 10 },
+    header: { fontWeight: "bold" as const },
 };
