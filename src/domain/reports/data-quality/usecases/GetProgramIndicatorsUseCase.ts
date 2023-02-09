@@ -1,14 +1,14 @@
 import { UseCase } from "../../../../compositionRoot";
 import { PaginatedObjects } from "../../../common/entities/PaginatedObjects";
-import { DataQualityItem } from "../entities/DataQualityItem";
-import { DataQualityRepository, DataQualityOptions } from "../repositories/DataQualityRepository";
+import { ProgramIndicatorItem } from "../entities/DataQualityItem";
+import { DataQualityRepository, ProgramIndicatorOptions } from "../repositories/DataQualityRepository";
 
-type DataElementsOptions = DataQualityOptions;
+type DataElementsOptions = ProgramIndicatorOptions;
 
 export class GetProgramIndicatorsUseCase implements UseCase {
     constructor(private dataQualityRepository: DataQualityRepository) {}
 
-    execute(options: DataElementsOptions, namespace: string): Promise<PaginatedObjects<DataQualityItem>> {
+    execute(options: DataElementsOptions, namespace: string): Promise<PaginatedObjects<ProgramIndicatorItem>> {
         return this.dataQualityRepository.getProgramIndicators(options, namespace);
     }
 }

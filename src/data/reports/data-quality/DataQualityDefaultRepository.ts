@@ -1,9 +1,15 @@
 import _ from "lodash";
 import { PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
-import { DataQualityConfig, DataQualityItem } from "../../../domain/reports/data-quality/entities/DataQualityItem";
 import {
-    DataQualityOptions,
+    IndicatorConfig,
+    IndicatorItem,
+    ProgramIndicatorConfig,
+    ProgramIndicatorItem,
+} from "../../../domain/reports/data-quality/entities/DataQualityItem";
+import {
     DataQualityRepository,
+    IndicatorOptions,
+    ProgramIndicatorOptions,
 } from "../../../domain/reports/data-quality/repositories/DataQualityRepository";
 import { D2Api, Pager } from "../../../types/d2-api";
 import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
@@ -20,8 +26,8 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         this.globalStorageClient = new DataStoreStorageClient("global", instance);
     }
 
-    async getIndicators(options: DataQualityOptions, namespace: string): Promise<PaginatedObjects<DataQualityItem>> {
-        const dataQuality = await this.globalStorageClient.getObject<DataQualityConfig>(namespace);
+    async getIndicators(options: IndicatorOptions, namespace: string): Promise<PaginatedObjects<IndicatorItem>> {
+        const dataQuality = await this.globalStorageClient.getObject<IndicatorConfig>(namespace);
         const { paging, sorting } = options;
 
         const dataQualityIndicatorErrors =
@@ -45,15 +51,18 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         return { pager: pager, objects: dataQualityIndicatorErrorsInPage };
     }
 
-    async saveDataQuality(namespace: string, dataQuality: DataQualityItem[]): Promise<void> {
-        return await this.globalStorageClient.saveObject<DataQualityItem[]>(namespace, dataQuality);
+    async saveDataQuality(namespace: string, dataQuality: IndicatorItem[] | ProgramIndicatorItem[]): Promise<void> {
+        return await this.globalStorageClient.saveObject<IndicatorItem[] | ProgramIndicatorItem[]>(
+            namespace,
+            dataQuality
+        );
     }
 
     async getProgramIndicators(
-        options: DataQualityOptions,
+        options: ProgramIndicatorOptions,
         namespace: string
-    ): Promise<PaginatedObjects<DataQualityItem>> {
-        const dataQuality = await this.globalStorageClient.getObject<DataQualityConfig>(namespace);
+    ): Promise<PaginatedObjects<ProgramIndicatorItem>> {
+        const dataQuality = await this.globalStorageClient.getObject<ProgramIndicatorConfig>(namespace);
         const { paging, sorting } = options;
 
         const dataQualityProgramIndicatorErrors =

@@ -1,17 +1,26 @@
 import { Config } from "../../../common/entities/Config";
 import { PaginatedObjects, Paging, Sorting } from "../../../common/entities/PaginatedObjects";
-import { DataQualityItem } from "../entities/DataQualityItem";
+import { IndicatorItem, ProgramIndicatorItem } from "../entities/DataQualityItem";
 
 export interface DataQualityRepository {
-    getIndicators(options: DataQualityOptions, namespace: string): Promise<PaginatedObjects<DataQualityItem>>;
-    saveDataQuality(namespace: string, dataQuality: DataQualityItem[]): Promise<void>;
-    getProgramIndicators(options: DataQualityOptions, namespace: string): Promise<PaginatedObjects<DataQualityItem>>;
+    getIndicators(options: IndicatorOptions, namespace: string): Promise<PaginatedObjects<IndicatorItem>>;
+    saveDataQuality(namespace: string, dataQuality: IndicatorItem[] | ProgramIndicatorItem[]): Promise<void>;
+    getProgramIndicators(
+        options: ProgramIndicatorOptions,
+        namespace: string
+    ): Promise<PaginatedObjects<ProgramIndicatorItem>>;
     getColumns(namespace: string): Promise<string[]>;
     saveColumns(namespace: string, columns: string[]): Promise<void>;
 }
 
-export interface DataQualityOptions {
+export interface IndicatorOptions {
     config: Config;
     paging: Paging;
-    sorting: Sorting<DataQualityItem>;
+    sorting: Sorting<IndicatorItem>;
+}
+
+export interface ProgramIndicatorOptions {
+    config: Config;
+    paging: Paging;
+    sorting: Sorting<ProgramIndicatorItem>;
 }

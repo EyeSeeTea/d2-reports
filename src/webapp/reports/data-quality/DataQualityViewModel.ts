@@ -1,23 +1,32 @@
 import { Config } from "../../../domain/common/entities/Config";
-import { DataQualityItem } from "../../../domain/reports/data-quality/entities/DataQualityItem";
+import { IndicatorItem, ProgramIndicatorItem } from "../../../domain/reports/data-quality/entities/DataQualityItem";
 
-export interface DataQualityViewModel {
+export interface IndicatorViewModel {
     id: string;
     lastUpdated: string;
     name: string;
     user: string;
     metadataType: string;
-    denominator?: string;
-    denominatorresult?: boolean;
-    numerator?: string;
-    numeratorresult?: boolean;
-    expression?: string;
-    expressionresult?: boolean;
-    filter?: string;
-    filterresult?: boolean;
+    denominator: string;
+    denominatorresult: boolean;
+    numerator: string;
+    numeratorresult: boolean;
 }
 
-export function getDataQualityIndicatorViews(_config: Config, items: DataQualityItem[]): DataQualityViewModel[] {
+export interface ProgramIndicatorViewModel {
+    id: string;
+    lastUpdated: string;
+    name: string;
+    user: string;
+    metadataType: string;
+    
+    expression: string;
+    expressionresult: boolean;
+    filter: string;
+    filterresult: boolean;
+}
+
+export function getDataQualityIndicatorViews(_config: Config, items: IndicatorItem[]): IndicatorViewModel[] {
     return items.map(item => {
         return {
             id: item.id,
@@ -33,7 +42,10 @@ export function getDataQualityIndicatorViews(_config: Config, items: DataQuality
     });
 }
 
-export function getDataQualityProgramIndicatorViews(_config: Config, items: DataQualityItem[]): DataQualityViewModel[] {
+export function getDataQualityProgramIndicatorViews(
+    _config: Config,
+    items: ProgramIndicatorItem[]
+): ProgramIndicatorViewModel[] {
     return items.map(item => {
         return {
             id: item.id,

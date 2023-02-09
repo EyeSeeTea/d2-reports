@@ -11,11 +11,12 @@ import _ from "lodash";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Namespaces } from "../../../data/common/clients/storage/Namespaces";
 import { Sorting } from "../../../domain/common/entities/PaginatedObjects";
-import { DataQualityItem } from "../../../domain/reports/data-quality/entities/DataQualityItem";
+import { IndicatorItem, ProgramIndicatorItem } from "../../../domain/reports/data-quality/entities/DataQualityItem";
 import i18n from "../../../locales";
 import { useAppContext } from "../../contexts/app-context";
 import {
-    DataQualityViewModel,
+    IndicatorViewModel,
+    ProgramIndicatorViewModel,
     getDataQualityIndicatorViews,
     getDataQualityProgramIndicatorViews,
 } from "./DataQualityViewModel";
@@ -37,7 +38,7 @@ export const DataQualityList: React.FC = React.memo(() => {
         });
     }, [compositionRoot]);
 
-    const indicatorBaseConfig: TableConfig<DataQualityViewModel> = useMemo(
+    const indicatorBaseConfig: TableConfig<IndicatorViewModel> = useMemo(
         () => ({
             columns: [
                 { name: "id", text: i18n.t("Id"), sortable: true },
@@ -72,7 +73,7 @@ export const DataQualityList: React.FC = React.memo(() => {
         []
     );
 
-    const programIndicatorBaseConfig: TableConfig<DataQualityViewModel> = useMemo(
+    const programIndicatorBaseConfig: TableConfig<ProgramIndicatorViewModel> = useMemo(
         () => ({
             columns: [
                 { name: "id", text: i18n.t("Id"), sortable: true },
@@ -108,12 +109,12 @@ export const DataQualityList: React.FC = React.memo(() => {
     );
 
     const getIndicatorRows = useMemo(
-        () => async (_search: string, paging: TablePagination, sorting: TableSorting<DataQualityViewModel>) => {
+        () => async (_search: string, paging: TablePagination, sorting: TableSorting<IndicatorViewModel>) => {
             const { pager, objects } = await compositionRoot.dataQuality.getIndicators(
                 {
                     config,
                     paging: { page: paging.page, pageSize: paging.pageSize },
-                    sorting: getSortingFromTableSorting(sorting),
+                    sorting: getIndicatorSortingFromTableSorting(sorting),
                 },
                 Namespaces.DATA_QUALITY
             );
@@ -127,12 +128,12 @@ export const DataQualityList: React.FC = React.memo(() => {
     );
 
     const getProgramIndicatorRows = useMemo(
-        () => async (_search: string, paging: TablePagination, sorting: TableSorting<DataQualityViewModel>) => {
+        () => async (_search: string, paging: TablePagination, sorting: TableSorting<ProgramIndicatorViewModel>) => {
             const { pager, objects } = await compositionRoot.dataQuality.getProgramIndicators(
                 {
                     config,
                     paging: { page: paging.page, pageSize: paging.pageSize },
-                    sorting: getSortingFromTableSorting(sorting),
+                    sorting: getProgramIndicatorSortingFromTableSorting(sorting),
                 },
                 Namespaces.DATA_QUALITY
             );
@@ -146,7 +147,7 @@ export const DataQualityList: React.FC = React.memo(() => {
     );
 
     const saveReorderedIndicatorColumns = useCallback(
-        async (columnKeys: Array<keyof DataQualityViewModel>) => {
+        async (columnKeys: Array<keyof IndicatorViewModel>) => {
             if (!visibleIndicatorColumns) return;
 
             await compositionRoot.dataQuality.saveColumns(Namespaces.INDICATOR_STATUS_USER_COLUMNS, columnKeys);
@@ -155,7 +156,7 @@ export const DataQualityList: React.FC = React.memo(() => {
     );
 
     const saveReorderedProgramIndicatorColumns = useCallback(
-        async (columnKeys: Array<keyof DataQualityViewModel>) => {
+        async (columnKeys: Array<keyof ProgramIndicatorViewModel>) => {
             if (!visibleProgramIndicatorColumns) return;
 
             await compositionRoot.dataQuality.saveColumns(Namespaces.PROGRAM_INDICATOR_STATUS_USER_COLUMNS, columnKeys);
@@ -166,7 +167,7 @@ export const DataQualityList: React.FC = React.memo(() => {
     const indicatorTableProps = useObjectsTable(indicatorBaseConfig, getIndicatorRows);
     const programIndicatorTableProps = useObjectsTable(programIndicatorBaseConfig, getProgramIndicatorRows);
 
-    const indicatorColumnsToShow = useMemo<TableColumn<DataQualityViewModel>[]>(() => {
+    const indicatorColumnsToShow = useMemo<TableColumn<IndicatorViewModel>[]>(() => {
         if (!visibleIndicatorColumns || _.isEmpty(visibleIndicatorColumns)) return indicatorTableProps.columns;
 
         const indexes = _(visibleIndicatorColumns)
@@ -180,7 +181,7 @@ export const DataQualityList: React.FC = React.memo(() => {
             .value();
     }, [indicatorTableProps.columns, visibleIndicatorColumns]);
 
-    const programIndicatorColumnsToShow = useMemo<TableColumn<DataQualityViewModel>[]>(() => {
+    const programIndicatorColumnsToShow = useMemo<TableColumn<ProgramIndicatorViewModel>[]>(() => {
         if (!visibleProgramIndicatorColumns || _.isEmpty(visibleProgramIndicatorColumns))
             return programIndicatorTableProps.columns;
 
@@ -212,7 +213,7 @@ export const DataQualityList: React.FC = React.memo(() => {
                 {i18n.t("Indicators")}
             </Typography>
 
-            <ObjectsList<DataQualityViewModel>
+            <ObjectsList<IndicatorViewModel>
                 {...indicatorTableProps}
                 columns={indicatorColumnsToShow}
                 onChangeSearch={undefined}
@@ -223,7 +224,7 @@ export const DataQualityList: React.FC = React.memo(() => {
                 {i18n.t("Program Indicators")}
             </Typography>
 
-            <ObjectsList<DataQualityViewModel>
+            <ObjectsList<ProgramIndicatorViewModel>
                 {...programIndicatorTableProps}
                 columns={programIndicatorColumnsToShow}
                 onChangeSearch={undefined}
@@ -233,7 +234,18 @@ export const DataQualityList: React.FC = React.memo(() => {
     );
 });
 
-export function getSortingFromTableSorting(sorting: TableSorting<DataQualityViewModel>): Sorting<DataQualityItem> {
+export function getIndicatorSortingFromTableSorting(
+    sorting: TableSorting<IndicatorViewModel>
+): Sorting<IndicatorItem> {
+    return {
+        field: sorting.field === "id" ? "name" : sorting.field,
+        direction: sorting.order,
+    };
+}
+
+export function getProgramIndicatorSortingFromTableSorting(
+    sorting: TableSorting<ProgramIndicatorViewModel>
+): Sorting<ProgramIndicatorItem> {
     return {
         field: sorting.field === "id" ? "name" : sorting.field,
         direction: sorting.order,
