@@ -9,66 +9,10 @@ import {
     DataTableCell,
     // @ts-ignore
 } from "@dhis2/ui";
-import { useReload } from "../../utils/use-reload";
-import { DataEntryItem, ItemDataValue } from "./DataEntryItem";
-import { Id } from "../../../domain/common/entities/Base";
+import DataEntryItem, { ItemDataValue } from "./DataEntryItem";
 import { DataForm, DataFormValue } from "../../../domain/common/entities/DataForm";
 import { SectionTableM } from "./DataFormViewModels";
-
-interface Period {
-    startDate: string; // "YYYY-MM-DD"
-    endDate: string; // "YYYY-MM-DD"
-    id: string;
-    iso: string;
-    name: string;
-}
-
-declare global {
-    interface Window {
-        dhis2?: {
-            de: {
-                currentOrganisationUnitId: Id;
-                currentDataSetId: Id;
-                getSelectedPeriod: () => Period | undefined;
-                event: { dataValuesLoaded: string };
-            };
-            util: {
-                on: (event: string, action: () => void) => void;
-            };
-        };
-    }
-}
-
-function useDataEntrySelector(): { orgUnitId: Id; dataSetId: Id; period: string; reloadKey: string } {
-    const [reloadKey, reload] = useReload();
-    const { dhis2 } = window;
-    const isRunningInDataEntry = dhis2;
-
-    useEffect(() => {
-        if (!dhis2) return;
-        dhis2.util.on(dhis2.de.event.dataValuesLoaded, () => {
-            reload();
-        });
-    });
-
-    if (isRunningInDataEntry) {
-        return {
-            orgUnitId: dhis2.de.currentOrganisationUnitId,
-            dataSetId: dhis2.de.currentDataSetId,
-            period: dhis2.de.getSelectedPeriod()?.iso || "",
-            reloadKey,
-        };
-    } else {
-        const params = new URLSearchParams(window.location.search);
-
-        return {
-            orgUnitId: params.get("orgUnitId") || "jFOZHDZpjPL", // Angola
-            period: params.get("period") || "2019",
-            dataSetId: "r8DqSf2FDvP",
-            reloadKey,
-        };
-    }
-}
+import { useDataEntrySelector } from "./useDataEntrySelector";
 
 export const WMRNationalPolicies: React.FC = () => {
     const { compositionRoot } = useAppContext();
@@ -97,6 +41,8 @@ export const WMRNationalPolicies: React.FC = () => {
     );
 
     if (!(dataForm && sections)) return null;
+
+    // console.log(dataForm.sections);
 
     return (
         <div>
@@ -133,7 +79,7 @@ export const WMRNationalPolicies: React.FC = () => {
                                                     dataElement={item.dataElement}
                                                     categoryOptionComboId="Xr12mI7VPn3" // TODO
                                                     onValueChange={saveValue}
-                                                    disabled={false} // TODO: Handle exclusion of implemented this year and policy discontinued
+                                                    disabled={false}
                                                 />
                                             </DataTableCell>
                                         ) : (

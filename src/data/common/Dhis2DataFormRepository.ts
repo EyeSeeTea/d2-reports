@@ -1,6 +1,7 @@
 import _ from "lodash";
 import { Id } from "../../domain/common/entities/Base";
 import {
+    DataElement,
     DataElementM,
     DataForm,
     DataFormValue,
@@ -28,22 +29,30 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                                 id: true,
                                 formName: true,
                                 valueType: true,
+                                optionSet: true,
                             },
                         },
                     },
                     filter: { id: { eq: options.id } },
+                },
+                optionSets: {
+                    fields: {
+                        id: true,
+                        options: { id: true, displayName: true, code: true },
+                    },
                 },
             })
             .getData();
 
         const dataSet = res.dataSets[0];
         if (!dataSet) return Promise.reject(new Error("Data set not found"));
-        console.log({ dataSet });
 
         return {
             id: dataSet.id,
-            options: [],
-            optionSets: [],
+            optionSets: res.optionSets.map(os => ({
+                ...os,
+                options: os.options.map(o => ({ ...o, name: o.displayName })),
+            })),
             sections: dataSet.sections.map((section): Section => {
                 return {
                     id: section.id,
@@ -55,7 +64,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                             ([groupName, dataElementsForGroup]): SubSection => ({
                                 name: groupName,
                                 dataElements: _(dataElementsForGroup)
-                                    .map(dataElement => {
+                                    .map((dataElement): DataElement | null => {
                                         const { valueType } = dataElement;
 
                                         if (isElementOfUnion(valueType, DataElementM.valueTypesSupported)) {
@@ -63,6 +72,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                                                 ...dataElement,
                                                 valueType,
                                                 name: _(dataElement.formName).split(" - ").last() || "-",
+                                                optionSet: dataElement.optionSet,
                                             };
                                         } else {
                                             console.error(
@@ -98,14 +108,12 @@ export class Dhis2DataFormRepository implements DataFormRepository {
     }
 
     async saveValue(dataValue: DataFormValue): Promise<void> {
-        const strValue = typeof dataValue.value === "number" ? dataValue.value.toString() : dataValue.value;
-
         return this.api.dataValues
             .post({
                 ou: dataValue.orgUnitId,
                 pe: dataValue.period,
                 de: dataValue.dataElementId,
-                value: strValue,
+                value: dataValue.value,
             })
             .getData();
     }

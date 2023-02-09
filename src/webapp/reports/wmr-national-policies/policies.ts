@@ -17,7 +17,8 @@ interface Policy {
     }>;
 }
 
-const policies: Policy[] = [
+// TODO: Delete file
+export const policies: Policy[] = [
     {
         code: "LLINS",
         items: [

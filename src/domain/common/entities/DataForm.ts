@@ -1,8 +1,8 @@
+import { Maybe } from "../../../utils/ts-utils";
 import { Id, Ref } from "./Base";
 
 export interface DataForm {
     id: Id;
-    options: Option[];
     optionSets: OptionSet[];
     sections: Section[];
 }
@@ -18,7 +18,7 @@ export interface SubSection {
 }
 
 export interface DataElement extends Ref {
-    optionSet?: Ref;
+    optionSet: Maybe<Ref>;
     name: string;
     valueType: typeof DataElementM.valueTypesSupported[number];
 }
@@ -31,7 +31,7 @@ export interface OptionSet extends Ref {
     options: Option[];
 }
 
-interface Option extends Ref {
+export interface Option extends Ref {
     name: string;
     code: string;
 }
@@ -41,7 +41,7 @@ export interface DataFormValue {
     dataElementId: Id;
     period: Period;
     categoryOptionComboId: Id;
-    value: string | number;
+    value: Maybe<string>;
 }
 
 export type Period = string;
