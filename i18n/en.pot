@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2022-09-16T08:44:53.398Z\n"
-"PO-Revision-Date: 2022-09-16T08:44:53.398Z\n"
+"POT-Creation-Date: 2023-02-09T16:42:20.205Z\n"
+"PO-Revision-Date: 2023-02-09T16:42:20.205Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -74,6 +74,45 @@ msgstr ""
 msgid "created"
 msgstr ""
 
+msgid "Name"
+msgstr ""
+
+msgid "Last Updated"
+msgstr ""
+
+msgid "Denominator"
+msgstr ""
+
+msgid "Valid denominator"
+msgstr ""
+
+msgid "Numerator"
+msgstr ""
+
+msgid "Valid Numerator"
+msgstr ""
+
+msgid "Expression"
+msgstr ""
+
+msgid "Valid expression"
+msgstr ""
+
+msgid "Filter"
+msgstr ""
+
+msgid "Valid filter"
+msgstr ""
+
+msgid "Indicators"
+msgstr ""
+
+msgid "Program Indicators"
+msgstr ""
+
+msgid "Data quality"
+msgstr ""
+
 msgid "Data Element"
 msgstr ""
 
@@ -87,6 +126,12 @@ msgid "Approved value"
 msgstr ""
 
 msgid "Approved value comment"
+msgstr ""
+
+msgid "Approve value"
+msgstr ""
+
+msgid "Error when trying to approve data values"
 msgstr ""
 
 msgid "Error when trying to check difference in data values"
@@ -149,7 +194,10 @@ msgstr ""
 msgid "Approve"
 msgstr ""
 
-msgid "Error when trying to approve data values"
+msgid "Activate monitoring"
+msgstr ""
+
+msgid "Deactivate monitoring"
 msgstr ""
 
 msgid "Check Difference"

@@ -198,14 +198,16 @@ export const DataQualityList: React.FC = React.memo(() => {
     return (
         <React.Fragment>
             <Button
+                color="primary"
+                variant="contained"
                 onClick={async () => {
-                    await compositionRoot.malDataApproval.saveMonitoring(Namespaces.DATA_QUALITY, []);
+                    await compositionRoot.dataQuality.saveDataQualityUseCase(Namespaces.DATA_QUALITY, []);
                     reload();
                 }}
             >
                 Reload Validation
             </Button>
-            
+
             <Typography variant="h6" gutterBottom>
                 {i18n.t("Indicators")}
             </Typography>
