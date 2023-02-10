@@ -1,7 +1,7 @@
 import { ReportType } from "../../domain/common/entities/ReportType";
+import { getVariant } from "../reports/variants";
 
 export function getReportType(): ReportType {
-    const report = process.env.REACT_APP_REPORT_VARIANT || "";
-
-    return report === "mal-approval-status" ? "mal" : "nhwa";
+    const variant = getVariant();
+    return variant === "mal-approval-status" ? "mal" : "nhwa";
 }
