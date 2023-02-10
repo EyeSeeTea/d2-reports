@@ -5,7 +5,7 @@ import { inlineSource } from "inline-source";
 import { ArgumentParser } from "argparse";
 
 function log(...args: any[]) {
-    console.log(...args);
+    console.debug(...args);
 }
 
 function getArgs() {
