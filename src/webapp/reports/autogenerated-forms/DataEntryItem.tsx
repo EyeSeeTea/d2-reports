@@ -1,7 +1,8 @@
 import React from "react";
 // @ts-ignore
 import { Id } from "../../../domain/common/entities/Base";
-import { DataElement, DataForm, DataFormValue } from "../../../domain/common/entities/DataForm";
+import { DataElement, DataForm } from "../../../domain/common/entities/DataForm";
+import { DataValue } from "../../../domain/common/entities/DataValue";
 import SelectWidget, { SelectWidgetProps } from "./widgets/SelectWidget";
 import { Maybe } from "../../../utils/ts-utils";
 import BooleanWidget from "./widgets/BooleanWidget";
@@ -17,7 +18,7 @@ export interface ItemDataValue {
 
 type DataEntryItemProps = {
     dataForm: DataForm;
-    data: DataFormValue[];
+    data: DataValue[];
     dataElement: DataElement;
     categoryOptionComboId: string;
     onValueChange: (dataValue: ItemDataValue) => Promise<void>;

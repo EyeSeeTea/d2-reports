@@ -35,13 +35,3 @@ export interface Option extends Ref {
     name: string;
     code: string;
 }
-
-export interface DataFormValue {
-    orgUnitId: Id;
-    dataElementId: Id;
-    period: Period;
-    categoryOptionComboId: Id;
-    value: Maybe<string>;
-}
-
-export type Period = string;

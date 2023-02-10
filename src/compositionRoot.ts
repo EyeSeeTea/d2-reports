@@ -32,6 +32,7 @@ import { Dhis2DataFormRepository } from "./data/common/Dhis2DataFormRepository";
 import { SaveDataFormValueUseCase } from "./domain/common/usecases/SaveDataFormValue";
 import { GetDataFormUseCase } from "./domain/common/usecases/GetDataFormUseCase";
 import { GetDataFormValuesUseCase } from "./domain/common/usecases/GetDataFormValuesUseCase";
+import { Dhis2DataValueRepository } from "./data/common/Dhis2DataValueRepository";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -41,6 +42,7 @@ export function getCompositionRoot(api: D2Api) {
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
     const dataFormRepository = new Dhis2DataFormRepository(api);
+    const dataValueRepository = new Dhis2DataValueRepository(api);
 
     return {
         admin: getExecute({
@@ -73,8 +75,8 @@ export function getCompositionRoot(api: D2Api) {
         }),
         dataForms: getExecute({
             get: new GetDataFormUseCase(dataFormRepository),
-            getValues: new GetDataFormValuesUseCase(dataFormRepository),
-            saveValue: new SaveDataFormValueUseCase(dataFormRepository),
+            getValues: new GetDataFormValuesUseCase(dataValueRepository),
+            saveValue: new SaveDataFormValueUseCase(dataValueRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),

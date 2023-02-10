@@ -1,14 +1,7 @@
 import _ from "lodash";
 import { Id } from "../../domain/common/entities/Base";
-import {
-    DataElement,
-    DataElementM,
-    DataForm,
-    DataFormValue,
-    Period,
-    Section,
-    SubSection,
-} from "../../domain/common/entities/DataForm";
+import { DataElement, DataElementM, DataForm, Section, SubSection } from "../../domain/common/entities/DataForm";
+import { Period } from "../../domain/common/entities/DataValue";
 import { DataFormRepository } from "../../domain/common/repositories/DataFormRepository";
 import { D2Api } from "../../types/d2-api";
 import { isElementOfUnion } from "../../utils/ts-utils";
@@ -89,32 +82,5 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 };
             }),
         };
-    }
-
-    async getValues(options: { id: Id; orgUnitId: Id; period: Period }): Promise<DataFormValue[]> {
-        const res = await this.api.dataValues
-            .getSet({ dataSet: [options.id], orgUnit: [options.orgUnitId], period: [options.period] })
-            .getData();
-
-        return res.dataValues.map(
-            (dv): DataFormValue => ({
-                dataElementId: dv.dataElement,
-                value: dv.value,
-                orgUnitId: dv.orgUnit,
-                period: dv.period,
-                categoryOptionComboId: dv.categoryOptionCombo,
-            })
-        );
-    }
-
-    async saveValue(dataValue: DataFormValue): Promise<void> {
-        return this.api.dataValues
-            .post({
-                ou: dataValue.orgUnitId,
-                pe: dataValue.period,
-                de: dataValue.dataElementId,
-                value: dataValue.value,
-            })
-            .getData();
     }
 }
