@@ -25,6 +25,14 @@ export interface DataElement extends Ref {
 
 export class DataElementM {
     static valueTypesSupported = ["BOOLEAN", "INTEGER_ZERO_OR_POSITIVE", "INTEGER", "TEXT"] as const;
+
+    static getOptionSet(dataForm: DataForm, dataElement: DataElement): Maybe<OptionSet> {
+        const dataElementOptionSet = dataElement.optionSet;
+        const optionSet = dataElementOptionSet
+            ? dataForm.optionSets.find(optionSet => optionSet.id === dataElementOptionSet.id)
+            : undefined;
+        return optionSet;
+    }
 }
 
 export interface OptionSet extends Ref {

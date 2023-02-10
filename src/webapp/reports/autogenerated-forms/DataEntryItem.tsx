@@ -1,7 +1,7 @@
 import React from "react";
 // @ts-ignore
 import { Id } from "../../../domain/common/entities/Base";
-import { DataElement, DataForm } from "../../../domain/common/entities/DataForm";
+import { DataElement, DataElementM, DataForm } from "../../../domain/common/entities/DataForm";
 import { DataValue } from "../../../domain/common/entities/DataValue";
 import SelectWidget, { SelectWidgetProps } from "./widgets/SelectWidget";
 import { Maybe } from "../../../utils/ts-utils";
@@ -9,6 +9,16 @@ import BooleanWidget from "./widgets/BooleanWidget";
 import NumberWidget from "./widgets/NumberWidget";
 import TextWidget from "./widgets/TextWidget";
 import { WidgetState } from "./WidgetFeedback";
+import _ from "lodash";
+
+interface DataEntryItemProps {
+    dataForm: DataForm;
+    dataValues: DataValue[];
+    dataElement: DataElement;
+    categoryOptionComboId: string;
+    onValueChange: (dataValue: ItemDataValue) => Promise<void>;
+    disabled: boolean;
+}
 
 export interface ItemDataValue {
     dataElementId: Id;
@@ -16,24 +26,63 @@ export interface ItemDataValue {
     value: Maybe<string>;
 }
 
-type DataEntryItemProps = {
-    dataForm: DataForm;
-    data: DataValue[];
-    dataElement: DataElement;
-    categoryOptionComboId: string;
-    onValueChange: (dataValue: ItemDataValue) => Promise<void>;
-    disabled: boolean;
+const DataEntryItem: React.FC<DataEntryItemProps> = props => {
+    const { dataForm, dataValues, dataElement, categoryOptionComboId, disabled } = props;
+    const [state, notifyChange] = useDataValueSaveWithFeedback(props);
+
+    const dataValuesByKey = React.useMemo(() => {
+        return _.keyBy(dataValues, getDataValueKey);
+    }, [dataValues]);
+
+    const key = getDataValueKey({ dataElementId: dataElement.id, categoryOptionComboId });
+    const dataValue = dataValuesByKey[key];
+    const value = dataValue?.value;
+    const optionSet = DataElementM.getOptionSet(dataForm, dataElement);
+
+    if (optionSet) {
+        return (
+            <SelectWidget
+                value={value}
+                options={optionSet.options}
+                onValueChange={notifyChange}
+                state={state}
+                disabled={disabled} //
+            />
+        );
+    } else if (dataElement.valueType === "BOOLEAN") {
+        return (
+            <BooleanWidget
+                value={value}
+                onValueChange={notifyChange}
+                state={state}
+                disabled={disabled} //
+            />
+        );
+    } else if (dataElement.valueType === "INTEGER_ZERO_OR_POSITIVE" || dataElement.valueType === "INTEGER") {
+        return (
+            <NumberWidget
+                value={value}
+                onValueChange={notifyChange}
+                state={state}
+                disabled={disabled} //
+            />
+        );
+    } else if (dataElement.valueType === "TEXT") {
+        return (
+            <TextWidget
+                value={value}
+                onValueChange={notifyChange}
+                state={state}
+                disabled={disabled} //
+            />
+        );
+    } else {
+        return <span>Unsupported value type</span>;
+    }
 };
 
-const DataEntryItem: React.FC<DataEntryItemProps> = props => {
-    const { dataForm, data, dataElement, categoryOptionComboId, onValueChange, disabled } = props;
-
-    const dataValue = data.find(
-        dv => dv.dataElementId === dataElement.id && dv.categoryOptionComboId === categoryOptionComboId
-    );
-
-    const optionSet = dataForm.optionSets.find(({ id }) => id === dataElement.optionSet?.id);
-
+function useDataValueSaveWithFeedback(props: DataEntryItemProps) {
+    const { dataElement, categoryOptionComboId, onValueChange } = props;
     const [state, setState] = React.useState<WidgetState>("original");
 
     const notifyChange = React.useCallback<SelectWidgetProps["onValueChange"]>(
@@ -47,46 +96,11 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
         [dataElement, categoryOptionComboId, onValueChange]
     );
 
-    if (optionSet) {
-        return (
-            <SelectWidget
-                value={dataValue?.value}
-                options={optionSet.options}
-                onValueChange={notifyChange}
-                disabled={disabled}
-                state={state} //
-            />
-        );
-    } else if (dataElement.valueType === "BOOLEAN") {
-        return (
-            <BooleanWidget
-                value={dataValue?.value}
-                onValueChange={notifyChange}
-                state={state}
-                disabled={disabled} //
-            />
-        );
-    } else if (dataElement.valueType === "INTEGER_ZERO_OR_POSITIVE" || dataElement.valueType === "INTEGER") {
-        return (
-            <NumberWidget
-                value={dataValue?.value}
-                onValueChange={notifyChange}
-                state={state}
-                disabled={disabled} //
-            />
-        );
-    } else if (dataElement.valueType === "TEXT") {
-        return (
-            <TextWidget
-                value={dataValue?.value}
-                onValueChange={notifyChange}
-                state={state}
-                disabled={disabled} //
-            />
-        );
-    } else {
-        throw new Error(`Unsupported value type ${dataElement.valueType}`);
-    }
-};
+    return [state, notifyChange] as const;
+}
+
+function getDataValueKey(options: { dataElementId: Id; categoryOptionComboId: Id }) {
+    return [options.dataElementId, options.categoryOptionComboId].join(".");
+}
 
 export default React.memo(DataEntryItem);

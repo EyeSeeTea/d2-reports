@@ -8,11 +8,11 @@ export function useDataEntrySelector(): { orgUnitId: Id; dataSetId: Id; period: 
     const isRunningInDataEntry = dhis2;
 
     React.useEffect(() => {
-        if (!dhis2) return;
-        dhis2.util.on(dhis2.de.event.dataValuesLoaded, () => {
-            console.debug("dhis2.de.event.dataValuesLoaded");
-            reload();
-        });
+        if (dhis2) {
+            dhis2.util.on(dhis2.de.event.dataValuesLoaded, () => {
+                reload();
+            });
+        }
     });
 
     if (isRunningInDataEntry) {
@@ -35,8 +35,8 @@ export function useDataEntrySelector(): { orgUnitId: Id; dataSetId: Id; period: 
 }
 
 interface Period {
-    startDate: string; // "YYYY-MM-DD"
-    endDate: string; // "YYYY-MM-DD"
+    startDate: string;
+    endDate: string;
     id: string;
     iso: string;
     name: string;
@@ -44,6 +44,7 @@ interface Period {
 
 declare global {
     interface Window {
+        // It should be set when rendered in Data Entry App, but not on development.
         dhis2?: {
             de: {
                 currentOrganisationUnitId: Id;

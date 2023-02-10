@@ -10,10 +10,10 @@ export interface SectionTable {
 
 type Column = { name: string };
 
-type Row = {
+interface Row {
     name: string;
     items: Array<{ column: Column; dataElement: DataElement | undefined }>;
-};
+}
 
 export class SectionTableM {
     static getSectionsFromDataForm(dataForm: DataForm): SectionTable[] {
