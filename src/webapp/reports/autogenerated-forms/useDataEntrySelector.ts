@@ -35,11 +35,17 @@ export function useDataEntrySelector(): DataEntrySelectorRes {
         };
     } else {
         const params = new URLSearchParams(window.location.search);
+        const orgUnitId = params.get("orgUnit");
+        const dataSetId = params.get("dataSet");
+        const period = params.get("period");
+
+        if (!(orgUnitId && dataSetId && period))
+            throw new Error(`Usage: ${window.location.origin}?orgUnit=ID&dataSet=ID&period=PERIOD`);
 
         return {
-            orgUnitId: params.get("orgUnitId") || "jFOZHDZpjPL", // Angola
-            period: params.get("period") || "2019",
-            dataSetId: "r8DqSf2FDvP",
+            orgUnitId,
+            dataSetId,
+            period,
             reloadKey,
             initForm: _.noop,
         };

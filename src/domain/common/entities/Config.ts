@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Id, NamedRef } from "./Base";
+import { Id, NamedRef, Ref } from "./Base";
 import { getPath } from "./OrgUnit";
 import { User } from "./User";
 
@@ -12,11 +12,16 @@ export interface Config {
         [dataSetId: string]: Array<{ dataValueVal: Id; dataValueComment: Id }>;
     };
     orgUnits: string[];
-    sectionsByDataSet: {
-        [dataSetId: string]: NamedRef[] 
-    }| undefined;
+    sectionsByDataSet:
+        | {
+              [dataSetId: string]: NamedRef[];
+          }
+        | undefined;
     years: string[];
     approvalWorkflow: NamedRef[];
+    categoryOptionCombos: {
+        default: Ref;
+    };
 }
 
 export function getMainUserPaths(config: Config) {

@@ -34,7 +34,8 @@ export class Dhis2ConfigRepository implements ConfigRepository {
     constructor(private api: D2Api, private type: ReportType) {}
 
     async get(): Promise<Config> {
-        const { dataSets, constants, sqlViews: existedSqlViews, dataApprovalWorkflows } = await this.getMetadata();
+        const metadata = await this.getMetadata();
+        const { dataSets, constants, sqlViews: existedSqlViews, dataApprovalWorkflows } = metadata;
         const filteredDataSets = getFilteredDataSets(dataSets);
 
         const expectedSqlViews = base[this.type].sqlViewNames;
@@ -56,34 +57,34 @@ export class Dhis2ConfigRepository implements ConfigRepository {
         const pairedDataElements = getPairedMapping(filteredDataSets);
         const orgUnitList = getPairedOrgunitsMapping(filteredDataSets);
         const currentYear = new Date().getFullYear();
+        const defaultCoc = metadata.categoryOptionCombos.find(coc => coc.code === "default");
+        if (!defaultCoc) throw new Error("Cannot find default categoryOptionCombo");
+
+        const baseConfig: Config = {
+            dataSets: keyById(filteredDataSets),
+            currentUser,
+            sqlViews,
+            pairedDataElementsByDataSet: pairedDataElements,
+            sections: undefined,
+            sectionsByDataSet: undefined,
+            orgUnits: orgUnitList,
+            years: _.range(currentYear - 10, currentYear + 1).map(n => n.toString()),
+            approvalWorkflow: dataApprovalWorkflows,
+            categoryOptionCombos: { default: defaultCoc },
+        };
+
         if (base[this.type].constantCode !== "") {
             const constant = getNth(constants, 0, `Missing constant: ${base[this.type].constantCode}`);
             const constantData = JSON.parse(constant.description || "{}") as Constant;
             const { sections, sectionsByDataSet } = getSectionsInfo(constantData);
 
             return {
-                dataSets: keyById(filteredDataSets),
-                currentUser,
-                sqlViews,
-                pairedDataElementsByDataSet: pairedDataElements,
-                orgUnits: orgUnitList,
+                ...baseConfig,
                 sections: keyById(sections),
                 sectionsByDataSet,
-                years: _.range(currentYear - 10, currentYear + 1).map(n => n.toString()),
-                approvalWorkflow: dataApprovalWorkflows,
             };
         } else {
-            return {
-                dataSets: keyById(filteredDataSets),
-                currentUser,
-                sqlViews,
-                pairedDataElementsByDataSet: pairedDataElements,
-                orgUnits: orgUnitList,
-                sections: undefined,
-                sectionsByDataSet: undefined,
-                years: _.range(currentYear - 10, currentYear + 1).map(n => n.toString()),
-                approvalWorkflow: dataApprovalWorkflows,
-            };
+            return baseConfig;
         }
     }
 
@@ -111,6 +112,10 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             dataApprovalWorkflows: {
                 fields: { id: true, name: true },
                 filter: { name: { $ilike: base[this.type].approvalWorkflows.namePrefix } },
+            },
+            categoryOptionCombos: {
+                fields: { id: true, code: true },
+                filter: { code: { eq: "default" } },
             },
         });
 
