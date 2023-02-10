@@ -1,8 +1,18 @@
 import React from "react";
+import _ from "lodash";
 import { Id } from "../../../domain/common/entities/Base";
+import { Maybe } from "../../../utils/ts-utils";
 import { useReload } from "../../utils/use-reload";
 
-export function useDataEntrySelector(): { orgUnitId: Id; dataSetId: Id; period: string; reloadKey: string } {
+type DataEntrySelectorRes = {
+    orgUnitId: Id;
+    dataSetId: Id;
+    period: string;
+    reloadKey: string;
+    initForm: () => void;
+};
+
+export function useDataEntrySelector(): DataEntrySelectorRes {
     const [reloadKey, reload] = useReload();
     const { dhis2 } = window;
     const isRunningInDataEntry = dhis2;
@@ -21,6 +31,7 @@ export function useDataEntrySelector(): { orgUnitId: Id; dataSetId: Id; period: 
             dataSetId: dhis2.de.currentDataSetId,
             period: dhis2.de.getSelectedPeriod()?.iso || "",
             reloadKey,
+            initForm: dhis2.de.addEventListeners,
         };
     } else {
         const params = new URLSearchParams(window.location.search);
@@ -30,6 +41,7 @@ export function useDataEntrySelector(): { orgUnitId: Id; dataSetId: Id; period: 
             period: params.get("period") || "2019",
             dataSetId: "r8DqSf2FDvP",
             reloadKey,
+            initForm: _.noop,
         };
     }
 }
@@ -49,7 +61,8 @@ declare global {
             de: {
                 currentOrganisationUnitId: Id;
                 currentDataSetId: Id;
-                getSelectedPeriod: () => Period | undefined;
+                getSelectedPeriod(): Maybe<Period>;
+                addEventListeners(): void;
                 event: { dataValuesLoaded: string };
             };
             util: {
