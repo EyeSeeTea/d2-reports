@@ -206,7 +206,7 @@ export const DataQualityList: React.FC = React.memo(() => {
                     reload();
                 }}
             >
-                Reload Validation
+                {i18n.t("Reload Validation")}
             </Button>
 
             <Typography variant="h6" gutterBottom>
