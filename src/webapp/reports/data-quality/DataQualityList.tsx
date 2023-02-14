@@ -42,7 +42,6 @@ export const DataQualityList: React.FC = React.memo(() => {
     }, [compositionRoot]);
 
     useEffect(() => {
-        console.log(indicatorItems, programIndicatorItems);
         if (_.isEmpty(indicatorItems) && _.isEmpty(programIndicatorItems)) {
             compositionRoot.dataQuality.reloadValidation(Namespaces.DATA_QUALITY);
         }
