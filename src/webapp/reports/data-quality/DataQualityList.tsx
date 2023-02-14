@@ -202,7 +202,7 @@ export const DataQualityList: React.FC = React.memo(() => {
                 color="primary"
                 variant="contained"
                 onClick={async () => {
-                    await compositionRoot.dataQuality.saveDataQualityUseCase(Namespaces.DATA_QUALITY, []);
+                    await compositionRoot.dataQuality.reloadValidation(Namespaces.DATA_QUALITY);
                     reload();
                 }}
             >
@@ -234,9 +234,7 @@ export const DataQualityList: React.FC = React.memo(() => {
     );
 });
 
-export function getIndicatorSortingFromTableSorting(
-    sorting: TableSorting<IndicatorViewModel>
-): Sorting<IndicatorItem> {
+export function getIndicatorSortingFromTableSorting(sorting: TableSorting<IndicatorViewModel>): Sorting<IndicatorItem> {
     return {
         field: sorting.field === "id" ? "name" : sorting.field,
         direction: sorting.order,

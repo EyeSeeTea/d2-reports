@@ -1,11 +1,11 @@
 import { UseCase } from "../../../../compositionRoot";
-import { IndicatorItem, ProgramIndicatorItem } from "../entities/DataQualityItem";
+import { IndicatorConfig, ProgramIndicatorConfig } from "../entities/DataQualityItem";
 import { DataQualityRepository } from "../repositories/DataQualityRepository";
 
 export class SaveDataQualityUseCase implements UseCase {
-    constructor(private approvalRepository: DataQualityRepository) {}
+    constructor(private dataQualityRepository: DataQualityRepository) {}
 
-    execute(namespace: string, dataQuality: IndicatorItem[] | ProgramIndicatorItem[]): Promise<void> {
-        return this.approvalRepository.saveDataQuality(namespace, dataQuality);
+    execute(namespace: string, dataQuality: IndicatorConfig | ProgramIndicatorConfig): Promise<void> {
+        return this.dataQualityRepository.saveDataQuality(namespace, dataQuality);
     }
 }
