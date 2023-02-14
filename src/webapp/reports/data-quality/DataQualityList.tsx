@@ -27,6 +27,9 @@ export const DataQualityList: React.FC = React.memo(() => {
 
     const [visibleIndicatorColumns, setVisibleIndicatorColumns] = useState<string[]>();
     const [visibleProgramIndicatorColumns, setVisibleProgramIndicatorColumns] = useState<string[]>();
+    const [indicatorItems, setIndicators] = useState<IndicatorItem[]>([]);
+    const [programIndicatorItems, setProgramIndicators] = useState<ProgramIndicatorItem[]>([]);
+
     const [_reloadKey, reload] = useReload();
 
     useEffect(() => {
@@ -37,6 +40,13 @@ export const DataQualityList: React.FC = React.memo(() => {
             setVisibleProgramIndicatorColumns(columns);
         });
     }, [compositionRoot]);
+
+    useEffect(() => {
+        console.log(indicatorItems, programIndicatorItems);
+        if (_.isEmpty(indicatorItems) && _.isEmpty(programIndicatorItems)) {
+            compositionRoot.dataQuality.reloadValidation(Namespaces.DATA_QUALITY);
+        }
+    });
 
     const indicatorBaseConfig: TableConfig<IndicatorViewModel> = useMemo(
         () => ({
@@ -118,6 +128,7 @@ export const DataQualityList: React.FC = React.memo(() => {
                 },
                 Namespaces.DATA_QUALITY
             );
+            setIndicators(objects);
 
             return {
                 pager,
@@ -137,6 +148,7 @@ export const DataQualityList: React.FC = React.memo(() => {
                 },
                 Namespaces.DATA_QUALITY
             );
+            setProgramIndicators(objects);
 
             return {
                 pager,
