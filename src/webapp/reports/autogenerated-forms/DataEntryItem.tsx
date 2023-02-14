@@ -2,109 +2,115 @@ import React from "react";
 // @ts-ignore
 import { Id } from "../../../domain/common/entities/Base";
 import { DataForm } from "../../../domain/common/entities/DataForm";
-import { DataElement } from "../../../domain/common/entities/DataElement";
-import { DataValue } from "../../../domain/common/entities/DataValue";
-import SelectWidget, { SelectWidgetProps } from "./widgets/SelectWidget";
-import { assertUnreachable, Maybe } from "../../../utils/ts-utils";
+import { DataValue, DataValueIndexed, DataValueM } from "../../../domain/common/entities/DataValue";
+import { assertUnreachable } from "../../../utils/ts-utils";
 import BooleanWidget from "./widgets/BooleanWidget";
 import NumberWidget from "./widgets/NumberWidget";
 import TextWidget from "./widgets/TextWidget";
 import { WidgetState } from "./WidgetFeedback";
-import _ from "lodash";
+import SingleSelectWidget from "./widgets/SingleSelectWidget";
+import MultipleSelectWidget from "./widgets/MultipleSelectWidget";
+import { WidgetProps } from "./widgets/WidgetBase";
 
 interface DataEntryItemProps {
     dataForm: DataForm;
-    dataValues: DataValue[];
-    dataElement: DataElement;
+    dataElementId: Id;
+    dataValues: DataValueIndexed;
     categoryOptionComboId: string;
-    onValueChange: (dataValue: ItemDataValue) => Promise<void>;
+    onValueChange: (dataValue: DataValue) => Promise<void>;
     disabled: boolean;
 }
 
-export interface ItemDataValue {
-    dataElementId: Id;
-    categoryOptionComboId: Id;
-    value: Maybe<string>;
-}
-
 const DataEntryItem: React.FC<DataEntryItemProps> = props => {
-    const { dataValues, dataElement, categoryOptionComboId, disabled } = props;
+    const { dataValues, categoryOptionComboId, dataElementId, disabled } = props;
     const [state, notifyChange] = useDataValueSaveWithFeedback(props);
 
-    const dataValuesByKey = React.useMemo(() => {
-        return _.keyBy(dataValues, getDataValueKey);
-    }, [dataValues]);
+    const key = DataValueM.getSelector({ dataElementId, categoryOptionComboId });
+    const dataValue = dataValues[key];
+    if (!dataValue) return null;
 
-    const key = getDataValueKey({ dataElementId: dataElement.id, categoryOptionComboId });
-    const dataValue = dataValuesByKey[key];
-    const value = dataValue?.value;
-    const { valueType } = dataElement;
+    const { type, dataElement } = dataValue;
+    const { options } = dataElement;
 
-    switch (valueType) {
-        case "BOOLEAN":
-            return (
-                <BooleanWidget
-                    value={value}
-                    onValueChange={notifyChange}
-                    state={state}
-                    disabled={disabled} //
-                />
-            );
-        case "INTEGER_ZERO_OR_POSITIVE":
-        case "INTEGER":
-            return (
-                <NumberWidget
-                    value={value}
-                    onValueChange={notifyChange}
-                    state={state}
-                    disabled={disabled} //
-                />
-            );
-        case "TEXT":
-            return (
-                <TextWidget
-                    value={value}
-                    onValueChange={notifyChange}
-                    state={state}
-                    disabled={disabled} //
-                />
-            );
-        case "OPTION":
-            return (
-                <SelectWidget
-                    value={value}
-                    options={dataElement.options}
-                    onValueChange={notifyChange}
-                    state={state}
-                    disabled={disabled}
-                    isMultiple={dataElement.isMultiple}
-                />
-            );
-        default:
-            return assertUnreachable(valueType);
+    if (options) {
+        switch (type) {
+            case "BOOLEAN":
+                return null;
+            case "TEXT":
+            case "NUMBER":
+                return dataValue.isMultiple ? (
+                    <MultipleSelectWidget
+                        dataValue={dataValue}
+                        options={options.items}
+                        onValueChange={notifyChange}
+                        state={state}
+                        disabled={disabled}
+                    />
+                ) : (
+                    <SingleSelectWidget
+                        dataValue={dataValue}
+                        options={options.items}
+                        onValueChange={notifyChange}
+                        state={state}
+                        disabled={disabled}
+                    />
+                );
+            default:
+                assertUnreachable(type);
+        }
+    } else if (!dataValue.isMultiple) {
+        switch (type) {
+            case "BOOLEAN":
+                return (
+                    <BooleanWidget
+                        dataValue={dataValue}
+                        onValueChange={notifyChange}
+                        state={state}
+                        disabled={disabled} //
+                    />
+                );
+            case "NUMBER":
+                return (
+                    <NumberWidget
+                        dataValue={dataValue}
+                        onValueChange={notifyChange}
+                        state={state}
+                        disabled={disabled} //
+                    />
+                );
+            case "TEXT":
+                return (
+                    <TextWidget
+                        dataValue={dataValue}
+                        onValueChange={notifyChange}
+                        state={state}
+                        disabled={disabled} //
+                    />
+                );
+            default:
+                return assertUnreachable(type);
+        }
+    } else {
+        return <p>Data element supported: {JSON.stringify(dataValue.dataElement)}</p>;
     }
 };
 
 function useDataValueSaveWithFeedback(props: DataEntryItemProps) {
-    const { dataElement, categoryOptionComboId, onValueChange } = props;
+    const { onValueChange } = props;
     const [state, setState] = React.useState<WidgetState>("original");
 
-    const notifyChange = React.useCallback<SelectWidgetProps["onValueChange"]>(
-        async value => {
+    const notifyChange = React.useCallback<WidgetProps["onValueChange"]>(
+        dataValue => {
             setState("saving");
 
-            onValueChange({ dataElementId: dataElement.id, categoryOptionComboId, value })
+            onValueChange(dataValue)
                 .then(() => setState("saveSuccessful"))
                 .catch(() => setState("saveError"));
         },
-        [dataElement, categoryOptionComboId, onValueChange]
+        [onValueChange]
     );
 
     return [state, notifyChange] as const;
-}
-
-function getDataValueKey(options: { dataElementId: Id; categoryOptionComboId: Id }) {
-    return [options.dataElementId, options.categoryOptionComboId].join(".");
 }
 
 export default React.memo(DataEntryItem);

@@ -1,42 +1,42 @@
-import { Ref } from "./Base";
+import { Maybe } from "../../../utils/ts-utils";
+import { Id } from "./Base";
 
-interface DataElementBase extends Ref {
+export type DataElement = DataElementBoolean | DataElementNumber | DataElementText;
+
+interface DataElementBase {
+    id: Id;
     name: string;
 }
 
-interface DataElementSimple extends DataElementBase {
-    valueType: "BOOLEAN" | "INTEGER_ZERO_OR_POSITIVE" | "INTEGER" | "TEXT";
+export interface DataElementBoolean extends DataElementBase {
+    type: "BOOLEAN";
+    options: Options;
 }
 
-interface DataElementOption extends DataElementBase {
-    valueType: "OPTION";
-    options: Option[];
-    isMultiple: boolean;
+export interface DataElementNumber extends DataElementBase {
+    type: "NUMBER";
+    numberType: NumberType;
+    options: Options;
 }
 
-export type DataElement = DataElementSimple | DataElementOption;
-
-export interface OptionSet extends Ref {
-    options: Option[];
+export interface DataElementText extends DataElementBase {
+    type: "TEXT";
+    options: Options;
 }
 
-export interface Option {
+type Options = Maybe<{ isMultiple: boolean; items: Option<string>[] }>;
+
+type NumberType =
+    | "NUMBER"
+    | "INTEGER_ZERO_OR_POSITIVE"
+    | "INTEGER"
+    | "INTEGER_NEGATIVE"
+    | "INTEGER_POSITIVE"
+    | "INTEGER_ZERO_OR_POSITIVE";
+
+export type DataElementType = DataElement["type"];
+
+export interface Option<Value> {
     name: string;
-    value: string;
-}
-
-/** */
-
-export class DataElementM {
-    static valueTypesSupported = ["BOOLEAN", "INTEGER_ZERO_OR_POSITIVE", "INTEGER", "TEXT", "OPTION"] as const;
-
-    /*
-    static getOptionSet(dataForm: DataForm, dataElement: DataElement): Maybe<OptionSet> {
-        const dataElementOptionSet = dataElement.optionSet;
-        const optionSet = dataElementOptionSet
-            ? dataForm.optionSets.find(optionSet => optionSet.id === dataElementOptionSet.id)
-            : undefined;
-        return optionSet;
-    }
-    */
+    value: Value;
 }

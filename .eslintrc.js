@@ -11,6 +11,7 @@ module.exports = {
         "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
         "react/prop-types": "off",
         "react/display-name": "off",
+        "array-callback-return": "off",
         "react/react-in-jsx-scope": "off",
         "no-unused-expressions": "off",
         "no-useless-concat": "off",

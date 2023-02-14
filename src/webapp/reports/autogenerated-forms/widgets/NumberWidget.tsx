@@ -1,29 +1,27 @@
 import React from "react";
 // @ts-ignore
 import { Input } from "@dhis2/ui";
-import { Maybe } from "../../../../utils/ts-utils";
-import { WidgetFeedback, WidgetState } from "../WidgetFeedback";
+import { WidgetFeedback } from "../WidgetFeedback";
+import { DataValueNumberSingle } from "../../../../domain/common/entities/DataValue";
+import { WidgetProps } from "./WidgetBase";
 
-export interface NumberWidgetProps {
-    value: Maybe<string>;
-    onValueChange(value: Maybe<string>): void;
-    disabled: boolean;
-    state: WidgetState;
+export interface NumberWidgetProps extends WidgetProps {
+    dataValue: DataValueNumberSingle;
 }
 
 const NumberWidget: React.FC<NumberWidgetProps> = props => {
-    const { onValueChange, value, disabled } = props;
+    const { onValueChange, dataValue, disabled } = props;
 
-    const [stateValue, setStateValue] = React.useState(value);
+    const [stateValue, setStateValue] = React.useState(dataValue.value);
 
-    React.useEffect(() => setStateValue(value), [value]);
+    React.useEffect(() => setStateValue(dataValue.value), [dataValue.value]);
 
     const notifyChange = React.useCallback(
         ({ value }: { value: string }) => {
             setStateValue(value);
-            onValueChange(value);
+            onValueChange({ ...dataValue, value });
         },
-        [onValueChange]
+        [onValueChange, dataValue]
     );
 
     return (
