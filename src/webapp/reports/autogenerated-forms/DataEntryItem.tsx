@@ -1,10 +1,11 @@
 import React from "react";
 // @ts-ignore
 import { Id } from "../../../domain/common/entities/Base";
-import { DataElement, DataElementM, DataForm } from "../../../domain/common/entities/DataForm";
+import { DataForm } from "../../../domain/common/entities/DataForm";
+import { DataElement } from "../../../domain/common/entities/DataElement";
 import { DataValue } from "../../../domain/common/entities/DataValue";
 import SelectWidget, { SelectWidgetProps } from "./widgets/SelectWidget";
-import { Maybe } from "../../../utils/ts-utils";
+import { assertUnreachable, Maybe } from "../../../utils/ts-utils";
 import BooleanWidget from "./widgets/BooleanWidget";
 import NumberWidget from "./widgets/NumberWidget";
 import TextWidget from "./widgets/TextWidget";
@@ -27,7 +28,7 @@ export interface ItemDataValue {
 }
 
 const DataEntryItem: React.FC<DataEntryItemProps> = props => {
-    const { dataForm, dataValues, dataElement, categoryOptionComboId, disabled } = props;
+    const { dataValues, dataElement, categoryOptionComboId, disabled } = props;
     const [state, notifyChange] = useDataValueSaveWithFeedback(props);
 
     const dataValuesByKey = React.useMemo(() => {
@@ -37,47 +38,50 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
     const key = getDataValueKey({ dataElementId: dataElement.id, categoryOptionComboId });
     const dataValue = dataValuesByKey[key];
     const value = dataValue?.value;
-    const optionSet = DataElementM.getOptionSet(dataForm, dataElement);
+    const { valueType } = dataElement;
 
-    if (optionSet) {
-        return (
-            <SelectWidget
-                value={value}
-                options={optionSet.options}
-                onValueChange={notifyChange}
-                state={state}
-                disabled={disabled} //
-            />
-        );
-    } else if (dataElement.valueType === "BOOLEAN") {
-        return (
-            <BooleanWidget
-                value={value}
-                onValueChange={notifyChange}
-                state={state}
-                disabled={disabled} //
-            />
-        );
-    } else if (dataElement.valueType === "INTEGER_ZERO_OR_POSITIVE" || dataElement.valueType === "INTEGER") {
-        return (
-            <NumberWidget
-                value={value}
-                onValueChange={notifyChange}
-                state={state}
-                disabled={disabled} //
-            />
-        );
-    } else if (dataElement.valueType === "TEXT") {
-        return (
-            <TextWidget
-                value={value}
-                onValueChange={notifyChange}
-                state={state}
-                disabled={disabled} //
-            />
-        );
-    } else {
-        return <span>Unsupported value type</span>;
+    switch (valueType) {
+        case "BOOLEAN":
+            return (
+                <BooleanWidget
+                    value={value}
+                    onValueChange={notifyChange}
+                    state={state}
+                    disabled={disabled} //
+                />
+            );
+        case "INTEGER_ZERO_OR_POSITIVE":
+        case "INTEGER":
+            return (
+                <NumberWidget
+                    value={value}
+                    onValueChange={notifyChange}
+                    state={state}
+                    disabled={disabled} //
+                />
+            );
+        case "TEXT":
+            return (
+                <TextWidget
+                    value={value}
+                    onValueChange={notifyChange}
+                    state={state}
+                    disabled={disabled} //
+                />
+            );
+        case "OPTION":
+            return (
+                <SelectWidget
+                    value={value}
+                    options={dataElement.options}
+                    onValueChange={notifyChange}
+                    state={state}
+                    disabled={disabled}
+                    isMultiple={dataElement.isMultiple}
+                />
+            );
+        default:
+            return assertUnreachable(valueType);
     }
 };
 

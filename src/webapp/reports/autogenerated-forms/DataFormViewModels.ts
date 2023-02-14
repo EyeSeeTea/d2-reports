@@ -1,5 +1,6 @@
 import _ from "lodash";
-import { DataElement, DataForm } from "../../../domain/common/entities/DataForm";
+import { DataForm } from "../../../domain/common/entities/DataForm";
+import { DataElement } from "../../../domain/common/entities/DataElement";
 
 export interface SectionTable {
     id: string;

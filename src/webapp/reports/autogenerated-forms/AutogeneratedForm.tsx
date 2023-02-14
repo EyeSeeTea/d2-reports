@@ -20,10 +20,10 @@ import { CommentIcon } from "./CommentIcon";
 /*
  * Convert data forms into table, using "-" as a separator. An example:
  *
- *    - ITNs - `Basic - Written Policy`
- *    - ITNs - `Basic - Policy Implemented`
- *    - ITNs - `Extended - Written Policy`
- *    - ITNs - `Extended - Policy Implemented`
+ *    - ITNs - Basic - Written Policy
+ *    - ITNs - Basic - Policy Implemented
+ *    - ITNs - Extended - Written Policy
+ *    - ITNs - Extended - Policy Implemented
  *
  *    This will create this table:
  *

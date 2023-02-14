@@ -66,10 +66,7 @@ export function groupedPairsBy<Obj, Key>(objs: Obj[], mapper: (obj: Obj) => Key)
     return Array.from(result);
 }
 
-export function isElementOfUnion<Union extends string>(
-    value: string,
-    values: readonly Union[]
-): value is Union {
+export function isElementOfUnion<Union extends string>(value: string, values: readonly Union[]): value is Union {
     return (values as readonly string[]).includes(value);
 }
 
@@ -98,7 +95,7 @@ export type FromPromise<T> = T extends Promise<infer U> ? U : T;
 
 export type ReplaceReturnType<T extends (...a: any) => any, TNewReturn> = (...a: Parameters<T>) => TNewReturn;
 
-export function assertUnreachable(value: never, message = `No such case in exhaustive switch: ${value}`) {
+export function assertUnreachable(value: never, message = `No such case in exhaustive switch: ${value}`): never {
     throw new Error(message);
 }
 
@@ -112,6 +109,8 @@ export type RecursivePartial<T> = {
         ? RecursivePartial<T[P]>
         : T[P];
 };
+
+export type NonPartial<T> = T extends Partial<infer R> ? R : T;
 
 export function invertMapping<Key extends string, Value extends string>(
     mapping: Record<Key, Value>
