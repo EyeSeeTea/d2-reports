@@ -45,7 +45,7 @@ export const DataQualityList: React.FC = React.memo(() => {
         if (_.isEmpty(indicatorItems) && _.isEmpty(programIndicatorItems)) {
             compositionRoot.dataQuality.reloadValidation(Namespaces.DATA_QUALITY);
         }
-    });
+    }, [compositionRoot.dataQuality, indicatorItems, programIndicatorItems]);
 
     const indicatorBaseConfig: TableConfig<IndicatorViewModel> = useMemo(
         () => ({
