@@ -12,14 +12,10 @@ export interface BooleanWidgetProps extends WidgetProps {
 
 const BooleanWidget: React.FC<BooleanWidgetProps> = props => {
     const { onValueChange, dataValue, disabled } = props;
-
-    const [stateValue, setStateValue] = React.useState(dataValue.value);
-
-    React.useEffect(() => setStateValue(dataValue.value), [dataValue.value]);
+    const isChecked = dataValue.value;
 
     const notifyChange = React.useCallback(
         (value: boolean) => {
-            setStateValue(value);
             onValueChange({ ...dataValue, value });
         },
         [onValueChange, dataValue]
@@ -30,8 +26,8 @@ const BooleanWidget: React.FC<BooleanWidgetProps> = props => {
 
     return (
         <WidgetFeedback state={props.state}>
-            <Radio dense label={i18n.t("Yes")} onChange={setTrue} checked={stateValue} disabled={disabled} />
-            <Radio dense label={i18n.t("No")} onChange={setFalse} checked={!stateValue} disabled={disabled} />
+            <Radio dense label={i18n.t("Yes")} onChange={setTrue} checked={isChecked === true} disabled={disabled} />
+            <Radio dense label={i18n.t("No")} onChange={setFalse} checked={isChecked === false} disabled={disabled} />
         </WidgetFeedback>
     );
 };

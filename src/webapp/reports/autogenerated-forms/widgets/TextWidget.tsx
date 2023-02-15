@@ -12,13 +12,8 @@ export interface TextWidgetProps extends WidgetProps {
 const TextWidget: React.FC<TextWidgetProps> = props => {
     const { onValueChange, dataValue, disabled } = props;
 
-    const [stateValue, setStateValue] = React.useState(dataValue.value);
-
-    React.useEffect(() => setStateValue(dataValue.value), [dataValue.value]);
-
     const notifyChange = React.useCallback(
         ({ value }: { value: string }) => {
-            setStateValue(value);
             onValueChange({ ...dataValue, value });
         },
         [onValueChange, dataValue]
@@ -26,7 +21,7 @@ const TextWidget: React.FC<TextWidgetProps> = props => {
 
     return (
         <WidgetFeedback state={props.state}>
-            <Input onChange={notifyChange} value={stateValue} disabled={disabled} />
+            <Input onChange={notifyChange} value={dataValue.value} disabled={disabled} />
         </WidgetFeedback>
     );
 };

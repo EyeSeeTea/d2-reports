@@ -1,3 +1,4 @@
+import _ from "lodash";
 import { Maybe } from "../../../utils/ts-utils";
 import { Id } from "./Base";
 import { DataElement, DataElementBoolean, DataElementNumber, DataElementText } from "./DataElement";
@@ -53,20 +54,36 @@ export type DataValue =
 export type Period = string;
 
 type DataValueSelector = string; // `${dataElementId.categoryOptionComboId}`
-export type DataValueStore = Record<DataValueSelector, DataValue>;
+export type DataValueStoreD = Record<DataValueSelector, DataValue>;
 
-export class DataValueM {
-    static getSelector(options: { dataElementId: Id; categoryOptionComboId: Id }): DataValueSelector {
-        return [options.dataElementId, options.categoryOptionComboId].join(".");
+export class DataValueStore {
+    constructor(private store: DataValueStoreD) {}
+
+    static from(dataValues: DataValue[]): DataValueStore {
+        const store = _.keyBy(dataValues, dv =>
+            getStoreKey({
+                dataElementId: dv.dataElement.id,
+                categoryOptionComboId: dv.categoryOptionComboId,
+            })
+        );
+        return new DataValueStore(store);
     }
 
-    static getOrEmpty(dataValues: DataValueStore, dataElement: DataElement, base: DataValueBase): DataValue {
-        const key = DataValueM.getSelector({
+    set(dataValue: DataValue): DataValueStore {
+        const key = getStoreKey({
+            dataElementId: dataValue.dataElement.id,
+            categoryOptionComboId: dataValue.categoryOptionComboId,
+        });
+        return new DataValueStore({ ...this.store, [key]: dataValue });
+    }
+
+    getOrEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
+        const key = getStoreKey({
             dataElementId: dataElement.id,
             categoryOptionComboId: base.categoryOptionComboId,
         });
 
-        return dataValues[key] || getEmpty(dataElement, base);
+        return this.store[key] || getEmpty(dataElement, base);
     }
 }
 
@@ -83,4 +100,8 @@ function getEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
                 ? { ...base, dataElement, type: "TEXT", isMultiple: true, values: [] }
                 : { ...base, dataElement, type: "TEXT", isMultiple: false, value: "" };
     }
+}
+
+function getStoreKey(options: { dataElementId: Id; categoryOptionComboId: Id }): DataValueSelector {
+    return [options.dataElementId, options.categoryOptionComboId].join(".");
 }

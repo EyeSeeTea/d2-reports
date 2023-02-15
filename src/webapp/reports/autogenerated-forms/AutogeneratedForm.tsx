@@ -43,7 +43,7 @@ function useDataFormInfo(): Maybe<DataFormInfo> {
     const { compositionRoot } = useAppContext();
     const { orgUnitId, period, dataSetId, reloadKey, initForm } = useDataEntrySelector();
     const [dataForm, setDataForm] = useState<DataForm>();
-    const [dataValues, setDataValues] = useState<DataValueStore>({});
+    const [dataValues, setDataValues] = useState<DataValueStore>();
 
     const { config } = useAppContext();
 

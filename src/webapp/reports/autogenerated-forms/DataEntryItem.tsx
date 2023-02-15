@@ -1,6 +1,6 @@
 import React from "react";
 // @ts-ignore
-import { DataValue, DataValueM } from "../../../domain/common/entities/DataValue";
+import { DataValue, DataValueStore } from "../../../domain/common/entities/DataValue";
 import { assertUnreachable } from "../../../utils/ts-utils";
 import BooleanWidget from "./widgets/BooleanWidget";
 import NumberWidget from "./widgets/NumberWidget";
@@ -22,14 +22,9 @@ interface DataEntryItemProps {
 const DataEntryItem: React.FC<DataEntryItemProps> = props => {
     const { dataElement, dataFormInfo, disabled } = props;
     const { categoryOptionComboId, orgUnitId, period } = dataFormInfo;
-    const [state, notifyChange] = useDataValueSaveWithFeedback(props);
+    const [dataValues, state, notifyChange] = useDataValueSaveWithFeedback(props);
 
-    const dataValue = DataValueM.getOrEmpty(dataFormInfo.data.values, dataElement, {
-        categoryOptionComboId,
-        period,
-        orgUnitId,
-    });
-
+    const dataValue = dataValues.getOrEmpty(dataElement, { categoryOptionComboId, period, orgUnitId });
     const { type } = dataValue;
     const { options } = dataElement;
 
@@ -97,21 +92,26 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
 };
 
 function useDataValueSaveWithFeedback(props: DataEntryItemProps) {
-    const { onValueChange } = props;
+    const { onValueChange, dataFormInfo } = props;
     const [state, setState] = React.useState<WidgetState>("original");
+
+    const [dataValues, setDataValues] = React.useState<DataValueStore>(dataFormInfo.data.values);
 
     const notifyChange = React.useCallback<WidgetProps["onValueChange"]>(
         dataValue => {
             setState("saving");
 
             onValueChange(dataValue)
-                .then(() => setState("saveSuccessful"))
+                .then(() => {
+                    setDataValues(prevDataValues => prevDataValues.set(dataValue));
+                    return setState("saveSuccessful");
+                })
                 .catch(() => setState("saveError"));
         },
         [onValueChange]
     );
 
-    return [state, notifyChange] as const;
+    return [dataValues, state, notifyChange] as const;
 }
 
 export default React.memo(DataEntryItem);

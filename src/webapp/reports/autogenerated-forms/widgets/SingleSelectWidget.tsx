@@ -17,13 +17,8 @@ export interface SingleSelectWidgetProps extends WidgetProps {
 const SingleSelectWidget: React.FC<SingleSelectWidgetProps> = props => {
     const { onValueChange, dataValue, disabled, options } = props;
 
-    const [stateValue, setStateValue] = React.useState(dataValue.value);
-
-    React.useEffect(() => setStateValue(dataValue.value), [dataValue.value]);
-
     const notifyChange = React.useCallback(
         ({ selected }: { selected: string }) => {
-            setStateValue(selected);
             onValueChange({ ...dataValue, value: selected });
         },
         [onValueChange, dataValue]
@@ -33,7 +28,7 @@ const SingleSelectWidget: React.FC<SingleSelectWidgetProps> = props => {
         <WidgetFeedback state={props.state}>
             <SingleSelect
                 onChange={notifyChange}
-                selected={stateValue}
+                selected={dataValue.value}
                 disabled={disabled}
                 placeholder={i18n.t("Select option")}
             >

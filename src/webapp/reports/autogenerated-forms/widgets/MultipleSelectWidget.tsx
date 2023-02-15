@@ -17,15 +17,8 @@ export interface MultipleSelectWidgetProps extends WidgetProps {
 const MultipleSelectWidget: React.FC<MultipleSelectWidgetProps> = props => {
     const { onValueChange, disabled, options, dataValue } = props;
 
-    const [stateValues, setStateValues] = React.useState(() => dataValue.values);
-
-    React.useEffect(() => {
-        return setStateValues(dataValue.values);
-    }, [dataValue.values]);
-
     const notifyChange = React.useCallback(
         ({ selected }: { selected: string[] }) => {
-            setStateValues(selected);
             onValueChange({ ...dataValue, values: selected });
         },
         [onValueChange, dataValue]
@@ -35,7 +28,7 @@ const MultipleSelectWidget: React.FC<MultipleSelectWidgetProps> = props => {
         <WidgetFeedback state={props.state}>
             <MultiSelect
                 onChange={notifyChange}
-                selected={stateValues}
+                selected={dataValue.values}
                 disabled={disabled}
                 placeholder={i18n.t("Select option")}
             >
