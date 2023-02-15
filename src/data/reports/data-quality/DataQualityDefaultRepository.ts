@@ -89,11 +89,13 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         );
     }
 
-    async reloadValidation(namespace: string) {
-        const dataQuality = await this.globalStorageClient.getObject<IndicatorConfig>(namespace);
+    async reloadValidation(namespace: string, fromZero: boolean) {
+        const dataQuality = await this.globalStorageClient.getObject<IndicatorConfig | ProgramIndicatorConfig>(
+            namespace
+        );
         const dataQualityErrors: any[] = [];
 
-        if (dataQuality?.validationResults.length === 0) {
+        if (fromZero && dataQuality?.validationResults.length === 0) {
             const { indicators } = await this.api.metadata
                 .get({
                     indicators: {
@@ -145,7 +147,6 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
                     console.debug(error);
                 }
             });
-
             await promiseMap(programIndicators, async programIndicator => {
                 const dataQualityItem: DataQualityItem = programIndicator;
                 try {
@@ -165,6 +166,12 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
                 } catch (error) {
                     console.debug(error);
                 }
+            });
+
+            await this.saveDataQuality(Namespaces.DATA_QUALITY, {
+                indicatorsLastUpdated: new Date().toISOString(),
+                programIndicatorsLastUpdated: new Date().toISOString(),
+                validationResults: dataQualityErrors,
             });
         } else {
             const { indicators } = await this.api.metadata
@@ -228,7 +235,6 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
                     console.debug(error);
                 }
             });
-
             await promiseMap(programIndicators, async programIndicator => {
                 const dataQualityItem: DataQualityItem = programIndicator;
                 try {
@@ -249,13 +255,13 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
                     console.debug(error);
                 }
             });
-        }
 
-        await this.saveDataQuality(Namespaces.DATA_QUALITY, {
-            indicatorsLastUpdated: new Date().toISOString(),
-            programIndicatorsLastUpdated: new Date().toISOString(),
-            validationResults: dataQualityErrors,
-        });
+            await this.saveDataQuality(Namespaces.DATA_QUALITY, {
+                indicatorsLastUpdated: new Date().toISOString(),
+                programIndicatorsLastUpdated: new Date().toISOString(),
+                validationResults: dataQualityErrors,
+            });
+        }
     }
 
     async getColumns(namespace: string): Promise<string[]> {
