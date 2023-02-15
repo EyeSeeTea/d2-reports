@@ -121,11 +121,6 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
                             expression: true,
                             filter: true,
                         },
-                        filter: {
-                            lastUpdated: {
-                                gt: dataQuality?.indicatorsLastUpdated,
-                            },
-                        },
                     },
                 })
                 .getData();
