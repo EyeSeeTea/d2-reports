@@ -5,29 +5,37 @@ import { dataStoreNamespace, Namespaces } from "./clients/storage/Namespaces";
 import { Maybe, NonPartial } from "../../utils/ts-utils";
 import { Id, NamedRef } from "../../domain/common/entities/Base";
 import { Option } from "../../domain/common/entities/DataElement";
+import { DataForm } from "../../domain/common/entities/DataForm";
 
 const selector = oneOf([
     Codec.interface({ id: string }),
     Codec.interface({ code: string }), //
 ]);
 
+function listOf<T>(codec: Codec<T>) {
+    return optional(array(intersect(selector, codec)));
+}
+
 const DataStoreConfigCodec = Codec.interface({
-    dataElements: optional(
-        array(
-            intersect(
-                selector,
-                Codec.interface({
-                    selection: Codec.interface({
-                        optionSet: selector,
-                        isMultiple: boolean,
-                    }),
-                })
-            )
-        )
+    dataElements: listOf(
+        Codec.interface({
+            selection: Codec.interface({
+                optionSet: selector,
+                isMultiple: boolean,
+            }),
+        })
+    ),
+    dataSets: listOf(
+        Codec.interface({
+            texts: Codec.interface({
+                header: optional(string),
+                footer: optional(string),
+            }),
+        })
     ),
 });
 
-export interface DataElementConfig {
+interface DataElementConfig {
     selection?: {
         optionSet: OptionSet;
         isMultiple: boolean;
@@ -39,7 +47,7 @@ interface OptionSet extends NamedRef {
     options: Option<string>[];
 }
 
-export type Selector = GetType<typeof selector>;
+type Selector = GetType<typeof selector>;
 type DataFormStoreConfigFromCodec = GetType<typeof DataStoreConfigCodec>;
 
 interface DataFormStoreConfig {
@@ -49,6 +57,7 @@ interface DataFormStoreConfig {
 
 const defaultDataStoreConfig: DataFormStoreConfig["custom"] = {
     dataElements: [],
+    dataSets: [],
 };
 
 export class Dhis2DataStoreDataForm {
@@ -69,7 +78,8 @@ export class Dhis2DataStoreDataForm {
             },
             Right: async storeConfigFromDataStore => {
                 const storeConfig: DataFormStoreConfig["custom"] = {
-                    dataElements: storeConfigFromDataStore.dataElements || defaultDataStoreConfig.dataElements,
+                    dataElements: storeConfigFromDataStore.dataElements || [],
+                    dataSets: storeConfigFromDataStore.dataSets || [],
                 };
                 const optionSetSelectors = storeConfig.dataElements?.map(de => de.selection.optionSet);
                 const optionSets = await this.getOptionSets(api, optionSetSelectors || []);
@@ -111,7 +121,18 @@ export class Dhis2DataStoreDataForm {
         );
     }
 
-    getDataElementConfig(dataElement: { id: Id; code: string }): Maybe<DataElementConfig> {
+    getTextsForDataSet(dataSet: CodedRef): DataForm["texts"] {
+        const dataSetStoreConfig = this.config.custom.dataSets.find(dataSetSelector =>
+            selectorMatches(dataSet, dataSetSelector)
+        );
+
+        return {
+            header: dataSetStoreConfig?.texts.header || "",
+            footer: dataSetStoreConfig?.texts.footer || "",
+        };
+    }
+
+    getDataElementConfig(dataElement: CodedRef): Maybe<DataElementConfig> {
         const dataElementStoreConfig = this.config.custom.dataElements.find(dataElementSelector =>
             selectorMatches(dataElement, dataElementSelector)
         );
@@ -133,3 +154,5 @@ export class Dhis2DataStoreDataForm {
 function selectorMatches<T extends { id: string; code: string }>(obj: T, selector: Selector): boolean {
     return "id" in selector ? obj.id === selector.id : obj.code === selector.code;
 }
+
+type CodedRef = { id: Id; code: string };

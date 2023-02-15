@@ -1,5 +1,6 @@
+import { Maybe } from "../../../utils/ts-utils";
 import { Id } from "./Base";
-import { DataElementBoolean, DataElementNumber, DataElementText } from "./DataElement";
+import { DataElement, DataElementBoolean, DataElementNumber, DataElementText } from "./DataElement";
 
 interface DataValueBase {
     orgUnitId: Id;
@@ -11,7 +12,7 @@ export interface DataValueBoolean extends DataValueBase {
     type: "BOOLEAN";
     isMultiple: false;
     dataElement: DataElementBoolean;
-    value: boolean;
+    value: Maybe<boolean>;
 }
 
 export interface DataValueNumberSingle extends DataValueBase {
@@ -52,10 +53,34 @@ export type DataValue =
 export type Period = string;
 
 type DataValueSelector = string; // `${dataElementId.categoryOptionComboId}`
-export type DataValueIndexed = Record<DataValueSelector, DataValue>;
+export type DataValueStore = Record<DataValueSelector, DataValue>;
 
 export class DataValueM {
     static getSelector(options: { dataElementId: Id; categoryOptionComboId: Id }): DataValueSelector {
         return [options.dataElementId, options.categoryOptionComboId].join(".");
+    }
+
+    static getOrEmpty(dataValues: DataValueStore, dataElement: DataElement, base: DataValueBase): DataValue {
+        const key = DataValueM.getSelector({
+            dataElementId: dataElement.id,
+            categoryOptionComboId: base.categoryOptionComboId,
+        });
+
+        return dataValues[key] || getEmpty(dataElement, base);
+    }
+}
+
+function getEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
+    switch (dataElement.type) {
+        case "BOOLEAN":
+            return { ...base, dataElement, type: "BOOLEAN", isMultiple: false, value: undefined };
+        case "NUMBER":
+            return dataElement.options?.isMultiple
+                ? { ...base, dataElement, type: "NUMBER", isMultiple: true, values: [] }
+                : { ...base, dataElement, type: "NUMBER", isMultiple: false, value: "" };
+        case "TEXT":
+            return dataElement.options?.isMultiple
+                ? { ...base, dataElement, type: "TEXT", isMultiple: true, values: [] }
+                : { ...base, dataElement, type: "TEXT", isMultiple: false, value: "" };
     }
 }

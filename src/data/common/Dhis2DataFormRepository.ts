@@ -5,6 +5,7 @@ import { Period } from "../../domain/common/entities/DataValue";
 import { DataFormRepository } from "../../domain/common/repositories/DataFormRepository";
 import { D2Api, MetadataPick } from "../../types/d2-api";
 import { Dhis2DataElement } from "./Dhis2DataElement";
+import { Dhis2DataStoreDataForm } from "./Dhis2DataStoreDataForm";
 
 /* Build DataForm objects from DHIS2 dataSet. It uses sections and " - " in dataElement.formName 
    as separator to group them in subsections. An example:
@@ -36,10 +37,17 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         const metadata = await this.getMetadata(options);
         const dataSet = metadata.dataSets[0];
         if (!dataSet) return Promise.reject(new Error("Data set not found"));
+        const config = await Dhis2DataStoreDataForm.build(this.api);
+        const sections = await this.getSections(dataSet);
 
         return {
             id: dataSet.id,
-            sections: await this.getSections(dataSet),
+            dataElements: _(sections)
+                .flatMap(section => section.subsections)
+                .flatMap(subsections => subsections.dataElements)
+                .value(),
+            sections: sections,
+            texts: config.getTextsForDataSet(dataSet),
         };
     }
 
@@ -90,6 +98,7 @@ function getMetadataQuery(options: { dataSetId: Id }) {
         dataSets: {
             fields: {
                 id: true,
+                code: true,
                 sections: {
                     id: true,
                     displayName: true,
