@@ -5,7 +5,7 @@ export type WidgetState = "original" | "saving" | "saveSuccessful" | "saveError"
 
 const baseStyles: CSSProperties = {
     transition: "background-color 0.5s",
-    padding: 1,
+    padding: 2,
 };
 
 export const widgetFeedbackStylesByState: Record<WidgetState, CSSProperties> = {

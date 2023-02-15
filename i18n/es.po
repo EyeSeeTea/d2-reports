@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2023-02-10T13:18:51.110Z\n"
+"POT-Creation-Date: 2023-02-15T13:48:39.897Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -74,10 +74,10 @@ msgstr ""
 msgid "created"
 msgstr ""
 
-msgid "There are no sections in this data set. Check README for more details"
+msgid "View comment and audit history"
 msgstr ""
 
-msgid "View comment and audit history"
+msgid "There are no sections in this data set. Check README for more details"
 msgstr ""
 
 msgid "Yes"
@@ -86,7 +86,7 @@ msgstr ""
 msgid "No"
 msgstr ""
 
-msgid "Select option"
+msgid "Select"
 msgstr ""
 
 msgid "Data Element"

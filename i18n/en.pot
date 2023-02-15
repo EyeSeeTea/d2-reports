@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2023-02-10T13:18:51.110Z\n"
-"PO-Revision-Date: 2023-02-10T13:18:51.110Z\n"
+"POT-Creation-Date: 2023-02-15T13:48:39.897Z\n"
+"PO-Revision-Date: 2023-02-15T13:48:39.897Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -74,10 +74,10 @@ msgstr ""
 msgid "created"
 msgstr ""
 
-msgid "There are no sections in this data set. Check README for more details"
+msgid "View comment and audit history"
 msgstr ""
 
-msgid "View comment and audit history"
+msgid "There are no sections in this data set. Check README for more details"
 msgstr ""
 
 msgid "Yes"
@@ -86,7 +86,7 @@ msgstr ""
 msgid "No"
 msgstr ""
 
-msgid "Select option"
+msgid "Select"
 msgstr ""
 
 msgid "Data Element"

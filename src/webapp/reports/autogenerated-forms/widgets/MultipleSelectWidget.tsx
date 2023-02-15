@@ -30,7 +30,7 @@ const MultipleSelectWidget: React.FC<MultipleSelectWidgetProps> = props => {
                 onChange={notifyChange}
                 selected={dataValue.values}
                 disabled={disabled}
-                placeholder={i18n.t("Select option")}
+                placeholder={i18n.t("Select")}
             >
                 {options.map(option => (
                     <MultiSelectOption key={option.value} label={option.name} value={option.value} />

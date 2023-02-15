@@ -36,6 +36,7 @@ export class Dhis2DataElement {
 const dataElementFields = {
     id: true,
     code: true,
+    displayName: true,
     formName: true,
     valueType: true,
     optionSet: {
@@ -63,7 +64,7 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
 
     const base = {
         id: dataElement.id,
-        name: dataElement.formName,
+        name: dataElement.formName || dataElement.displayName,
         options: optionSet
             ? { isMultiple: Boolean(deConfig?.selection?.isMultiple), items: optionSet.options }
             : undefined,

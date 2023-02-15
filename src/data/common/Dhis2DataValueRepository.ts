@@ -96,7 +96,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
     private getStrValue(dataValue: DataValue): string {
         switch (dataValue.type) {
             case "BOOLEAN":
-                return dataValue.value ? "true" : "false";
+                return dataValue.value ? "true" : dataValue.value === false ? "false" : "";
             case "NUMBER":
             case "TEXT":
                 return dataValue.isMultiple ? dataValue.values.join("; ") : dataValue.value;

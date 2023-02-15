@@ -12,6 +12,13 @@ export interface NumberWidgetProps extends WidgetProps {
 const NumberWidget: React.FC<NumberWidgetProps> = props => {
     const { onValueChange, dataValue, disabled } = props;
 
+    const [stateValue, setStateValue] = React.useState(dataValue.value);
+    React.useEffect(() => setStateValue(dataValue.value), [dataValue.value]);
+
+    const updateState = React.useCallback(({ value }: { value: string }) => {
+        setStateValue(value);
+    }, []);
+
     const notifyChange = React.useCallback(
         ({ value }: { value: string }) => {
             onValueChange({ ...dataValue, value });
@@ -21,7 +28,7 @@ const NumberWidget: React.FC<NumberWidgetProps> = props => {
 
     return (
         <WidgetFeedback state={props.state}>
-            <Input type="number" onChange={notifyChange} value={dataValue.value} disabled={disabled} />
+            <Input type="number" onBlur={notifyChange} onChange={updateState} value={stateValue} disabled={disabled} />
         </WidgetFeedback>
     );
 };

@@ -30,7 +30,9 @@ const SingleSelectWidget: React.FC<SingleSelectWidgetProps> = props => {
                 onChange={notifyChange}
                 selected={dataValue.value}
                 disabled={disabled}
-                placeholder={i18n.t("Select option")}
+                placeholder={i18n.t("Select")}
+                clearable={true}
+                clearText="✕"
             >
                 {options.map(option => (
                     <SingleSelectOption key={`option-${option.value}`} label={option.name} value={option.value} />
