@@ -173,7 +173,7 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
                 programIndicatorsLastUpdated: new Date().toISOString(),
                 validationResults: dataQualityErrors,
             });
-        } else {
+        } else if (!fromZero) {
             const { indicators } = await this.api.metadata
                 .get({
                     indicators: {
