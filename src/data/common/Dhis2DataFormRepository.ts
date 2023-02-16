@@ -38,7 +38,8 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         const dataSet = metadata.dataSets[0];
         if (!dataSet) return Promise.reject(new Error("Data set not found"));
         const config = await Dhis2DataStoreDataForm.build(this.api);
-        const sections = await this.getSections(dataSet);
+        const sections = await this.getSections(dataSet, config);
+        const dataSetConfig = config.getDataSetConfig(dataSet);
 
         return {
             id: dataSet.id,
@@ -46,7 +47,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 .flatMap(section => section.dataElements)
                 .value(),
             sections: sections,
-            texts: config.getTextsForDataSet(dataSet),
+            texts: dataSetConfig.texts,
         };
     }
 
@@ -55,7 +56,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         return this.api.metadata.get(metadataQuery).getData();
     }
 
-    private async getSections(dataSet: D2DataSet) {
+    private async getSections(dataSet: D2DataSet, config: Dhis2DataStoreDataForm) {
         const dataElementIds = _(dataSet.sections)
             .flatMap(section => section.dataElements)
             .map(getId)
@@ -67,6 +68,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             return {
                 id: section.id,
                 name: section.displayName,
+                viewType: config.getDataSetConfig(dataSet).viewType,
                 dataElements: _(section.dataElements)
                     .map(dataElementRef => dataElements[dataElementRef.id])
                     .compact()

@@ -2,10 +2,17 @@ import _ from "lodash";
 import { D2Api } from "@eyeseetea/d2-api/2.34";
 import { array, boolean, Codec, GetType, intersect, oneOf, optional, string } from "purify-ts";
 import { dataStoreNamespace, Namespaces } from "./clients/storage/Namespaces";
-import { Maybe, NonPartial } from "../../utils/ts-utils";
+import { isElementOfUnion, Maybe, NonPartial } from "../../utils/ts-utils";
 import { Id, NamedRef } from "../../domain/common/entities/Base";
 import { Option } from "../../domain/common/entities/DataElement";
-import { DataForm } from "../../domain/common/entities/DataForm";
+import { DataFormM, ViewType } from "../../domain/common/entities/DataForm";
+
+interface DataSetConfig {
+    texts: { header: string; footer: string };
+    viewType: ViewType;
+}
+
+interface DataSetConfig {}
 
 const selector = oneOf([
     Codec.interface({ id: string }),
@@ -27,6 +34,7 @@ const DataStoreConfigCodec = Codec.interface({
     ),
     dataSets: listOf(
         Codec.interface({
+            viewType: optional(string),
             texts: Codec.interface({
                 header: optional(string),
                 footer: optional(string),
@@ -121,14 +129,17 @@ export class Dhis2DataStoreDataForm {
         );
     }
 
-    getTextsForDataSet(dataSet: CodedRef): DataForm["texts"] {
-        const dataSetStoreConfig = this.config.custom.dataSets.find(dataSetSelector =>
-            selectorMatches(dataSet, dataSetSelector)
-        );
+    getDataSetConfig(dataSet: CodedRef): DataSetConfig {
+        const config = this.config.custom.dataSets.find(dataSetSelector => selectorMatches(dataSet, dataSetSelector));
+
+        const viewType = config?.viewType;
 
         return {
-            header: dataSetStoreConfig?.texts.header || "",
-            footer: dataSetStoreConfig?.texts.footer || "",
+            texts: {
+                header: config?.texts.header || "",
+                footer: config?.texts.footer || "",
+            },
+            viewType: viewType && isElementOfUnion(viewType, DataFormM.viewTypes) ? viewType : "table",
         };
     }
 
