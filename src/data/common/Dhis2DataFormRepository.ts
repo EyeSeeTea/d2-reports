@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { getId, Id } from "../../domain/common/entities/Base";
-import { DataForm, Section, SubSection } from "../../domain/common/entities/DataForm";
+import { DataForm, Section } from "../../domain/common/entities/DataForm";
 import { Period } from "../../domain/common/entities/DataValue";
 import { DataFormRepository } from "../../domain/common/repositories/DataFormRepository";
 import { D2Api, MetadataPick } from "../../types/d2-api";
@@ -43,8 +43,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         return {
             id: dataSet.id,
             dataElements: _(sections)
-                .flatMap(section => section.subsections)
-                .flatMap(subsections => subsections.dataElements)
+                .flatMap(section => section.dataElements)
                 .value(),
             sections: sections,
             texts: config.getTextsForDataSet(dataSet),
@@ -68,20 +67,9 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             return {
                 id: section.id,
                 name: section.displayName,
-                subsections: _(section.dataElements)
+                dataElements: _(section.dataElements)
                     .map(dataElementRef => dataElements[dataElementRef.id])
                     .compact()
-                    .groupBy(dataElement => _(dataElement.name).split(separator).initial().join(separator))
-                    .toPairs()
-                    .map(
-                        ([groupName, dataElementsForGroup]): SubSection => ({
-                            name: groupName,
-                            dataElements: dataElementsForGroup.map(de => ({
-                                ...de,
-                                name: _(de.name).split(separator).last() || "-",
-                            })),
-                        })
-                    )
                     .value(),
             };
         });
@@ -90,8 +78,6 @@ export class Dhis2DataFormRepository implements DataFormRepository {
 
 type Metadata = ReturnType<typeof getMetadataQuery>;
 type D2DataSet = MetadataPick<Metadata>["dataSets"][number];
-
-const separator = " - ";
 
 function getMetadataQuery(options: { dataSetId: Id }) {
     return {

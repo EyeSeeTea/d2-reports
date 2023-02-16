@@ -10,10 +10,5 @@ export interface DataForm {
 
 export interface Section extends Ref {
     name: string;
-    subsections: SubSection[];
-}
-
-export interface SubSection {
-    name: string;
     dataElements: DataElement[];
 }
