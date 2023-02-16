@@ -16,7 +16,7 @@ interface Row {
     items: Array<{ column: Column; dataElement: DataElement | undefined }>;
 }
 
-export class SectionTableM {
+export class SectionTableViewModel {
     static getSectionsFromDataForm(dataForm: DataForm): SectionTable[] {
         return dataForm.sections.map((section): SectionTable => {
             const columns: Column[] = _(section.subsections)
