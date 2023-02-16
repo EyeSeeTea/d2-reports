@@ -5,7 +5,7 @@ import { Period } from "../../domain/common/entities/DataValue";
 import { DataFormRepository } from "../../domain/common/repositories/DataFormRepository";
 import { D2Api, MetadataPick } from "../../types/d2-api";
 import { Dhis2DataElement } from "./Dhis2DataElement";
-import { Dhis2DataStoreDataForm } from "./Dhis2DataStoreDataForm";
+import { DataSetConfig, Dhis2DataStoreDataForm } from "./Dhis2DataStoreDataForm";
 
 /* Build DataForm objects from DHIS2 dataSet. It uses sections and " - " in dataElement.formName 
    as separator to group them in subsections. An example:
@@ -38,14 +38,12 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         const dataSet = metadata.dataSets[0];
         if (!dataSet) return Promise.reject(new Error("Data set not found"));
         const config = await Dhis2DataStoreDataForm.build(this.api);
-        const sections = await this.getSections(dataSet, config);
         const dataSetConfig = config.getDataSetConfig(dataSet);
+        const sections = await this.getSections(dataSet, dataSetConfig);
 
         return {
             id: dataSet.id,
-            dataElements: _(sections)
-                .flatMap(section => section.dataElements)
-                .value(),
+            dataElements: _.flatMap(sections, section => section.dataElements),
             sections: sections,
             texts: dataSetConfig.texts,
         };
@@ -56,7 +54,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         return this.api.metadata.get(metadataQuery).getData();
     }
 
-    private async getSections(dataSet: D2DataSet, config: Dhis2DataStoreDataForm) {
+    private async getSections(dataSet: D2DataSet, dataSetConfig: DataSetConfig) {
         const dataElementIds = _(dataSet.sections)
             .flatMap(section => section.dataElements)
             .map(getId)
@@ -68,7 +66,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             return {
                 id: section.id,
                 name: section.displayName,
-                viewType: config.getDataSetConfig(dataSet).viewType,
+                viewType: (dataSetConfig.sections[section.id] || dataSetConfig).viewType,
                 dataElements: _(section.dataElements)
                     .map(dataElementRef => dataElements[dataElementRef.id])
                     .compact()
@@ -89,6 +87,7 @@ function getMetadataQuery(options: { dataSetId: Id }) {
                 code: true,
                 sections: {
                     id: true,
+                    code: true,
                     displayName: true,
                     dataElements: { id: true },
                 },

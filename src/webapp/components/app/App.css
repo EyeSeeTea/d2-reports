@@ -15,3 +15,7 @@ table th,
 table td {
     border: none !important;
 }
+
+[data-test="dhis2-uicore-singleselect-clear"] {
+    margin-left: 5px;
+}

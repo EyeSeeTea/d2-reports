@@ -7,40 +7,39 @@ import { Id, NamedRef } from "../../domain/common/entities/Base";
 import { Option } from "../../domain/common/entities/DataElement";
 import { DataFormM, ViewType } from "../../domain/common/entities/DataForm";
 
-interface DataSetConfig {
+export interface DataSetConfig {
     texts: { header: string; footer: string };
     viewType: ViewType;
+    sections: Record<Id, { viewType: ViewType }>;
 }
-
-interface DataSetConfig {}
 
 const selector = oneOf([
     Codec.interface({ id: string }),
     Codec.interface({ code: string }), //
 ]);
 
-function listOf<T>(codec: Codec<T>) {
-    return optional(array(intersect(selector, codec)));
+function sectionConfig<T extends Record<string, Codec<any>>>(properties: T) {
+    return optional(array(intersect(selector, Codec.interface(properties))));
 }
 
 const DataStoreConfigCodec = Codec.interface({
-    dataElements: listOf(
-        Codec.interface({
-            selection: Codec.interface({
-                optionSet: selector,
-                isMultiple: boolean,
-            }),
-        })
-    ),
-    dataSets: listOf(
-        Codec.interface({
+    dataElements: sectionConfig({
+        selection: Codec.interface({
+            optionSet: selector,
+            isMultiple: boolean,
+        }),
+    }),
+
+    dataSets: sectionConfig({
+        viewType: optional(string),
+        texts: Codec.interface({
+            header: optional(string),
+            footer: optional(string),
+        }),
+        sections: sectionConfig({
             viewType: optional(string),
-            texts: Codec.interface({
-                header: optional(string),
-                footer: optional(string),
-            }),
-        })
-    ),
+        }),
+    }),
 });
 
 interface DataElementConfig {
@@ -67,6 +66,12 @@ const defaultDataStoreConfig: DataFormStoreConfig["custom"] = {
     dataElements: [],
     dataSets: [],
 };
+
+interface DataSet {
+    id: Id;
+    code: string;
+    sections: Array<{ id: string; code: string }>;
+}
 
 export class Dhis2DataStoreDataForm {
     constructor(private config: DataFormStoreConfig) {}
@@ -110,15 +115,15 @@ export class Dhis2DataStoreDataForm {
             options: { code: true, displayName: true },
         } as const;
 
-        const res1 = _.isEmpty(ids)
+        const resByIds = _.isEmpty(ids)
             ? { optionSets: [] }
             : await api.metadata.get({ optionSets: { fields: fields, filter: { id: { in: ids } } } }).getData();
 
-        const res2 = _.isEmpty(codes)
+        const resByCodes = _.isEmpty(codes)
             ? { optionSets: [] }
             : await api.metadata.get({ optionSets: { fields: fields, filter: { code: { in: codes } } } }).getData();
 
-        return _.concat(res1.optionSets, res2.optionSets).map(
+        return _.concat(resByIds.optionSets, resByCodes.optionSets).map(
             (optionSet): OptionSet => ({
                 ...optionSet,
                 options: optionSet.options.map(option => ({
@@ -129,17 +134,31 @@ export class Dhis2DataStoreDataForm {
         );
     }
 
-    getDataSetConfig(dataSet: CodedRef): DataSetConfig {
-        const config = this.config.custom.dataSets.find(dataSetSelector => selectorMatches(dataSet, dataSetSelector));
+    getDataSetConfig(dataSet: DataSet): DataSetConfig {
+        const config = this.config.custom.dataSets.find(dataSetSelector => {
+            return selectorMatches(dataSet, dataSetSelector);
+        });
 
         const viewType = config?.viewType;
+
+        const sections = _(config?.sections)
+            .map(sectionConfig => {
+                const section = dataSet.sections.find(section => selectorMatches(section, sectionConfig));
+                return section
+                    ? ([section.id, { viewType: getViewType(sectionConfig.viewType) }] as [Id, { viewType: ViewType }])
+                    : undefined;
+            })
+            .compact()
+            .fromPairs()
+            .value();
 
         return {
             texts: {
                 header: config?.texts.header || "",
                 footer: config?.texts.footer || "",
             },
-            viewType: viewType && isElementOfUnion(viewType, DataFormM.viewTypes) ? viewType : "table",
+            viewType: getViewType(viewType),
+            sections: sections,
         };
     }
 
@@ -160,6 +179,10 @@ export class Dhis2DataStoreDataForm {
             },
         };
     }
+}
+
+function getViewType(viewType: Maybe<string>): ViewType {
+    return viewType && isElementOfUnion(viewType, DataFormM.viewTypes) ? viewType : "table";
 }
 
 function selectorMatches<T extends { id: string; code: string }>(obj: T, selector: Selector): boolean {

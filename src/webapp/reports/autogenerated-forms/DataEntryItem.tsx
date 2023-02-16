@@ -1,5 +1,4 @@
 import React from "react";
-// @ts-ignore
 import { DataValue } from "../../../domain/common/entities/DataValue";
 import { assertUnreachable } from "../../../utils/ts-utils";
 import BooleanWidget from "./widgets/BooleanWidget";
@@ -16,15 +15,15 @@ interface DataEntryItemProps {
     dataElement: DataElement;
     dataFormInfo: DataFormInfo;
     onValueChange: (dataValue: DataValue) => Promise<void>;
-    disabled: boolean;
 }
 
 const DataEntryItem: React.FC<DataEntryItemProps> = props => {
-    const { dataElement, disabled } = props;
+    const { dataElement } = props;
     const [dataValue, state, notifyChange] = useUpdatableDataValueWithFeedback(props);
 
     const { type } = dataValue;
     const { options } = dataElement;
+    const disabled = false;
 
     if (options) {
         switch (type) {

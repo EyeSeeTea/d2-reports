@@ -19,6 +19,7 @@ The API endpoint `/dataValueSets` does not provide all the features we need, so 
 ## Initial setup
 
 ```
+$ nvm use # Install node from .nvmrc
 $ yarn install
 ```
 
@@ -75,8 +76,8 @@ This will create this table:
 
 ```
     ITNs            | Written Policy | Policy Implemented |
-    ITNs - Basic    |  [         ]   |    [                |
-    ITNs - Extended |  [         ]   |                    |
+    ITNs - Basic    |  [         ]   |    [           ]   |
+    ITNs - Extended |  [         ]   |    [           ]   |
 ```
 
 #### Data store customization
@@ -103,17 +104,22 @@ An example:
 
     "dataSets": [
         {
-            "code": "TEST_MAL",
+            "code": "DATASET1",
             "texts": {
                 "header": "<h2>Header from dataStore</h2>",
                 "footer": "<i>Footer from dataStore</i>"
             },
             "viewType": "grid"
-        }
-
+        },
         {
-            "code": "TEST_MAL2",
-            "viewType": "table"
+            "code": "DATASET2",
+            "viewType": "grid",
+            "sections": [
+                {
+                    "code": "PREVENTION_CONTACT_INFO",
+                    "viewType": "table"
+                }
+            ]
         }
     ]
 }
