@@ -5,9 +5,9 @@ export interface IndicatorItem {
     name: string;
     user: string;
     denominator: string;
-    denominatorresult: boolean;
+    denominatorResult: boolean;
     numerator: string;
-    numeratorresult: boolean;
+    numeratorResult: boolean;
 }
 
 export interface ProgramIndicatorItem {
@@ -17,9 +17,9 @@ export interface ProgramIndicatorItem {
     name: string;
     user: string;
     expression: string;
-    expressionresult: boolean;
+    expressionResult: boolean;
     filter: string;
-    filterresult: boolean;
+    filterResult: boolean;
 }
 
 export interface IndicatorConfig {

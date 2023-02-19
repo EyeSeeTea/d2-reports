@@ -36,7 +36,7 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
 
         const dataQualityIndicatorErrors =
             dataQuality?.validationResults?.filter(
-                r => (!r.denominatorresult || !r.numeratorresult) && r.metadataType === "Indicator"
+                r => (!r.denominatorResult || !r.numeratorResult) && r.metadataType === "Indicator"
             ) ?? [];
 
         const dataQualityIndicatorErrorsInPage = _(dataQualityIndicatorErrors)
@@ -64,7 +64,7 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
 
         const dataQualityProgramIndicatorErrors =
             dataQuality?.validationResults?.filter(
-                r => (!r.expressionresult || !r.filterresult) && r.metadataType === "ProgramIndicator"
+                r => (!r.expressionResult || !r.filterResult) && r.metadataType === "ProgramIndicator"
             ) ?? [];
 
         const dataQualityIndicatorErrorsInPage = _(dataQualityProgramIndicatorErrors)

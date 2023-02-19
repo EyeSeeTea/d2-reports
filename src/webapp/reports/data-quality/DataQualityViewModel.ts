@@ -8,9 +8,9 @@ export interface IndicatorViewModel {
     user: string;
     metadataType: string;
     denominator: string;
-    denominatorresult: boolean;
+    denominatorResult: boolean;
     numerator: string;
-    numeratorresult: boolean;
+    numeratorResult: boolean;
 }
 
 export interface ProgramIndicatorViewModel {
@@ -19,11 +19,10 @@ export interface ProgramIndicatorViewModel {
     name: string;
     user: string;
     metadataType: string;
-    
     expression: string;
-    expressionresult: boolean;
+    expressionResult: boolean;
     filter: string;
-    filterresult: boolean;
+    filterResult: boolean;
 }
 
 export function getDataQualityIndicatorViews(_config: Config, items: IndicatorItem[]): IndicatorViewModel[] {
@@ -31,11 +30,11 @@ export function getDataQualityIndicatorViews(_config: Config, items: IndicatorIt
         return {
             id: item.id,
             denominator: item.denominator,
-            denominatorresult: item.denominatorresult,
+            denominatorResult: item.denominatorResult,
             lastUpdated: item.lastUpdated,
             name: item.name,
             numerator: item.numerator,
-            numeratorresult: item.numeratorresult,
+            numeratorResult: item.numeratorResult,
             user: item.user,
             metadataType: item.metadataType,
         };
@@ -50,11 +49,11 @@ export function getDataQualityProgramIndicatorViews(
         return {
             id: item.id,
             expression: item.expression,
-            expressionresult: item.expressionresult,
+            expressionResult: item.expressionResult,
             lastUpdated: item.lastUpdated,
             name: item.name,
             filter: item.filter,
-            filterresult: item.filterresult,
+            filterResult: item.filterResult,
             user: item.user,
             metadataType: item.metadataType,
         };
