@@ -22,14 +22,16 @@ export interface ProgramIndicatorItem {
     filterResult: boolean;
 }
 
-export interface IndicatorConfig {
-    indicatorsLastUpdated: string;
-    programIndicatorsLastUpdated: string;
-    validationResults: IndicatorItem[];
+export function isIndicatorItem(item: any): item is IndicatorItem {
+    return item.metadataType === "Indicator";
 }
 
-export interface ProgramIndicatorConfig {
+export function isProgramIndicatorItem(item: any): item is ProgramIndicatorItem {
+    return item.metadataType === "ProgramIndicator";
+}
+
+export interface DataQualityConfig {
     indicatorsLastUpdated: string;
     programIndicatorsLastUpdated: string;
-    validationResults: ProgramIndicatorItem[];
+    validationResults: Array<IndicatorItem | ProgramIndicatorItem>;
 }

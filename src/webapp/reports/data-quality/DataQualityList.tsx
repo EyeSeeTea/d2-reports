@@ -52,14 +52,14 @@ export const DataQualityList: React.FC = React.memo(() => {
                 { name: "lastUpdated", text: i18n.t("Last Updated"), sortable: false },
                 { name: "denominator", text: i18n.t("Denominator"), sortable: false },
                 {
-                    name: "denominatorresult",
+                    name: "denominatorResult",
                     text: i18n.t("Valid denominator"),
                     sortable: false,
                     getValue: row => (row.denominatorResult ? "Valid" : "Invalid"),
                 },
                 { name: "numerator", text: i18n.t("Numerator"), sortable: false },
                 {
-                    name: "numeratorresult",
+                    name: "numeratorResult",
                     text: i18n.t("Valid Numerator"),
                     sortable: false,
                     getValue: row => (row.numeratorResult ? "Valid" : "Invalid"),
@@ -87,14 +87,14 @@ export const DataQualityList: React.FC = React.memo(() => {
                 { name: "lastUpdated", text: i18n.t("Last Updated"), sortable: false },
                 { name: "expression", text: i18n.t("Expression"), sortable: false },
                 {
-                    name: "expressionresult",
+                    name: "expressionResult",
                     text: i18n.t("Valid expression"),
                     sortable: false,
                     getValue: row => (row.expressionResult ? "Valid" : "Invalid"),
                 },
                 { name: "filter", text: i18n.t("Filter"), sortable: false },
                 {
-                    name: "filterresult",
+                    name: "filterResult",
                     text: i18n.t("Valid filter"),
                     sortable: false,
                     getValue: row => (row.filterResult ? "Valid" : "Invalid"),

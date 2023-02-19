@@ -1,10 +1,11 @@
 import _ from "lodash";
 import { PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
 import {
-    IndicatorConfig,
+    DataQualityConfig,
     IndicatorItem,
-    ProgramIndicatorConfig,
     ProgramIndicatorItem,
+    isIndicatorItem,
+    isProgramIndicatorItem,
 } from "../../../domain/reports/data-quality/entities/DataQualityItem";
 import {
     DataQualityRepository,
@@ -31,13 +32,13 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
     }
 
     async getIndicators(options: IndicatorOptions, namespace: string): Promise<PaginatedObjects<IndicatorItem>> {
-        const dataQuality = await this.globalStorageClient.getObject<IndicatorConfig>(namespace);
+        const dataQuality = await this.globalStorageClient.getObject<DataQualityConfig>(namespace);
         const { paging, sorting } = options;
 
         const dataQualityIndicatorErrors =
-            dataQuality?.validationResults?.filter(
-                r => (!r.denominatorResult || !r.numeratorResult) && r.metadataType === "Indicator"
-            ) ?? [];
+            (dataQuality?.validationResults?.filter(
+                r => isIndicatorItem(r) && (!r.denominatorResult || !r.numeratorResult)
+            ) as IndicatorItem[]) ?? [];
 
         const dataQualityIndicatorErrorsInPage = _(dataQualityIndicatorErrors)
             .orderBy([row => row[sorting.field]], [sorting.direction])
@@ -59,13 +60,13 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         options: ProgramIndicatorOptions,
         namespace: string
     ): Promise<PaginatedObjects<ProgramIndicatorItem>> {
-        const dataQuality = await this.globalStorageClient.getObject<ProgramIndicatorConfig>(namespace);
+        const dataQuality = await this.globalStorageClient.getObject<DataQualityConfig>(namespace);
         const { paging, sorting } = options;
 
         const dataQualityProgramIndicatorErrors =
-            dataQuality?.validationResults?.filter(
-                r => (!r.expressionResult || !r.filterResult) && r.metadataType === "ProgramIndicator"
-            ) ?? [];
+            (dataQuality?.validationResults?.filter(
+                r => isProgramIndicatorItem(r) && (!r.expressionResult || !r.filterResult)
+            ) as ProgramIndicatorItem[]) ?? [];
 
         const dataQualityIndicatorErrorsInPage = _(dataQualityProgramIndicatorErrors)
             .orderBy([row => row[sorting.field]], [sorting.direction])
@@ -82,17 +83,12 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         return { pager: pager, objects: dataQualityIndicatorErrorsInPage };
     }
 
-    async saveDataQuality(namespace: string, dataQuality: IndicatorConfig | ProgramIndicatorConfig): Promise<void> {
-        return await this.globalStorageClient.saveObject<IndicatorConfig | ProgramIndicatorConfig>(
-            namespace,
-            dataQuality
-        );
+    async saveDataQuality(namespace: string, dataQuality: DataQualityConfig): Promise<void> {
+        return await this.globalStorageClient.saveObject<DataQualityConfig>(namespace, dataQuality);
     }
 
     async reloadValidation(namespace: string, fromZero: boolean) {
-        const dataQuality = await this.globalStorageClient.getObject<IndicatorConfig | ProgramIndicatorConfig>(
-            namespace
-        );
+        const dataQuality = await this.globalStorageClient.getObject<DataQualityConfig>(namespace);
         const dataQualityErrors: any[] = [];
 
         if (fromZero && dataQuality?.validationResults.length === 0) {

@@ -1,11 +1,6 @@
 import { Config } from "../../../common/entities/Config";
 import { PaginatedObjects, Paging, Sorting } from "../../../common/entities/PaginatedObjects";
-import {
-    IndicatorConfig,
-    IndicatorItem,
-    ProgramIndicatorConfig,
-    ProgramIndicatorItem,
-} from "../entities/DataQualityItem";
+import { DataQualityConfig, IndicatorItem, ProgramIndicatorItem } from "../entities/DataQualityItem";
 
 export interface DataQualityRepository {
     getIndicators(options: IndicatorOptions, namespace: string): Promise<PaginatedObjects<IndicatorItem>>;
@@ -13,7 +8,7 @@ export interface DataQualityRepository {
         options: ProgramIndicatorOptions,
         namespace: string
     ): Promise<PaginatedObjects<ProgramIndicatorItem>>;
-    saveDataQuality(namespace: string, dataQuality: IndicatorConfig | ProgramIndicatorConfig): Promise<void>;
+    saveDataQuality(namespace: string, dataQuality: DataQualityConfig): Promise<void>;
     reloadValidation(namespace: string, fromZero: boolean): Promise<void>;
     getColumns(namespace: string): Promise<string[]>;
     saveColumns(namespace: string, columns: string[]): Promise<void>;
