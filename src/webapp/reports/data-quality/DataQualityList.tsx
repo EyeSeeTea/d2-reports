@@ -1,4 +1,5 @@
 import {
+    ConfirmationDialog,
     ObjectsList,
     TableColumn,
     TableConfig,
@@ -21,12 +22,15 @@ import {
     getDataQualityProgramIndicatorViews,
 } from "./DataQualityViewModel";
 import { useReload } from "../../utils/use-reload";
+import { useBooleanState } from "../../utils/use-boolean";
 
 export const DataQualityList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
 
     const [visibleIndicatorColumns, setVisibleIndicatorColumns] = useState<string[]>();
     const [visibleProgramIndicatorColumns, setVisibleProgramIndicatorColumns] = useState<string[]>();
+    const [isDialogOpen, { enable: openDialog, disable: closeDialog }] = useBooleanState(false);
+
     const [_reloadKey, reload] = useReload();
 
     useEffect(() => {
@@ -207,7 +211,10 @@ export const DataQualityList: React.FC = React.memo(() => {
                 color="primary"
                 variant="contained"
                 onClick={async () => {
-                    await compositionRoot.dataQuality.reloadValidation(Namespaces.DATA_QUALITY, false);
+                    openDialog();
+                    await compositionRoot.dataQuality
+                        .reloadValidation(Namespaces.DATA_QUALITY, false)
+                        .finally(() => closeDialog());
                     reload();
                 }}
             >
@@ -235,6 +242,17 @@ export const DataQualityList: React.FC = React.memo(() => {
                 onChangeSearch={undefined}
                 onReorderColumns={saveReorderedProgramIndicatorColumns}
             />
+
+            <ConfirmationDialog
+                isOpen={isDialogOpen}
+                title={i18n.t("Reloading Validation")}
+                onCancel={closeDialog}
+                cancelText={i18n.t("Close")}
+                maxWidth="md"
+                fullWidth
+            >
+                Please wait while validation results are reloaded. This may take a few minutes. Do not reload the page.
+            </ConfirmationDialog>
         </React.Fragment>
     );
 });
