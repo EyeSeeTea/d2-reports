@@ -97,7 +97,7 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
             await this.saveDataQuality(Namespaces.DATA_QUALITY, {
                 indicatorsLastUpdated: new Date().toISOString(),
                 programIndicatorsLastUpdated: new Date().toISOString(),
-                validationResults: dataQualityErrors,
+                validationResults: _.union(dataQualityErrors, dataQuality?.validationResults),
             });
         } else if (!fromZero) {
             const { indicators, programIndicators } = await getMetadata(this.api, {
@@ -109,7 +109,7 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
             await this.saveDataQuality(Namespaces.DATA_QUALITY, {
                 indicatorsLastUpdated: new Date().toISOString(),
                 programIndicatorsLastUpdated: new Date().toISOString(),
-                validationResults: dataQualityErrors,
+                validationResults: _.union(dataQualityErrors, dataQuality?.validationResults),
             });
         }
     }
@@ -167,7 +167,7 @@ async function validateExpression(
     api: D2Api,
     metadataType: "Indicator" | "ProgramIndicator",
     metadataItems: any[],
-    errors: any[]
+    errors: Array<IndicatorItem | ProgramIndicatorItem>
 ) {
     await promiseMap(metadataItems, async item => {
         try {
@@ -187,7 +187,7 @@ async function validateExpression(
                     };
                     errors.push(dataQualityItem);
                 }
-            } else if (metadataType === "ProgramIndicator") {
+            } else if (metadataType === "ProgramIndicator" && (item.filter || item.expression)) {
                 const expressionValidation = await api.expressions
                     .validate("program-indicator-formula", item.expression)
                     .getData();
