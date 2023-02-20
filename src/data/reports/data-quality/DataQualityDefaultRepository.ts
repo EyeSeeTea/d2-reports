@@ -19,8 +19,6 @@ import { Instance } from "../../common/entities/Instance";
 import { promiseMap } from "../../../utils/promises";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 
-type DataQualityItem = { [key: string]: any };
-
 export class DataQualityDefaultRepository implements DataQualityRepository {
     private storageClient: StorageClient;
     private globalStorageClient: StorageClient;
@@ -92,77 +90,9 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         const dataQualityErrors: any[] = [];
 
         if (fromZero && dataQuality?.validationResults.length === 0) {
-            const { indicators } = await this.api.metadata
-                .get({
-                    indicators: {
-                        fields: {
-                            id: true,
-                            name: true,
-                            numerator: true,
-                            denominator: true,
-                            lastUpdated: true,
-                            user: true,
-                        },
-                    },
-                })
-                .getData();
-            const { programIndicators } = await this.api.metadata
-                .get({
-                    programIndicators: {
-                        fields: {
-                            id: true,
-                            name: true,
-                            numerator: true,
-                            denominator: true,
-                            lastUpdated: true,
-                            user: true,
-                            expression: true,
-                            filter: true,
-                        },
-                    },
-                })
-                .getData();
-
-            await promiseMap(indicators, async indicator => {
-                const dataQualityItem: DataQualityItem = indicator;
-                try {
-                    const numeratorValidation = await this.api.expressions
-                        .validate("indicator", indicator.numerator)
-                        .getData();
-                    const denominatorValidation = await this.api.expressions
-                        .validate("indicator", indicator.denominator)
-                        .getData();
-
-                    if (numeratorValidation.status === "ERROR" || denominatorValidation.status === "ERROR") {
-                        dataQualityItem.numeratorresult = numeratorValidation.status === "ERROR";
-                        dataQualityItem.denominatorresult = denominatorValidation.status === "ERROR";
-                        dataQualityItem.metadataType = "Indicator";
-                        dataQualityErrors.push(dataQualityItem);
-                    }
-                } catch (error) {
-                    console.debug(error);
-                }
-            });
-            await promiseMap(programIndicators, async programIndicator => {
-                const dataQualityItem: DataQualityItem = programIndicator;
-                try {
-                    const expressionValidation = await this.api.expressions
-                        .validate("program-indicator-formula", programIndicator.expression)
-                        .getData();
-                    const filterValidation = await this.api.expressions
-                        .validate("program-indicator-filter", programIndicator.filter)
-                        .getData();
-
-                    if (expressionValidation.status === "ERROR" || filterValidation.status === "ERROR") {
-                        dataQualityItem.numeratorresult = expressionValidation.status === "ERROR";
-                        dataQualityItem.denominatorresult = filterValidation.status === "ERROR";
-                        dataQualityItem.metadataType = "ProgramIndicator";
-                        dataQualityErrors.push(dataQualityItem);
-                    }
-                } catch (error) {
-                    console.debug(error);
-                }
-            });
+            const { indicators, programIndicators } = await getMetadata(this.api, {});
+            validateExpression(this.api, "Indicator", indicators, dataQualityErrors);
+            validateExpression(this.api, "ProgramIndicator", programIndicators, dataQualityErrors);
 
             await this.saveDataQuality(Namespaces.DATA_QUALITY, {
                 indicatorsLastUpdated: new Date().toISOString(),
@@ -170,87 +100,11 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
                 validationResults: dataQualityErrors,
             });
         } else if (!fromZero) {
-            const { indicators } = await this.api.metadata
-                .get({
-                    indicators: {
-                        fields: {
-                            id: true,
-                            name: true,
-                            numerator: true,
-                            denominator: true,
-                            lastUpdated: true,
-                            user: true,
-                        },
-                        filter: {
-                            lastUpdated: {
-                                gt: dataQuality?.indicatorsLastUpdated,
-                            },
-                        },
-                    },
-                })
-                .getData();
-            const { programIndicators } = await this.api.metadata
-                .get({
-                    programIndicators: {
-                        fields: {
-                            id: true,
-                            name: true,
-                            numerator: true,
-                            denominator: true,
-                            lastUpdated: true,
-                            user: true,
-                            expression: true,
-                            filter: true,
-                        },
-                        filter: {
-                            lastUpdated: {
-                                gt: dataQuality?.programIndicatorsLastUpdated,
-                            },
-                        },
-                    },
-                })
-                .getData();
-
-            await promiseMap(indicators, async indicator => {
-                const dataQualityItem: DataQualityItem = indicator;
-                try {
-                    const numeratorValidation = await this.api.expressions
-                        .validate("indicator", indicator.numerator)
-                        .getData();
-                    const denominatorValidation = await this.api.expressions
-                        .validate("indicator", indicator.denominator)
-                        .getData();
-
-                    if (numeratorValidation.status === "ERROR" || denominatorValidation.status === "ERROR") {
-                        dataQualityItem.numeratorresult = numeratorValidation.status === "ERROR";
-                        dataQualityItem.denominatorresult = denominatorValidation.status === "ERROR";
-                        dataQualityItem.metadataType = "Indicator";
-                        dataQualityErrors.push(dataQualityItem);
-                    }
-                } catch (error) {
-                    console.debug(error);
-                }
+            const { indicators, programIndicators } = await getMetadata(this.api, {
+                lastUpdated: { gt: dataQuality?.indicatorsLastUpdated },
             });
-            await promiseMap(programIndicators, async programIndicator => {
-                const dataQualityItem: DataQualityItem = programIndicator;
-                try {
-                    const expressionValidation = await this.api.expressions
-                        .validate("program-indicator-formula", programIndicator.expression)
-                        .getData();
-                    const filterValidation = await this.api.expressions
-                        .validate("program-indicator-filter", programIndicator.filter)
-                        .getData();
-
-                    if (expressionValidation.status === "ERROR" || filterValidation.status === "ERROR") {
-                        dataQualityItem.numeratorresult = expressionValidation.status === "ERROR";
-                        dataQualityItem.denominatorresult = filterValidation.status === "ERROR";
-                        dataQualityItem.metadataType = "ProgramIndicator";
-                        dataQualityErrors.push(dataQualityItem);
-                    }
-                } catch (error) {
-                    console.debug(error);
-                }
-            });
+            validateExpression(this.api, "Indicator", indicators, dataQualityErrors);
+            validateExpression(this.api, "ProgramIndicator", programIndicators, dataQualityErrors);
 
             await this.saveDataQuality(Namespaces.DATA_QUALITY, {
                 indicatorsLastUpdated: new Date().toISOString(),
@@ -269,4 +123,93 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
     async saveColumns(namespace: string, columns: string[]): Promise<void> {
         return this.storageClient.saveObject<string[]>(namespace, columns);
     }
+}
+
+async function getMetadata(api: D2Api, filter: Record<string, any>) {
+    const { indicators } = await api.metadata
+        .get({
+            indicators: {
+                fields: {
+                    id: true,
+                    name: true,
+                    numerator: true,
+                    denominator: true,
+                    lastUpdated: true,
+                    user: { displayName: true },
+                },
+                filter: filter,
+            },
+        })
+        .getData();
+
+    const { programIndicators } = await api.metadata
+        .get({
+            programIndicators: {
+                fields: {
+                    id: true,
+                    name: true,
+                    numerator: true,
+                    denominator: true,
+                    lastUpdated: true,
+                    user: { displayName: true },
+                    expression: true,
+                    filter: true,
+                },
+                filter: filter,
+            },
+        })
+        .getData();
+
+    return { indicators, programIndicators };
+}
+
+async function validateExpression(
+    api: D2Api,
+    metadataType: "Indicator" | "ProgramIndicator",
+    metadataItems: any[],
+    errors: any[]
+) {
+    await promiseMap(metadataItems, async item => {
+        try {
+            if (metadataType === "Indicator") {
+                const numeratorValidation = await api.expressions.validate("indicator", item.numerator).getData();
+                const denominatorValidation = await api.expressions.validate("indicator", item.denominator).getData();
+
+                if (numeratorValidation.status === "ERROR" || denominatorValidation.status === "ERROR") {
+                    const numeratorResult = numeratorValidation.status !== "ERROR";
+                    const denominatorResult = denominatorValidation.status !== "ERROR";
+                    const dataQualityItem: IndicatorItem = {
+                        ...item,
+                        user: item.user.displayName,
+                        numeratorResult,
+                        denominatorResult,
+                        metadataType,
+                    };
+                    errors.push(dataQualityItem);
+                }
+            } else if (metadataType === "ProgramIndicator") {
+                const expressionValidation = await api.expressions
+                    .validate("program-indicator-formula", item.expression)
+                    .getData();
+                const filterValidation = await api.expressions
+                    .validate("program-indicator-filter", item.filter)
+                    .getData();
+
+                if (expressionValidation.status === "ERROR" || filterValidation.status === "ERROR") {
+                    const expressionResult = expressionValidation.status !== "ERROR";
+                    const filterResult = filterValidation.status !== "ERROR";
+                    const dataQualityItem: ProgramIndicatorItem = {
+                        ...item,
+                        user: item.user.displayName,
+                        expressionResult,
+                        filterResult,
+                        metadataType,
+                    };
+                    errors.push(dataQualityItem);
+                }
+            }
+        } catch (error) {
+            console.debug(error);
+        }
+    });
 }
