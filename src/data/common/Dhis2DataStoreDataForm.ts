@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { D2Api } from "@eyeseetea/d2-api/2.34";
-import { array, boolean, Codec, GetType, intersect, oneOf, optional, string } from "purify-ts";
+import { boolean, Codec, GetType, oneOf, optional, record, string } from "purify-ts";
 import { dataStoreNamespace, Namespaces } from "./clients/storage/Namespaces";
 import { isElementOfUnion, Maybe, NonPartial } from "../../utils/ts-utils";
 import { Id, NamedRef } from "../../domain/common/entities/Base";
@@ -13,32 +13,38 @@ export interface DataSetConfig {
     sections: Record<Id, { viewType: ViewType }>;
 }
 
+function sectionConfig<T extends Record<string, Codec<any>>>(properties: T) {
+    return optional(record(string, Codec.interface(properties)));
+}
+
 const selector = oneOf([
     Codec.interface({ id: string }),
     Codec.interface({ code: string }), //
 ]);
 
-function sectionConfig<T extends Record<string, Codec<any>>>(properties: T) {
-    return optional(array(intersect(selector, Codec.interface(properties))));
-}
-
 const DataStoreConfigCodec = Codec.interface({
     dataElements: sectionConfig({
-        selection: Codec.interface({
-            optionSet: selector,
-            isMultiple: boolean,
-        }),
+        selection: optional(
+            Codec.interface({
+                optionSet: selector,
+                isMultiple: boolean,
+            })
+        ),
     }),
 
     dataSets: sectionConfig({
         viewType: optional(string),
-        texts: Codec.interface({
-            header: optional(string),
-            footer: optional(string),
-        }),
-        sections: sectionConfig({
-            viewType: optional(string),
-        }),
+        texts: optional(
+            Codec.interface({
+                header: optional(string),
+                footer: optional(string),
+            })
+        ),
+        sections: optional(
+            sectionConfig({
+                viewType: optional(string),
+            })
+        ),
     }),
 });
 
@@ -63,8 +69,8 @@ interface DataFormStoreConfig {
 }
 
 const defaultDataStoreConfig: DataFormStoreConfig["custom"] = {
-    dataElements: [],
-    dataSets: [],
+    dataElements: {},
+    dataSets: {},
 };
 
 interface DataSet {
@@ -91,11 +97,16 @@ export class Dhis2DataStoreDataForm {
             },
             Right: async storeConfigFromDataStore => {
                 const storeConfig: DataFormStoreConfig["custom"] = {
-                    dataElements: storeConfigFromDataStore.dataElements || [],
-                    dataSets: storeConfigFromDataStore.dataSets || [],
+                    dataElements: storeConfigFromDataStore.dataElements || {},
+                    dataSets: storeConfigFromDataStore.dataSets || {},
                 };
-                const optionSetSelectors = storeConfig.dataElements?.map(de => de.selection.optionSet);
-                const optionSets = await this.getOptionSets(api, optionSetSelectors || []);
+                const optionSetsInConfig = _(storeConfig.dataElements)
+                    .values()
+                    .map(obj => obj.selection?.optionSet)
+                    .compact()
+                    .value();
+
+                const optionSets = await this.getOptionSets(api, optionSetsInConfig || []);
 
                 return { optionSets, custom: storeConfig };
             },
@@ -135,15 +146,13 @@ export class Dhis2DataStoreDataForm {
     }
 
     getDataSetConfig(dataSet: DataSet): DataSetConfig {
-        const config = this.config.custom.dataSets.find(dataSetSelector => {
-            return selectorMatches(dataSet, dataSetSelector);
-        });
+        const dataSetConfig = this.config.custom.dataSets?.[dataSet.code];
+        const viewType = dataSetConfig?.viewType;
 
-        const viewType = config?.viewType;
-
-        const sections = _(config?.sections)
-            .map(sectionConfig => {
-                const section = dataSet.sections.find(section => selectorMatches(section, sectionConfig));
+        const sections = _(dataSetConfig?.sections)
+            .toPairs()
+            .map(([code, sectionConfig]) => {
+                const section = dataSet.sections.find(section => section.code === code);
                 return section
                     ? ([section.id, { viewType: getViewType(sectionConfig.viewType) }] as [Id, { viewType: ViewType }])
                     : undefined;
@@ -154,8 +163,8 @@ export class Dhis2DataStoreDataForm {
 
         return {
             texts: {
-                header: config?.texts.header || "",
-                footer: config?.texts.footer || "",
+                header: dataSetConfig?.texts?.header || "",
+                footer: dataSetConfig?.texts?.footer || "",
             },
             viewType: getViewType(viewType),
             sections: sections,
@@ -163,18 +172,18 @@ export class Dhis2DataStoreDataForm {
     }
 
     getDataElementConfig(dataElement: CodedRef): Maybe<DataElementConfig> {
-        const dataElementStoreConfig = this.config.custom.dataElements.find(dataElementSelector =>
-            selectorMatches(dataElement, dataElementSelector)
-        );
-        if (!dataElementStoreConfig) return;
+        const dataElementConfig = this.config.custom.dataElements[dataElement.code];
+        const optionSetSelector = dataElementConfig?.selection;
+        if (!optionSetSelector) return;
 
-        const optionSetSelector = dataElementStoreConfig.selection.optionSet;
-        const optionSet = this.config.optionSets.find(optionSet => selectorMatches(optionSet, optionSetSelector));
+        const optionSet = this.config.optionSets.find(optionSet =>
+            selectorMatches(optionSet, optionSetSelector.optionSet)
+        );
         if (!optionSet) return;
 
         return {
             selection: {
-                isMultiple: dataElementStoreConfig.selection.isMultiple,
+                isMultiple: optionSetSelector.isMultiple,
                 optionSet,
             },
         };
