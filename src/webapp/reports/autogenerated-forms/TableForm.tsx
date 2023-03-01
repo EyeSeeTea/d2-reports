@@ -56,7 +56,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
 
 const useStyles = makeStyles({
     wrapper: { margin: 10 },
-    header: { fontWeight: "bold" as const },
+    header: { fontSize: "1.4em", fontWeight: "bold" as const },
     center: { display: "table", margin: "0 auto" },
 });
 

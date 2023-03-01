@@ -1,3 +1,4 @@
+import _ from "lodash";
 import React from "react";
 // @ts-ignore
 import { SingleSelect, SingleSelectOption } from "@dhis2/ui";
@@ -16,6 +17,7 @@ export interface SingleSelectWidgetProps extends WidgetProps {
 
 const SingleSelectWidget: React.FC<SingleSelectWidgetProps> = props => {
     const { onValueChange, dataValue, disabled, options } = props;
+    const { value } = dataValue;
 
     const notifyChange = React.useCallback(
         ({ selected }: { selected: string }) => {
@@ -24,11 +26,16 @@ const SingleSelectWidget: React.FC<SingleSelectWidgetProps> = props => {
         [onValueChange, dataValue]
     );
 
+    const selectedValue = React.useMemo(
+        () => (_(options).some(option => option.value === value) ? value : undefined),
+        [value, options]
+    );
+
     return (
         <WidgetFeedback state={props.state}>
             <SingleSelect
                 onChange={notifyChange}
-                selected={dataValue.value}
+                selected={selectedValue}
                 disabled={disabled}
                 placeholder={i18n.t("Select")}
                 clearable={true}

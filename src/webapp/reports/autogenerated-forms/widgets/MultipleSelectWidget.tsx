@@ -1,3 +1,4 @@
+import _ from "lodash";
 import React from "react";
 // @ts-ignore
 import { MultiSelect, MultiSelectOption } from "@dhis2/ui";
@@ -24,11 +25,16 @@ const MultipleSelectWidget: React.FC<MultipleSelectWidgetProps> = props => {
         [onValueChange, dataValue]
     );
 
+    const selectedValues = React.useMemo(
+        () => dataValue.values.filter(value => _(options).some(option => option.value === value)),
+        [dataValue.values, options]
+    );
+
     return (
         <WidgetFeedback state={props.state}>
             <MultiSelect
                 onChange={notifyChange}
-                selected={dataValue.values}
+                selected={selectedValues}
                 disabled={disabled}
                 placeholder={i18n.t("Select")}
             >

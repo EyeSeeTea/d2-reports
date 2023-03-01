@@ -48,7 +48,7 @@ const GridForm: React.FC<GridFormProps> = props => {
 
                         {section.columns.map(column => (
                             <DataTableColumnHeader key={`column-${column.name}`}>
-                                <span style={styles.header}>{column.name}</span>
+                                <span>{column.name}</span>
                             </DataTableColumnHeader>
                         ))}
                     </DataTableRow>
@@ -80,7 +80,7 @@ const GridForm: React.FC<GridFormProps> = props => {
 
 const styles = {
     wrapper: { margin: 10 },
-    header: { fontWeight: "bold" as const },
+    header: { fontSize: "1.4em", fontWeight: "bold" as const },
 };
 
 export default React.memo(GridForm);
