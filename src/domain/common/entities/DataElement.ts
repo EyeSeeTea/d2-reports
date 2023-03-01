@@ -11,6 +11,7 @@ interface DataElementBase {
 export interface DataElementBoolean extends DataElementBase {
     type: "BOOLEAN";
     options: Options;
+    isTrueOnly: boolean;
 }
 
 export interface DataElementNumber extends DataElementBase {
