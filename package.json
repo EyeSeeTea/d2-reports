@@ -51,8 +51,11 @@
         "craco-start": "craco start",
         "prebuild": "yarn localize && yarn test",
         "build-folder": "rm -rf build/ && d2-manifest package.json manifest.webapp && react-scripts build && yarn run manifest && cp -r i18n icon.png build",
-        "build": "yarn build-folder && rm -f $npm_package_name.zip && cd build && zip --quiet -r ../$npm_package_name.zip *",
+        "build-default": "yarn build-folder && rm -f $npm_package_name.zip && cd build && rm -f manifest_mal.json mal-favicon.ico && zip --quiet -r ../$npm_package_name.zip *",
+        "mal-build-folder": "rm -rf build/ && yarn run mal-manifest && react-scripts build && yarn run mal-build-manifest && cp -r i18n mal-icon.png build",
+        "mal-build": "yarn mal-build-folder && rm -f $npm_package_name.zip && cd build && mv manifest_mal.json manifest.json && mv mal-favicon.ico favicon.ico && zip --quiet -r ../$npm_package_name.zip *",
         "build-report": "REACT_APP_DHIS2_BASE_URL='' REACT_APP_DHIS2_AUTH='' yarn build && gulp build-report",
+        "build": "REACT_APP_DHIS2_BASE_URL='' REACT_APP_DHIS2_AUTH='' npx ts-node -P tsconfig-cli.json src/scripts/build.ts",
         "build-nhwa-metadata": "npx ts-node -P tsconfig-cli.json src/scripts/build-nhwa-metadata.ts",
         "post-metadata": "npx ts-node -P tsconfig-cli.json src/scripts/post-metadata.ts",
         "build-mal-metadata": "npx ts-node -P tsconfig-cli.json src/scripts/build-mal-metadata.ts",
@@ -63,11 +66,10 @@
         "extract-pot": "yarn d2-i18n-extract -p src/ -o i18n/",
         "localize": "yarn update-po && d2-i18n-generate -n d2-reports -p ./i18n/ -o ./src/locales/",
         "update-po": "yarn extract-pot && for pofile in i18n/*.po; do msgmerge --backup=off -U $pofile i18n/en.pot; done",
-        "manifest": "d2-manifest package.json build/manifest.webapp",
         "prepare": "husky install",
-        "mal-build": "yarn mal-build-folder && rm -f $npm_package_name.zip && cd build && zip --quiet -r ../$npm_package_name.zip *",
-        "mal-build-folder": "rm -rf build/ && d2-manifest package.json manifest.webapp --icon mal-icon.png --index mal-index.html && react-scripts build && yarn run mal-manifest && cp -r i18n mal-icon.png build",
-        "mal-manifest": "d2-manifest package.json build/manifest.webapp --icon mal-icon.png --index mal-index.html"
+        "manifest": "d2-manifest package.json build/manifest.webapp",
+        "mal-manifest": "d2-manifest package.json manifest.webapp --manifest.icons.48='mal-icon.png' --manifest.name='DHIS2 MAL Approval Report' --manifest.description='DHIS2 MAL Approval Report'",
+        "mal-build-manifest": "d2-manifest package.json build/manifest.webapp --manifest.icons.48 mal-icon.png --manifest.name='DHIS2 MAL Approval Report' --manifest.description='DHIS2 MAL Approval Report'"
     },
     "husky": {
         "hooks": {
