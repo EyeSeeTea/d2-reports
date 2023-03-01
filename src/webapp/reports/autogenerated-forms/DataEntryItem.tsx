@@ -84,7 +84,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                 return assertUnreachable(type);
         }
     } else {
-        return <p>Data element not supported: {JSON.stringify(dataValue.dataElement)}</p>;
+        return <p>Data element not supported: {JSON.stringify(dataValue?.dataElement)}</p>;
     }
 };
 
@@ -92,9 +92,14 @@ function useUpdatableDataValueWithFeedback(options: DataEntryItemProps) {
     const { onValueChange, dataFormInfo, dataElement } = options;
     const [state, setState] = React.useState<WidgetState>("original");
 
-    const [dataValue, setDataValue] = React.useState<DataValue>(() => {
-        return dataFormInfo.data.values.getOrEmpty(dataElement, dataFormInfo);
-    });
+    const [dataValue, setDataValue] = React.useState<DataValue>(() =>
+        dataFormInfo.data.values.getOrEmpty(dataElement, dataFormInfo)
+    );
+
+    React.useEffect(() => {
+        const dataValue = dataFormInfo.data.values.getOrEmpty(dataElement, dataFormInfo);
+        setDataValue(dataValue);
+    }, [dataFormInfo, dataElement]);
 
     const notifyChange = React.useCallback<WidgetProps["onValueChange"]>(
         dataValue => {

@@ -20,8 +20,10 @@ const TextWidget: React.FC<TextWidgetProps> = props => {
     }, []);
 
     const notifyChange = React.useCallback(
-        ({ value }: { value: string }) => {
-            onValueChange({ ...dataValue, value });
+        ({ value: newValue }: { value: string }) => {
+            if (dataValue.value !== newValue) {
+                onValueChange({ ...dataValue, value: newValue });
+            }
         },
         [onValueChange, dataValue]
     );
