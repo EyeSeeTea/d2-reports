@@ -28,9 +28,12 @@ import { GenerateSortOrderUseCase } from "./domain/reports/mal-data-approval/use
 import { GetMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/GetMonitoringUseCase";
 import { SaveMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/SaveMonitoringUseCase";
 import { DuplicateDataValuesUseCase } from "./domain/reports/mal-data-approval/usecases/DuplicateDataValuesUseCase";
+import { CSYAuditDefaultRepository } from "./data/reports/csy-audit/CSYAuditDefaultRepository";
+import { GetAuditUseCase } from "./domain/reports/csy-audit/usecases/GetAuditUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
+    const csyAuditRepository = new CSYAuditDefaultRepository(api);
     const dataCommentsRepository = new NHWADataCommentsDefaultRepository(api);
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
     const dataDuplicationRepository = new MalDataApprovalDefaultRepository(api);
@@ -65,6 +68,9 @@ export function getCompositionRoot(api: D2Api) {
             duplicateValue: new DuplicateDataValuesUseCase(dataDuplicationRepository),
             getSortOrder: new GetSortOrderUseCase(dataDuplicationRepository),
             generateSortOrder: new GenerateSortOrderUseCase(dataDuplicationRepository),
+        }),
+        audit: getExecute({
+            get: new GetAuditUseCase(csyAuditRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),
