@@ -4,6 +4,7 @@ import MalDataApprovalStatusReport from "./mal-data-approval/MalDataApprovalRepo
 import { NHWADataApprovalStatusReport } from "./nhwa-approval-status/NHWADataApprovalStatusReport";
 import { NHWACommentsReport } from "./nhwa-comments/NHWACommentsReport";
 import { WMRNationalPolicies } from "./wmr-national-policies/WMRNationalPolicies";
+import CSYAuditReport from "./csy-audit/CSYAuditReport";
 import GLASSDataSubmissionReport from "./glass-data-submission/GLASSDataSubmissionReport";
 import CSYSummaryReport from "./csy-summary/CSYSummaryReport";
 import CSYSummaryReportMortality from "./csy-summary-mortality/CSYSummaryReport";
@@ -26,6 +27,9 @@ const Component: React.FC = () => {
         }
         case "wmr-national-policies": {
             return <WMRNationalPolicies />;
+        }
+        case "audit": {
+            return <CSYAuditReport />;
         }
         case "csy-summary": {
             return <CSYSummaryReport />;
