@@ -10,4 +10,7 @@ export interface CSYAuditOptions {
     config: Config;
     paging: Paging;
     sorting: Sorting<AuditItem>;
+    year: string;
+    quarter?: string;
+    orgUnitPaths: string[];
 }

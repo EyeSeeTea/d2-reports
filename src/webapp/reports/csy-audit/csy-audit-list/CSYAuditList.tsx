@@ -4,7 +4,15 @@ import { Config } from "../../../../domain/common/entities/Config";
 import { useAppContext } from "../../../contexts/app-context";
 import _ from "lodash";
 import { AuditViewModel, getAuditViews } from "../AuditViewModel";
-import { ObjectsList, TableConfig, TablePagination, TableSorting, useObjectsTable } from "@eyeseetea/d2-ui-components";
+import {
+    ObjectsList,
+    TableConfig,
+    TableGlobalAction,
+    TablePagination,
+    TableSorting,
+    useObjectsTable,
+} from "@eyeseetea/d2-ui-components";
+import StorageIcon from "@material-ui/icons/Storage";
 import i18n from "@eyeseetea/d2-ui-components/locales";
 import { useReload } from "../../../utils/use-reload";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
@@ -15,10 +23,11 @@ export const CSYAuditList: React.FC = React.memo(() => {
 
     const [reloadKey, _reload] = useReload();
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
+    const [sorting, setSorting] = useState<TableSorting<AuditViewModel>>();
 
     const selectablePeriods = React.useMemo(() => {
         const currentYear = new Date().getFullYear();
-        return _.range(currentYear - 5, currentYear).map(n => n.toString());
+        return _.range(currentYear - 10, currentYear + 1).map(n => n.toString());
     }, []);
 
     const baseConfig: TableConfig<AuditViewModel> = useMemo(
@@ -46,6 +55,7 @@ export const CSYAuditList: React.FC = React.memo(() => {
                 ...filters,
             });
 
+            setSorting(sorting);
             console.debug("Reloading", reloadKey);
             return { pager, objects: getAuditViews(config, objects) };
         },
@@ -61,8 +71,26 @@ export const CSYAuditList: React.FC = React.memo(() => {
     }
     const filterOptions = useMemo(() => getFilterOptions(selectablePeriods), [selectablePeriods]);
 
+    const downloadCsv: TableGlobalAction = {
+        name: "downloadCsv",
+        text: "Download CSV",
+        icon: <StorageIcon />,
+        onClick: async () => {
+            if (!sorting) return;
+            // FUTURE: create a single use case that performs the get+saveCSV
+            const { objects: dataValues } = await compositionRoot.audit.get({
+                config,
+                paging: { page: 1, pageSize: 100000 },
+                sorting: getSortingFromTableSorting(sorting),
+                ...filters,
+            });
+            // @ts-ignore
+            compositionRoot.dataComments.save("data-values.csv", dataValues);
+        },
+    };
+
     return (
-        <ObjectsList<AuditViewModel> {...tableProps} onChangeSearch={undefined}>
+        <ObjectsList<AuditViewModel> {...tableProps} onChangeSearch={undefined} globalActions={[downloadCsv]}>
             <Filters values={filters} options={filterOptions} onChange={setFilters} />
         </ObjectsList>
     );
@@ -79,7 +107,8 @@ function getEmptyDataValuesFilter(_config: Config): Filter {
     return {
         auditType: "mortality",
         orgUnitPaths: [],
-        periods: ["2021"],
+        year: "2020",
         periodType: "yearly",
+        quarter: undefined,
     };
 }
