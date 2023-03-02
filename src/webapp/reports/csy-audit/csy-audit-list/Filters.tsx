@@ -1,10 +1,10 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { OrgUnitsFilterButton } from "../../../components/org-units-filter/OrgUnitsFilterButton";
 import { useAppContext } from "../../../contexts/app-context";
 import { Id } from "../../../../domain/common/entities/Base";
 import { getRootIds } from "../../../../domain/common/entities/OrgUnit";
 import styled from "styled-components";
-import { Dropdown, DropdownProps, MultipleDropdown, MultipleDropdownProps } from "@eyeseetea/d2-ui-components";
+import { Dropdown, DropdownProps } from "@eyeseetea/d2-ui-components";
 import i18n from "../../../../locales";
 
 export interface FiltersProps {
@@ -17,7 +17,8 @@ export interface Filter {
     auditType: string;
     orgUnitPaths: Id[];
     periodType: string;
-    periods: string[];
+    year: string;
+    quarter?: string;
 }
 
 interface FilterOptions {
@@ -28,9 +29,13 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
     const { config, api } = useAppContext();
     const { values: filter, options: filterOptions, onChange } = props;
 
+    const [periodType, setPertype] = useState<string>("yearly");
+
     const auditTypeItems = React.useMemo(() => {
         return [{ value: "mortality", text: i18n.t("Mortality") }];
     }, []);
+
+    const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
 
     const periodTypeItems = React.useMemo(() => {
         return [
@@ -39,9 +44,16 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
         ];
     }, []);
 
-    const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
+    const yearItems = useMemoOptionsFromStrings(filterOptions.periods);
 
-    const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
+    const quarterPeriodItems = React.useMemo(() => {
+        return [
+            { value: "01", text: i18n.t("Jan - March") },
+            { value: "04", text: i18n.t("April - June") },
+            { value: "07", text: i18n.t("July - September") },
+            { value: "10", text: i18n.t("October - December") },
+        ];
+    }, []);
 
     const setAuditType = React.useCallback<SingleDropdownHandler>(
         auditType => {
@@ -50,15 +62,27 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
         [onChange]
     );
 
-    const setPeriodType = React.useCallback<SingleDropdownHandler>(
-        periodType => {
-            onChange(filter => ({ ...filter, periodType: periodType ?? "" }));
+    const setQuarterPeriod = React.useCallback<SingleDropdownHandler>(
+        quarterPeriod => {
+            onChange(filter => ({ ...filter, quarter: quarterPeriod ?? "" }));
         },
         [onChange]
     );
 
-    const setPeriods = React.useCallback<DropdownHandler>(
-        periods => onChange(prev => ({ ...prev, periods })),
+    const setPeriodType = React.useCallback<SingleDropdownHandler>(
+        periodType => {
+            setPertype(periodType ?? "yearly");
+            setQuarterPeriod(undefined);
+
+            onChange(filter => ({ ...filter, periodType: periodType ?? "yearly" }));
+        },
+        [onChange, setQuarterPeriod]
+    );
+
+    const setYear = React.useCallback<SingleDropdownHandler>(
+        year => {
+            onChange(filter => ({ ...filter, year: year ?? "" }));
+        },
         [onChange]
     );
 
@@ -77,6 +101,7 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
                 rootIds={rootIds}
                 selected={filter.orgUnitPaths}
                 setSelected={paths => onChange({ ...filter, orgUnitPaths: paths })}
+                selectableLevels={[2]}
             />
 
             <SingleDropdownStyled
@@ -87,12 +112,25 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
                 hideEmpty
             />
 
-            <DropdownStyled
-                items={periodItems}
-                values={filter.periods}
-                onChange={setPeriods}
-                label={i18n.t("Periods")}
+            <SingleDropdownStyled
+                items={yearItems}
+                value={filter.year}
+                onChange={setYear}
+                label={i18n.t("Year")}
+                hideEmpty
             />
+
+            {periodType === "quarterly" && (
+                <>
+                    <SingleDropdownStyled
+                        items={quarterPeriodItems}
+                        value={filter.quarter}
+                        onChange={setQuarterPeriod}
+                        label={i18n.t("Quarter")}
+                        hideEmpty
+                    />
+                </>
+            )}
         </Container>
     );
 });
@@ -114,9 +152,4 @@ const SingleDropdownStyled = styled(Dropdown)`
     width: 180px;
 `;
 
-const DropdownStyled = styled(MultipleDropdown)`
-    margin-left: -10px;
-`;
-
-type DropdownHandler = MultipleDropdownProps["onChange"];
 type SingleDropdownHandler = DropdownProps["onChange"];
