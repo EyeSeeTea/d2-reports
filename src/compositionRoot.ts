@@ -30,6 +30,7 @@ import { SaveMonitoringUseCase } from "./domain/reports/mal-data-approval/usecas
 import { DuplicateDataValuesUseCase } from "./domain/reports/mal-data-approval/usecases/DuplicateDataValuesUseCase";
 import { CSYAuditDefaultRepository } from "./data/reports/csy-audit/CSYAuditDefaultRepository";
 import { GetAuditUseCase } from "./domain/reports/csy-audit/usecases/GetAuditUseCase";
+import { SaveAuditUseCase } from "./domain/reports/csy-audit/usecases/SaveAuditUseCase";
 import { GLASSDataSubmissionDefaultRepository } from "./data/reports/glass-data-submission/GLASSDataSubmissionDefaultRepository";
 import { GetGLASSDataSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSDataSubmissionUseCase";
 import { GetGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSDataSubmissionColumnsUseCase";
@@ -86,6 +87,7 @@ export function getCompositionRoot(api: D2Api) {
         }),
         audit: getExecute({
             get: new GetAuditUseCase(csyAuditRepository),
+            save: new SaveAuditUseCase(csyAuditRepository),
         }),
         glassDataSubmission: getExecute({
             get: new GetGLASSDataSubmissionUseCase(glassDataRepository),

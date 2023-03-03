@@ -29,7 +29,7 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
     const { config, api } = useAppContext();
     const { values: filter, options: filterOptions, onChange } = props;
 
-    const [periodType, setPertype] = useState<string>("yearly");
+    const [periodType, setPerType] = useState<string>("yearly");
 
     const auditTypeItems = React.useMemo(() => {
         return [{ value: "mortality", text: i18n.t("Mortality") }];
@@ -71,7 +71,7 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
 
     const setPeriodType = React.useCallback<SingleDropdownHandler>(
         periodType => {
-            setPertype(periodType ?? "yearly");
+            setPerType(periodType ?? "yearly");
             setQuarterPeriod(undefined);
 
             onChange(filter => ({ ...filter, periodType: periodType ?? "yearly" }));
