@@ -77,7 +77,6 @@ export const CSYAuditList: React.FC = React.memo(() => {
         icon: <StorageIcon />,
         onClick: async () => {
             if (!sorting) return;
-            // FUTURE: create a single use case that performs the get+saveCSV
             const { objects: auditItems } = await compositionRoot.audit.get({
                 config,
                 paging: { page: 1, pageSize: 100000 },
