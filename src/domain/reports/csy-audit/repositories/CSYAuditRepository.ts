@@ -4,6 +4,7 @@ import { AuditItem } from "../entities/AuditItem";
 
 export interface CSYAuditRepository {
     get(options: CSYAuditOptions): Promise<PaginatedObjects<AuditItem>>;
+    save(filename: string, items: AuditItem[]): Promise<void>;
 }
 
 export interface CSYAuditOptions {

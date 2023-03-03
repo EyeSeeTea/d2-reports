@@ -7,6 +7,9 @@ import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreSt
 import { StorageClient } from "../../common/clients/storage/StorageClient";
 import { Instance } from "../../common/entities/Instance";
 import { getOrgUnitIdsFromPaths } from "../../../domain/common/entities/OrgUnit";
+import { CsvWriterDataSource } from "../../common/CsvWriterCsvDataSource";
+import { CsvData } from "../../common/CsvDataSource";
+import { downloadFile } from "../../common/utils/download-file";
 
 export class CSYAuditDefaultRepository implements CSYAuditRepository {
     private storageClient: StorageClient;
@@ -78,4 +81,25 @@ export class CSYAuditDefaultRepository implements CSYAuditRepository {
             return { pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 }, objects: [] };
         }
     }
+
+    async save(filename: string, items: AuditItem[]): Promise<void> {
+        const headers = csvFields.map(field => ({ id: field, text: field }));
+        const rows = items.map(
+            (dataValue): AuditItemRow => ({
+                registerId: dataValue.registerId,
+            })
+        );
+
+        const csvDataSource = new CsvWriterDataSource();
+        const csvData: CsvData<CsvField> = { headers, rows };
+        const csvContents = csvDataSource.toString(csvData);
+
+        await downloadFile(csvContents, filename, "text/csv");
+    }
 }
+
+const csvFields = ["registerId"] as const;
+
+type CsvField = typeof csvFields[number];
+
+type AuditItemRow = Record<CsvField, string>;

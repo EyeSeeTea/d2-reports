@@ -78,14 +78,14 @@ export const CSYAuditList: React.FC = React.memo(() => {
         onClick: async () => {
             if (!sorting) return;
             // FUTURE: create a single use case that performs the get+saveCSV
-            const { objects: dataValues } = await compositionRoot.audit.get({
+            const { objects: auditItems } = await compositionRoot.audit.get({
                 config,
                 paging: { page: 1, pageSize: 100000 },
                 sorting: getSortingFromTableSorting(sorting),
                 ...filters,
             });
-            // @ts-ignore
-            compositionRoot.dataComments.save("data-values.csv", dataValues);
+
+            compositionRoot.audit.save("audit-report.csv", auditItems);
         },
     };
 

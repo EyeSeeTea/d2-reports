@@ -30,6 +30,7 @@ import { SaveMonitoringUseCase } from "./domain/reports/mal-data-approval/usecas
 import { DuplicateDataValuesUseCase } from "./domain/reports/mal-data-approval/usecases/DuplicateDataValuesUseCase";
 import { CSYAuditDefaultRepository } from "./data/reports/csy-audit/CSYAuditDefaultRepository";
 import { GetAuditUseCase } from "./domain/reports/csy-audit/usecases/GetAuditUseCase";
+import { SaveAuditUseCase } from "./domain/reports/csy-audit/usecases/SaveAuditUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -71,6 +72,7 @@ export function getCompositionRoot(api: D2Api) {
         }),
         audit: getExecute({
             get: new GetAuditUseCase(csyAuditRepository),
+            save: new SaveAuditUseCase(csyAuditRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),
