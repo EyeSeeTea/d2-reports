@@ -98,6 +98,33 @@ export class CSYAuditDefaultRepository implements CSYAuditRepository {
             console.log(auditItems);
         }
 
+        if (auditType === "hypoxia") {
+            const queryStrings = [
+                "&dimension=AlkbwOe8hCK:IN:4&stage=mnNpBtanIQo",
+                "&dimension=RBQXVln19aY:IN:2&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+                "&dimension=QStbireWKjW&filter=pvnRZkpycwP:LT:92&stage=mnNpBtanIQo",
+            ];
+
+            const response = await promiseMap(queryStrings, async queryString => {
+                return await this.api
+                    .get<AnalyticsResponse>(
+                        eventQueryUri(_.last(getOrgUnitIdsFromPaths(orgUnitPaths)) ?? "", "2020Q1", queryString)
+                    )
+                    .getData();
+            });
+
+            const euProcedureIds = getColumnValue(response[0], "QStbireWKjW");
+            const oxMethIds = getColumnValue(response[1], "QStbireWKjW");
+            const oxSatIds = getColumnValue(response[2], "QStbireWKjW");
+            const matchedIds = _.union(_.intersection(euProcedureIds, oxMethIds), oxSatIds);
+
+            const auditItems: AuditItem[] = matchedIds.map(matchedId => ({
+                registerId: matchedId,
+            }));
+
+            console.log(auditItems);
+        }
+
         try {
             const { rows } = await this.api
                 // program
