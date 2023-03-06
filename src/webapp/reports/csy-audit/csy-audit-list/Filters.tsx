@@ -32,7 +32,12 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
     const [periodType, setPerType] = useState<string>("yearly");
 
     const auditTypeItems = React.useMemo(() => {
-        return [{ value: "mortality", text: i18n.t("Mortality") }];
+        return [
+            { value: "mortality", text: i18n.t("Mortality with low injury severity score") },
+            { value: "hypoxia", text: i18n.t("Oxygen not administered for patients with hypoxia") },
+            { value: "tachypnea", text: i18n.t("Oxygen not administered for patients with tachypnea") },
+            { value: "mental", text: i18n.t("Mental status-dependent airway maneuver") },
+        ];
     }, []);
 
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
@@ -48,10 +53,10 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
 
     const quarterPeriodItems = React.useMemo(() => {
         return [
-            { value: "01", text: i18n.t("Jan - March") },
-            { value: "04", text: i18n.t("April - June") },
-            { value: "07", text: i18n.t("July - September") },
-            { value: "10", text: i18n.t("October - December") },
+            { value: "Q1", text: i18n.t("Jan - March") },
+            { value: "Q2", text: i18n.t("April - June") },
+            { value: "Q3", text: i18n.t("July - September") },
+            { value: "Q4", text: i18n.t("October - December") },
         ];
     }, []);
 

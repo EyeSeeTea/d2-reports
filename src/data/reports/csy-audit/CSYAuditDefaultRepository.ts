@@ -10,6 +10,7 @@ import { getOrgUnitIdsFromPaths } from "../../../domain/common/entities/OrgUnit"
 import { CsvWriterDataSource } from "../../common/CsvWriterCsvDataSource";
 import { CsvData } from "../../common/CsvDataSource";
 import { downloadFile } from "../../common/utils/download-file";
+import { promiseMap } from "../../../utils/promises";
 
 export class CSYAuditDefaultRepository implements CSYAuditRepository {
     private storageClient: StorageClient;
@@ -22,7 +23,7 @@ export class CSYAuditDefaultRepository implements CSYAuditRepository {
     }
 
     async get(options: CSYAuditOptions): Promise<PaginatedObjects<AuditItem>> {
-        const { paging, year, orgUnitPaths, quarter } = options;
+        const { paging, year, orgUnitPaths, quarter, auditType } = options;
 
         const { objects } = await this.api.models.dataElements
             .get({
@@ -49,16 +50,63 @@ export class CSYAuditDefaultRepository implements CSYAuditRepository {
             })
             .getData();
 
+        if (auditType === "mortality") {
+            const queryStrings = [
+                "&dimension=ijG1c7IqeZb:IN:7&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+                "&dimension=QStbireWKjW&dimension=CZhIs5wGCiz:IN:5&stage=mnNpBtanIQo",
+                "&dimension=UQ8ENntnDDd&dimension=O38wkAQbK9z&dimension=NebmxV8fnTD&dimension=h0XlP7VstW7&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+            ];
+
+            const response = await promiseMap(queryStrings, async queryString => {
+                return await this.api
+                    .get<AnalyticsResponse>(
+                        eventQueryUri(_.last(getOrgUnitIdsFromPaths(orgUnitPaths)) ?? "", "202001", queryString)
+                    )
+                    .getData();
+            });
+
+            // for (KTS=14-16) OR (MGAP=23-29) OR (GAP=19-24) OR (RTS=11-12)
+            const scoreRows = response[2]?.rows ?? [];
+            const scoreIds: string[] = [];
+            scoreRows.map(scoreRow => {
+                const gap = Number(scoreRow[findColumnIndex(response[2], "h0XlP7VstW7")]);
+                const mgap = Number(scoreRow[findColumnIndex(response[2], "NebmxV8fnTD")]);
+                const rts = Number(scoreRow[findColumnIndex(response[2], "NebmxV8fnTD")]);
+                const kts = Number(scoreRow[findColumnIndex(response[2], "UQ8ENntnDDd")]);
+
+                if (
+                    (gap >= 19 && gap <= 24) ||
+                    (mgap >= 23 && mgap <= 29) ||
+                    (rts >= 11 && rts <= 12) ||
+                    (kts >= 14 && kts <= 16)
+                )
+                    scoreIds.push(String(scoreRow[findColumnIndex(response[2], "QStbireWKjW")]));
+
+                return scoreIds;
+            });
+
+            const euMortalityIds = getColumnValue(response[0], "QStbireWKjW");
+            const inpMortalityIds = getColumnValue(response[1], "QStbireWKjW");
+
+            const mortality = _.union(euMortalityIds, inpMortalityIds);
+            const matchedIds = _.compact(_.intersection(mortality, scoreIds));
+
+            const auditItems: AuditItem[] = matchedIds.map(matchedId => ({
+                registerId: matchedId,
+            }));
+
+            console.log(auditItems);
+        }
+
         try {
             const { rows } = await this.api
                 // program
                 .get<AnalyticsResponse>(`/analytics/events/query/${programs[0]?.id}.json`, {
-                    // ijG1c7IqeZb in option code 7
                     dimension: [
                         `pe:${!quarter ? year : `${year}${quarter}`}`,
                         `ou:${_.last(getOrgUnitIdsFromPaths(orgUnitPaths))}`,
-                        "ijG1c7IqeZb:IN:7",
-                        `${objects[0]?.id}`,
+                        "ijG1c7IqeZb:IN:7", // ETA_EU Dispo in option died (code: 7)
+                        `${objects[0]?.id}`, // dataElement: QStbireWKjW
                     ],
                     stage: programStages[0]?.id, // program stage
                 })
@@ -103,3 +151,32 @@ const csvFields = ["registerId"] as const;
 type CsvField = typeof csvFields[number];
 
 type AuditItemRow = Record<CsvField, string>;
+
+function eventQueryUri(orgUnit: string, period: string, query: string) {
+    const uri =
+        "/analytics/events/query/auqdJ66DqAT.json?dimension=pe:" +
+        period +
+        "&dimension=ou:" +
+        orgUnit +
+        query +
+        "&pageSize=100000";
+    return uri;
+}
+
+function findColumnIndex(response: AnalyticsResponse | undefined, columnId: string) {
+    const headers = response?.headers ?? [];
+    const columnHeader = headers.find(header => header.name === columnId);
+
+    if (!columnHeader) return -1;
+    return headers.indexOf(columnHeader);
+}
+
+function getColumnValue(response: AnalyticsResponse | undefined, columnId: string) {
+    const columnIndex = findColumnIndex(response, columnId);
+    const values: string[] = [];
+    const rows = response?.rows ?? [];
+
+    rows.map(row => values.push(String(row[columnIndex])));
+
+    return values;
+}
