@@ -125,6 +125,67 @@ export class CSYAuditDefaultRepository implements CSYAuditRepository {
             console.log(auditItems);
         }
 
+        if (auditType === "tachypnea") {
+            const queryStrings = [
+                "&dimension=AlkbwOe8hCK:IN:4&stage=mnNpBtanIQo",
+                "&dimension=QStbireWKjW&dimension=CVodhbK2wQ2:GT:30&stage=mnNpBtanIQo",
+                "&dimension=QStbireWKjW&dimension=CVodhbK2wQ2:LT:12&stage=mnNpBtanIQo",
+            ];
+
+            const response = await promiseMap(queryStrings, async queryString => {
+                return await this.api
+                    .get<AnalyticsResponse>(
+                        eventQueryUri(_.last(getOrgUnitIdsFromPaths(orgUnitPaths)) ?? "", "202001", queryString)
+                    )
+                    .getData();
+            });
+
+            const euProcedureIds = getColumnValue(response[0], "QStbireWKjW");
+            const spontaneousRR30 = getColumnValue(response[1], "QStbireWKjW");
+            const spontaneousRR12 = getColumnValue(response[2], "QStbireWKjW");
+            const matchedIds = _.union(spontaneousRR30, spontaneousRR12).filter(item => !euProcedureIds.includes(item));
+
+            const auditItems: AuditItem[] = matchedIds.map(matchedId => ({
+                registerId: matchedId,
+            }));
+
+            console.log(auditItems);
+        }
+
+        if (auditType === "mental") {
+            const queryStrings = [
+                "&dimension=QStbireWKjW&dimension=AlkbwOe8hCK:IN:2;3;5&stage=mnNpBtanIQo",
+                "&dimension=WJE7ozQ21LA&dimension=kj3SOKykiDg&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+            ];
+
+            const response = await promiseMap(queryStrings, async queryString => {
+                return await this.api
+                    .get<AnalyticsResponse>(
+                        eventQueryUri(_.last(getOrgUnitIdsFromPaths(orgUnitPaths)) ?? "", "202001", queryString)
+                    )
+                    .getData();
+            });
+
+            const euProcedureIds = getColumnValue(response[0], "QStbireWKjW");
+            const rows = response[1]?.rows ?? [];
+            const gcsAndAvpuIds: string[] = [];
+            rows.map(
+                row =>
+                    (Number(row[findColumnIndex(response[1], "WJE7ozQ21LA")]) < 8 ||
+                        // @ts-ignore
+                        [3, 4].includes(row[findColumnIndex(response[1], "kj3SOKykiDg")])) &&
+                    gcsAndAvpuIds.push(String(row[findColumnIndex(response[1], "QStbireWKjW")]))
+            );
+
+            const matchedIds = gcsAndAvpuIds.filter(item => !euProcedureIds.includes(item));
+
+            const auditItems: AuditItem[] = matchedIds.map(matchedId => ({
+                registerId: matchedId,
+            }));
+
+            console.log(auditItems);
+        }
+
         try {
             const { rows } = await this.api
                 // program
