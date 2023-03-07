@@ -3,9 +3,6 @@ import { PaginatedObjects } from "../../../domain/common/entities/PaginatedObjec
 import { AuditItem } from "../../../domain/reports/csy-audit/entities/AuditItem";
 import { CSYAuditOptions, CSYAuditRepository } from "../../../domain/reports/csy-audit/repositories/CSYAuditRepository";
 import { AnalyticsResponse, D2Api, Pager } from "../../../types/d2-api";
-import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
-import { StorageClient } from "../../common/clients/storage/StorageClient";
-import { Instance } from "../../common/entities/Instance";
 import { getOrgUnitIdsFromPaths } from "../../../domain/common/entities/OrgUnit";
 import { CsvWriterDataSource } from "../../common/CsvWriterCsvDataSource";
 import { CsvData } from "../../common/CsvDataSource";
@@ -13,202 +10,28 @@ import { downloadFile } from "../../common/utils/download-file";
 import { promiseMap } from "../../../utils/promises";
 
 export class CSYAuditDefaultRepository implements CSYAuditRepository {
-    private storageClient: StorageClient;
-    private globalStorageClient: StorageClient;
-
-    constructor(private api: D2Api) {
-        const instance = new Instance({ url: this.api.baseUrl });
-        this.storageClient = new DataStoreStorageClient("user", instance);
-        this.globalStorageClient = new DataStoreStorageClient("global", instance);
-    }
+    constructor(private api: D2Api) {}
 
     async get(options: CSYAuditOptions): Promise<PaginatedObjects<AuditItem>> {
         const { paging, year, orgUnitPaths, quarter, auditType } = options;
-
-        const { objects } = await this.api.models.dataElements
-            .get({
-                fields: { id: true },
-                filter: { name: { $like: "ETA_Registry ID" } },
-            })
-            .getData();
-
-        const { programs } = await this.api.metadata
-            .get({
-                programs: {
-                    fields: { id: true },
-                    filter: { name: { eq: "WHO Clinical Registry - Trauma" } },
-                },
-            })
-            .getData();
-
-        const { programStages } = await this.api.metadata
-            .get({
-                programStages: {
-                    fields: { id: true },
-                    filter: { name: { eq: "WHO Clinical Registry - Trauma" } },
-                },
-            })
-            .getData();
-
-        if (auditType === "mortality") {
-            const queryStrings = [
-                "&dimension=ijG1c7IqeZb:IN:7&dimension=QStbireWKjW&stage=mnNpBtanIQo",
-                "&dimension=QStbireWKjW&dimension=CZhIs5wGCiz:IN:5&stage=mnNpBtanIQo",
-                "&dimension=UQ8ENntnDDd&dimension=O38wkAQbK9z&dimension=NebmxV8fnTD&dimension=h0XlP7VstW7&dimension=QStbireWKjW&stage=mnNpBtanIQo",
-            ];
-
-            const response = await promiseMap(queryStrings, async queryString => {
-                return await this.api
-                    .get<AnalyticsResponse>(
-                        eventQueryUri(_.last(getOrgUnitIdsFromPaths(orgUnitPaths)) ?? "", "202001", queryString)
-                    )
-                    .getData();
-            });
-
-            // for (KTS=14-16) OR (MGAP=23-29) OR (GAP=19-24) OR (RTS=11-12)
-            const scoreRows = response[2]?.rows ?? [];
-            const scoreIds: string[] = [];
-            scoreRows.map(scoreRow => {
-                const gap = Number(scoreRow[findColumnIndex(response[2], "h0XlP7VstW7")]);
-                const mgap = Number(scoreRow[findColumnIndex(response[2], "NebmxV8fnTD")]);
-                const rts = Number(scoreRow[findColumnIndex(response[2], "NebmxV8fnTD")]);
-                const kts = Number(scoreRow[findColumnIndex(response[2], "UQ8ENntnDDd")]);
-
-                if (
-                    (gap >= 19 && gap <= 24) ||
-                    (mgap >= 23 && mgap <= 29) ||
-                    (rts >= 11 && rts <= 12) ||
-                    (kts >= 14 && kts <= 16)
-                )
-                    scoreIds.push(String(scoreRow[findColumnIndex(response[2], "QStbireWKjW")]));
-
-                return scoreIds;
-            });
-
-            const euMortalityIds = getColumnValue(response[0], "QStbireWKjW");
-            const inpMortalityIds = getColumnValue(response[1], "QStbireWKjW");
-
-            const mortality = _.union(euMortalityIds, inpMortalityIds);
-            const matchedIds = _.compact(_.intersection(mortality, scoreIds));
-
-            const auditItems: AuditItem[] = matchedIds.map(matchedId => ({
-                registerId: matchedId,
-            }));
-
-            console.log(auditItems);
-        }
-
-        if (auditType === "hypoxia") {
-            const queryStrings = [
-                "&dimension=AlkbwOe8hCK:IN:4&stage=mnNpBtanIQo",
-                "&dimension=RBQXVln19aY:IN:2&dimension=QStbireWKjW&stage=mnNpBtanIQo",
-                "&dimension=QStbireWKjW&filter=pvnRZkpycwP:LT:92&stage=mnNpBtanIQo",
-            ];
-
-            const response = await promiseMap(queryStrings, async queryString => {
-                return await this.api
-                    .get<AnalyticsResponse>(
-                        eventQueryUri(_.last(getOrgUnitIdsFromPaths(orgUnitPaths)) ?? "", "2020Q1", queryString)
-                    )
-                    .getData();
-            });
-
-            const euProcedureIds = getColumnValue(response[0], "QStbireWKjW");
-            const oxMethIds = getColumnValue(response[1], "QStbireWKjW");
-            const oxSatIds = getColumnValue(response[2], "QStbireWKjW");
-            const matchedIds = _.union(_.intersection(euProcedureIds, oxMethIds), oxSatIds);
-
-            const auditItems: AuditItem[] = matchedIds.map(matchedId => ({
-                registerId: matchedId,
-            }));
-
-            console.log(auditItems);
-        }
-
-        if (auditType === "tachypnea") {
-            const queryStrings = [
-                "&dimension=AlkbwOe8hCK:IN:4&stage=mnNpBtanIQo",
-                "&dimension=QStbireWKjW&dimension=CVodhbK2wQ2:GT:30&stage=mnNpBtanIQo",
-                "&dimension=QStbireWKjW&dimension=CVodhbK2wQ2:LT:12&stage=mnNpBtanIQo",
-            ];
-
-            const response = await promiseMap(queryStrings, async queryString => {
-                return await this.api
-                    .get<AnalyticsResponse>(
-                        eventQueryUri(_.last(getOrgUnitIdsFromPaths(orgUnitPaths)) ?? "", "202001", queryString)
-                    )
-                    .getData();
-            });
-
-            const euProcedureIds = getColumnValue(response[0], "QStbireWKjW");
-            const spontaneousRR30 = getColumnValue(response[1], "QStbireWKjW");
-            const spontaneousRR12 = getColumnValue(response[2], "QStbireWKjW");
-            const matchedIds = _.union(spontaneousRR30, spontaneousRR12).filter(item => !euProcedureIds.includes(item));
-
-            const auditItems: AuditItem[] = matchedIds.map(matchedId => ({
-                registerId: matchedId,
-            }));
-
-            console.log(auditItems);
-        }
-
-        if (auditType === "mental") {
-            const queryStrings = [
-                "&dimension=QStbireWKjW&dimension=AlkbwOe8hCK:IN:2;3;5&stage=mnNpBtanIQo",
-                "&dimension=WJE7ozQ21LA&dimension=kj3SOKykiDg&dimension=QStbireWKjW&stage=mnNpBtanIQo",
-            ];
-
-            const response = await promiseMap(queryStrings, async queryString => {
-                return await this.api
-                    .get<AnalyticsResponse>(
-                        eventQueryUri(_.last(getOrgUnitIdsFromPaths(orgUnitPaths)) ?? "", "202001", queryString)
-                    )
-                    .getData();
-            });
-
-            const euProcedureIds = getColumnValue(response[0], "QStbireWKjW");
-            const rows = response[1]?.rows ?? [];
-            const gcsAndAvpuIds: string[] = [];
-            rows.map(
-                row =>
-                    (Number(row[findColumnIndex(response[1], "WJE7ozQ21LA")]) < 8 ||
-                        // @ts-ignore
-                        [3, 4].includes(row[findColumnIndex(response[1], "kj3SOKykiDg")])) &&
-                    gcsAndAvpuIds.push(String(row[findColumnIndex(response[1], "QStbireWKjW")]))
-            );
-
-            const matchedIds = gcsAndAvpuIds.filter(item => !euProcedureIds.includes(item));
-
-            const auditItems: AuditItem[] = matchedIds.map(matchedId => ({
-                registerId: matchedId,
-            }));
-
-            console.log(auditItems);
-        }
+        const orgUnitId = _.last(getOrgUnitIdsFromPaths(orgUnitPaths)) ?? "";
+        const period = !quarter ? year : `${year}${quarter}`;
 
         try {
-            const { rows } = await this.api
-                // program
-                .get<AnalyticsResponse>(`/analytics/events/query/${programs[0]?.id}.json`, {
-                    dimension: [
-                        `pe:${!quarter ? year : `${year}${quarter}`}`,
-                        `ou:${_.last(getOrgUnitIdsFromPaths(orgUnitPaths))}`,
-                        "ijG1c7IqeZb:IN:7", // ETA_EU Dispo in option died (code: 7)
-                        `${objects[0]?.id}`, // dataElement: QStbireWKjW
-                    ],
-                    stage: programStages[0]?.id, // program stage
-                })
-                .getData();
-
-            const auditItems: Array<AuditItem> = rows.map(item => ({
-                registerId: _.last(item) ?? "",
-            }));
-
+            const response = await promiseMap(
+                auditQueryStrings[auditType as keyof typeof auditQueryStrings],
+                async queryString => {
+                    return await this.api
+                        .get<AnalyticsResponse>(eventQueryUri(orgUnitId, period, queryString))
+                        .getData();
+                }
+            );
+            const auditItems = getAuditItems(auditType, response);
             const pager: Pager = {
                 page: paging.page,
                 pageSize: paging.pageSize,
-                pageCount: Math.ceil(rows.length / paging.pageSize),
-                total: rows.length,
+                pageCount: Math.ceil(auditItems.length / paging.pageSize),
+                total: auditItems.length,
             };
 
             return { pager, objects: auditItems };
@@ -267,4 +90,110 @@ function getColumnValue(response: AnalyticsResponse | undefined, columnId: strin
     rows.map(row => values.push(String(row[columnIndex])));
 
     return values;
+}
+
+const auditQueryStrings = {
+    mortality: [
+        "&dimension=ijG1c7IqeZb:IN:7&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+        "&dimension=QStbireWKjW&dimension=CZhIs5wGCiz:IN:5&stage=mnNpBtanIQo",
+        "&dimension=UQ8ENntnDDd&dimension=O38wkAQbK9z&dimension=NebmxV8fnTD&dimension=h0XlP7VstW7&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+    ],
+    hypoxia: [
+        "&dimension=AlkbwOe8hCK:IN:4&stage=mnNpBtanIQo",
+        "&dimension=RBQXVln19aY:IN:2&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+        "&dimension=QStbireWKjW&filter=pvnRZkpycwP:LT:92&stage=mnNpBtanIQo",
+    ],
+    tachypnea: [
+        "&dimension=AlkbwOe8hCK:IN:4&stage=mnNpBtanIQo",
+        "&dimension=QStbireWKjW&dimension=CVodhbK2wQ2:GT:30&stage=mnNpBtanIQo",
+        "&dimension=QStbireWKjW&dimension=CVodhbK2wQ2:LT:12&stage=mnNpBtanIQo",
+    ],
+    mental: [
+        "&dimension=QStbireWKjW&dimension=AlkbwOe8hCK:IN:2;3;5&stage=mnNpBtanIQo",
+        "&dimension=WJE7ozQ21LA&dimension=kj3SOKykiDg&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+    ],
+};
+
+function getAuditItems(auditType: string, response: AnalyticsResponse[]) {
+    switch (auditType) {
+        case "mortality": {
+            // for (KTS=14-16) OR (MGAP=23-29) OR (GAP=19-24) OR (RTS=11-12)
+            const scoreRows = response[2]?.rows ?? [];
+            const scoreIds: string[] = [];
+            scoreRows.map(scoreRow => {
+                const gap = Number(scoreRow[findColumnIndex(response[2], "h0XlP7VstW7")]);
+                const mgap = Number(scoreRow[findColumnIndex(response[2], "NebmxV8fnTD")]);
+                const rts = Number(scoreRow[findColumnIndex(response[2], "NebmxV8fnTD")]);
+                const kts = Number(scoreRow[findColumnIndex(response[2], "UQ8ENntnDDd")]);
+
+                if (
+                    (gap >= 19 && gap <= 24) ||
+                    (mgap >= 23 && mgap <= 29) ||
+                    (rts >= 11 && rts <= 12) ||
+                    (kts >= 14 && kts <= 16)
+                )
+                    scoreIds.push(String(scoreRow[findColumnIndex(response[2], "QStbireWKjW")]));
+
+                return scoreIds;
+            });
+
+            const euMortalityIds = getColumnValue(response[0], "QStbireWKjW");
+            const inpMortalityIds = getColumnValue(response[1], "QStbireWKjW");
+
+            const mortality = _.union(euMortalityIds, inpMortalityIds);
+            const matchedIds = _.compact(_.intersection(mortality, scoreIds));
+
+            const auditItems: AuditItem[] = matchedIds.map(matchedId => ({
+                registerId: matchedId,
+            }));
+
+            return auditItems;
+        }
+        case "hypoxia": {
+            const euProcedureIds = getColumnValue(response[0], "QStbireWKjW");
+            const oxMethIds = getColumnValue(response[1], "QStbireWKjW");
+            const oxSatIds = getColumnValue(response[2], "QStbireWKjW");
+            const matchedIds = _.union(_.intersection(euProcedureIds, oxMethIds), oxSatIds);
+
+            const auditItems: AuditItem[] = matchedIds.map(matchedId => ({
+                registerId: matchedId,
+            }));
+
+            return auditItems;
+        }
+        case "tachypnea": {
+            const euProcedureIds = getColumnValue(response[0], "QStbireWKjW");
+            const spontaneousRR30 = getColumnValue(response[1], "QStbireWKjW");
+            const spontaneousRR12 = getColumnValue(response[2], "QStbireWKjW");
+            const matchedIds = _.union(spontaneousRR30, spontaneousRR12).filter(item => !euProcedureIds.includes(item));
+
+            const auditItems: AuditItem[] = matchedIds.map(matchedId => ({
+                registerId: matchedId,
+            }));
+
+            return auditItems;
+        }
+        case "mental": {
+            const euProcedureIds = getColumnValue(response[0], "QStbireWKjW");
+            const rows = response[1]?.rows ?? [];
+            const gcsAndAvpuIds: string[] = [];
+            rows.map(
+                row =>
+                    (Number(row[findColumnIndex(response[1], "WJE7ozQ21LA")]) < 8 ||
+                        // @ts-ignore
+                        [3, 4].includes(row[findColumnIndex(response[1], "kj3SOKykiDg")])) &&
+                    gcsAndAvpuIds.push(String(row[findColumnIndex(response[1], "QStbireWKjW")]))
+            );
+
+            const matchedIds = gcsAndAvpuIds.filter(item => !euProcedureIds.includes(item));
+
+            const auditItems: AuditItem[] = matchedIds.map(matchedId => ({
+                registerId: matchedId,
+            }));
+
+            return auditItems;
+        }
+        default:
+            return [];
+    }
 }
