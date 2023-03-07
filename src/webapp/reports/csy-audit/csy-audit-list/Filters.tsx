@@ -77,7 +77,7 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
     const setPeriodType = React.useCallback<SingleDropdownHandler>(
         periodType => {
             setPerType(periodType ?? "yearly");
-            setQuarterPeriod(undefined);
+            setQuarterPeriod(periodType !== "yearly" ? "Q1" : undefined);
 
             onChange(filter => ({ ...filter, periodType: periodType ?? "yearly" }));
         },
@@ -93,7 +93,7 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
 
     return (
         <Container>
-            <SingleDropdownStyled
+            <AuditTypeDropdown
                 items={auditTypeItems}
                 value={filter.auditType}
                 onChange={setAuditType}
@@ -106,7 +106,7 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
                 rootIds={rootIds}
                 selected={filter.orgUnitPaths}
                 setSelected={paths => onChange({ ...filter, orgUnitPaths: paths })}
-                selectableLevels={[2]}
+                selectableLevels={[1, 2]}
             />
 
             <SingleDropdownStyled
@@ -150,6 +150,11 @@ const Container = styled.div`
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
+`;
+
+const AuditTypeDropdown = styled(Dropdown)`
+    margin-left: -10px;
+    width: 420px;
 `;
 
 const SingleDropdownStyled = styled(Dropdown)`
