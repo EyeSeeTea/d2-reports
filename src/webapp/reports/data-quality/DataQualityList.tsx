@@ -1,5 +1,4 @@
 import {
-    ConfirmationDialog,
     ObjectsList,
     TableColumn,
     TableConfig,
@@ -21,7 +20,6 @@ import {
     getDataQualityIndicatorViews,
     getDataQualityProgramIndicatorViews,
 } from "./DataQualityViewModel";
-import { useReload } from "../../utils/use-reload";
 import { useBooleanState } from "../../utils/use-boolean";
 
 export const DataQualityList: React.FC = React.memo(() => {
@@ -29,9 +27,8 @@ export const DataQualityList: React.FC = React.memo(() => {
 
     const [visibleIndicatorColumns, setVisibleIndicatorColumns] = useState<string[]>();
     const [visibleProgramIndicatorColumns, setVisibleProgramIndicatorColumns] = useState<string[]>();
-    const [isDialogOpen, { enable: openDialog, disable: closeDialog }] = useBooleanState(false);
-
-    const [_reloadKey, reload] = useReload();
+    const [isReloading, { enable: startReloading, disable: stopReloading }] = useBooleanState(false);
+    const [isLoading, { enable: startLoading, disable: stopLoading }] = useBooleanState(false);
 
     useEffect(() => {
         compositionRoot.dataQuality.getColumns(Namespaces.INDICATOR_STATUS_USER_COLUMNS).then(columns => {
@@ -42,10 +39,23 @@ export const DataQualityList: React.FC = React.memo(() => {
         });
     }, [compositionRoot]);
 
+    const fetchValidationData = useCallback(
+        async (fromZero: boolean) => {
+            await compositionRoot.dataQuality.reloadValidation(Namespaces.DATA_QUALITY, fromZero);
+        },
+        [compositionRoot.dataQuality]
+    );
+
     useEffect(() => {
-        compositionRoot.dataQuality.reloadValidation(Namespaces.DATA_QUALITY, true);
-        reload();
-    }, [compositionRoot.dataQuality, reload]);
+        if (isReloading) {
+            fetchValidationData(false).then(() => stopReloading());
+        }
+    }, [fetchValidationData, isReloading, stopReloading]);
+
+    useEffect(() => {
+        startLoading();
+        fetchValidationData(true).then(() => stopLoading());
+    }, [fetchValidationData, startLoading, stopLoading]);
 
     const indicatorBaseConfig: TableConfig<IndicatorViewModel> = useMemo(
         () => ({
@@ -128,12 +138,13 @@ export const DataQualityList: React.FC = React.memo(() => {
                 Namespaces.DATA_QUALITY
             );
 
+            console.debug("load: ", isLoading || isReloading);
             return {
                 pager,
                 objects: getDataQualityIndicatorViews(config, objects),
             };
         },
-        [compositionRoot.dataQuality, config]
+        [compositionRoot.dataQuality, config, isLoading, isReloading]
     );
 
     const getProgramIndicatorRows = useMemo(
@@ -147,12 +158,13 @@ export const DataQualityList: React.FC = React.memo(() => {
                 Namespaces.DATA_QUALITY
             );
 
+            console.debug("load: ", isLoading || isReloading);
             return {
                 pager,
                 objects: getDataQualityProgramIndicatorViews(config, objects),
             };
         },
-        [compositionRoot.dataQuality, config]
+        [compositionRoot.dataQuality, config, isLoading, isReloading]
     );
 
     const saveReorderedIndicatorColumns = useCallback(
@@ -211,11 +223,7 @@ export const DataQualityList: React.FC = React.memo(() => {
                 color="primary"
                 variant="contained"
                 onClick={async () => {
-                    openDialog();
-                    await compositionRoot.dataQuality
-                        .reloadValidation(Namespaces.DATA_QUALITY, false)
-                        .finally(() => closeDialog());
-                    reload();
+                    startReloading();
                 }}
             >
                 {i18n.t("Reload Validation")}
@@ -230,6 +238,7 @@ export const DataQualityList: React.FC = React.memo(() => {
                 columns={indicatorColumnsToShow}
                 onChangeSearch={undefined}
                 onReorderColumns={saveReorderedIndicatorColumns}
+                isLoading={isLoading || isReloading}
             />
 
             <Typography variant="h6" gutterBottom>
@@ -241,18 +250,8 @@ export const DataQualityList: React.FC = React.memo(() => {
                 columns={programIndicatorColumnsToShow}
                 onChangeSearch={undefined}
                 onReorderColumns={saveReorderedProgramIndicatorColumns}
+                isLoading={isLoading || isReloading}
             />
-
-            <ConfirmationDialog
-                isOpen={isDialogOpen}
-                title={i18n.t("Reloading Validation")}
-                onCancel={closeDialog}
-                cancelText={i18n.t("Close")}
-                maxWidth="md"
-                fullWidth
-            >
-                Please wait while validation results are reloaded. This may take a few minutes. Do not reload the page.
-            </ConfirmationDialog>
         </React.Fragment>
     );
 });
