@@ -158,8 +158,6 @@ async function getMetadata(api: D2Api, filter: Record<string, any>) {
                 fields: {
                     id: true,
                     name: true,
-                    numerator: true,
-                    denominator: true,
                     lastUpdated: true,
                     user: { displayName: true },
                     expression: true,
