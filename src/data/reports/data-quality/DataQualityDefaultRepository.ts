@@ -81,6 +81,16 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         return { pager: pager, objects: dataQualityIndicatorErrorsInPage };
     }
 
+    private makeNewDataQualityConfig(
+        validationResults: Array<IndicatorItem | ProgramIndicatorItem>
+    ): DataQualityConfig {
+        return {
+            indicatorsLastUpdated: new Date().toISOString(),
+            programIndicatorsLastUpdated: new Date().toISOString(),
+            validationResults: validationResults,
+        };
+    }
+
     async saveDataQuality(namespace: string, dataQuality: DataQualityConfig): Promise<void> {
         return await this.globalStorageClient.saveObject<DataQualityConfig>(namespace, dataQuality);
     }
@@ -89,28 +99,28 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         const dataQuality = await this.globalStorageClient.getObject<DataQualityConfig>(namespace);
         const dataQualityErrors: any[] = [];
 
-        if (fromZero && dataQuality?.validationResults.length === 0) {
+        if (fromZero && (dataQuality?.validationResults.length === 0 || typeof dataQuality === "undefined")) {
             const { indicators, programIndicators } = await getMetadata(this.api, {});
-            validateExpression(this.api, "Indicator", indicators, dataQualityErrors);
-            validateExpression(this.api, "ProgramIndicator", programIndicators, dataQualityErrors);
 
-            await this.saveDataQuality(Namespaces.DATA_QUALITY, {
-                indicatorsLastUpdated: new Date().toISOString(),
-                programIndicatorsLastUpdated: new Date().toISOString(),
-                validationResults: _.union(dataQualityErrors, dataQuality?.validationResults),
-            });
+            await validateExpression(this.api, "Indicator", indicators, dataQualityErrors);
+            await validateExpression(this.api, "ProgramIndicator", programIndicators, dataQualityErrors);
+
+            await this.saveDataQuality(
+                Namespaces.DATA_QUALITY,
+                this.makeNewDataQualityConfig(_.union(dataQualityErrors, dataQuality?.validationResults))
+            );
         } else if (!fromZero) {
             const { indicators, programIndicators } = await getMetadata(this.api, {
                 lastUpdated: { gt: dataQuality?.indicatorsLastUpdated },
             });
-            validateExpression(this.api, "Indicator", indicators, dataQualityErrors);
-            validateExpression(this.api, "ProgramIndicator", programIndicators, dataQualityErrors);
 
-            await this.saveDataQuality(Namespaces.DATA_QUALITY, {
-                indicatorsLastUpdated: new Date().toISOString(),
-                programIndicatorsLastUpdated: new Date().toISOString(),
-                validationResults: _.union(dataQualityErrors, dataQuality?.validationResults),
-            });
+            await validateExpression(this.api, "Indicator", indicators, dataQualityErrors);
+            await validateExpression(this.api, "ProgramIndicator", programIndicators, dataQualityErrors);
+
+            await this.saveDataQuality(
+                Namespaces.DATA_QUALITY,
+                this.makeNewDataQualityConfig(_.union(dataQualityErrors, dataQuality?.validationResults))
+            );
         }
     }
 
