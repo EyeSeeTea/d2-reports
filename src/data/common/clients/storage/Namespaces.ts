@@ -9,7 +9,7 @@ export const Namespaces = {
     MAL_DIFF_STATUS_USER_COLUMNS: "mal-diff-status-user-columns",
     MAL_DIFF_NAMES_SORT_ORDER: "mal-diff-names-sort-order",
     MONITORING: "monitoring",
-    DATA_QUALITY: "data-quality-config",
+    DATA_QUALITY: "data-quality",
     INDICATOR_STATUS_USER_COLUMNS: "indicator-status-user-columns",
     PROGRAM_INDICATOR_STATUS_USER_COLUMNS: "program-indicator-status-user-columns",
 };
