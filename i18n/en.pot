@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2023-02-09T16:42:20.205Z\n"
-"PO-Revision-Date: 2023-02-09T16:42:20.205Z\n"
+"POT-Creation-Date: 2023-03-08T15:13:13.473Z\n"
+"PO-Revision-Date: 2023-03-08T15:13:13.473Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -102,6 +102,9 @@ msgid "Filter"
 msgstr ""
 
 msgid "Valid filter"
+msgstr ""
+
+msgid "Reload Validation"
 msgstr ""
 
 msgid "Indicators"
