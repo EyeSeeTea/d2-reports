@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { keyById, NamedRef } from "../../domain/common/entities/Base";
-import { Config } from "../../domain/common/entities/Config";
+import { Config, translationKeys, Translations } from "../../domain/common/entities/Config";
 import { ReportType } from "../../domain/common/entities/ReportType";
 import { User } from "../../domain/common/entities/User";
 import { ConfigRepository } from "../../domain/common/repositories/ConfigRepository";
@@ -53,7 +53,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             return { ...acc, [sqlView.name]: sqlView };
         }, {});
 
-        const currentUser = await this.getCurrentUser();
+        const [currentUser, translations] = await Promise.all([this.getCurrentUser(), this.getTranslations()]);
         const pairedDataElements = getPairedMapping(filteredDataSets);
         const orgUnitList = getPairedOrgunitsMapping(filteredDataSets);
         const currentYear = new Date().getFullYear();
@@ -71,6 +71,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             years: _.range(currentYear - 10, currentYear + 1).map(n => n.toString()),
             approvalWorkflow: dataApprovalWorkflows,
             categoryOptionCombos: { default: defaultCoc },
+            translations: translations,
         };
 
         if (base[this.type].constantCode !== "") {
@@ -88,7 +89,11 @@ export class Dhis2ConfigRepository implements ConfigRepository {
         }
     }
 
-    getMetadata() {
+    private getTranslations() {
+        return this.api.post<Translations>("/i18n", {}, translationKeys).getData();
+    }
+
+    private getMetadata() {
         const metadata$ = this.api.metadata.get({
             dataSets: {
                 fields: {

@@ -1,11 +1,11 @@
 import React from "react";
 // @ts-ignore
 import { Radio, Button } from "@dhis2/ui";
-import i18n from "@eyeseetea/d2-ui-components/locales";
 import { WidgetFeedback } from "../WidgetFeedback";
 import { DataValueBoolean } from "../../../../domain/common/entities/DataValue";
 import { WidgetProps } from "./WidgetBase";
 import { makeStyles } from "@material-ui/core";
+import { useAppContext } from "../../../contexts/app-context";
 
 export interface BooleanWidgetProps extends WidgetProps {
     dataValue: DataValueBoolean;
@@ -13,6 +13,7 @@ export interface BooleanWidgetProps extends WidgetProps {
 
 const BooleanWidget: React.FC<BooleanWidgetProps> = props => {
     const { onValueChange, dataValue, disabled } = props;
+    const { config } = useAppContext();
 
     const notifyChange = React.useCallback(
         (value: boolean | undefined) => {
@@ -30,14 +31,14 @@ const BooleanWidget: React.FC<BooleanWidgetProps> = props => {
             <div className={classes.wrapper}>
                 <Radio
                     checked={stateValue === true}
-                    label={i18n.t("Yes")}
+                    label={config.translations.yes}
                     disabled={disabled}
                     onChange={() => notifyChange(true)}
                 />
 
                 <Radio
                     checked={stateValue === false}
-                    label={i18n.t("No")}
+                    label={config.translations.no}
                     disabled={disabled}
                     onChange={() => notifyChange(false)}
                 />

@@ -4,7 +4,6 @@ import React from "react";
 import { SingleSelect, SingleSelectOption } from "@dhis2/ui";
 import { Option } from "../../../../domain/common/entities/DataElement";
 import { WidgetFeedback } from "../WidgetFeedback";
-import i18n from "@eyeseetea/d2-ui-components/locales";
 import { DataValueNumberSingle, DataValueTextSingle } from "../../../../domain/common/entities/DataValue";
 import { WidgetProps } from "./WidgetBase";
 
@@ -37,7 +36,6 @@ const SingleSelectWidget: React.FC<SingleSelectWidgetProps> = props => {
                 onChange={notifyChange}
                 selected={selectedValue}
                 disabled={disabled}
-                placeholder={i18n.t("Select")}
                 clearable={true}
                 clearText="✕"
             >
