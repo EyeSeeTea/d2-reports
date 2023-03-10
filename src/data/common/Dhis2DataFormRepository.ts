@@ -6,30 +6,7 @@ import { Period } from "../../domain/common/entities/DataValue";
 import { DataFormRepository } from "../../domain/common/repositories/DataFormRepository";
 import { D2Api, MetadataPick } from "../../types/d2-api";
 import { Dhis2DataElement } from "./Dhis2DataElement";
-import { DataSetConfig, Dhis2DataStoreDataForm } from "./Dhis2DataStoreDataForm";
-
-/* Build DataForm objects from DHIS2 dataSet. It uses sections and " - " in dataElement.formName 
-   as separator to group them in subsections. An example:
- *
- *    dataSet.section = ITNs. dataElements:
- *
- *    - ITNs - Basic - Written Policy
- *    - ITNs - Basic - Policy Implemented
- *    - ITNs - Extended - Written Policy
- *    - ITNs - Extended - Policy Implemented
- *
- *    This will create section ITNs:
- *
- *       - Subsection ITNs - Basic:
- *          - ITNs - Basic - Written Policy
- *          - ITNs - Basic - Policy Implemented
- *       - Subsection ITNs - Extended:
- *          - ITNs - Extended - Written Policy
- *          - ITNs - Extended - Policy Implemented
- *
- *   Further customization unsupported by DHIS2 is save in the dataStore (check type DataFormStoreConfig):
- *     - Data elements multi-selection populated from optionSet.
- **/
+import { Dhis2DataStoreDataForm } from "./Dhis2DataStoreDataForm";
 
 export class Dhis2DataFormRepository implements DataFormRepository {
     constructor(private api: D2Api) {}
@@ -39,10 +16,10 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         const dataSet = metadata.dataSets[0];
         if (!dataSet) return Promise.reject(new Error("Data set not found"));
         const config = await Dhis2DataStoreDataForm.build(this.api);
-        const dataSetConfig = config.getDataSetConfig(dataSet);
-        const sections = await this.getSections(dataSet, dataSetConfig);
+        const sections = await this.getSections(dataSet, config);
         const dataElements = _.flatMap(sections, section => section.dataElements);
         const dataElementsOptions = this.getDataElementsOptions(dataElements, config);
+        const dataSetConfig = config.getDataSetConfig(dataSet);
 
         return {
             id: dataSet.id,
@@ -77,7 +54,9 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         return this.api.metadata.get(metadataQuery).getData();
     }
 
-    private async getSections(dataSet: D2DataSet, dataSetConfig: DataSetConfig) {
+    private async getSections(dataSet: D2DataSet, config: Dhis2DataStoreDataForm) {
+        const dataSetConfig = config.getDataSetConfig(dataSet);
+
         const dataElementIds = _(dataSet.sections)
             .flatMap(section => section.dataElements)
             .map(getId)
