@@ -1,4 +1,4 @@
-import { UnionFromValues } from "../../../utils/ts-utils";
+import { Maybe, UnionFromValues } from "../../../utils/ts-utils";
 import { Id, Ref } from "./Base";
 import { DataElement } from "./DataElement";
 
@@ -6,7 +6,7 @@ export interface DataForm {
     id: Id;
     dataElements: DataElement[];
     sections: Section[];
-    texts: { header: string; footer: string };
+    texts: { header: Maybe<string>; footer: Maybe<string> };
     options: {
         dataElements: Record<Id, { widget: "dropdown" | "radio" }>;
     };
