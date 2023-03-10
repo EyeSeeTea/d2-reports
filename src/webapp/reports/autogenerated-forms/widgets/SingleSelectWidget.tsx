@@ -8,7 +8,7 @@ import i18n from "@eyeseetea/d2-ui-components/locales";
 import { DataValueNumberSingle, DataValueTextSingle } from "../../../../domain/common/entities/DataValue";
 import { WidgetProps } from "./WidgetBase";
 
-type DataValueSingle = DataValueNumberSingle | DataValueTextSingle;
+export type DataValueSingle = DataValueNumberSingle | DataValueTextSingle;
 
 export interface SingleSelectWidgetProps extends WidgetProps {
     dataValue: DataValueSingle;

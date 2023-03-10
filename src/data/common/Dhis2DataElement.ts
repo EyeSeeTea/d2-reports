@@ -49,7 +49,7 @@ type D2DataElement = MetadataPick<{ dataElements: { fields: typeof dataElementFi
 
 function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataForm): DataElement | null {
     const { valueType } = dataElement;
-    const deConfig = config.getDataElementConfig(dataElement);
+    const deConfig = config.dataElementsConfig[dataElement.code];
     const optionSetFromDataElement = dataElement.optionSet
         ? {
               ...dataElement.optionSet,
@@ -64,6 +64,7 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
 
     const base = {
         id: dataElement.id,
+        code: dataElement.code,
         name: dataElement.formName || dataElement.displayName,
         options: optionSet
             ? { isMultiple: Boolean(deConfig?.selection?.isMultiple), items: optionSet.options }

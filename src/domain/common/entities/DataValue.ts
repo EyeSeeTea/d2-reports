@@ -20,7 +20,7 @@ export interface DataValueNumberSingle extends DataValueBase {
     type: "NUMBER";
     isMultiple: false;
     dataElement: DataElementNumber;
-    value: string;
+    value: Maybe<string>;
 }
 
 export interface DataValueNumberMultiple extends DataValueBase {
@@ -34,7 +34,7 @@ export interface DataValueTextSingle extends DataValueBase {
     type: "TEXT";
     isMultiple: false;
     dataElement: DataElementText;
-    value: string;
+    value: Maybe<string>;
 }
 
 export interface DataValueTextMultiple extends DataValueBase {

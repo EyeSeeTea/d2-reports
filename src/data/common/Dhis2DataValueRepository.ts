@@ -103,7 +103,7 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                     : "";
             case "NUMBER":
             case "TEXT":
-                return dataValue.isMultiple ? dataValue.values.join("; ") : dataValue.value;
+                return (dataValue.isMultiple ? dataValue.values.join("; ") : dataValue.value) || "";
         }
     }
 }

@@ -12,7 +12,7 @@ export interface BooleanWidgetProps extends WidgetProps {
     dataValue: DataValueBoolean;
 }
 
-const BooleanWidget: React.FC<BooleanWidgetProps> = props => {
+const BooleanDropdownWidget: React.FC<BooleanWidgetProps> = props => {
     const { onValueChange, dataValue, disabled } = props;
 
     const notifyChange = React.useCallback(
@@ -54,4 +54,4 @@ const BooleanWidget: React.FC<BooleanWidgetProps> = props => {
     );
 };
 
-export default React.memo(BooleanWidget);
+export default React.memo(BooleanDropdownWidget);

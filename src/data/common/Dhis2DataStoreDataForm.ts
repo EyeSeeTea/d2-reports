@@ -1,9 +1,9 @@
 import _ from "lodash";
 import { D2Api } from "@eyeseetea/d2-api/2.34";
-import { boolean, Codec, GetType, oneOf, optional, record, string } from "purify-ts";
+import { boolean, Codec, exactly, GetType, oneOf, optional, record, string } from "purify-ts";
 import { dataStoreNamespace, Namespaces } from "./clients/storage/Namespaces";
 import { isElementOfUnion, Maybe, NonPartial } from "../../utils/ts-utils";
-import { Id, NamedRef } from "../../domain/common/entities/Base";
+import { Code, Id, NamedRef } from "../../domain/common/entities/Base";
 import { Option } from "../../domain/common/entities/DataElement";
 import { DataFormM, ViewType } from "../../domain/common/entities/DataForm";
 
@@ -26,8 +26,9 @@ const DataStoreConfigCodec = Codec.interface({
     dataElements: sectionConfig({
         selection: optional(
             Codec.interface({
-                optionSet: selector,
-                isMultiple: boolean,
+                optionSet: optional(selector),
+                isMultiple: optional(boolean),
+                widget: optional(oneOf([exactly("dropdown"), exactly("radio")])),
             })
         ),
     }),
@@ -50,8 +51,9 @@ const DataStoreConfigCodec = Codec.interface({
 
 interface DataElementConfig {
     selection?: {
-        optionSet: OptionSet;
+        optionSet?: OptionSet;
         isMultiple: boolean;
+        widget: Maybe<"dropdown" | "radio">;
     };
 }
 
@@ -80,7 +82,11 @@ interface DataSet {
 }
 
 export class Dhis2DataStoreDataForm {
-    constructor(private config: DataFormStoreConfig) {}
+    public dataElementsConfig: Record<Code, DataElementConfig>;
+
+    constructor(private config: DataFormStoreConfig) {
+        this.dataElementsConfig = this.getDataElementsConfig();
+    }
 
     static async build(api: D2Api): Promise<Dhis2DataStoreDataForm> {
         const dataStore = api.dataStore(dataStoreNamespace);
@@ -171,22 +177,31 @@ export class Dhis2DataStoreDataForm {
         };
     }
 
-    getDataElementConfig(dataElement: CodedRef): Maybe<DataElementConfig> {
-        const dataElementConfig = this.config.custom.dataElements[dataElement.code];
-        const optionSetSelector = dataElementConfig?.selection;
-        if (!optionSetSelector) return;
+    private getDataElementsConfig(): Record<Code, DataElementConfig> {
+        return _(this.config.custom.dataElements)
+            .toPairs()
+            .map(([code, config]) => {
+                const optionSetSelector = config?.selection;
+                if (!optionSetSelector) return;
 
-        const optionSet = this.config.optionSets.find(optionSet =>
-            selectorMatches(optionSet, optionSetSelector.optionSet)
-        );
-        if (!optionSet) return;
+                const optionSetRef = optionSetSelector.optionSet;
+                const optionSet = optionSetRef
+                    ? this.config.optionSets.find(optionSet => selectorMatches(optionSet, optionSetRef))
+                    : undefined;
 
-        return {
-            selection: {
-                isMultiple: optionSetSelector.isMultiple,
-                optionSet,
-            },
-        };
+                const dataElementConfig: DataElementConfig = {
+                    selection: {
+                        isMultiple: optionSetSelector.isMultiple || false,
+                        optionSet: optionSet,
+                        widget: optionSetSelector.widget,
+                    },
+                };
+
+                return [code, dataElementConfig] as [typeof code, typeof dataElementConfig];
+            })
+            .compact()
+            .fromPairs()
+            .value();
     }
 }
 
@@ -197,5 +212,3 @@ function getViewType(viewType: Maybe<string>): ViewType {
 function selectorMatches<T extends { id: string; code: string }>(obj: T, selector: Selector): boolean {
     return "id" in selector ? obj.id === selector.id : obj.code === selector.code;
 }
-
-type CodedRef = { id: Id; code: string };

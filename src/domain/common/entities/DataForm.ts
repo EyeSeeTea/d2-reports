@@ -7,6 +7,9 @@ export interface DataForm {
     dataElements: DataElement[];
     sections: Section[];
     texts: { header: string; footer: string };
+    options: {
+        dataElements: Record<Id, { widget: "dropdown" | "radio" }>;
+    };
 }
 
 export type ViewType = UnionFromValues<typeof DataFormM.viewTypes>;

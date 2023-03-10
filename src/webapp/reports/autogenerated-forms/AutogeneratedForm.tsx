@@ -71,7 +71,7 @@ function useDataFormInfo(): [Maybe<DataFormInfo>, boolean] {
             .finally(() => {
                 loadingActions.disable();
             });
-    }, [compositionRoot, orgUnitId, dataSetId, period, reloadKey]);
+    }, [compositionRoot, orgUnitId, dataSetId, period, reloadKey, loadingActions]);
 
     // Save the data value but don't update dataValues (it re-renders all the form)
     const saveDataValue = useCallback(

@@ -1,5 +1,6 @@
 import _ from "lodash";
 import { getId, Id } from "../../domain/common/entities/Base";
+import { DataElement } from "../../domain/common/entities/DataElement";
 import { DataForm, Section } from "../../domain/common/entities/DataForm";
 import { Period } from "../../domain/common/entities/DataValue";
 import { DataFormRepository } from "../../domain/common/repositories/DataFormRepository";
@@ -40,13 +41,35 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         const config = await Dhis2DataStoreDataForm.build(this.api);
         const dataSetConfig = config.getDataSetConfig(dataSet);
         const sections = await this.getSections(dataSet, dataSetConfig);
+        const dataElements = _.flatMap(sections, section => section.dataElements);
+        const dataElementsOptions = this.getDataElementsOptions(dataElements, config);
 
         return {
             id: dataSet.id,
             dataElements: _.flatMap(sections, section => section.dataElements),
             sections: sections,
             texts: dataSetConfig.texts,
+            options: {
+                dataElements: dataElementsOptions,
+            },
         };
+    }
+
+    private getDataElementsOptions(dataElements: DataElement[], config: Dhis2DataStoreDataForm) {
+        const dataElementsByCode = _.keyBy(dataElements, de => de.code);
+        const dataElementsOptions = _(config.dataElementsConfig)
+            .toPairs()
+            .map(([code, deConfig]) => {
+                const dataElement = dataElementsByCode[code];
+                if (!dataElement) return;
+                const defaultWidget = dataElement.type === "BOOLEAN" ? "radio" : "dropdown";
+                const value = { widget: deConfig.selection?.widget || defaultWidget };
+                return [dataElement.id, value] as [typeof dataElement.id, typeof value];
+            })
+            .compact()
+            .fromPairs()
+            .value();
+        return dataElementsOptions;
     }
 
     private async getMetadata(options: { id: Id }) {

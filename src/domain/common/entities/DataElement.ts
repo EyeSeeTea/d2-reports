@@ -1,10 +1,11 @@
 import { Maybe } from "../../../utils/ts-utils";
-import { Id } from "./Base";
+import { Code, Id } from "./Base";
 
 export type DataElement = DataElementBoolean | DataElementNumber | DataElementText;
 
 interface DataElementBase {
     id: Id;
+    code: Code;
     name: string;
 }
 
