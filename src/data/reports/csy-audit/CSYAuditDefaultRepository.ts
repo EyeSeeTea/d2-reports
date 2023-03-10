@@ -14,19 +14,31 @@ export class CSYAuditDefaultRepository implements CSYAuditRepository {
 
     async get(options: CSYAuditOptions): Promise<PaginatedObjects<AuditItem>> {
         const { paging, year, orgUnitPaths, quarter, auditType } = options;
-        const orgUnitId = _.last(getOrgUnitIdsFromPaths(orgUnitPaths)) ?? "";
         const period = !quarter ? year : `${year}${quarter}`;
+
+        const orgUnitIds = getOrgUnitIdsFromPaths(orgUnitPaths);
+        const auditItems: AuditItem[] = [];
 
         try {
             const response = await promiseMap(
                 auditQueryStrings[auditType as keyof typeof auditQueryStrings],
                 async queryString => {
-                    return await this.api
-                        .get<AnalyticsResponse>(eventQueryUri(orgUnitId, period, queryString))
-                        .getData();
+                    return await promiseMap(orgUnitIds, async orgUnitId => {
+                        return await this.api
+                            .get<AnalyticsResponse>(eventQueryUri(orgUnitId, period, queryString))
+                            .getData();
+                    });
                 }
             );
-            const auditItems = getAuditItems(auditType, response);
+
+            [...Array(response[0]?.length).keys()].map(a => {
+                const resi = _.compact(response.map(res => res[a]));
+                const resi2 = getAuditItems(auditType, resi);
+
+                auditItems.push(...resi2);
+                return auditItems;
+            });
+
             const pager: Pager = {
                 page: paging.page,
                 pageSize: paging.pageSize,
