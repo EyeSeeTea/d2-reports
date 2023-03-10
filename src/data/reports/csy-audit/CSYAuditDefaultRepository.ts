@@ -49,9 +49,10 @@ export class CSYAuditDefaultRepository implements CSYAuditRepository {
             })
         );
 
+        const timestamp = new Date().toISOString();
         const csvDataSource = new CsvWriterDataSource();
         const csvData: CsvData<CsvField> = { headers, rows };
-        const csvContents = csvDataSource.toString(csvData);
+        const csvContents = `Time: ${timestamp}\n` + csvDataSource.toString(csvData);
 
         await downloadFile(csvContents, filename, "text/csv");
     }
