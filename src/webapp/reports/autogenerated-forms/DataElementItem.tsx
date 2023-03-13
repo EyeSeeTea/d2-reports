@@ -21,8 +21,9 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
 
     const saveDataValueAndNotifyParent = React.useCallback<DataEntryItemProps["onValueChange"]>(
         async dataValue => {
-            await dataFormInfo.data.save(dataValue);
-            if (onChange) onChange(dataValue);
+            const dataValueUpdated = await dataFormInfo.data.save(dataValue);
+            if (onChange) onChange(dataValueUpdated);
+            return dataValueUpdated;
         },
         [onChange, dataFormInfo.data]
     );

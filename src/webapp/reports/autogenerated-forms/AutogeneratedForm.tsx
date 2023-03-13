@@ -108,7 +108,7 @@ export interface DataFormInfo {
     metadata: { dataForm: DataForm };
     data: {
         values: DataValueStore;
-        save: (dataValue: DataValue) => Promise<void>;
+        save: (dataValue: DataValue) => Promise<DataValue>;
     };
     initForm: () => void;
     categoryOptionComboId: Id;

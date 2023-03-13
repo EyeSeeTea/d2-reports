@@ -1,7 +1,7 @@
 import _ from "lodash";
-import { Maybe } from "../../../utils/ts-utils";
+import { assertUnreachable, Maybe } from "../../../utils/ts-utils";
 import { Id } from "./Base";
-import { DataElement, DataElementBoolean, DataElementNumber, DataElementText } from "./DataElement";
+import { DataElement, DataElementBoolean, DataElementFile, DataElementNumber, DataElementText } from "./DataElement";
 
 interface DataValueBase {
     orgUnitId: Id;
@@ -44,12 +44,28 @@ export interface DataValueTextMultiple extends DataValueBase {
     values: string[];
 }
 
+export interface DataValueFile extends DataValueBase {
+    type: "FILE";
+    isMultiple: false;
+    dataElement: DataElementFile;
+    file: Maybe<FileResource>;
+    fileToSave?: File;
+}
+
+export interface FileResource {
+    id: Id;
+    name: string;
+    size: number;
+    url: string;
+}
+
 export type DataValue =
     | DataValueBoolean
     | DataValueNumberSingle
     | DataValueNumberMultiple
     | DataValueTextSingle
-    | DataValueTextMultiple;
+    | DataValueTextMultiple
+    | DataValueFile;
 
 export type Period = string;
 
@@ -91,7 +107,9 @@ export class DataValueStore {
 }
 
 function getEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
-    switch (dataElement.type) {
+    const { type } = dataElement;
+
+    switch (type) {
         case "BOOLEAN":
             return { ...base, dataElement, type: "BOOLEAN", isMultiple: false, value: undefined };
         case "NUMBER":
@@ -102,6 +120,11 @@ function getEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
             return dataElement.options?.isMultiple
                 ? { ...base, dataElement, type: "TEXT", isMultiple: true, values: [] }
                 : { ...base, dataElement, type: "TEXT", isMultiple: false, value: "" };
+        case "FILE":
+            return { ...base, dataElement, type: "FILE", file: undefined, isMultiple: false };
+
+        default:
+            assertUnreachable(type);
     }
 }
 

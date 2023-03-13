@@ -1,8 +1,11 @@
 import _ from "lodash";
-import { Id } from "../../domain/common/entities/Base";
-import { DataValue, Period } from "../../domain/common/entities/DataValue";
+import { getId, Id } from "../../domain/common/entities/Base";
+import { DataElement } from "../../domain/common/entities/DataElement";
+import { DataValue, DataValueFile, FileResource, Period } from "../../domain/common/entities/DataValue";
 import { DataValueRepository } from "../../domain/common/repositories/DataValueRepository";
 import { D2Api, DataValueSetsDataValue } from "../../types/d2-api";
+import { promiseMap } from "../../utils/promises";
+import { assertUnreachable } from "../../utils/ts-utils";
 import { Dhis2DataElement } from "./Dhis2DataElement";
 
 export class Dhis2DataValueRepository implements DataValueRepository {
@@ -19,6 +22,8 @@ export class Dhis2DataValueRepository implements DataValueRepository {
 
         const dataElements = await this.getDataElements(dataValues);
 
+        const dataValuesFiles = await this.getFileResourcesMapping(dataElements, dataValues);
+
         return _(dataValues)
             .map((dv): DataValue | null => {
                 const dataElement = dataElements[dv.dataElement];
@@ -34,8 +39,9 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                 };
 
                 const isMultiple = dataElement.options?.isMultiple;
+                const { type } = dataElement;
 
-                switch (dataElement.type) {
+                switch (type) {
                     case "TEXT":
                         return isMultiple
                             ? { type: "TEXT", isMultiple: true, dataElement, values: getValues(dv.value), ...selector }
@@ -70,10 +76,63 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                             value: dv.value === "true",
                             ...selector,
                         };
+                    case "FILE":
+                        return {
+                            type: "FILE",
+                            dataElement,
+                            file: dataValuesFiles[dv.value],
+                            isMultiple: false,
+                            ...selector,
+                        };
+
+                    default:
+                        assertUnreachable(type);
                 }
             })
             .compact()
             .value();
+    }
+
+    private async getFileResourcesMapping(
+        dataElements: Record<Id, DataElement>,
+        dataValues: DataValueSetsDataValue[]
+    ): Promise<Record<Id, FileResource>> {
+        const fileResources = await promiseMap(dataValues, async dataValue => {
+            const dataElement = dataElements[dataValue.dataElement];
+            if (dataElement?.type !== "FILE") return undefined;
+
+            return this.api
+                .get<D2FileResource>(`/fileResources/${dataValue.value}`)
+                .getData()
+                .then(
+                    (fileResource): FileResource => ({
+                        id: fileResource.id,
+                        name: fileResource.displayName,
+                        size: fileResource.contentLength,
+                        url: this.getUrl({
+                            dataElementId: dataElement.id,
+                            categoryOptionComboId: dataValue.categoryOptionCombo,
+                            orgUnitId: dataValue.orgUnit,
+                            period: dataValue.period,
+                        }),
+                    })
+                )
+                .catch(() => undefined);
+        });
+
+        return _(fileResources).compact().keyBy(getId).value();
+    }
+
+    private getUrl(options: { dataElementId: Id; categoryOptionComboId: Id; orgUnitId: Id; period: Period }): string {
+        return (
+            `${this.api.baseUrl}/api/dataValues/files?` +
+            new URLSearchParams({
+                de: options.dataElementId,
+                co: options.categoryOptionComboId,
+                ou: options.orgUnitId,
+                pe: options.period,
+            }).toString()
+        );
     }
 
     private async getDataElements(dataValues: DataValueSetsDataValue[]) {
@@ -81,16 +140,83 @@ export class Dhis2DataValueRepository implements DataValueRepository {
         return new Dhis2DataElement(this.api).get(dataElementIds);
     }
 
-    async save(dataValue: DataValue): Promise<void> {
+    async save(dataValue: DataValue): Promise<DataValue> {
         const valueStr = this.getStrValue(dataValue);
-        return this.api.dataValues
-            .post({
-                ou: dataValue.orgUnitId,
-                pe: dataValue.period,
-                de: dataValue.dataElement.id,
-                value: valueStr,
+        const { type } = dataValue;
+
+        switch (type) {
+            case "FILE": {
+                const { fileToSave } = dataValue;
+
+                if (fileToSave) {
+                    return this.saveFileDataValue(dataValue, fileToSave);
+                } else {
+                    return this.deleteFileDataValue(dataValue);
+                }
+            }
+            default:
+                return this.api.dataValues
+                    .post({
+                        ou: dataValue.orgUnitId,
+                        pe: dataValue.period,
+                        de: dataValue.dataElement.id,
+                        value: valueStr,
+                    })
+                    .getData()
+                    .then(() => dataValue);
+        }
+    }
+
+    private async deleteFileDataValue(dataValue: DataValueFile): Promise<DataValue> {
+        await this.api
+            .request<unknown>({
+                method: "delete",
+                url: "/dataValues",
+                params: {
+                    ou: dataValue.orgUnitId,
+                    pe: dataValue.period,
+                    de: dataValue.dataElement.id,
+                },
             })
             .getData();
+
+        return { ...dataValue, file: undefined, fileToSave: undefined };
+    }
+
+    private async saveFileDataValue(dataValue: DataValueFile, fileToSave: File): Promise<DataValueFile> {
+        const obj = {
+            ou: dataValue.orgUnitId,
+            pe: dataValue.period,
+            de: dataValue.dataElement.id,
+            file: fileToSave,
+        };
+
+        const formData = new FormData();
+        _.forEach(obj, (value, key) => formData.append(key, value));
+
+        const res = await this.api
+            .request<D2PostFileResource>({
+                method: "post",
+                url: "/dataValues/file",
+                data: formData,
+                requestBodyType: "raw",
+            })
+            .getData();
+
+        const resource = res.response.fileResource;
+        const fileResource: FileResource = {
+            id: resource.id,
+            name: resource.displayName,
+            size: resource.contentLength,
+            url: this.getUrl({
+                dataElementId: dataValue.dataElement.id,
+                categoryOptionComboId: dataValue.categoryOptionComboId,
+                orgUnitId: dataValue.orgUnitId,
+                period: dataValue.period,
+            }),
+        };
+
+        return { ...dataValue, file: fileResource, fileToSave: undefined };
     }
 
     private getStrValue(dataValue: DataValue): string {
@@ -104,6 +230,8 @@ export class Dhis2DataValueRepository implements DataValueRepository {
             case "NUMBER":
             case "TEXT":
                 return (dataValue.isMultiple ? dataValue.values.join("; ") : dataValue.value) || "";
+            case "FILE":
+                return dataValue.file?.id || "";
         }
     }
 }
@@ -114,4 +242,14 @@ function getValues(s: string): string[] {
         .map(s => s.trim())
         .compact()
         .value();
+}
+
+interface D2FileResource {
+    id: Id;
+    displayName: string;
+    contentLength: number;
+}
+
+interface D2PostFileResource {
+    response: { fileResource: D2FileResource };
 }

@@ -1,29 +1,31 @@
 import { Maybe } from "../../../utils/ts-utils";
 import { Code, Id } from "./Base";
 
-export type DataElement = DataElementBoolean | DataElementNumber | DataElementText;
+export type DataElement = DataElementBoolean | DataElementNumber | DataElementText | DataElementFile;
 
 interface DataElementBase {
     id: Id;
     code: Code;
     name: string;
+    options: Options;
 }
 
 export interface DataElementBoolean extends DataElementBase {
     type: "BOOLEAN";
-    options: Options;
     isTrueOnly: boolean;
 }
 
 export interface DataElementNumber extends DataElementBase {
     type: "NUMBER";
     numberType: NumberType;
-    options: Options;
 }
 
 export interface DataElementText extends DataElementBase {
     type: "TEXT";
-    options: Options;
+}
+
+export interface DataElementFile extends DataElementBase {
+    type: "FILE";
 }
 
 type Options = Maybe<{ isMultiple: boolean; items: Option<string>[] }>;
