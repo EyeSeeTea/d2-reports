@@ -1,12 +1,12 @@
 import _ from "lodash";
 import { getId, Id } from "../../domain/common/entities/Base";
 import { DataElement } from "../../domain/common/entities/DataElement";
-import { DataForm, Section } from "../../domain/common/entities/DataForm";
+import { DataForm, Section, SectionBase } from "../../domain/common/entities/DataForm";
 import { Period } from "../../domain/common/entities/DataValue";
 import { DataFormRepository } from "../../domain/common/repositories/DataFormRepository";
 import { D2Api, MetadataPick } from "../../types/d2-api";
 import { Dhis2DataElement } from "./Dhis2DataElement";
-import { Dhis2DataStoreDataForm } from "./Dhis2DataStoreDataForm";
+import { Dhis2DataStoreDataForm, SectionConfig } from "./Dhis2DataStoreDataForm";
 
 export class Dhis2DataFormRepository implements DataFormRepository {
     constructor(private api: D2Api) {}
@@ -65,9 +65,10 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         const dataElements = await new Dhis2DataElement(this.api).get(dataElementIds);
 
         return dataSet.sections.map((section): Section => {
-            const base = {
+            const base: SectionBase = {
                 id: section.id,
                 name: section.displayName,
+                toggle: { type: "none" },
                 dataElements: _(section.dataElements)
                     .map(dataElementRef => dataElements[dataElementRef.id])
                     .compact()
@@ -77,9 +78,11 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             const config = dataSetConfig.sections[section.id];
             if (!config) return { viewType: "table", ...base };
 
+            const base2 = getSectionBaseWithToggle(config, base);
+
             return config.viewType === "grid-with-periods"
-                ? { viewType: config.viewType, periods: config.periods, ...base }
-                : { viewType: config.viewType, ...base };
+                ? { viewType: config.viewType, periods: config.periods, ...base2 }
+                : { viewType: config.viewType, ...base2 };
         });
     }
 }
@@ -103,4 +106,27 @@ function getMetadataQuery(options: { dataSetId: Id }) {
             filter: { id: { eq: options.dataSetId } },
         },
     } as const;
+}
+
+function getSectionBaseWithToggle(config: SectionConfig, base: SectionBase): SectionBase {
+    const { toggle } = config;
+
+    switch (toggle.type) {
+        case "dataElement": {
+            const toggleDataElement = base.dataElements.find(de => de.code === toggle.code);
+
+            if (toggleDataElement) {
+                return {
+                    ...base,
+                    toggle: { type: "dataElement", dataElement: toggleDataElement },
+                    dataElements: _.without(base.dataElements, toggleDataElement),
+                };
+            } else {
+                console.warn(`Data element for toggle not found in section: ${toggle.code}`);
+                return base;
+            }
+        }
+        default:
+            return base;
+    }
 }

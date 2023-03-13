@@ -14,6 +14,7 @@ import { SectionWithPeriods } from "../../../domain/common/entities/DataForm";
 import { DataElementItem } from "./DataElementItem";
 import { makeStyles } from "@material-ui/core";
 import { DataElement } from "../../../domain/common/entities/DataElement";
+import DataTableSection from "./DataTableSection";
 
 /*
  * Convert data forms into table, using "-" as a separator. An example for section ITNs:
@@ -45,13 +46,11 @@ const GridWithPeriods: React.FC<GridWithPeriodsProps> = props => {
     const classes = useStyles();
 
     return (
-        <div key={grid.id} className={classes.wrapper}>
+        <DataTableSection section={grid} dataFormInfo={dataFormInfo}>
             <DataTable className={classes.table}>
                 <TableHead>
                     <DataTableRow>
-                        <DataTableColumnHeader width="400px" colSpan="2">
-                            <span className={classes.header}>{grid.name}</span>
-                        </DataTableColumnHeader>
+                        <DataTableColumnHeader width="400px" colSpan="2"></DataTableColumnHeader>
 
                         {grid.periods.map(period => (
                             <DataTableColumnHeader key={period}>
@@ -106,7 +105,7 @@ const GridWithPeriods: React.FC<GridWithPeriodsProps> = props => {
                     })}
                 </TableBody>
             </DataTable>
-        </div>
+        </DataTableSection>
     );
 };
 

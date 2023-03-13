@@ -11,7 +11,7 @@ interface UseBooleanActions {
     disable: Callback;
 }
 
-export function useBooleanState(initialValue: boolean): UseBooleanReturn {
+export function useBooleanState(initialValue: boolean | (() => boolean)): UseBooleanReturn {
     const [value, setValue] = React.useState(initialValue);
 
     const actions = React.useMemo(() => {

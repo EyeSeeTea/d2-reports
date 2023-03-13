@@ -17,10 +17,11 @@ export interface DataForm {
 const viewTypes = ["grid", "table", "grid-with-periods"] as const;
 export type ViewType = UnionFromValues<typeof DataFormM.viewTypes>;
 
-interface SectionBase {
+export interface SectionBase {
     id: Id;
     name: string;
     dataElements: DataElement[];
+    toggle: { type: "none" } | { type: "dataElement"; dataElement: DataElement };
 }
 
 export interface SectionSimple extends SectionBase {

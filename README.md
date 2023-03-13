@@ -56,79 +56,6 @@ Expected structure of the metadata:
 -   _Maintenance_ -> _Data set_ -> _Edit_: Add all the data elements that need to be displayed.
 -   _Maintenance_ -> _Data set_ -> _Manage sections_: Create a section for each table to display in the form.
 
-##### View mode: Table
-
-Data elements will be shown in the first column and the value in the second.
-
-An example, a section: `ITN Section` with data elements:
-
-    -   `ITNs - Policy`
-    -   `ITNs - Implemented`
-
-This will create this table:
-
-```
-ITN Section        |                |
-ITNs - Policy      |                |
-ITNs - Implemented |                |
-```
-
-##### View mode: Grid
-
-Data elements will by grouped by rows and columns using **formName**/**name** and `" - "` as a separator of subsection / data element.
-
-An example, a section: `ITN Section` with data elements:
-
-    -   `ITNs - Basic - Written Policy`
-    -   `ITNs - Basic - Policy Implemented`
-    -   `ITNs - Extended - Written Policy`
-    -   `ITNs - Extended - Policy Implemented`
-
-This will create this table:
-
-```
-ITN Section     | Written Policy | Policy Implemented |
-ITNs - Basic    |                |                    |
-ITNs - Extended |                |                    |
-```
-
-##### View mode: Grid with periods
-
-Data elements will by grouped by rows and subrows using **formName**/**name** and `" - "` as a separator of subsections.
-
-An example, a section: `ITNs` with data elements:
-
-    -   `ITNs - Basic`
-    -   `ITNs - Extended - Written Policy`
-    -   `ITNs - Extended - Policy Implemented`
-    -   `ITNs - Extended - Policy Extra`
-
-And having a configuration in the dataStore:
-
-```json
-{
-    "SECTION_CODE": {
-        "viewType": "grid-with-periods",
-        "periods": {
-            "type": "relative-interval",
-            "endOffset": 0,
-            "startOffset": -2
-        }
-    }
-}
-```
-
-When rendering a data entry for 2022, this will create this table for interval `[2022-2 .. 2022+0]`:
-
-```
-ITNs                                   |  2020  |  2021  |  2022   |
---------------------------------------------------------------------
-ITNs - Basic                           |        |        |         |
-                 | Written Policy      |        |        |         |
-ITNs - Extended  | Policy Implemented  |        |        |         |
-                 | Policy Extra        |        |        |         |
-```
-
 #### Data store customization
 
 Data sets, sections and data elements are customizable using the data store:
@@ -168,8 +95,12 @@ An example:
         },
         "DS3_CODE": {
             "sections": {
-                "SECTION1_CODE": {
+                "SECTION2_CODE": {
                     "viewType": "grid-with-periods",
+                    "toggle": {
+                        "type": "dataElement",
+                        "code": "CODE_OF_DATA_ELEMENT"
+                    },
                     "periods": {
                         "type": "relative-interval",
                         "endOffset": 0,
@@ -182,9 +113,95 @@ An example:
 }
 ```
 
+#### Toggleable contents
+
+Section contents can be optionally shown/hidden using a dataElement as toggle. In the section configuration:
+
+```json
+{
+    "toggle": {
+        "type": "dataElement",
+        "code": "CODE_OF_DATA_ELEMENT"
+    }
+}
+```
+
+##### View mode: Table
+
+Data elements will be shown in the first column and the value in the second.
+
+An example, a section with data elements:
+
+    -   `ITNs - Policy`
+    -   `ITNs - Implemented`
+
+This will create this table:
+
+```
+                   |                |
+ITNs - Policy      |                |
+ITNs - Implemented |                |
+```
+
+##### View mode: Grid
+
+Data elements will by grouped by rows and columns using **formName**/**name** and `" - "` as a separator of subsection / data element.
+
+An example, a section with data elements:
+
+    -   `ITNs - Basic - Written Policy`
+    -   `ITNs - Basic - Policy Implemented`
+    -   `ITNs - Extended - Written Policy`
+    -   `ITNs - Extended - Policy Implemented`
+
+This will create this table:
+
+```
+                | Written Policy | Policy Implemented |
+ITNs - Basic    |                |                    |
+ITNs - Extended |                |                    |
+```
+
+##### View mode: Grid with periods
+
+Data elements will by grouped by rows and subrows using **formName**/**name** and `" - "` as a separator of subsections.
+
+An example, a section with data elements:
+
+    -   `ITNs - Basic`
+    -   `ITNs - Extended - Written Policy`
+    -   `ITNs - Extended - Policy Implemented`
+    -   `ITNs - Extended - Policy Extra`
+
+And having a configuration in the dataStore:
+
+```json
+{
+    "SECTION_CODE": {
+        "viewType": "grid-with-periods",
+        "periods": {
+            "type": "relative-interval",
+            "endOffset": 0,
+            "startOffset": -2
+        }
+    }
+}
+```
+
+And rendering a data entry for 2022, will create this table for interval `[2022-2 .. 2022+0]`:
+
+```
+                                       |  2020  |  2021  |  2022   |
+--------------------------------------------------------------------
+ITNs - Basic                           |        |        |         |
+                 | Written Policy      |        |        |         |
+ITNs - Extended  | Policy Implemented  |        |        |         |
+                 | Policy Extra        |        |        |         |
+```
+
 #### Development
 
-On development, you need to specify the orgUnit/dataSet/period:
+On development, you need to specify the orgUnit/dataSet/period manually on the URL:
 
 http://localhost:8081?orgUnit=ID&dataSet=ID&period=PERIOD
 
@@ -194,6 +211,6 @@ http://localhost:8081?orgUnit=ID&dataSet=ID&period=PERIOD
 $ yarn build-autogenerated-forms
 ```
 
-This task creates `dist/custom-data-form.html`, which can be directly pasted as a DHIS2 data
+This creates `dist/custom-data-form.html`, which can be directly pasted as a DHIS2 data
 set custom form (_Maintenance_ -> _Data set_ -> Right-click on data set -> _Design
-data entry form_ -> _{Source code}_ -> Paste HTML -> _{Save}_).
+data entry form_ -> _{Source code}_ -> Paste HTML -> _{Save}_) or posted using the API to `dataSet.dataEntryForm.htmlCode`.

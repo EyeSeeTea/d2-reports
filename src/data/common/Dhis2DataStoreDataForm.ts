@@ -12,14 +12,20 @@ interface DataSetConfig {
     sections: Record<Id, SectionConfig>;
 }
 
-type SectionConfig =
-    | {
-          viewType: "table" | "grid";
-      }
-    | {
-          viewType: "grid-with-periods";
-          periods: string[];
-      };
+export type SectionConfig = BasicSectionConfig | GridWithPeriodsSectionConfig;
+
+interface BaseSectionConfig {
+    toggle: { type: "none" } | { type: "dataElement"; code: Code };
+}
+
+interface BasicSectionConfig extends BaseSectionConfig {
+    viewType: "table" | "grid";
+}
+
+interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
+    viewType: "grid-with-periods";
+    periods: string[];
+}
 
 const defaultViewType = "table";
 
@@ -49,14 +55,18 @@ const DataStoreConfigCodec = Codec.interface({
         sections: optional(
             sectionConfig({
                 viewType: optional(viewType),
+                toggle: optional(
+                    Codec.interface({
+                        type: exactly("dataElement"),
+                        code: string,
+                    })
+                ),
                 periods: optional(
-                    oneOf([
-                        Codec.interface({
-                            type: exactly("relative-interval"),
-                            startOffset: number,
-                            endOffset: number,
-                        }),
-                    ])
+                    Codec.interface({
+                        type: exactly("relative-interval"),
+                        startOffset: number,
+                        endOffset: number,
+                    })
                 ),
             })
         ),
@@ -230,10 +240,15 @@ export class Dhis2DataStoreDataForm {
                 if (!section) return;
 
                 const viewType = sectionConfig.viewType || dataSetDefaultViewType;
+                const base: BaseSectionConfig = {
+                    toggle: sectionConfig.toggle || { type: "none" },
+                };
+
                 const config: SectionConfig =
                     viewType === "grid-with-periods"
-                        ? { viewType, periods: getPeriods(period, sectionConfig.periods) }
-                        : { viewType };
+                        ? { ...base, viewType, periods: getPeriods(period, sectionConfig.periods) }
+                        : { ...base, viewType };
+
                 return [section.id, config] as [typeof section.id, typeof config];
             })
             .compact()
