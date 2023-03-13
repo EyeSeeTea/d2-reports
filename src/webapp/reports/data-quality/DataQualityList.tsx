@@ -39,44 +39,45 @@ export const DataQualityList: React.FC = React.memo(() => {
         });
     }, [compositionRoot]);
 
-    const fetchValidationData = useCallback(
-        async (fromZero: boolean) => {
-            await compositionRoot.dataQuality.reloadValidation(Namespaces.DATA_QUALITY, fromZero);
-        },
-        [compositionRoot.dataQuality]
-    );
+    const loadValidationData = useCallback(async () => {
+        await compositionRoot.dataQuality.loadValidation();
+    }, [compositionRoot.dataQuality]);
+
+    const reloadValidationData = useCallback(async () => {
+        await compositionRoot.dataQuality.resetValidation();
+    }, [compositionRoot.dataQuality]);
 
     useEffect(() => {
         if (isReloading) {
-            fetchValidationData(false).then(() => stopReloading());
+            reloadValidationData().then(() => stopReloading());
         }
-    }, [fetchValidationData, isReloading, stopReloading]);
+    }, [reloadValidationData, isReloading, stopReloading]);
 
     useEffect(() => {
         startLoading();
-        fetchValidationData(true).then(() => stopLoading());
-    }, [fetchValidationData, startLoading, stopLoading]);
+        loadValidationData().then(() => stopLoading());
+    }, [loadValidationData, startLoading, stopLoading]);
 
     const indicatorBaseConfig: TableConfig<IndicatorViewModel> = useMemo(
         () => ({
             columns: [
                 { name: "id", text: i18n.t("Id"), sortable: true },
-                { name: "name", text: i18n.t("Name"), sortable: false },
-                { name: "user", text: i18n.t("Created By"), sortable: false },
-                { name: "lastUpdated", text: i18n.t("Last Updated"), sortable: false },
-                { name: "denominator", text: i18n.t("Denominator"), sortable: false },
+                { name: "name", text: i18n.t("Name"), sortable: true },
+                { name: "user", text: i18n.t("Created By"), sortable: true },
+                { name: "lastUpdated", text: i18n.t("Last Updated"), sortable: true },
+                { name: "denominator", text: i18n.t("Denominator"), sortable: true },
                 {
                     name: "denominatorResult",
                     text: i18n.t("Valid denominator"),
                     sortable: false,
-                    getValue: row => (row.denominatorResult ? "Valid" : "Invalid"),
+                    getValue: row => (row.denominatorResult ? i18n.t("Valid") : i18n.t("Invalid")),
                 },
-                { name: "numerator", text: i18n.t("Numerator"), sortable: false },
+                { name: "numerator", text: i18n.t("Numerator"), sortable: true },
                 {
                     name: "numeratorResult",
                     text: i18n.t("Valid Numerator"),
                     sortable: false,
-                    getValue: row => (row.numeratorResult ? "Valid" : "Invalid"),
+                    getValue: row => (row.numeratorResult ? i18n.t("Valid") : i18n.t("Invalid")),
                 },
             ],
             actions: [],
@@ -96,22 +97,27 @@ export const DataQualityList: React.FC = React.memo(() => {
         () => ({
             columns: [
                 { name: "id", text: i18n.t("Id"), sortable: true },
-                { name: "name", text: i18n.t("Name"), sortable: false },
-                { name: "user", text: i18n.t("Created By"), sortable: false },
-                { name: "lastUpdated", text: i18n.t("Last Updated"), sortable: false },
-                { name: "expression", text: i18n.t("Expression"), sortable: false },
+                { name: "name", text: i18n.t("Name"), sortable: true },
+                { name: "user", text: i18n.t("Created By"), sortable: true },
+                { name: "lastUpdated", text: i18n.t("Last Updated"), sortable: true },
+                { name: "expression", text: i18n.t("Expression"), sortable: true },
                 {
                     name: "expressionResult",
                     text: i18n.t("Valid expression"),
                     sortable: false,
-                    getValue: row => (row.expressionResult ? "Valid" : "Invalid"),
+                    getValue: row => (row.expressionResult ? i18n.t("Valid") : i18n.t("Invalid")),
                 },
-                { name: "filter", text: i18n.t("Filter"), sortable: false },
+                { name: "filter", text: i18n.t("Filter"), sortable: true },
                 {
                     name: "filterResult",
                     text: i18n.t("Valid filter"),
                     sortable: false,
-                    getValue: row => (row.filterResult ? "Valid" : "Invalid"),
+                    getValue: row =>
+                        row.filterResult
+                            ? i18n.t("Valid")
+                            : row.filterResult === undefined
+                            ? i18n.t("Empty")
+                            : i18n.t("Invalid"),
                 },
             ],
             actions: [],
@@ -138,7 +144,7 @@ export const DataQualityList: React.FC = React.memo(() => {
                 Namespaces.DATA_QUALITY
             );
 
-            console.debug("load: ", isLoading || isReloading);
+            console.debug("load: ", isLoading, "reload: ", isReloading);
             return {
                 pager,
                 objects: getDataQualityIndicatorViews(config, objects),
@@ -158,7 +164,7 @@ export const DataQualityList: React.FC = React.memo(() => {
                 Namespaces.DATA_QUALITY
             );
 
-            console.debug("load: ", isLoading || isReloading);
+            console.debug("load: ", isLoading, "reload: ", isReloading);
             return {
                 pager,
                 objects: getDataQualityProgramIndicatorViews(config, objects),
