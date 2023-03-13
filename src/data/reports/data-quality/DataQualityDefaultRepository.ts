@@ -19,6 +19,30 @@ import { Instance } from "../../common/entities/Instance";
 import { promiseMap } from "../../../utils/promises";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 
+type IndicatorMetadataType = {
+    id: string;
+    name: string;
+    lastUpdated: string;
+    user: {
+        displayName: string;
+    };
+    numerator: string;
+    denominator: string;
+};
+
+type ProgramIndicatorMetadataType = {
+    id: string;
+    name: string;
+    lastUpdated: string;
+    user: {
+        displayName: string;
+    };
+    expression?: string;
+    filter?: string;
+};
+
+type DataQualityItemType = IndicatorItem | ProgramIndicatorItem;
+
 export class DataQualityDefaultRepository implements DataQualityRepository {
     private storageClient: StorageClient;
     private globalStorageClient: StorageClient;
@@ -27,6 +51,42 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         const instance = new Instance({ url: this.api.baseUrl });
         this.storageClient = new DataStoreStorageClient("user", instance);
         this.globalStorageClient = new DataStoreStorageClient("global", instance);
+    }
+
+    private async getMetadata(api: D2Api, filter: Record<string, any>) {
+        const { indicators } = await api.metadata
+            .get({
+                indicators: {
+                    fields: {
+                        id: true,
+                        name: true,
+                        numerator: true,
+                        denominator: true,
+                        lastUpdated: true,
+                        user: { displayName: true },
+                    },
+                    filter: filter,
+                },
+            })
+            .getData();
+
+        const { programIndicators } = await api.metadata
+            .get({
+                programIndicators: {
+                    fields: {
+                        id: true,
+                        name: true,
+                        lastUpdated: true,
+                        user: { displayName: true },
+                        expression: true,
+                        filter: true,
+                    },
+                    filter: filter,
+                },
+            })
+            .getData();
+
+        return { indicators, programIndicators };
     }
 
     async getIndicators(options: IndicatorOptions, namespace: string): Promise<PaginatedObjects<IndicatorItem>> {
@@ -81,9 +141,7 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         return { pager: pager, objects: dataQualityIndicatorErrorsInPage };
     }
 
-    private makeNewDataQualityConfig(
-        validationResults: Array<IndicatorItem | ProgramIndicatorItem>
-    ): DataQualityConfig {
+    private makeNewDataQualityConfig(validationResults: DataQualityItemType[]): DataQualityConfig {
         return {
             indicatorsLastUpdated: new Date().toISOString(),
             programIndicatorsLastUpdated: new Date().toISOString(),
@@ -95,33 +153,146 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         return await this.globalStorageClient.saveObject<DataQualityConfig>(namespace, dataQuality);
     }
 
-    async reloadValidation(namespace: string, fromZero: boolean) {
-        const dataQuality = await this.globalStorageClient.getObject<DataQualityConfig>(namespace);
-        const dataQualityErrors: any[] = [];
+    private removeItemsByIds(ids: string[], ItamsArray: DataQualityItemType[]) {
+        return ItamsArray.filter(itemToFilter => {
+            return !ids.includes(itemToFilter.id);
+        });
+    }
 
-        if (fromZero && (dataQuality?.validationResults.length === 0 || typeof dataQuality === "undefined")) {
-            const { indicators, programIndicators } = await getMetadata(this.api, {});
+    private statusToBoolean(status: "OK" | "ERROR") {
+        return status === "OK" ? true : false;
+    }
 
-            await validateExpression(this.api, "Indicator", indicators, dataQualityErrors);
-            await validateExpression(this.api, "ProgramIndicator", programIndicators, dataQualityErrors);
+    private async getIndicatorValidations(
+        api: D2Api,
+        metadataItems: IndicatorMetadataType[]
+    ): Promise<IndicatorItem[]> {
+        return (await promiseMap(metadataItems, async item => {
+            try {
+                const numeratorValidation = await api.expressions.validate("indicator", item.numerator).getData();
+                const denominatorValidation = await api.expressions.validate("indicator", item.denominator).getData();
 
-            await this.saveDataQuality(
-                Namespaces.DATA_QUALITY,
-                this.makeNewDataQualityConfig(_.union(dataQualityErrors, dataQuality?.validationResults))
-            );
-        } else if (!fromZero) {
-            const { indicators, programIndicators } = await getMetadata(this.api, {
-                lastUpdated: { gt: dataQuality?.indicatorsLastUpdated },
+                const numeratorResult = this.statusToBoolean(numeratorValidation.status);
+                const denominatorResult = this.statusToBoolean(denominatorValidation.status);
+
+                return {
+                    ...item,
+                    user: item.user.displayName,
+                    numeratorResult,
+                    denominatorResult,
+                    metadataType: "Indicator",
+                };
+            } catch (error) {
+                console.debug(error);
+            }
+        })) as IndicatorItem[];
+    }
+
+    private async getProgramIndicatorValidations(
+        api: D2Api,
+        metadataItems: ProgramIndicatorMetadataType[]
+    ): Promise<ProgramIndicatorItem[]> {
+        return (await promiseMap(metadataItems, async item => {
+            try {
+                const expressionValidation = item.expression
+                    ? await api.expressions.validate("program-indicator-formula", item.expression).getData()
+                    : undefined;
+
+                const filterValidation = item.filter
+                    ? await api.expressions.validate("program-indicator-filter", item.filter).getData()
+                    : undefined;
+
+                const expressionResult = expressionValidation
+                    ? this.statusToBoolean(expressionValidation.status)
+                    : false;
+
+                const filterResult = filterValidation ? this.statusToBoolean(filterValidation.status) : undefined;
+
+                return {
+                    ...item,
+                    user: item.user.displayName,
+                    expressionResult,
+                    filterResult,
+                    metadataType: "ProgramIndicator",
+                };
+            } catch (error) {
+                console.debug(error);
+            }
+        })) as ProgramIndicatorItem[];
+    }
+
+    private async getValidations(
+        api: D2Api,
+        indicators: IndicatorMetadataType[],
+        programIndicators: ProgramIndicatorMetadataType[]
+    ): Promise<DataQualityItemType[]> {
+        const indicatorValidations = await this.getIndicatorValidations(this.api, indicators);
+        const programIndicatorValidations = await this.getProgramIndicatorValidations(this.api, programIndicators);
+        return _.concat<DataQualityItemType>(indicatorValidations, programIndicatorValidations);
+    }
+
+    private getValidationErrors(
+        indicatorValidations: DataQualityItemType[],
+        oldIndicatorValidations?: DataQualityItemType[]
+    ) {
+        const newIndicators = indicatorValidations.flatMap(indicator => {
+            if (indicator.metadataType === "Indicator") {
+                if (!indicator.numeratorResult || !indicator.denominatorResult) {
+                    return indicator;
+                } else {
+                    return [];
+                }
+            } else {
+                if (!indicator.expressionResult || indicator.filterResult === false) {
+                    return indicator;
+                } else {
+                    return [];
+                }
+            }
+        });
+
+        if (oldIndicatorValidations) {
+            const newIds = indicatorValidations.map(indicator => indicator.id);
+            const filteredOldIndicators = this.removeItemsByIds(newIds, oldIndicatorValidations) as IndicatorItem[];
+
+            return _.concat(newIndicators, filteredOldIndicators);
+        } else {
+            return newIndicators;
+        }
+    }
+
+    private async makeDataQualityObject(
+        indicatorsMeta: IndicatorMetadataType[],
+        programIndicatorsMeta: ProgramIndicatorMetadataType[],
+        oldValidations?: DataQualityItemType[]
+    ) {
+        const validations = await this.getValidations(this.api, indicatorsMeta, programIndicatorsMeta);
+
+        const validationErrors = this.getValidationErrors(validations, oldValidations);
+
+        await this.saveDataQuality(Namespaces.DATA_QUALITY, this.makeNewDataQualityConfig(validationErrors));
+    }
+
+    async loadValidation() {
+        const dataQuality = await this.globalStorageClient.getObject<DataQualityConfig>(Namespaces.DATA_QUALITY);
+
+        if (typeof dataQuality === "undefined" || dataQuality.validationResults.length === 0) {
+            const { indicators, programIndicators } = await this.getMetadata(this.api, {});
+
+            await this.makeDataQualityObject(indicators, programIndicators);
+        } else {
+            const { indicators, programIndicators } = await this.getMetadata(this.api, {
+                lastUpdated: { gt: dataQuality.indicatorsLastUpdated },
             });
 
-            await validateExpression(this.api, "Indicator", indicators, dataQualityErrors);
-            await validateExpression(this.api, "ProgramIndicator", programIndicators, dataQualityErrors);
-
-            await this.saveDataQuality(
-                Namespaces.DATA_QUALITY,
-                this.makeNewDataQualityConfig(_.union(dataQualityErrors, dataQuality?.validationResults))
-            );
+            await this.makeDataQualityObject(indicators, programIndicators, dataQuality.validationResults);
         }
+    }
+
+    async resetValidation() {
+        const { indicators, programIndicators } = await this.getMetadata(this.api, {});
+
+        await this.makeDataQualityObject(indicators, programIndicators);
     }
 
     async getColumns(namespace: string): Promise<string[]> {
@@ -133,91 +304,4 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
     async saveColumns(namespace: string, columns: string[]): Promise<void> {
         return this.storageClient.saveObject<string[]>(namespace, columns);
     }
-}
-
-async function getMetadata(api: D2Api, filter: Record<string, any>) {
-    const { indicators } = await api.metadata
-        .get({
-            indicators: {
-                fields: {
-                    id: true,
-                    name: true,
-                    numerator: true,
-                    denominator: true,
-                    lastUpdated: true,
-                    user: { displayName: true },
-                },
-                filter: filter,
-            },
-        })
-        .getData();
-
-    const { programIndicators } = await api.metadata
-        .get({
-            programIndicators: {
-                fields: {
-                    id: true,
-                    name: true,
-                    lastUpdated: true,
-                    user: { displayName: true },
-                    expression: true,
-                    filter: true,
-                },
-                filter: filter,
-            },
-        })
-        .getData();
-
-    return { indicators, programIndicators };
-}
-
-async function validateExpression(
-    api: D2Api,
-    metadataType: "Indicator" | "ProgramIndicator",
-    metadataItems: any[],
-    errors: Array<IndicatorItem | ProgramIndicatorItem>
-) {
-    await promiseMap(metadataItems, async item => {
-        try {
-            if (metadataType === "Indicator") {
-                const numeratorValidation = await api.expressions.validate("indicator", item.numerator).getData();
-                const denominatorValidation = await api.expressions.validate("indicator", item.denominator).getData();
-
-                if (numeratorValidation.status === "ERROR" || denominatorValidation.status === "ERROR") {
-                    const numeratorResult = numeratorValidation.status !== "ERROR";
-                    const denominatorResult = denominatorValidation.status !== "ERROR";
-                    const dataQualityItem: IndicatorItem = {
-                        ...item,
-                        user: item.user.displayName,
-                        numeratorResult,
-                        denominatorResult,
-                        metadataType,
-                    };
-                    errors.push(dataQualityItem);
-                }
-            } else if (metadataType === "ProgramIndicator" && (item.filter || item.expression)) {
-                const expressionValidation = await api.expressions
-                    .validate("program-indicator-formula", item.expression)
-                    .getData();
-                const filterValidation = await api.expressions
-                    .validate("program-indicator-filter", item.filter)
-                    .getData();
-
-                if (expressionValidation.status === "ERROR" || filterValidation.status === "ERROR") {
-                    const expressionResult = expressionValidation.status !== "ERROR";
-                    const filterResult = filterValidation.status !== "ERROR";
-                    const dataQualityItem: ProgramIndicatorItem = {
-                        ...item,
-                        user: item.user.displayName,
-                        expressionResult,
-                        filterResult,
-                        metadataType,
-                    };
-                    errors.push(dataQualityItem);
-                }
-            }
-        } catch (error) {
-            console.debug(error);
-        }
-    });
 }

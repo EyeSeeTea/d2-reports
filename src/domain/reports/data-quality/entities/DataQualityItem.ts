@@ -1,7 +1,7 @@
 export interface IndicatorItem {
     id: string;
     lastUpdated: string;
-    metadataType: string;
+    metadataType: "Indicator";
     name: string;
     user: string;
     denominator: string;
@@ -13,13 +13,13 @@ export interface IndicatorItem {
 export interface ProgramIndicatorItem {
     id: string;
     lastUpdated: string;
-    metadataType: string;
+    metadataType: "ProgramIndicator";
     name: string;
     user: string;
     expression: string;
     expressionResult: boolean;
     filter: string;
-    filterResult: boolean;
+    filterResult: boolean | undefined;
 }
 
 export function isIndicatorItem(item: any): item is IndicatorItem {

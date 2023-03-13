@@ -9,7 +9,8 @@ export interface DataQualityRepository {
         namespace: string
     ): Promise<PaginatedObjects<ProgramIndicatorItem>>;
     saveDataQuality(namespace: string, dataQuality: DataQualityConfig): Promise<void>;
-    reloadValidation(namespace: string, fromZero: boolean): Promise<void>;
+    loadValidation(): Promise<void>;
+    resetValidation(): Promise<void>;
     getColumns(namespace: string): Promise<string[]>;
     saveColumns(namespace: string, columns: string[]): Promise<void>;
 }

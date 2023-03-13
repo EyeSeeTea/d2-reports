@@ -22,7 +22,7 @@ export interface ProgramIndicatorViewModel {
     expression: string;
     expressionResult: boolean;
     filter: string;
-    filterResult: boolean;
+    filterResult: boolean | undefined;
 }
 
 export function getDataQualityIndicatorViews(_config: Config, items: IndicatorItem[]): IndicatorViewModel[] {

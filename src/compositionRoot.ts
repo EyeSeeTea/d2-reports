@@ -34,7 +34,8 @@ import { GetProgramIndicatorsUseCase } from "./domain/reports/data-quality/useca
 import { SaveDataQualityColumnsUseCase } from "./domain/reports/data-quality/usecases/SaveDataQualityColumnsUseCase";
 import { GetDataQualityColumnsUseCase } from "./domain/reports/data-quality/usecases/GetDataQualityColumnsUseCase";
 import { SaveDataQualityUseCase } from "./domain/reports/data-quality/usecases/SaveDataQualityUseCase";
-import { ReloadDataQualityValidation } from "./domain/reports/data-quality/usecases/ReloadDataQualityValidation";
+import { LoadDataQualityValidation } from "./domain/reports/data-quality/usecases/loadDataQualityValidation";
+import { ResetDataQualityValidation } from "./domain/reports/data-quality/usecases/ResetDataQualityValidation";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -78,7 +79,8 @@ export function getCompositionRoot(api: D2Api) {
             getIndicators: new GetIndicatorsUseCase(dataQualityRepository),
             getProgramIndicators: new GetProgramIndicatorsUseCase(dataQualityRepository),
             saveDataQuality: new SaveDataQualityUseCase(dataQualityRepository),
-            reloadValidation: new ReloadDataQualityValidation(dataQualityRepository),
+            loadValidation: new LoadDataQualityValidation(dataQualityRepository),
+            resetValidation: new ResetDataQualityValidation(dataQualityRepository),
             getColumns: new GetDataQualityColumnsUseCase(dataQualityRepository),
             saveColumns: new SaveDataQualityColumnsUseCase(dataQualityRepository),
         }),
