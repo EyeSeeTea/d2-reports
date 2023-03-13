@@ -14,6 +14,7 @@ import {
     // @ts-ignore
 } from "@dhis2/ui";
 import { makeStyles } from "@material-ui/core";
+import DataTableSection from "./DataTableSection";
 
 export interface TableFormProps {
     dataFormInfo: DataFormInfo;
@@ -26,7 +27,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
     const classes = useStyles();
 
     return (
-        <div key={`table-${section.id}`} className={classes.wrapper}>
+        <DataTableSection section={section} dataFormInfo={dataFormInfo}>
             <DataTable>
                 <TableHead>
                     <DataTableRow>
@@ -50,7 +51,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                     ))}
                 </TableBody>
             </DataTable>
-        </div>
+        </DataTableSection>
     );
 });
 

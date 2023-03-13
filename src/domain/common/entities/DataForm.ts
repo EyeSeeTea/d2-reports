@@ -8,11 +8,18 @@ export interface DataForm {
     id: Id;
     dataElements: DataElement[];
     sections: Section[];
-    texts: { header: Maybe<string>; footer: Maybe<string> };
+    texts: Texts;
     options: {
         dataElements: Record<Id, { widget: "dropdown" | "radio" }>;
     };
 }
+
+export interface Texts {
+    header: Maybe<string>;
+    footer: Maybe<string>;
+}
+
+export const defaultTexts: Texts = { header: undefined, footer: undefined };
 
 const viewTypes = ["grid", "table", "grid-with-periods"] as const;
 export type ViewType = UnionFromValues<typeof DataFormM.viewTypes>;
@@ -22,7 +29,7 @@ export interface SectionBase {
     name: string;
     dataElements: DataElement[];
     toggle: { type: "none" } | { type: "dataElement"; dataElement: DataElement };
-    description: string;
+    texts: Texts;
 }
 
 export interface SectionSimple extends SectionBase {

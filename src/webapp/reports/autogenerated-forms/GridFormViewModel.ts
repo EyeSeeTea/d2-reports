@@ -1,15 +1,15 @@
 import _ from "lodash";
-import { Section } from "../../../domain/common/entities/DataForm";
+import { Section, Texts } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
 
 export interface Grid {
     id: string;
     name: string;
-    description: string;
     columns: Column[];
     rows: Row[];
     toggle: Section["toggle"];
     useIndexes: boolean;
+    texts: Texts;
 }
 
 interface SubSectionGrid {
@@ -72,8 +72,8 @@ export class GridViewModel {
             columns: columns,
             rows: rows,
             toggle: section.toggle,
+            texts: section.texts,
             useIndexes: useIndexes,
-            description: section.description,
         };
     }
 }

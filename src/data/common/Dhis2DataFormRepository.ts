@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { getId, Id } from "../../domain/common/entities/Base";
 import { DataElement } from "../../domain/common/entities/DataElement";
-import { DataForm, Section, SectionBase } from "../../domain/common/entities/DataForm";
+import { DataForm, defaultTexts, Section, SectionBase } from "../../domain/common/entities/DataForm";
 import { Period } from "../../domain/common/entities/DataValue";
 import { DataFormRepository } from "../../domain/common/repositories/DataFormRepository";
 import { D2Api, MetadataPick } from "../../types/d2-api";
@@ -65,18 +65,19 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         const dataElements = await new Dhis2DataElement(this.api).get(dataElementIds);
 
         return dataSet.sections.map((section): Section => {
+            const config = dataSetConfig.sections[section.id];
+
             const base: SectionBase = {
                 id: section.id,
                 name: section.displayName,
-                description: section.description,
                 toggle: { type: "none" },
+                texts: config?.texts || defaultTexts,
                 dataElements: _(section.dataElements)
                     .map(dataElementRef => dataElements[dataElementRef.id])
                     .compact()
                     .value(),
             };
 
-            const config = dataSetConfig.sections[section.id];
             if (!config) return { viewType: "table", ...base };
 
             const base2 = getSectionBaseWithToggle(config, base);
@@ -101,7 +102,6 @@ function getMetadataQuery(options: { dataSetId: Id }) {
                     id: true,
                     code: true,
                     displayName: true,
-                    description: true,
                     dataElements: { id: true },
                 },
             },

@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Section, SectionWithPeriods } from "../../../domain/common/entities/DataForm";
+import { Section, SectionWithPeriods, Texts } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
 
 interface GridWithPeriodsI {
@@ -7,8 +7,8 @@ interface GridWithPeriodsI {
     name: string;
     rows: Row[];
     periods: string[];
-    description: string;
     toggle: Section["toggle"];
+    texts: Texts;
 }
 
 interface DataElementRow {
@@ -53,7 +53,7 @@ export class GridWithPeriodsViewModel {
             rows: rows,
             periods: section.periods,
             toggle: section.toggle,
-            description: section.description,
+            texts: section.texts,
         };
     }
 }

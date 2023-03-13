@@ -89,7 +89,11 @@ An example:
             "viewType": "grid",
             "sections": {
                 "SECTION1_CODE": {
-                    "viewType": "table"
+                    "viewType": "table",
+                    "texts": {
+                        "header": "<h2>Section header from dataStore</h2>",
+                        "footer": "<h3>Section footer from dataStore</h3>"
+                    }
                 }
             }
         },

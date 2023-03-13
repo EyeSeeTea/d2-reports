@@ -6,15 +6,17 @@ import { Maybe, NonPartial } from "../../utils/ts-utils";
 import { Code, getCode, Id, NamedRef } from "../../domain/common/entities/Base";
 import { Option } from "../../domain/common/entities/DataElement";
 import { Period } from "../../domain/common/entities/DataValue";
+import { Texts } from "../../domain/common/entities/DataForm";
 
 interface DataSetConfig {
-    texts: { header: Maybe<string>; footer: Maybe<string> };
+    texts: Texts;
     sections: Record<Id, SectionConfig>;
 }
 
 export type SectionConfig = BasicSectionConfig | GridWithPeriodsSectionConfig;
 
 interface BaseSectionConfig {
+    texts: Texts;
     toggle: { type: "none" } | { type: "dataElement"; code: Code };
 }
 
@@ -33,6 +35,11 @@ const selector = Codec.interface({ code: string });
 
 const viewType = oneOf([exactly("table"), exactly("grid"), exactly("grid-with-periods")]);
 
+const textsCodec = Codec.interface({
+    header: optional(oneOf([string, selector])),
+    footer: optional(oneOf([string, selector])),
+});
+
 const DataStoreConfigCodec = Codec.interface({
     dataElements: sectionConfig({
         selection: optional(
@@ -46,15 +53,11 @@ const DataStoreConfigCodec = Codec.interface({
 
     dataSets: sectionConfig({
         viewType: optional(viewType),
-        texts: optional(
-            Codec.interface({
-                header: optional(oneOf([string, selector])),
-                footer: optional(oneOf([string, selector])),
-            })
-        ),
+        texts: optional(textsCodec),
         sections: optional(
             sectionConfig({
                 viewType: optional(viewType),
+                texts: optional(textsCodec),
                 toggle: optional(
                     Codec.interface({
                         type: exactly("dataElement"),
@@ -203,16 +206,28 @@ export class Dhis2DataStoreDataForm {
     }
 
     private static async getConstants(api: D2Api, storeConfig: DataFormStoreConfig["custom"]): Promise<Constant[]> {
-        const codes = _(storeConfig.dataSets)
+        const dataSetTexts = _(storeConfig.dataSets)
             .values()
             .map(x => (x.texts ? x.texts : undefined))
             .compact()
+            .value();
+
+        const sectionTexts = _(storeConfig.dataSets)
+            .values()
+            .flatMap(dataSet => _.values(dataSet.sections))
+            .flatMap(section => section.texts)
+            .compact()
+            .value();
+
+        const codes = _(dataSetTexts)
+            .concat(sectionTexts)
             .flatMap(t => [
                 typeof t.header !== "string" ? t.header : undefined,
                 typeof t.footer !== "string" ? t.footer : undefined,
             ])
             .compact()
             .map(selector => selector.code)
+            .uniq()
             .value();
 
         if (_.isEmpty(codes)) return [];
@@ -232,6 +247,10 @@ export class Dhis2DataStoreDataForm {
     getDataSetConfig(dataSet: DataSet, period: Period): DataSetConfig {
         const dataSetConfig = this.config.custom.dataSets?.[dataSet.code];
         const dataSetDefaultViewType = dataSetConfig?.viewType || defaultViewType;
+        const constantsByCode = _.keyBy(this.config.constants, getCode);
+
+        const getText = (value: string | { code: string } | undefined) =>
+            typeof value === "string" ? value : value ? constantsByCode[value.code]?.description : "";
 
         const sections = _(dataSetConfig?.sections)
             .toPairs()
@@ -242,6 +261,10 @@ export class Dhis2DataStoreDataForm {
                 const viewType = sectionConfig.viewType || dataSetDefaultViewType;
                 const base: BaseSectionConfig = {
                     toggle: sectionConfig.toggle || { type: "none" },
+                    texts: {
+                        header: getText(sectionConfig?.texts?.header),
+                        footer: getText(sectionConfig?.texts?.footer),
+                    },
                 };
 
                 const config: SectionConfig =
@@ -255,14 +278,11 @@ export class Dhis2DataStoreDataForm {
             .fromPairs()
             .value();
 
-        const { header, footer } = dataSetConfig?.texts || { header: "", footer: "" };
-        const constantsByCode = _.keyBy(this.config.constants, getCode);
-
-        const getText = (value: string | { code: string } | undefined) =>
-            typeof value === "string" ? value : value ? constantsByCode[value.code]?.description : "";
-
         return {
-            texts: { header: getText(header), footer: getText(footer) },
+            texts: {
+                header: getText(dataSetConfig?.texts?.header),
+                footer: getText(dataSetConfig?.texts?.header),
+            },
             sections: sections,
         };
     }
