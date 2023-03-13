@@ -12,7 +12,7 @@ interface GridWithPeriodsI {
 }
 
 interface DataElementRow {
-    type: "dataElement";
+    type: "dataElement" | "dataElementFile";
     dataElement: DataElement;
 }
 
@@ -28,7 +28,7 @@ export class GridWithPeriodsViewModel {
             .map(([groupName, dataElementsForGroup]): Row => {
                 if (dataElementsForGroup.length === 1) {
                     return {
-                        type: "dataElement",
+                        type: dataElementsForGroup[0].type === "FILE" ? "dataElementFile" : "dataElement",
                         dataElement: dataElementsForGroup[0],
                     };
                 } else {

@@ -7,6 +7,7 @@ interface DataElementBase {
     id: Id;
     code: Code;
     name: string;
+    description: string;
     options: Options;
 }
 

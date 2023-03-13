@@ -37,6 +37,7 @@ const dataElementFields = {
     id: true,
     code: true,
     displayName: true,
+    displayDescription: true,
     formName: true,
     valueType: true,
     optionSet: {
@@ -45,7 +46,9 @@ const dataElementFields = {
     },
 } as const;
 
-type D2DataElement = MetadataPick<{ dataElements: { fields: typeof dataElementFields } }>["dataElements"][number];
+type D2DataElement = MetadataPick<{
+    dataElements: { fields: typeof dataElementFields };
+}>["dataElements"][number];
 
 function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataForm): DataElement | null {
     const { valueType } = dataElement;
@@ -66,6 +69,7 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
         id: dataElement.id,
         code: dataElement.code,
         name: dataElement.formName || dataElement.displayName,
+        description: dataElement.displayDescription,
         options: optionSet
             ? { isMultiple: Boolean(deConfig?.selection?.isMultiple), items: optionSet.options }
             : undefined,
