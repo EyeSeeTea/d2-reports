@@ -2,11 +2,7 @@ import _ from "lodash";
 import { Section } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
 
-export interface GridFormViewModel {
-    sections: SectionGrid[];
-}
-
-export interface SectionGrid {
+export interface Grid {
     id: string;
     name: string;
     columns: Column[];
@@ -29,8 +25,8 @@ interface Row {
 
 const separator = " - ";
 
-export class TableFormViewModelM {
-    static get(section: Section): SectionGrid {
+export class GridViewModel {
+    static get(section: Section): Grid {
         const subsections = _(section.dataElements)
             .groupBy(dataElement => _(dataElement.name).split(separator).initial().join(separator))
             .toPairs()

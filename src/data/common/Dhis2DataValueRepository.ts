@@ -8,12 +8,12 @@ import { Dhis2DataElement } from "./Dhis2DataElement";
 export class Dhis2DataValueRepository implements DataValueRepository {
     constructor(private api: D2Api) {}
 
-    async get(options: { dataSetId: Id; orgUnitId: Id; period: Period }): Promise<DataValue[]> {
+    async get(options: { dataSetId: Id; orgUnitId: Id; periods: Period[] }): Promise<DataValue[]> {
         const { dataValues } = await this.api.dataValues
             .getSet({
                 dataSet: [options.dataSetId],
                 orgUnit: [options.orgUnitId],
-                period: [options.period],
+                period: options.periods,
             })
             .getData();
 

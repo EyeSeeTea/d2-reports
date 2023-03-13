@@ -53,7 +53,7 @@ export type DataValue =
 
 export type Period = string;
 
-type DataValueSelector = string; // `${dataElementId.categoryOptionComboId}`
+type DataValueSelector = string; // `${dataElementId.period.categoryOptionComboId}`
 export type DataValueStoreD = Record<DataValueSelector, DataValue>;
 
 export class DataValueStore {
@@ -63,6 +63,7 @@ export class DataValueStore {
         const store = _.keyBy(dataValues, dv =>
             getStoreKey({
                 dataElementId: dv.dataElement.id,
+                period: dv.period,
                 categoryOptionComboId: dv.categoryOptionComboId,
             })
         );
@@ -72,6 +73,7 @@ export class DataValueStore {
     set(dataValue: DataValue): DataValueStore {
         const key = getStoreKey({
             dataElementId: dataValue.dataElement.id,
+            period: dataValue.period,
             categoryOptionComboId: dataValue.categoryOptionComboId,
         });
         return new DataValueStore({ ...this.store, [key]: dataValue });
@@ -80,6 +82,7 @@ export class DataValueStore {
     getOrEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
         const key = getStoreKey({
             dataElementId: dataElement.id,
+            period: base.period,
             categoryOptionComboId: base.categoryOptionComboId,
         });
 
@@ -102,6 +105,6 @@ function getEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
     }
 }
 
-function getStoreKey(options: { dataElementId: Id; categoryOptionComboId: Id }): DataValueSelector {
-    return [options.dataElementId, options.categoryOptionComboId].join(".");
+function getStoreKey(options: { dataElementId: Id; period: Period; categoryOptionComboId: Id }): DataValueSelector {
+    return [options.dataElementId, options.period, options.categoryOptionComboId].join(".");
 }

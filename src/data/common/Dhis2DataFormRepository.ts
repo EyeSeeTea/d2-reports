@@ -11,15 +11,15 @@ import { Dhis2DataStoreDataForm } from "./Dhis2DataStoreDataForm";
 export class Dhis2DataFormRepository implements DataFormRepository {
     constructor(private api: D2Api) {}
 
-    async get(options: { id: Id; orgUnitId: Id; period: Period }): Promise<DataForm> {
+    async get(options: { id: Id; period: Period }): Promise<DataForm> {
         const metadata = await this.getMetadata(options);
         const dataSet = metadata.dataSets[0];
         if (!dataSet) return Promise.reject(new Error("Data set not found"));
         const config = await Dhis2DataStoreDataForm.build(this.api);
-        const sections = await this.getSections(dataSet, config);
+        const sections = await this.getSections(dataSet, config, options.period);
         const dataElements = _.flatMap(sections, section => section.dataElements);
         const dataElementsOptions = this.getDataElementsOptions(dataElements, config);
-        const dataSetConfig = config.getDataSetConfig(dataSet);
+        const dataSetConfig = config.getDataSetConfig(dataSet, options.period);
 
         return {
             id: dataSet.id,
@@ -54,8 +54,8 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         return this.api.metadata.get(metadataQuery).getData();
     }
 
-    private async getSections(dataSet: D2DataSet, config: Dhis2DataStoreDataForm) {
-        const dataSetConfig = config.getDataSetConfig(dataSet);
+    private async getSections(dataSet: D2DataSet, config: Dhis2DataStoreDataForm, period: Period) {
+        const dataSetConfig = config.getDataSetConfig(dataSet, period);
 
         const dataElementIds = _(dataSet.sections)
             .flatMap(section => section.dataElements)
@@ -65,15 +65,21 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         const dataElements = await new Dhis2DataElement(this.api).get(dataElementIds);
 
         return dataSet.sections.map((section): Section => {
-            return {
+            const base = {
                 id: section.id,
                 name: section.displayName,
-                viewType: (dataSetConfig.sections[section.id] || dataSetConfig).viewType,
                 dataElements: _(section.dataElements)
                     .map(dataElementRef => dataElements[dataElementRef.id])
                     .compact()
                     .value(),
             };
+
+            const config = dataSetConfig.sections[section.id];
+            if (!config) return { viewType: "table", ...base };
+
+            return config.viewType === "grid-with-periods"
+                ? { viewType: config.viewType, periods: config.periods, ...base }
+                : { viewType: config.viewType, ...base };
         });
     }
 }

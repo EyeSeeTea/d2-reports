@@ -16,6 +16,7 @@ import YesNoWidget from "./widgets/YesNoWidget";
 interface DataEntryItemProps {
     dataElement: DataElement;
     dataFormInfo: DataFormInfo;
+    period?: string; // Override period in dataFormInfo
     onValueChange: (dataValue: DataValue) => Promise<void>;
 }
 
@@ -96,15 +97,22 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
 function useUpdatableDataValueWithFeedback(options: DataEntryItemProps) {
     const { onValueChange, dataFormInfo, dataElement } = options;
     const [state, setState] = React.useState<WidgetState>("original");
+    const selector = React.useMemo(() => {
+        return {
+            orgUnitId: dataFormInfo.orgUnitId,
+            period: options.period || dataFormInfo.period,
+            categoryOptionComboId: dataFormInfo.categoryOptionComboId,
+        };
+    }, [dataFormInfo.orgUnitId, options.period, dataFormInfo.period, dataFormInfo.categoryOptionComboId]);
 
     const [dataValue, setDataValue] = React.useState<DataValue>(() =>
-        dataFormInfo.data.values.getOrEmpty(dataElement, dataFormInfo)
+        dataFormInfo.data.values.getOrEmpty(dataElement, selector)
     );
 
     React.useEffect(() => {
-        const dataValue = dataFormInfo.data.values.getOrEmpty(dataElement, dataFormInfo);
+        const dataValue = dataFormInfo.data.values.getOrEmpty(dataElement, selector);
         setDataValue(dataValue);
-    }, [dataFormInfo, dataElement]);
+    }, [dataFormInfo.data.values, dataElement, selector]);
 
     const notifyChange = React.useCallback<WidgetProps["onValueChange"]>(
         dataValue => {

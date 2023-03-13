@@ -56,7 +56,7 @@ Expected structure of the metadata:
 -   _Maintenance_ -> _Data set_ -> _Edit_: Add all the data elements that need to be displayed.
 -   _Maintenance_ -> _Data set_ -> _Manage sections_: Create a section for each table to display in the form.
 
-##### View mode: table
+##### View mode: Table
 
 Data elements will be shown in the first column and the value in the second.
 
@@ -73,7 +73,7 @@ ITNs - Policy      |                |
 ITNs - Implemented |                |
 ```
 
-##### View mode: grid
+##### View mode: Grid
 
 Data elements will by grouped by rows and columns using **formName**/**name** and `" - "` as a separator of subsection / data element.
 
@@ -90,6 +90,43 @@ This will create this table:
 ITN Section     | Written Policy | Policy Implemented |
 ITNs - Basic    |                |                    |
 ITNs - Extended |                |                    |
+```
+
+##### View mode: Grid with periods
+
+Data elements will by grouped by rows and subrows using **formName**/**name** and `" - "` as a separator of subsections.
+
+An example, a section: `ITNs` with data elements:
+
+    -   `ITNs - Basic`
+    -   `ITNs - Extended - Written Policy`
+    -   `ITNs - Extended - Policy Implemented`
+    -   `ITNs - Extended - Policy Extra`
+
+And having a configuration in the dataStore:
+
+```json
+{
+    "SECTION_CODE": {
+        "viewType": "grid-with-periods",
+        "periods": {
+            "type": "relative-interval",
+            "endOffset": 0,
+            "startOffset": -2
+        }
+    }
+}
+```
+
+When rendering a data entry for 2022, this will create this table for interval `[2022-2 .. 2022+0]`:
+
+```
+ITNs                                   |  2020  |  2021  |  2022   |
+--------------------------------------------------------------------
+ITNs - Basic                           |        |        |         |
+                 | Written Policy      |        |        |         |
+ITNs - Extended  | Policy Implemented  |        |        |         |
+                 | Policy Extra        |        |        |         |
 ```
 
 #### Data store customization
@@ -126,6 +163,18 @@ An example:
             "sections": {
                 "SECTION1_CODE": {
                     "viewType": "table"
+                }
+            }
+        },
+        "DS3_CODE": {
+            "sections": {
+                "SECTION1_CODE": {
+                    "viewType": "grid-with-periods",
+                    "periods": {
+                        "type": "relative-interval",
+                        "endOffset": 0,
+                        "startOffset": -2
+                    }
                 }
             }
         }
