@@ -14,6 +14,7 @@ export interface DataTableProps {
 
 interface DataTableSectionObj {
     name: string;
+    description: string;
     toggle: Section["toggle"];
 }
 
@@ -38,6 +39,7 @@ const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
     return (
         <div className={classes.wrapper}>
             <h3 className={classes.title}>{section.name}</h3>
+            <div className={classes.subtitle}>{section.description}</div>
 
             {toggle.type === "dataElement" && (
                 <div className={classes.toggleWrapper}>
@@ -60,6 +62,7 @@ const useStyles = makeStyles({
     toggleWrapper: { margin: 10 },
     toggleTitle: { marginBottom: 10 },
     title: { textAlign: "center" },
+    subtitle: { textAlign: "center", marginBottom: 10 },
 });
 
 function isDataValueEnabled(dataValue: DataValue): boolean {

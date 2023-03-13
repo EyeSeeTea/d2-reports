@@ -22,6 +22,7 @@ export interface SectionBase {
     name: string;
     dataElements: DataElement[];
     toggle: { type: "none" } | { type: "dataElement"; dataElement: DataElement };
+    description: string;
 }
 
 export interface SectionSimple extends SectionBase {

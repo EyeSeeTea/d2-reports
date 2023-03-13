@@ -7,6 +7,7 @@ interface GridWithPeriodsI {
     name: string;
     rows: Row[];
     periods: string[];
+    description: string;
     toggle: Section["toggle"];
 }
 
@@ -52,6 +53,7 @@ export class GridWithPeriodsViewModel {
             rows: rows,
             periods: section.periods,
             toggle: section.toggle,
+            description: section.description,
         };
     }
 }

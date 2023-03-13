@@ -5,8 +5,11 @@ import { DataElement } from "../../../domain/common/entities/DataElement";
 export interface Grid {
     id: string;
     name: string;
+    description: string;
     columns: Column[];
     rows: Row[];
+    toggle: Section["toggle"];
+    useIndexes: boolean;
 }
 
 interface SubSectionGrid {
@@ -27,15 +30,17 @@ const separator = " - ";
 
 export class GridViewModel {
     static get(section: Section): Grid {
-        const subsections = _(section.dataElements)
-            .groupBy(dataElement => _(dataElement.name).split(separator).initial().join(separator))
+        const dataElements = getDataElementsWithIndexProccessing(section);
+
+        const subsections = _(dataElements)
+            .groupBy(dataElement => getSubsectionName(dataElement))
             .toPairs()
             .map(
                 ([groupName, dataElementsForGroup]): SubSectionGrid => ({
                     name: groupName,
-                    dataElements: dataElementsForGroup.map(de => ({
-                        ...de,
-                        name: _(de.name).split(separator).last() || "-",
+                    dataElements: dataElementsForGroup.map(dataElement => ({
+                        ...dataElement,
+                        name: _(dataElement.name).split(separator).last() || "-",
                     })),
                 })
             )
@@ -56,11 +61,59 @@ export class GridViewModel {
             return { name: subsection.name, items: items };
         });
 
+        const useIndexes =
+            _(rows)
+                .groupBy(row => row.name.replace(/\s*\(\d+\)$/, ""))
+                .size() === 1;
+
         return {
             id: section.id,
             name: section.name,
             columns: columns,
             rows: rows,
+            toggle: section.toggle,
+            useIndexes: useIndexes,
+            description: section.description,
         };
     }
+}
+
+/** Move the data element index to the row name, so indexed data elements are automatically grouped 
+
+    Input:
+        MAL - Compound name (1)
+        MAL - Compound name (2)
+        MAL - Compound symbol (1)
+        MAL - Compound symbol (2)
+
+    Output:
+        MAL (1) - Compound name
+        MAL (2) - Compound name
+        MAL (1) - Compound symbol
+        MAL (2) - Compound symbol
+*/
+
+function getDataElementsWithIndexProccessing(section: Section) {
+    return section.dataElements.map((dataElement): typeof dataElement => {
+        // "MAL - Compound name (1)" -> "MAL (1) - Compound name"
+        const index = dataElement.name.match(/\((\d+)\)$/)?.[1];
+
+        if (!index) {
+            return dataElement;
+        } else {
+            const parts = dataElement.name.split(separator);
+            const initial = _.initial(parts).join(separator);
+            const last = _.last(parts);
+            if (!last) return dataElement;
+            const lastWithoutIndex = last.replace(/\s*\(\d+\)$/, "");
+            const newName = `${initial} (${index}) - ${lastWithoutIndex}`;
+            return { ...dataElement, name: newName };
+        }
+    });
+}
+
+function getSubsectionName(dataElement: DataElement): string {
+    // Remove index from enumerated data elements (example: `Chemical name (1)` -> `Chemical name`)
+    // so they are grouped with no need to edit each name in the metadata.
+    return _(dataElement.name).split(separator).initial().join(separator);
 }

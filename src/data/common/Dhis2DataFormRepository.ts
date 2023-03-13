@@ -68,6 +68,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
             const base: SectionBase = {
                 id: section.id,
                 name: section.displayName,
+                description: section.description,
                 toggle: { type: "none" },
                 dataElements: _(section.dataElements)
                     .map(dataElementRef => dataElements[dataElementRef.id])
@@ -100,6 +101,7 @@ function getMetadataQuery(options: { dataSetId: Id }) {
                     id: true,
                     code: true,
                     displayName: true,
+                    description: true,
                     dataElements: { id: true },
                 },
             },

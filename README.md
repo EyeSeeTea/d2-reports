@@ -162,6 +162,23 @@ ITNs - Basic    |                |                    |
 ITNs - Extended |                |                    |
 ```
 
+NOTE: The section processor detects if all the data elements are indexed, and in that case a special. An example:
+
+Data elements:
+
+    - `MAL - Compound name (1)`
+    - `MAL - Compound name (2)`
+    - `MAL - Compound symbol (1)`
+    - `MAL - Compound symbol (2)`
+
+Output:
+
+```
+   #   | Compound name | Compound symbol
+   1   |               |
+   2   |               |
+```
+
 ##### View mode: Grid with periods
 
 Data elements will by grouped by rows and subrows using **formName**/**name** and `" - "` as a separator of subsections.
