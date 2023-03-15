@@ -61,7 +61,7 @@ const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
             {isSectionOpen && (
                 <>
                     {children}
-                    <Html content={section.texts.header} />
+                    <Html content={section.texts.footer} />
                 </>
             )}
         </div>

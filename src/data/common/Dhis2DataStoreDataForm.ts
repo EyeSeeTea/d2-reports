@@ -281,7 +281,7 @@ export class Dhis2DataStoreDataForm {
         return {
             texts: {
                 header: getText(dataSetConfig?.texts?.header),
-                footer: getText(dataSetConfig?.texts?.header),
+                footer: getText(dataSetConfig?.texts?.footer),
             },
             sections: sections,
         };
