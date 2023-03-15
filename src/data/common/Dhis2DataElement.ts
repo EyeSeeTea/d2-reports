@@ -38,7 +38,7 @@ const dataElementFields = {
     code: true,
     displayName: true,
     displayDescription: true,
-    formName: true,
+    displayFormName: true,
     valueType: true,
     optionSet: {
         id: true,
@@ -68,7 +68,7 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
     const base = {
         id: dataElement.id,
         code: dataElement.code,
-        name: dataElement.formName || dataElement.displayName,
+        name: dataElement.displayFormName || dataElement.displayName,
         description: dataElement.displayDescription,
         options: optionSet
             ? { isMultiple: Boolean(deConfig?.selection?.isMultiple), items: optionSet.options }
@@ -93,7 +93,7 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
             return { type: "FILE", ...base };
         default:
             console.error(
-                `Data element [formName=${dataElement.formName}, id=${dataElement.id}, valueType=${dataElement.valueType}] skipped, valueType not supported`
+                `Data element [name=${dataElement.displayName}, id=${dataElement.id}, valueType=${dataElement.valueType}] skipped, valueType not supported`
             );
             return null;
     }
