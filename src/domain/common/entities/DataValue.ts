@@ -1,7 +1,14 @@
 import _ from "lodash";
 import { assertUnreachable, Maybe } from "../../../utils/ts-utils";
 import { Id } from "./Base";
-import { DataElement, DataElementBoolean, DataElementFile, DataElementNumber, DataElementText } from "./DataElement";
+import {
+    DataElement,
+    DataElementBoolean,
+    DataElementDate,
+    DataElementFile,
+    DataElementNumber,
+    DataElementText,
+} from "./DataElement";
 
 interface DataValueBase {
     orgUnitId: Id;
@@ -52,6 +59,19 @@ export interface DataValueFile extends DataValueBase {
     fileToSave?: File;
 }
 
+export interface DataValueDate extends DataValueBase {
+    type: "DATE";
+    dataElement: DataElementDate;
+    value: Maybe<DateObj>;
+    isMultiple: false;
+}
+
+export interface DateObj {
+    day: number;
+    month: number; // 1-12
+    year: number;
+}
+
 export interface FileResource {
     id: Id;
     name: string;
@@ -65,7 +85,8 @@ export type DataValue =
     | DataValueNumberMultiple
     | DataValueTextSingle
     | DataValueTextMultiple
-    | DataValueFile;
+    | DataValueFile
+    | DataValueDate;
 
 export type Period = string;
 
@@ -122,6 +143,8 @@ function getEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
                 : { ...base, dataElement, type: "TEXT", isMultiple: false, value: "" };
         case "FILE":
             return { ...base, dataElement, type: "FILE", file: undefined, isMultiple: false };
+        case "DATE":
+            return { ...base, dataElement, type: "DATE", value: undefined, isMultiple: false };
 
         default:
             assertUnreachable(type);

@@ -1,11 +1,11 @@
 import _ from "lodash";
 import { getId, Id } from "../../domain/common/entities/Base";
 import { DataElement } from "../../domain/common/entities/DataElement";
-import { DataValue, DataValueFile, FileResource, Period } from "../../domain/common/entities/DataValue";
+import { DataValue, DataValueFile, DateObj, FileResource, Period } from "../../domain/common/entities/DataValue";
 import { DataValueRepository } from "../../domain/common/repositories/DataValueRepository";
 import { D2Api, DataValueSetsDataValue } from "../../types/d2-api";
 import { promiseMap } from "../../utils/promises";
-import { assertUnreachable } from "../../utils/ts-utils";
+import { assertUnreachable, Maybe } from "../../utils/ts-utils";
 import { Dhis2DataElement } from "./Dhis2DataElement";
 
 export class Dhis2DataValueRepository implements DataValueRepository {
@@ -84,7 +84,18 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                             isMultiple: false,
                             ...selector,
                         };
+                    case "DATE": {
+                        const [year, month, day] = (dv.value || "").split("-").map(s => parseInt(s));
+                        const value: Maybe<DateObj> = year && month && day ? { year, month, day } : undefined;
 
+                        return {
+                            type: "DATE",
+                            dataElement,
+                            value: value,
+                            isMultiple: false,
+                            ...selector,
+                        };
+                    }
                     default:
                         assertUnreachable(type);
                 }
@@ -232,8 +243,16 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                 return (dataValue.isMultiple ? dataValue.values.join("; ") : dataValue.value) || "";
             case "FILE":
                 return dataValue.file?.id || "";
+            case "DATE": {
+                const val = dataValue.value;
+                return val ? [val.year, pad2(val.month), pad2(val.day)].join("-") : "";
+            }
         }
     }
+}
+
+function pad2(n: number): string {
+    return n.toString().padStart(2, "0");
 }
 
 function getValues(s: string): string[] {

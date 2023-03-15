@@ -1,7 +1,7 @@
 import { Maybe } from "../../../utils/ts-utils";
 import { Code, Id } from "./Base";
 
-export type DataElement = DataElementBoolean | DataElementNumber | DataElementText | DataElementFile;
+export type DataElement = DataElementBoolean | DataElementNumber | DataElementText | DataElementFile | DataElementDate;
 
 interface DataElementBase {
     id: Id;
@@ -27,6 +27,10 @@ export interface DataElementText extends DataElementBase {
 
 export interface DataElementFile extends DataElementBase {
     type: "FILE";
+}
+
+export interface DataElementDate extends DataElementBase {
+    type: "DATE";
 }
 
 type Options = Maybe<{ isMultiple: boolean; items: Option<string>[] }>;

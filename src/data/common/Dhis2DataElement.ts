@@ -91,6 +91,8 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
             return { type: "BOOLEAN", isTrueOnly: true, ...base };
         case "FILE_RESOURCE":
             return { type: "FILE", ...base };
+        case "DATE":
+            return { type: "DATE", ...base };
         default:
             console.error(
                 `Data element [name=${dataElement.displayName}, id=${dataElement.id}, valueType=${dataElement.valueType}] skipped, valueType not supported`
