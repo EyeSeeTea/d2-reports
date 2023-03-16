@@ -350,13 +350,14 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
+                useOldPeriods: oldPeriods,
                 ...getUseCaseOptions(filters, selectablePeriods),
             });
 
             console.debug("Reloading", reloadKey);
             return { pager, objects: getDataApprovalViews(config, objects, monitoring) };
         },
-        [compositionRoot.malDataApproval, config, filters, selectablePeriods, monitoring, reloadKey]
+        [compositionRoot.malDataApproval, config, oldPeriods, filters, selectablePeriods, monitoring, reloadKey]
     );
 
     function getUseCaseOptions(filter: DataSetsFilter, selectablePeriods: string[]) {
@@ -455,7 +456,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     revoke={revoke}
                     isMalAdmin={isMalAdmin}
                     isUpdated={() => setDiffState(`${new Date().getTime()}`)}
-                    key={new Date().getTime()}
                     key={new Date().getTime()}
                 />
             </ConfirmationDialog>
