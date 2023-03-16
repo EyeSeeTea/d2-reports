@@ -344,13 +344,14 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
+                useOldPeriods: oldPeriods,
                 ...getUseCaseOptions(filters, selectablePeriods),
             });
 
             console.debug("Reloading", reloadKey);
             return { pager, objects: getDataApprovalViews(config, objects) };
         },
-        [config, compositionRoot, filters, reloadKey, selectablePeriods]
+        [compositionRoot.malDataApproval, config, oldPeriods, filters, selectablePeriods, reloadKey]
     );
 
     function getUseCaseOptions(filter: DataSetsFilter, selectablePeriods: string[]) {

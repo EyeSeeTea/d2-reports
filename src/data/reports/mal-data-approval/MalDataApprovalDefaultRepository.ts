@@ -13,6 +13,7 @@ import {
     SQL_VIEW_DATA_DUPLICATION_NAME,
     SQL_VIEW_MAL_DIFF_NAME,
     SQL_VIEW_MAL_METADATA_NAME,
+    SQL_VIEW_OLD_DATA_DUPLICATION_NAME,
 } from "../../common/Dhis2ConfigRepository";
 import {
     MalDataApprovalItem,
@@ -23,10 +24,7 @@ import {
     MalDataApprovalOptions,
     MalDataApprovalRepository,
 } from "../../../domain/reports/mal-data-approval/repositories/MalDataApprovalRepository";
-import {
-    DataDiffItem,
-    DataDiffItemIdentifier
-} from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
+import { DataDiffItem, DataDiffItemIdentifier } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 
 export interface Pagination {
@@ -217,8 +215,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
     async get(options: MalDataApprovalOptions): Promise<PaginatedObjects<MalDataApprovalItem>> {
         const { config } = options; // ?
-        const { sorting, dataSetIds, orgUnitIds, periods } = options; // ?
-
+        const { sorting, dataSetIds, orgUnitIds, periods, useOldPeriods } = options; // ?
         const allDataSetIds = _.values(config.dataSets).map(ds => ds.id); // ?
         const sqlViews = new Dhis2SqlViews(this.api);
         const paging_to_download = { page: 1, pageSize: 10000 };
@@ -234,7 +231,10 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
         const { rows } = await sqlViews
             .query<Variables, SqlField>(
-                getSqlViewId(config, SQL_VIEW_DATA_DUPLICATION_NAME),
+                getSqlViewId(
+                    config,
+                    !useOldPeriods ? SQL_VIEW_DATA_DUPLICATION_NAME : SQL_VIEW_OLD_DATA_DUPLICATION_NAME
+                ),
                 {
                     orgUnitRoot: sqlViewJoinIds(config.currentUser.orgUnits.map(({ id }) => id)),
                     orgUnits: sqlViewJoinIds(orgUnitIds),
@@ -466,44 +466,44 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
     async duplicateDataValues(dataValues: DataDiffItemIdentifier[]): Promise<boolean> {
         try {
             const approvalDataSetId = process.env.REACT_APP_APPROVE_DATASET_ID ?? "fRrt4V8ImqD";
-            const uniqueDataSets = _.uniqBy(dataValues, 'dataSet');
-            const uniqueDataElementsNames = _.uniq(_.map(dataValues, 'dataElement'));
+            const uniqueDataSets = _.uniqBy(dataValues, "dataSet");
+            const uniqueDataElementsNames = _.uniq(_.map(dataValues, "dataElement"));
 
-            const DSDataElements: { dataSetElements: dataSetElementsType[] }[] = await promiseMap(uniqueDataSets, async item =>
-                this.api
-                    .get<any>(`/dataSets/${item.dataSet}`, { fields: "dataSetElements[dataElement[id,name]]" })
-                    .getData()
+            const DSDataElements: { dataSetElements: dataSetElementsType[] }[] = await promiseMap(
+                uniqueDataSets,
+                async item =>
+                    this.api
+                        .get<any>(`/dataSets/${item.dataSet}`, { fields: "dataSetElements[dataElement[id,name]]" })
+                        .getData()
             );
 
             const dataValueSets: dataSetsValueType[] = await promiseMap(uniqueDataSets, async item =>
-                this.api.get<any>("/dataValueSets", {
-                    dataSet: item.dataSet,
-                    period: item.period,
-                    orgUnit: item.orgUnit,
-                }).getData()
+                this.api
+                    .get<any>("/dataValueSets", {
+                        dataSet: item.dataSet,
+                        period: item.period,
+                        orgUnit: item.orgUnit,
+                    })
+                    .getData()
             );
 
             const ADSDataElementsRaw: { dataSetElements: dataSetElementsType[] } = await this.api
                 .get<any>(`/dataSets/${approvalDataSetId}`, { fields: "dataSetElements[dataElement[id,name]]" })
                 .getData();
 
-            const ADSDataElements: dataElementsType[] = ADSDataElementsRaw.dataSetElements.map(
-                (element) => {
-                    return {
-                        id: element.dataElement.id,
-                        name: element.dataElement.name,
-                    };
-                }
-            );
+            const ADSDataElements: dataElementsType[] = ADSDataElementsRaw.dataSetElements.map(element => {
+                return {
+                    id: element.dataElement.id,
+                    name: element.dataElement.name,
+                };
+            });
 
             const dataElementsMatchedArray: { [key: string]: any }[] = DSDataElements.flatMap(DSDataElement => {
-                return DSDataElement.dataSetElements.flatMap((element) => {
+                return DSDataElement.dataSetElements.flatMap(element => {
                     const dataElement = element.dataElement;
                     if (uniqueDataElementsNames.includes(dataElement.name)) {
                         const othername = dataElement.name + "-APVD";
-                        const ADSDataElement = ADSDataElements.find(
-                            (DataElement) => DataElement.name === othername
-                        );
+                        const ADSDataElement = ADSDataElements.find(DataElement => DataElement.name === othername);
                         return {
                             origId: dataElement?.id,
                             destId: ADSDataElement?.id,
@@ -513,24 +513,22 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                         return [];
                     }
                 });
-            })
+            });
 
             const apvdDataValues = dataValueSets.flatMap(dataValueSet => {
                 if (dataValueSet.dataValues) {
-                    const data = dataValueSet.dataValues.flatMap(
-                        (dataValue) => {
-                            const data = { ...dataValue };
-                            const destId = dataElementsMatchedArray.find(
-                                dataElementsMatchedObj => dataElementsMatchedObj.origId === dataValue.dataElement
-                            )?.destId;
-                            data.dataElement = destId;
-                            data.dataSet = approvalDataSetId;
-                            delete data.lastUpdated;
-                            delete data.comment;
+                    const data = dataValueSet.dataValues.flatMap(dataValue => {
+                        const data = { ...dataValue };
+                        const destId = dataElementsMatchedArray.find(
+                            dataElementsMatchedObj => dataElementsMatchedObj.origId === dataValue.dataElement
+                        )?.destId;
+                        data.dataElement = destId;
+                        data.dataSet = approvalDataSetId;
+                        delete data.lastUpdated;
+                        delete data.comment;
 
-                            return data.dataElement ? data : [];
-                        }
-                    );
+                        return data.dataElement ? data : [];
+                    });
                     return data;
                 } else {
                     return [];
@@ -558,7 +556,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                         .post<any>("/dataValueSets.json", {}, { dataValues: _.reject(chunk, _.isEmpty) })
                         .getData();
 
-                    copyResponse.push(response)
+                    copyResponse.push(response);
                 }
                 return _.every(copyResponse, item => item.status === "SUCCESS");
             } else {
@@ -586,7 +584,11 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             };
 
             const revokeResponse = await this.api
-                .delete<any>("/dataApprovals", { ds: revokeData.dataSet, pe: revokeData.period, ou: revokeData.orgUnit })
+                .delete<any>("/dataApprovals", {
+                    ds: revokeData.dataSet,
+                    pe: revokeData.period,
+                    ou: revokeData.orgUnit,
+                })
                 .getData();
 
             return duplicateResponse && revokeResponse === "";
@@ -631,17 +633,19 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         try {
             const response: any[] = [];
             dataSets.forEach(async dataSet => {
-                const isApproved = await this.api.get<any>(
-                    "/dataApprovals",
-                    { wf: dataSet.workflow, pe: dataSet.period, ou: dataSet.orgUnit }
-                ).getData();
+                const isApproved = await this.api
+                    .get<any>("/dataApprovals", { wf: dataSet.workflow, pe: dataSet.period, ou: dataSet.orgUnit })
+                    .getData();
 
                 if (isApproved.state === "APPROVED_HERE") {
                     response.push(
-                        await this.api.delete<any>(
-                            "/dataApprovals",
-                            { wf: dataSet.workflow, pe: dataSet.period, ou: dataSet.orgUnit }
-                        ).getData()
+                        await this.api
+                            .delete<any>("/dataApprovals", {
+                                wf: dataSet.workflow,
+                                pe: dataSet.period,
+                                ou: dataSet.orgUnit,
+                            })
+                            .getData()
                     );
                 }
             });
@@ -727,7 +731,7 @@ type DataSetRow = Record<CsvField, string>;
 
 function getISODate() {
     const date = new Date().toISOString();
-    return date.slice(0, date.lastIndexOf(":"))
+    return date.slice(0, date.lastIndexOf(":"));
 }
 
 /* From the docs: "The variables must contain alphanumeric, dash, underscore and
