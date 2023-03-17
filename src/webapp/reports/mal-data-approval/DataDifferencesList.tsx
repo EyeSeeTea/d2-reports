@@ -27,7 +27,12 @@ interface DataDifferencesListProps {
     isUpdated: () => void;
 }
 
-export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ selectedIds, revoke, isMalAdmin, isUpdated }) => {
+export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({
+    selectedIds,
+    revoke,
+    isMalAdmin,
+    isUpdated,
+}) => {
     const { compositionRoot, config } = useAppContext();
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const snackbar = useSnackbar();
