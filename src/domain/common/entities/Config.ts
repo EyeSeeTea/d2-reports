@@ -12,9 +12,11 @@ export interface Config {
         [dataSetId: string]: Array<{ dataValueVal: Id; dataValueComment: Id }>;
     };
     orgUnits: string[];
-    sectionsByDataSet: {
-        [dataSetId: string]: NamedRef[] 
-    }| undefined;
+    sectionsByDataSet:
+        | {
+              [dataSetId: string]: NamedRef[];
+          }
+        | undefined;
     years: string[];
     approvalWorkflow: NamedRef[];
 }
