@@ -11,6 +11,7 @@ export const SQL_VIEW_DATA_COMMENTS_NAME = "NHWA Data Comments";
 export const SQL_VIEW_DATA_APPROVAL_NAME = "NHWA Data Approval Status";
 
 export const SQL_VIEW_DATA_DUPLICATION_NAME = "MAL Data Approval Status";
+export const SQL_VIEW_OLD_DATA_DUPLICATION_NAME = "MAL Data Approval Status Pre 2000";
 export const SQL_VIEW_MAL_METADATA_NAME = "MAL Data approval header";
 export const SQL_VIEW_MAL_DIFF_NAME = "MAL Data Approval Diff";
 
@@ -24,7 +25,12 @@ const base = {
     mal: {
         dataSets: { namePrefix: "MAL - WMR Form", nameExcluded: /-APVD$/ },
 
-        sqlViewNames: [SQL_VIEW_DATA_DUPLICATION_NAME, SQL_VIEW_MAL_METADATA_NAME, SQL_VIEW_MAL_DIFF_NAME],
+        sqlViewNames: [
+            SQL_VIEW_DATA_DUPLICATION_NAME,
+            SQL_VIEW_MAL_METADATA_NAME,
+            SQL_VIEW_MAL_DIFF_NAME,
+            SQL_VIEW_OLD_DATA_DUPLICATION_NAME,
+        ],
         constantCode: "",
         approvalWorkflows: { namePrefix: "MAL" },
     },

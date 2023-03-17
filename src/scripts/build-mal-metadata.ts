@@ -198,7 +198,7 @@ export async function buildMetadata(baseUrl: string, authString: string): Promis
             publicAccess: "--------",
         },
         {
-            id: "i2eh7Zfe9LW",
+            id: "OhWrTIxUdN1",
             name: "MAL Data Approval Status",
             cacheStrategy: "RESPECT_SYSTEM_SETTING",
             type: "QUERY",

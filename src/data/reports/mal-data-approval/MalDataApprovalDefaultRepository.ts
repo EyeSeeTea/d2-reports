@@ -13,6 +13,7 @@ import {
     SQL_VIEW_DATA_DUPLICATION_NAME,
     SQL_VIEW_MAL_DIFF_NAME,
     SQL_VIEW_MAL_METADATA_NAME,
+    SQL_VIEW_OLD_DATA_DUPLICATION_NAME,
 } from "../../common/Dhis2ConfigRepository";
 import {
     MalDataApprovalItem,
@@ -214,8 +215,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
     async get(options: MalDataApprovalOptions): Promise<PaginatedObjects<MalDataApprovalItem>> {
         const { config } = options; // ?
-        const { sorting, dataSetIds, orgUnitIds, periods } = options; // ?
-
+        const { sorting, dataSetIds, orgUnitIds, periods, useOldPeriods } = options; // ?
         const allDataSetIds = _.values(config.dataSets).map(ds => ds.id); // ?
         const sqlViews = new Dhis2SqlViews(this.api);
         const paging_to_download = { page: 1, pageSize: 10000 };
@@ -231,7 +231,10 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
         const { rows } = await sqlViews
             .query<Variables, SqlField>(
-                getSqlViewId(config, SQL_VIEW_DATA_DUPLICATION_NAME),
+                getSqlViewId(
+                    config,
+                    !useOldPeriods ? SQL_VIEW_DATA_DUPLICATION_NAME : SQL_VIEW_OLD_DATA_DUPLICATION_NAME
+                ),
                 {
                     orgUnitRoot: sqlViewJoinIds(config.currentUser.orgUnits.map(({ id }) => id)),
                     orgUnits: sqlViewJoinIds(orgUnitIds),
