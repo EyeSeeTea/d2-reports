@@ -262,7 +262,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.lastUpdatedValue) && isMalAdmin,
+                    isActive: rows => _.every(rows, row => !row.monitoring) && isMalAdmin,
                 },
                 {
                     name: "deactivate",
@@ -287,7 +287,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.lastUpdatedValue) && isMalAdmin,
+                    isActive: rows => _.every(rows, row => row.monitoring) && isMalAdmin,
                 },
                 {
                     name: "getDiff",
@@ -349,9 +349,9 @@ export const DataApprovalList: React.FC = React.memo(() => {
             });
 
             console.debug("Reloading", reloadKey);
-            return { pager, objects: getDataApprovalViews(config, objects) };
+            return { pager, objects: getDataApprovalViews(config, objects, monitoring) };
         },
-        [compositionRoot.malDataApproval, config, oldPeriods, filters, selectablePeriods, reloadKey]
+        [compositionRoot.malDataApproval, config, monitoring, oldPeriods, filters, selectablePeriods, reloadKey]
     );
 
     function getUseCaseOptions(filter: DataSetsFilter, selectablePeriods: string[]) {

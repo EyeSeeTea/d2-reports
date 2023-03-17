@@ -134,7 +134,8 @@ type SqlField =
     | "lastupdatedvalue"
     | "lastdateofsubmission"
     | "lastdateofapproval"
-    | "diff";
+    | "diff"
+    | "monitoring";
 
 const fieldMapping: Record<keyof MalDataApprovalItem, SqlField> = {
     dataSetUid: "datasetuid",
@@ -151,6 +152,7 @@ const fieldMapping: Record<keyof MalDataApprovalItem, SqlField> = {
     lastDateOfSubmission: "lastdateofsubmission",
     lastDateOfApproval: "lastdateofapproval",
     modificationCount: "diff",
+    monitoring: "monitoring",
 };
 
 export class MalDataApprovalDefaultRepository implements MalDataApprovalRepository {
