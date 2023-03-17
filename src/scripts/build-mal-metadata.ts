@@ -24,22 +24,6 @@ export async function buildMetadata(): Promise<void> {
 
     const sqlViews: Partial<D2SqlView>[] = [
         {
-            id: "gCvQF1yeC9f",
-            name: "NHWA Data Comments",
-            cacheStrategy: "RESPECT_SYSTEM_SETTING",
-            type: "QUERY",
-            sqlQuery: sqlDataComments,
-            publicAccess: "--------",
-        },
-        {
-            id: "QTKlHcbGQRh",
-            name: "NHWA Data Approval Status",
-            cacheStrategy: "RESPECT_SYSTEM_SETTING",
-            type: "QUERY",
-            sqlQuery: sqlDataApproval,
-            publicAccess: "--------",
-        },
-        {
             id: "OhWrTIxUdN1",
             name: "MAL Data Approval Status",
             cacheStrategy: "RESPECT_SYSTEM_SETTING",
