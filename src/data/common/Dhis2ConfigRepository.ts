@@ -11,6 +11,7 @@ export const SQL_VIEW_DATA_COMMENTS_NAME = "NHWA Data Comments";
 export const SQL_VIEW_DATA_APPROVAL_NAME = "NHWA Data Approval Status";
 
 export const SQL_VIEW_DATA_DUPLICATION_NAME = "MAL Data Approval Status";
+export const SQL_VIEW_OLD_DATA_DUPLICATION_NAME = "MAL Data Approval Status Pre 2000";
 export const SQL_VIEW_MAL_METADATA_NAME = "MAL Data approval header";
 export const SQL_VIEW_MAL_DIFF_NAME = "MAL Data Approval Diff";
 
@@ -24,7 +25,12 @@ const base = {
     mal: {
         dataSets: { namePrefix: "MAL - WMR Form", nameExcluded: /-APVD$/ },
 
-        sqlViewNames: [SQL_VIEW_DATA_DUPLICATION_NAME, SQL_VIEW_MAL_METADATA_NAME, SQL_VIEW_MAL_DIFF_NAME],
+        sqlViewNames: [
+            SQL_VIEW_DATA_DUPLICATION_NAME,
+            SQL_VIEW_MAL_METADATA_NAME,
+            SQL_VIEW_MAL_DIFF_NAME,
+            SQL_VIEW_OLD_DATA_DUPLICATION_NAME,
+        ],
         constantCode: "",
         approvalWorkflows: { namePrefix: "MAL" },
     },
@@ -56,7 +62,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
         const pairedDataElements = getPairedMapping(filteredDataSets);
         const orgUnitList = getPairedOrgunitsMapping(filteredDataSets);
         const currentYear = new Date().getFullYear();
-        if  (base[this.type].constantCode !== ""){
+        if (base[this.type].constantCode !== "") {
             const constant = getNth(constants, 0, `Missing constant: ${base[this.type].constantCode}`);
             const constantData = JSON.parse(constant.description || "{}") as Constant;
             const { sections, sectionsByDataSet } = getSectionsInfo(constantData);
@@ -72,8 +78,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                 years: _.range(currentYear - 10, currentYear + 1).map(n => n.toString()),
                 approvalWorkflow: dataApprovalWorkflows,
             };
-        }else{
-
+        } else {
             return {
                 dataSets: keyById(filteredDataSets),
                 currentUser,
@@ -85,7 +90,6 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                 years: _.range(currentYear - 10, currentYear + 1).map(n => n.toString()),
                 approvalWorkflow: dataApprovalWorkflows,
             };
-
         }
     }
 
