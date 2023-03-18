@@ -1,4 +1,5 @@
-export const dataStoreNamespace = "d2-reports";
+export const d2ReportsDataStoreNamespace = "d2-reports";
+export const glassDataStoreNamespace = "glass";
 export const constantPrefix = "D2 Report Storage";
 
 export type Namespace = typeof Namespaces[keyof typeof Namespaces];
@@ -9,6 +10,8 @@ export const Namespaces = {
     MAL_DIFF_STATUS_USER_COLUMNS: "mal-diff-status-user-columns",
     MAL_DIFF_NAMES_SORT_ORDER: "mal-diff-names-sort-order",
     MONITORING: "monitoring",
+    DATA_SUBMISSSIONS: "data-submissions",
+    DATA_SUBMISSSIONS_USER_COLUMNS: "data-submissions-user-columns",
 };
 
 export const NamespaceProperties: Record<Namespace, string[]> = {
@@ -17,4 +20,6 @@ export const NamespaceProperties: Record<Namespace, string[]> = {
     [Namespaces.MAL_DIFF_STATUS_USER_COLUMNS]: [],
     [Namespaces.MAL_DIFF_NAMES_SORT_ORDER]: [],
     [Namespaces.MONITORING]: [],
+    [Namespaces.DATA_SUBMISSSIONS]: [],
+    [Namespaces.DATA_SUBMISSSIONS_USER_COLUMNS]: [],
 };
