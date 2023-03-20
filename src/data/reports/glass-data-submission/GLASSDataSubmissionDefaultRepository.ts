@@ -25,9 +25,21 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         options: GLASSDataSubmissionOptions,
         namespace: string
     ): Promise<PaginatedObjects<GLASSDataSubmissionItem>> {
-        const { paging, sorting } = options;
+        const { paging, sorting, orgUnitIds, periods, completionStatus } = options;
+
         const objects = (await this.globalStorageClient.getObject<GLASSDataSubmissionItem[]>(namespace)) ?? [];
-        const rows = await promiseMap(objects, async row => ({
+        const filteredObjects = objects.filter(
+            object =>
+                (_.isEmpty(orgUnitIds) ? object.orgUnit : orgUnitIds.includes(object.orgUnit)) &&
+                periods.includes(String(object.period)) &&
+                (completionStatus
+                    ? object.status === "COMPLETE"
+                    : completionStatus === false
+                    ? object.status !== "COMPLETE"
+                    : object)
+        );
+
+        const rows = await promiseMap(filteredObjects, async row => ({
             ...row,
             orgUnit: await getCountryName(this.api, row.orgUnit),
         }));

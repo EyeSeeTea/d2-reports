@@ -15,12 +15,21 @@ import { GLASSDataSubmissionItem } from "../../../../domain/reports/glass-data-s
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
 import _ from "lodash";
+import { Filter, Filters } from "./Filters";
+import { Config } from "../../../../domain/common/entities/Config";
+import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
 
 export const DataSubmissionList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
-    const [reloadKey, _reload] = useReload();
 
+    const [reloadKey, _reload] = useReload();
+    const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
+
+    const selectablePeriods = React.useMemo(() => {
+        const currentYear = new Date().getFullYear();
+        return _.range(currentYear - 5, currentYear + 1).map(n => n.toString());
+    }, []);
 
     useEffect(() => {
         compositionRoot.glassDataSubmission.getColumns(Namespaces.DATA_SUBMISSSIONS_USER_COLUMNS).then(columns => {
@@ -33,9 +42,18 @@ export const DataSubmissionList: React.FC = React.memo(() => {
             columns: [
                 { name: "orgUnit", text: i18n.t("Country"), sortable: true },
                 { name: "period", text: i18n.t("Year"), sortable: true },
-                { name: "id", text: i18n.t("Id"), sortable: true },
-                { name: "module", text: i18n.t("Module"), sortable: true },
-                { name: "status", text: i18n.t("Status"), sortable: true },
+                {
+                    name: "status",
+                    text: i18n.t("Questionnaire completed"),
+                    sortable: true,
+                    getValue: row => (row.status === "COMPLETE" ? "Completed" : "Not completed"),
+                },
+                {
+                    name: "module",
+                    text: i18n.t("Datasets uploaded"),
+                    sortable: true,
+                    getValue: row => (row.module ? "Uploaded" : "Not uploaded"),
+                },
             ],
             actions: [],
             initialSorting: {
@@ -57,6 +75,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     config,
                     paging: { page: paging.page, pageSize: paging.pageSize },
                     sorting: getSortingFromTableSorting(sorting),
+                    ...getUseCaseOptions(filters, selectablePeriods),
                 },
                 Namespaces.DATA_SUBMISSSIONS
             );
@@ -65,8 +84,16 @@ export const DataSubmissionList: React.FC = React.memo(() => {
 
             return { pager, objects: getDataSubmissionViews(config, objects) };
         },
-        [compositionRoot.glassDataSubmission, config, reloadKey]
+        [compositionRoot, config, filters, reloadKey, selectablePeriods]
     );
+
+    function getUseCaseOptions(filter: Filter, selectablePeriods: string[]) {
+        return {
+            ...filter,
+            periods: _.isEmpty(filter.periods) ? selectablePeriods : filter.periods,
+            orgUnitIds: getOrgUnitIdsFromPaths(filter.orgUnitPaths),
+        };
+    }
 
     const saveReorderedColumns = useCallback(
         async (columnKeys: Array<keyof DataSubmissionViewModel>) => {
@@ -81,6 +108,13 @@ export const DataSubmissionList: React.FC = React.memo(() => {
     );
 
     const tableProps = useObjectsTable<DataSubmissionViewModel>(baseConfig, getRows);
+
+    function getFilterOptions(selectablePeriods: string[]) {
+        return {
+            periods: selectablePeriods,
+        };
+    }
+    const filterOptions = useMemo(() => getFilterOptions(selectablePeriods), [selectablePeriods]);
 
     const columnsToShow = useMemo<TableColumn<DataSubmissionViewModel>[]>(() => {
         if (!visibleColumns || _.isEmpty(visibleColumns)) return tableProps.columns;
@@ -102,7 +136,9 @@ export const DataSubmissionList: React.FC = React.memo(() => {
             columns={columnsToShow}
             onChangeSearch={undefined}
             onReorderColumns={saveReorderedColumns}
-        />
+        >
+            <Filters values={filters} options={filterOptions} onChange={setFilters} />
+        </ObjectsList>
     );
 });
 
@@ -112,5 +148,13 @@ export function getSortingFromTableSorting(
     return {
         field: sorting.field === "id" ? "period" : sorting.field,
         direction: sorting.order,
+    };
+}
+
+function getEmptyDataValuesFilter(_config: Config): Filter {
+    return {
+        orgUnitPaths: [],
+        periods: [],
+        completionStatus: undefined,
     };
 }
