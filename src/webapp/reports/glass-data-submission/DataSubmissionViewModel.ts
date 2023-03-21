@@ -8,7 +8,7 @@ export interface DataSubmissionViewModel {
     id: string;
     module: string;
     orgUnit: string;
-    period: number;
+    period: string;
     status: Status;
 }
 

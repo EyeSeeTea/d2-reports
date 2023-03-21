@@ -1,12 +1,15 @@
 import { Id } from "../../../common/entities/Base";
 import { Config } from "../../../common/entities/Config";
 import { PaginatedObjects, Paging, Sorting } from "../../../common/entities/PaginatedObjects";
-import { GLASSDataSubmissionItem } from "../entities/GLASSDataSubmissionItem";
+import { GLASSDataSubmissionItem, GLASSDataSubmissionItemIdentifier } from "../entities/GLASSDataSubmissionItem";
 
 export interface GLASSDataSubmissionRepository {
     get(options: GLASSDataSubmissionOptions, namespace: string): Promise<PaginatedObjects<GLASSDataSubmissionItem>>;
     getColumns(namespace: string): Promise<string[]>;
     saveColumns(namespace: string, columns: string[]): Promise<void>;
+    approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]): Promise<void>;
+    reject(namespace: string, items: GLASSDataSubmissionItemIdentifier[]): Promise<void>;
+    reopen(namespace: string, items: GLASSDataSubmissionItemIdentifier[]): Promise<void>;
 }
 
 export interface GLASSDataSubmissionOptions {

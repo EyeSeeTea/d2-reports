@@ -1,6 +1,9 @@
 import _ from "lodash";
 import { PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
-import { GLASSDataSubmissionItem } from "../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
+import {
+    GLASSDataSubmissionItem,
+    GLASSDataSubmissionItemIdentifier,
+} from "../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 import {
     GLASSDataSubmissionOptions,
     GLASSDataSubmissionRepository,
@@ -10,6 +13,7 @@ import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreSt
 import { StorageClient } from "../../common/clients/storage/StorageClient";
 import { Instance } from "../../common/entities/Instance";
 import { promiseMap } from "../../../utils/promises";
+import { Status } from "../../../webapp/reports/glass-data-submission/DataSubmissionViewModel";
 
 export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmissionRepository {
     private storageClient: StorageClient;
@@ -72,6 +76,27 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
     async saveColumns(namespace: string, columns: string[]): Promise<void> {
         return this.storageClient.saveObject<string[]>(namespace, columns);
     }
+
+    async approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
+        const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
+        const newSubmissionValues = await getNewSubmissionValues(this.api, items, objects, "APPROVED");
+
+        return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
+    }
+
+    async reject(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
+        const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
+        const newSubmissionValues = await getNewSubmissionValues(this.api, items, objects, "REJECTED");
+
+        return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
+    }
+
+    async reopen(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
+        const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
+        const newSubmissionValues = await getNewSubmissionValues(this.api, items, objects, "NOT_COMPLETED");
+
+        return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
+    }
 }
 
 async function getCountryName(api: D2Api, countryId: string): Promise<string> {
@@ -87,4 +112,45 @@ async function getCountryName(api: D2Api, countryId: string): Promise<string> {
         .getData();
 
     return organisationUnits[0]?.name ?? "";
+}
+
+async function getCountryUid(api: D2Api, countryName?: string): Promise<string> {
+    const { organisationUnits } = await api.metadata
+        .get({
+            organisationUnits: {
+                filter: { name: { eq: countryName } },
+                fields: {
+                    id: true,
+                },
+            },
+        })
+        .getData();
+
+    return organisationUnits[0]?.id ?? "";
+}
+
+async function getNewSubmissionValues(
+    api: D2Api,
+    items: GLASSDataSubmissionItemIdentifier[],
+    objects: GLASSDataSubmissionItem[],
+    status: Status
+) {
+    const newItems: GLASSDataSubmissionItemIdentifier[] = await promiseMap(items, async ob => ({
+        ...ob,
+        orgUnit: await getCountryUid(api, ob.orgUnit),
+    }));
+
+    const newSubmissionValues = _.flatMap(
+        objects.map(object =>
+            newItems.map(item =>
+                item.period === String(object.period) &&
+                item.orgUnit === object.orgUnit &&
+                item.module === object.module
+                    ? { ...object, status }
+                    : object
+            )
+        )
+    );
+
+    return newSubmissionValues;
 }

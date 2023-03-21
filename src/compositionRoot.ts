@@ -32,6 +32,7 @@ import { GLASSDataSubmissionDefaultRepository } from "./data/reports/glass-data-
 import { GetGLASSDataSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSDataSubmissionUseCase";
 import { GetGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSDataSubmissionColumnsUseCase";
 import { SaveGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-data-submission/usecases/SaveGLASSDataSubmissionColumnsUseCase";
+import { UpdateGLASSSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/UpdateGLASSSubmissionUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -75,6 +76,7 @@ export function getCompositionRoot(api: D2Api) {
             get: new GetGLASSDataSubmissionUseCase(glassDataRepository),
             getColumns: new GetGLASSDataSubmissionColumnsUseCase(glassDataRepository),
             saveColumns: new SaveGLASSDataSubmissionColumnsUseCase(glassDataRepository),
+            updateStatus: new UpdateGLASSSubmissionUseCase(glassDataRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),

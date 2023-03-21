@@ -7,22 +7,28 @@ import {
     TablePagination,
     TableSorting,
     useObjectsTable,
+    useSnackbar,
 } from "@eyeseetea/d2-ui-components";
 import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
 import { useReload } from "../../../utils/use-reload";
-import { GLASSDataSubmissionItem } from "../../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
+import {
+    GLASSDataSubmissionItem,
+    parseDataSubmissionItemId,
+} from "../../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
 import _ from "lodash";
 import { Filter, Filters } from "./Filters";
 import { Config } from "../../../../domain/common/entities/Config";
 import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
+import { LockOpen, ThumbDown, ThumbUp } from "@material-ui/icons";
 
 export const DataSubmissionList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
 
-    const [reloadKey, _reload] = useReload();
+    const snackbar = useSnackbar();
+    const [reloadKey, reload] = useReload();
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
 
@@ -55,7 +61,83 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     getValue: row => (row.module ? "Uploaded" : "Not uploaded"),
                 },
             ],
-            actions: [],
+            actions: [
+                {
+                    name: "approve",
+                    text: i18n.t("Approve"),
+                    icon: <ThumbUp />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseDataSubmissionItemId(item)));
+                        if (items.length === 0) return;
+
+                        try {
+                            await compositionRoot.glassDataSubmission.updateStatus(
+                                Namespaces.DATA_SUBMISSSIONS,
+                                "approve",
+                                items
+                            );
+                        } catch {
+                            snackbar.error(i18n.t("Error when trying to approve submission"));
+                        }
+
+                        reload();
+                    },
+                    isActive: (rows: DataSubmissionViewModel[]) => {
+                        return _.every(rows, row => row.status === "PENDING_APPROVAL");
+                    },
+                },
+                {
+                    name: "reject",
+                    text: i18n.t("Reject"),
+                    icon: <ThumbDown />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseDataSubmissionItemId(item)));
+                        if (items.length === 0) return;
+
+                        try {
+                            await compositionRoot.glassDataSubmission.updateStatus(
+                                Namespaces.DATA_SUBMISSSIONS,
+                                "reject",
+                                items
+                            );
+                        } catch {
+                            snackbar.error(i18n.t("Error when trying to reject submission"));
+                        }
+
+                        reload();
+                    },
+                    isActive: (rows: DataSubmissionViewModel[]) => {
+                        return _.every(rows, row => row.status === "PENDING_APPROVAL");
+                    },
+                },
+                {
+                    name: "reopen",
+                    text: i18n.t("Reopen Submission"),
+                    icon: <LockOpen />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseDataSubmissionItemId(item)));
+                        if (items.length === 0) return;
+
+                        try {
+                            await compositionRoot.glassDataSubmission.updateStatus(
+                                Namespaces.DATA_SUBMISSSIONS,
+                                "reopen",
+                                items
+                            );
+                        } catch {
+                            snackbar.error(i18n.t("Error when trying to reopen submission"));
+                        }
+
+                        reload();
+                    },
+                    isActive: (rows: DataSubmissionViewModel[]) => {
+                        return _.every(rows, row => row.status === "PENDING_APPROVAL");
+                    },
+                },
+            ],
             initialSorting: {
                 field: "orgUnit" as const,
                 order: "asc" as const,
@@ -65,7 +147,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        []
+        [compositionRoot.glassDataSubmission, reload, snackbar]
     );
 
     const getRows = useMemo(
@@ -80,6 +162,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                 Namespaces.DATA_SUBMISSSIONS
             );
 
+            //setSubmissionValues(objects);
             console.debug("Reloading", reloadKey);
 
             return { pager, objects: getDataSubmissionViews(config, objects) };
