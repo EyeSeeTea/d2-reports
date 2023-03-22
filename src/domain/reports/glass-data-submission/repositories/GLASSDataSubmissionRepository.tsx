@@ -8,7 +8,7 @@ export interface GLASSDataSubmissionRepository {
     getColumns(namespace: string): Promise<string[]>;
     saveColumns(namespace: string, columns: string[]): Promise<void>;
     approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]): Promise<void>;
-    reject(namespace: string, items: GLASSDataSubmissionItemIdentifier[]): Promise<void>;
+    reject(namespace: string, items: GLASSDataSubmissionItemIdentifier[], message?: string): Promise<void>;
     reopen(namespace: string, items: GLASSDataSubmissionItemIdentifier[]): Promise<void>;
 }
 

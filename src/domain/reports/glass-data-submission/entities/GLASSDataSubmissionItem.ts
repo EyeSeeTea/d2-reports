@@ -1,5 +1,5 @@
 import { Status } from "../../../../webapp/reports/glass-data-submission/DataSubmissionViewModel";
-import { Id } from "../../../common/entities/Base";
+import { Id, NamedRef } from "../../../common/entities/Base";
 
 export interface GLASSDataSubmissionItem {
     id: Id;
@@ -19,7 +19,10 @@ export interface GLASSDataSubmissionItemIdentifier {
 export interface GLASSDataSubmissionModule {
     id: Id;
     questionnaires: string;
-    userGroups: string;
+    userGroups: {
+        captureAccess: NamedRef[];
+        readAccess: NamedRef[];
+    };
 }
 
 export function getDataSubmissionItemId(submissionItem: GLASSDataSubmissionItem): string {

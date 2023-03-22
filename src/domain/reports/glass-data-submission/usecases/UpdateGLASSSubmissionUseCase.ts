@@ -5,12 +5,17 @@ import { GLASSDataSubmissionRepository } from "../repositories/GLASSDataSubmissi
 export class UpdateGLASSSubmissionUseCase implements UseCase {
     constructor(private submissionRepository: GLASSDataSubmissionRepository) {}
 
-    execute(namespace: string, action: UpdateAction, items: GLASSDataSubmissionItemIdentifier[]): Promise<void> {
+    execute(
+        namespace: string,
+        action: UpdateAction,
+        items: GLASSDataSubmissionItemIdentifier[],
+        message?: string
+    ): Promise<void> {
         switch (action) {
             case "approve":
                 return this.submissionRepository.approve(namespace, items);
             case "reject":
-                return this.submissionRepository.reject(namespace, items);
+                return this.submissionRepository.reject(namespace, items, message);
             case "reopen":
                 return this.submissionRepository.reopen(namespace, items);
             default:

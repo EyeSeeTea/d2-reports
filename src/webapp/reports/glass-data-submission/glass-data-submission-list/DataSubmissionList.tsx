@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { DataSubmissionViewModel, getDataSubmissionViews } from "../DataSubmissionViewModel";
 import {
+    ConfirmationDialog,
     ObjectsList,
     TableColumn,
     TableConfig,
@@ -9,11 +10,16 @@ import {
     useObjectsTable,
     useSnackbar,
 } from "@eyeseetea/d2-ui-components";
+import {
+    Input,
+    // @ts-ignore
+} from "@dhis2/ui";
 import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
 import { useReload } from "../../../utils/use-reload";
 import {
     GLASSDataSubmissionItem,
+    GLASSDataSubmissionItemIdentifier,
     parseDataSubmissionItemId,
 } from "../../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
@@ -23,6 +29,7 @@ import { Filter, Filters } from "./Filters";
 import { Config } from "../../../../domain/common/entities/Config";
 import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
 import { LockOpen, ThumbDown, ThumbUp } from "@material-ui/icons";
+import { useBooleanState } from "../../../utils/use-boolean";
 
 export const DataSubmissionList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
@@ -31,6 +38,10 @@ export const DataSubmissionList: React.FC = React.memo(() => {
     const [reloadKey, reload] = useReload();
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
+    const [rejectionReason, setRejectionReason] = useState<string>("");
+    const [rejectedItems, setRejectedItems] = useState<GLASSDataSubmissionItemIdentifier[]>([]);
+    const [rejectedState, setRejectedState] = useState<"loading" | "idle">("idle");
+    const [isDialogOpen, { enable: openDialog, disable: closeDialog }] = useBooleanState(false);
 
     const selectablePeriods = React.useMemo(() => {
         const currentYear = new Date().getFullYear();
@@ -97,19 +108,12 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     text: i18n.t("Reject"),
                     icon: <ThumbDown />,
                     multiple: true,
-                    onClick: async (selectedIds: string[]) => {
+                    onClick: (selectedIds: string[]) => {
                         const items = _.compact(selectedIds.map(item => parseDataSubmissionItemId(item)));
                         if (items.length === 0) return;
 
-                        try {
-                            await compositionRoot.glassDataSubmission.updateStatus(
-                                Namespaces.DATA_SUBMISSSIONS,
-                                "reject",
-                                items
-                            );
-                        } catch {
-                            snackbar.error(i18n.t("Error when trying to reject submission"));
-                        }
+                        setRejectedItems(items);
+                        openDialog();
 
                         reload();
                     },
@@ -152,7 +156,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot.glassDataSubmission, reload, snackbar]
+        [compositionRoot, openDialog, reload, snackbar]
     );
 
     const getRows = useMemo(
@@ -217,6 +221,11 @@ export const DataSubmissionList: React.FC = React.memo(() => {
             .value();
     }, [tableProps.columns, visibleColumns]);
 
+    const closeRejectionDialog = () => {
+        closeDialog();
+        setRejectionReason("");
+    };
+
     return (
         <ObjectsList<DataSubmissionViewModel>
             {...tableProps}
@@ -225,6 +234,42 @@ export const DataSubmissionList: React.FC = React.memo(() => {
             onReorderColumns={saveReorderedColumns}
         >
             <Filters values={filters} options={filterOptions} onChange={setFilters} />
+            <ConfirmationDialog
+                isOpen={isDialogOpen}
+                title={i18n.t("Reject Data Submission")}
+                onCancel={closeRejectionDialog}
+                cancelText={i18n.t("Cancel")}
+                onSave={async () => {
+                    setRejectedState("loading");
+                    try {
+                        await compositionRoot.glassDataSubmission.updateStatus(
+                            Namespaces.DATA_SUBMISSSIONS,
+                            "reject",
+                            rejectedItems,
+                            rejectionReason
+                        );
+                        setRejectedState("idle");
+                        closeRejectionDialog();
+                        snackbar.success(i18n.t("Data submissions have been successfully rejected"));
+                    } catch {
+                        snackbar.error(i18n.t("Error when trying to reject submission"));
+                    }
+                }}
+                saveText={rejectedState === "idle" ? "Reject" : "Rejecting"}
+                maxWidth="md"
+                disableSave={!rejectionReason || rejectedState === "loading"}
+                fullWidth
+            >
+                <p>{i18n.t("Please provide a reason for rejecting this data submission:")}</p>
+                <Input
+                    type="text"
+                    onChange={({ value }: { value: string }) => {
+                        setRejectionReason(value);
+                    }}
+                    value={rejectionReason}
+                />
+            </ConfirmationDialog>
+            ;
         </ObjectsList>
     );
 });
