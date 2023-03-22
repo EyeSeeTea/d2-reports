@@ -3,6 +3,7 @@ import { PaginatedObjects } from "../../../domain/common/entities/PaginatedObjec
 import {
     GLASSDataSubmissionItem,
     GLASSDataSubmissionItemIdentifier,
+    GLASSDataSubmissionModule,
 } from "../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 import {
     GLASSDataSubmissionOptions,
@@ -14,6 +15,20 @@ import { StorageClient } from "../../common/clients/storage/StorageClient";
 import { Instance } from "../../common/entities/Instance";
 import { promiseMap } from "../../../utils/promises";
 import { Status } from "../../../webapp/reports/glass-data-submission/DataSubmissionViewModel";
+
+// type CompleteDataSetRegistrationsType = {
+//     completeDataSetRegistrations: [
+//         {
+//             period?: string;
+//             dataSet?: string;
+//             organisationUnit?: string;
+//             attributeOptionCombo?: string;
+//             date?: string;
+//             storedBy?: string;
+//             completed?: boolean;
+//         }
+//     ];
+// };
 
 export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmissionRepository {
     private storageClient: StorageClient;
@@ -32,6 +47,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const { paging, sorting, orgUnitIds, periods, completionStatus } = options;
 
         const objects = (await this.globalStorageClient.getObject<GLASSDataSubmissionItem[]>(namespace)) ?? [];
+        const modules = (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>("modules")) ?? [];
+
         const filteredObjects = objects.filter(
             object =>
                 (_.isEmpty(orgUnitIds) ? object.orgUnit : orgUnitIds.includes(object.orgUnit)) &&
@@ -43,10 +60,16 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                     : object)
         );
 
-        const rows = await promiseMap(filteredObjects, async row => ({
-            ...row,
-            orgUnit: await getCountryName(this.api, row.orgUnit),
-        }));
+        const rows = await promiseMap(filteredObjects, async row => {
+            const completedQuestionnaire = modules.find(mod => mod.id === row.module && !_.isEmpty(mod.questionnaires));
+            //const uploadedDataSet = uploads.find
+
+            return {
+                ...row,
+                orgUnit: await getCountryName(this.api, row.orgUnit),
+                questionnaireCompleted: completedQuestionnaire ? true : false,
+            };
+        });
 
         const rowsInPage = _(rows)
             .orderBy([row => row[sorting.field]], [sorting.direction])
@@ -80,6 +103,16 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
     async approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
         const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
         const newSubmissionValues = await getNewSubmissionValues(this.api, items, objects, "APPROVED");
+
+        // const completeCheckResponses: CompleteDataSetRegistrationsType[] = await promiseMap(newItems, async newItem =>
+        //     this.api
+        //         .get<any>("/completeDataSetRegistrations", {
+        //             dataSet: "OYc0CihXiSn",
+        //             period: newItem.period,
+        //             orgUnit: newItem.orgUnit,
+        //         })
+        //         .getData()
+        // );
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }

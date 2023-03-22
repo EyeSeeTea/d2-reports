@@ -10,6 +10,7 @@ export interface DataSubmissionViewModel {
     orgUnit: string;
     period: string;
     status: Status;
+    questionnaireCompleted: boolean;
 }
 
 export type Status =
@@ -28,6 +29,7 @@ export function getDataSubmissionViews(_config: Config, items: GLASSDataSubmissi
             period: item.period,
             module: item.module,
             status: item.status,
+            questionnaireCompleted: item.questionnaireCompleted,
         };
     });
 }

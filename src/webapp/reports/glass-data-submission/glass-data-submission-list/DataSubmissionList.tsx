@@ -49,16 +49,21 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                 { name: "orgUnit", text: i18n.t("Country"), sortable: true },
                 { name: "period", text: i18n.t("Year"), sortable: true },
                 {
-                    name: "status",
+                    name: "questionnaireCompleted",
                     text: i18n.t("Questionnaire completed"),
                     sortable: true,
-                    getValue: row => (row.status === "COMPLETE" ? "Completed" : "Not completed"),
+                    getValue: row => (row.questionnaireCompleted ? "Completed" : "Not completed"),
                 },
                 {
                     name: "module",
                     text: i18n.t("Datasets uploaded"),
                     sortable: true,
                     getValue: row => (row.module ? "Uploaded" : "Not uploaded"),
+                },
+                {
+                    name: "status",
+                    text: i18n.t("Status"),
+                    sortable: true,
                 },
             ],
             actions: [
@@ -162,7 +167,6 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                 Namespaces.DATA_SUBMISSSIONS
             );
 
-            //setSubmissionValues(objects);
             console.debug("Reloading", reloadKey);
 
             return { pager, objects: getDataSubmissionViews(config, objects) };
