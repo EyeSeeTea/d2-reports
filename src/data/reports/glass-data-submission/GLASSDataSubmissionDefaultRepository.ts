@@ -57,7 +57,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             return {
                 ...row,
                 orgUnit: await getCountryName(this.api, row.orgUnit),
-                submissionStatus: statusItems.find(item => item.value === submissionStatus)?.text ?? "",
+                submissionStatus: statusItems.find(item => item.value === row.status)?.text ?? "",
                 questionnaireCompleted: completedQuestionnaire ? true : false,
             };
         });
@@ -102,14 +102,6 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         return this.storageClient.saveObject<string[]>(namespace, columns);
     }
 
-    async sendNotifications(message: string, userGroups: Ref[]): Promise<void> {
-        await this.api.messageConversations.post({
-            subject: "Rejected by WHO",
-            text: `Please review the messages and the reports to find about the causes of this rejection. You have to upload new datasets.\n Reason for rejection:\n ${message}`,
-            userGroups,
-        });
-    }
-
     async approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
         const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
         const newSubmissionValues = await getNewSubmissionValues(this.api, items, objects, "APPROVED");
@@ -127,9 +119,19 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
 
-    async reject(namespace: string, items: GLASSDataSubmissionItemIdentifier[], message: string) {
+    async reject(
+        namespace: string,
+        items: GLASSDataSubmissionItemIdentifier[],
+        message: string,
+        isDatasetUpdate: boolean
+    ) {
         const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
-        const newSubmissionValues = await getNewSubmissionValues(this.api, items, objects, "REJECTED");
+        const newSubmissionValues = await getNewSubmissionValues(
+            this.api,
+            items,
+            objects,
+            isDatasetUpdate ? "APPROVED" : "REJECTED"
+        );
         const modules = (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>("modules")) ?? [];
 
         const userGroups: Ref[] = _.flatMap(
@@ -151,6 +153,21 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const newSubmissionValues = await getNewSubmissionValues(this.api, items, objects, "NOT_COMPLETED");
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
+    }
+
+    async accept(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
+        const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
+        const newSubmissionValues = await getNewSubmissionValues(this.api, items, objects, "ACCEPTED");
+
+        return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
+    }
+
+    async sendNotifications(message: string, userGroups: Ref[]): Promise<void> {
+        await this.api.messageConversations.post({
+            subject: "Rejected by WHO",
+            text: `Please review the messages and the reports to find about the causes of this rejection. You have to upload new datasets.\n Reason for rejection:\n ${message}`,
+            userGroups,
+        });
     }
 }
 

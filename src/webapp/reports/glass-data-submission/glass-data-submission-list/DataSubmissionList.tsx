@@ -28,7 +28,7 @@ import _ from "lodash";
 import { Filter, Filters } from "./Filters";
 import { Config } from "../../../../domain/common/entities/Config";
 import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
-import { LockOpen, ThumbDown, ThumbUp } from "@material-ui/icons";
+import { Check, LockOpen, ThumbDown, ThumbUp } from "@material-ui/icons";
 import { useBooleanState } from "../../../utils/use-boolean";
 
 export const DataSubmissionList: React.FC = React.memo(() => {
@@ -41,6 +41,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
     const [rejectionReason, setRejectionReason] = useState<string>("");
     const [rejectedItems, setRejectedItems] = useState<GLASSDataSubmissionItemIdentifier[]>([]);
     const [rejectedState, setRejectedState] = useState<"loading" | "idle">("idle");
+    const [isDatasetUpdate, setDatasetUpdate] = useState<boolean>(false);
     const [isDialogOpen, { enable: openDialog, disable: closeDialog }] = useBooleanState(false);
 
     const selectablePeriods = React.useMemo(() => {
@@ -104,6 +105,31 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     },
                 },
                 {
+                    name: "accept",
+                    text: i18n.t("Accept"),
+                    icon: <Check />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseDataSubmissionItemId(item)));
+                        if (items.length === 0) return;
+
+                        try {
+                            await compositionRoot.glassDataSubmission.updateStatus(
+                                Namespaces.DATA_SUBMISSSIONS,
+                                "accept",
+                                items
+                            );
+                        } catch {
+                            snackbar.error(i18n.t("Error when trying to accept submission"));
+                        }
+
+                        reload();
+                    },
+                    isActive: (rows: DataSubmissionViewModel[]) => {
+                        return _.every(rows, row => row.status === "PENDING_UPDATE_APPROVAL");
+                    },
+                },
+                {
                     name: "reject",
                     text: i18n.t("Reject"),
                     icon: <ThumbDown />,
@@ -118,7 +144,11 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                         reload();
                     },
                     isActive: (rows: DataSubmissionViewModel[]) => {
-                        return _.every(rows, row => row.status === "PENDING_APPROVAL");
+                        return _.every(rows, row => {
+                            setDatasetUpdate(row.status === "PENDING_UPDATE_APPROVAL");
+
+                            return row.status === "PENDING_APPROVAL" || row.status === "PENDING_UPDATE_APPROVAL";
+                        });
                     },
                 },
                 {
@@ -246,10 +276,13 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                             Namespaces.DATA_SUBMISSSIONS,
                             "reject",
                             rejectedItems,
-                            rejectionReason
+                            rejectionReason,
+                            isDatasetUpdate
                         );
+
                         setRejectedState("idle");
                         closeRejectionDialog();
+
                         snackbar.success(i18n.t("Data submissions have been successfully rejected"));
                     } catch {
                         snackbar.error(i18n.t("Error when trying to reject submission"));

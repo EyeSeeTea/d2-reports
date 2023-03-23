@@ -9,8 +9,14 @@ export interface GLASSDataSubmissionRepository {
     getColumns(namespace: string): Promise<string[]>;
     saveColumns(namespace: string, columns: string[]): Promise<void>;
     approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]): Promise<void>;
-    reject(namespace: string, items: GLASSDataSubmissionItemIdentifier[], message?: string): Promise<void>;
+    reject(
+        namespace: string,
+        items: GLASSDataSubmissionItemIdentifier[],
+        message?: string,
+        isDatasetUpdate?: boolean
+    ): Promise<void>;
     reopen(namespace: string, items: GLASSDataSubmissionItemIdentifier[]): Promise<void>;
+    accept(namespace: string, items: GLASSDataSubmissionItemIdentifier[]): Promise<void>;
 }
 
 export interface GLASSDataSubmissionOptions {
