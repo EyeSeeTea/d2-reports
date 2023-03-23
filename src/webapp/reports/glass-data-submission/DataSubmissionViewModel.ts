@@ -17,6 +17,7 @@ export interface DataSubmissionViewModel {
 export type Status =
     | "NOT_COMPLETED"
     | "COMPLETE"
+    | "UPDATE_REQUEST_ACCEPTED"
     | "PENDING_APPROVAL"
     | "REJECTED"
     | "APPROVED"

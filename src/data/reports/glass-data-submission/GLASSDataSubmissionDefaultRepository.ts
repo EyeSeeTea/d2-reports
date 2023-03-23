@@ -62,16 +62,15 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             };
         });
 
-        const filteredRows = rows.filter(row => {
-            return (
+        const filteredRows = rows.filter(
+            row =>
                 (_.isEmpty(orgUnitIds) ? row.orgUnit : orgUnitIds.includes(row.orgUnit)) &&
                 periods.includes(String(row.period)) &&
                 (completionStatus === undefined
                     ? row.questionnaireCompleted
                     : row.questionnaireCompleted === completionStatus) &&
                 (submissionStatus === undefined ? row.status : row.status === submissionStatus)
-            );
-        });
+        );
 
         const rowsInPage = _(filteredRows)
             .orderBy([row => row[sorting.field]], [sorting.direction])
@@ -157,7 +156,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
     async accept(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
         const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
-        const newSubmissionValues = await getNewSubmissionValues(this.api, items, objects, "ACCEPTED");
+        const newSubmissionValues = await getNewSubmissionValues(this.api, items, objects, "UPDATE_REQUEST_ACCEPTED");
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }

@@ -52,7 +52,7 @@ export const statusItems = [
     { value: "PENDING_APPROVAL", text: i18n.t("Waiting WHO Approval") },
     { value: "REJECTED", text: i18n.t("Rejected By WHO") },
     { value: "APPROVED", text: i18n.t("Approved") },
-    { value: "ACCEPTED", text: i18n.t("Data update request accepted") },
+    { value: "UPDATE_REQUEST_ACCEPTED", text: i18n.t("Data update request accepted") },
     { value: "PENDING_UPDATE_APPROVAL", text: i18n.t("Waiting for WHO to approve your update request") },
 ];
 
