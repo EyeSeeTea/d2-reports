@@ -10,7 +10,7 @@ export class UpdateGLASSSubmissionUseCase implements UseCase {
         action: UpdateAction,
         items: GLASSDataSubmissionItemIdentifier[],
         message?: string
-    ): Promise<void> {
+    ): Promise<void> | undefined {
         switch (action) {
             case "approve":
                 return this.submissionRepository.approve(namespace, items);
@@ -19,7 +19,7 @@ export class UpdateGLASSSubmissionUseCase implements UseCase {
             case "reopen":
                 return this.submissionRepository.reopen(namespace, items);
             default:
-                return this.submissionRepository.reopen(namespace, items);
+                return;
         }
     }
 }

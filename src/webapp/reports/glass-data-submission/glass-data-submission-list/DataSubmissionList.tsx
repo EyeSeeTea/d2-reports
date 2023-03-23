@@ -72,7 +72,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     getValue: row => (row.module ? "Uploaded" : "Not uploaded"),
                 },
                 {
-                    name: "status",
+                    name: "submissionStatus",
                     text: i18n.t("Status"),
                     sortable: true,
                 },
@@ -269,7 +269,6 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     value={rejectionReason}
                 />
             </ConfirmationDialog>
-            ;
         </ObjectsList>
     );
 });
@@ -288,5 +287,6 @@ function getEmptyDataValuesFilter(_config: Config): Filter {
         orgUnitPaths: [],
         periods: [],
         completionStatus: undefined,
+        submissionStatus: undefined,
     };
 }

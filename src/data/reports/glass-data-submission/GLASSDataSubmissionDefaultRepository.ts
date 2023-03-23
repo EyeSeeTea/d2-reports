@@ -16,6 +16,7 @@ import { Instance } from "../../common/entities/Instance";
 import { promiseMap } from "../../../utils/promises";
 import { Status } from "../../../webapp/reports/glass-data-submission/DataSubmissionViewModel";
 import { Ref } from "../../../domain/common/entities/Base";
+import { statusItems } from "../../../webapp/reports/glass-data-submission/glass-data-submission-list/Filters";
 
 // type CompleteDataSetRegistrationsType = {
 //     completeDataSetRegistrations: [
@@ -45,33 +46,34 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         options: GLASSDataSubmissionOptions,
         namespace: string
     ): Promise<PaginatedObjects<GLASSDataSubmissionItem>> {
-        const { paging, sorting, orgUnitIds, periods, completionStatus } = options;
+        const { paging, sorting, orgUnitIds, periods, completionStatus, submissionStatus } = options;
 
         const objects = (await this.globalStorageClient.getObject<GLASSDataSubmissionItem[]>(namespace)) ?? [];
         const modules = (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>("modules")) ?? [];
 
-        const filteredObjects = objects.filter(
-            object =>
-                (_.isEmpty(orgUnitIds) ? object.orgUnit : orgUnitIds.includes(object.orgUnit)) &&
-                periods.includes(String(object.period)) &&
-                (completionStatus
-                    ? object.status === "COMPLETE"
-                    : completionStatus === false
-                    ? object.status !== "COMPLETE"
-                    : object)
-        );
-
-        const rows = await promiseMap(filteredObjects, async row => {
+        const rows = await promiseMap(objects, async row => {
             const completedQuestionnaire = modules.find(mod => mod.id === row.module && !_.isEmpty(mod.questionnaires));
 
             return {
                 ...row,
                 orgUnit: await getCountryName(this.api, row.orgUnit),
+                submissionStatus: statusItems.find(item => item.value === submissionStatus)?.text ?? "",
                 questionnaireCompleted: completedQuestionnaire ? true : false,
             };
         });
 
-        const rowsInPage = _(rows)
+        const filteredRows = rows.filter(row => {
+            return (
+                (_.isEmpty(orgUnitIds) ? row.orgUnit : orgUnitIds.includes(row.orgUnit)) &&
+                periods.includes(String(row.period)) &&
+                (completionStatus === undefined
+                    ? row.questionnaireCompleted
+                    : row.questionnaireCompleted === completionStatus) &&
+                (submissionStatus === undefined ? row.status : row.status === submissionStatus)
+            );
+        });
+
+        const rowsInPage = _(filteredRows)
             .orderBy([row => row[sorting.field]], [sorting.direction])
             .drop((paging.page - 1) * paging.pageSize)
             .take(paging.pageSize)
@@ -80,8 +82,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const pager: Pager = {
             page: paging.page,
             pageSize: paging.pageSize,
-            pageCount: Math.ceil(objects.length / paging.pageSize),
-            total: objects.length,
+            pageCount: Math.ceil(filteredRows.length / paging.pageSize),
+            total: filteredRows.length,
         };
 
         return {

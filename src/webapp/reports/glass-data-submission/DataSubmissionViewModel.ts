@@ -11,6 +11,7 @@ export interface DataSubmissionViewModel {
     period: string;
     status: Status;
     questionnaireCompleted: boolean;
+    submissionStatus: string;
 }
 
 export type Status =
@@ -19,6 +20,7 @@ export type Status =
     | "PENDING_APPROVAL"
     | "REJECTED"
     | "APPROVED"
+    | "ACCEPTED"
     | "PENDING_UPDATE_APPROVAL";
 
 export function getDataSubmissionViews(_config: Config, items: GLASSDataSubmissionItem[]): DataSubmissionViewModel[] {
@@ -30,6 +32,7 @@ export function getDataSubmissionViews(_config: Config, items: GLASSDataSubmissi
             module: item.module,
             status: item.status,
             questionnaireCompleted: item.questionnaireCompleted,
+            submissionStatus: item.submissionStatus,
         };
     });
 }

@@ -12,6 +12,7 @@ import { D2Api } from "../../../../types/d2-api";
 import i18n from "../../../../locales";
 import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
 import { Dropdown, DropdownProps, MultipleDropdownProps } from "@eyeseetea/d2-ui-components";
+import { Status } from "../DataSubmissionViewModel";
 
 export interface DataSetsFiltersProps {
     values: Filter;
@@ -23,6 +24,7 @@ export interface Filter {
     orgUnitPaths: Id[];
     periods: string[];
     completionStatus?: boolean;
+    submissionStatus?: Status;
 }
 
 interface FilterOptions {
@@ -44,6 +46,16 @@ interface OrgUnit {
     }[];
 }
 
+export const statusItems = [
+    { value: "NOT_COMPLETED", text: i18n.t("Not Completed") },
+    { value: "COMPLETE", text: i18n.t("Data to be approved by country") },
+    { value: "PENDING_APPROVAL", text: i18n.t("Waiting WHO Approval") },
+    { value: "REJECTED", text: i18n.t("Rejected By WHO") },
+    { value: "APPROVED", text: i18n.t("Approved") },
+    { value: "ACCEPTED", text: i18n.t("Data update request accepted") },
+    { value: "PENDING_UPDATE_APPROVAL", text: i18n.t("Waiting for WHO to approve your update request") },
+];
+
 export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { config, api } = useAppContext();
     const { values: filter, options: filterOptions, onChange } = props;
@@ -59,6 +71,8 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
             { value: "false", text: i18n.t("Not completed") },
         ];
     }, []);
+
+    const submissionStatusItems = React.useMemo(() => statusItems, []);
 
     useEffect(() => {
         async function getOrganisationUnits(api: D2Api, levels: string[]): Promise<OrgUnit[]> {
@@ -134,7 +148,14 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
 
     const setCompletionStatus = React.useCallback<SingleDropdownHandler>(
         completionStatus => {
-            onChange(filter => ({ ...filter, completionStatus: completionStatus === "true" }));
+            onChange(filter => ({ ...filter, completionStatus: toBool(completionStatus) }));
+        },
+        [onChange]
+    );
+
+    const setSubmissionStatus = React.useCallback<SingleDropdownHandler>(
+        submissionStatus => {
+            onChange(filter => ({ ...filter, submissionStatus: submissionStatus as Status }));
         },
         [onChange]
     );
@@ -162,6 +183,13 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 onChange={setCompletionStatus}
                 label={i18n.t("Questionnaire completed")}
             />
+
+            <SingleDropdownStyled
+                items={submissionStatusItems}
+                value={filter.submissionStatus}
+                onChange={setSubmissionStatus}
+                label={i18n.t("Status")}
+            />
         </Container>
     );
 });
@@ -186,6 +214,10 @@ const SingleDropdownStyled = styled(Dropdown)`
     margin-left: -10px;
     width: 250px;
 `;
+
+function toBool(s: string | undefined): boolean | undefined {
+    return s === undefined ? undefined : s === "true";
+}
 
 function fromBool(value: boolean | undefined): string | undefined {
     return value === undefined ? undefined : value.toString();
