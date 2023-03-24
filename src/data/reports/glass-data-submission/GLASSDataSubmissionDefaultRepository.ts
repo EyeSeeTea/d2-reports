@@ -18,19 +18,19 @@ import { Status } from "../../../webapp/reports/glass-data-submission/DataSubmis
 import { Ref } from "../../../domain/common/entities/Base";
 import { statusItems } from "../../../webapp/reports/glass-data-submission/glass-data-submission-list/Filters";
 
-// type CompleteDataSetRegistrationsType = {
-//     completeDataSetRegistrations: [
-//         {
-//             period?: string;
-//             dataSet?: string;
-//             organisationUnit?: string;
-//             attributeOptionCombo?: string;
-//             date?: string;
-//             storedBy?: string;
-//             completed?: boolean;
-//         }
-//     ];
-// };
+type CompleteDataSetRegistrationsType = {
+    completeDataSetRegistrations: [
+        {
+            period?: string;
+            dataSet?: string;
+            organisationUnit?: string;
+            attributeOptionCombo?: string;
+            date?: string;
+            storedBy?: string;
+            completed?: boolean;
+        }
+    ];
+};
 
 export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmissionRepository {
     private storageClient: StorageClient;
@@ -49,27 +49,37 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const { paging, sorting, orgUnitIds, periods, completionStatus, submissionStatus } = options;
 
         const objects = (await this.globalStorageClient.getObject<GLASSDataSubmissionItem[]>(namespace)) ?? [];
-        const modules = (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>("modules")) ?? [];
 
         const rows = await promiseMap(objects, async row => {
-            const completedQuestionnaire = modules.find(mod => mod.id === row.module && !_.isEmpty(mod.questionnaires));
+            try {
+                const completeDataSetRegistration: CompleteDataSetRegistrationsType = await this.api
+                    .get<any>("/completeDataSetRegistrations", {
+                        dataSet: "OYc0CihXiSn",
+                        period: row.period,
+                        orgUnit: row.orgUnit,
+                    })
+                    .getData();
 
-            return {
-                ...row,
-                orgUnit: await getCountryName(this.api, row.orgUnit),
-                submissionStatus: statusItems.find(item => item.value === row.status)?.text ?? "",
-                questionnaireCompleted: completedQuestionnaire ? true : false,
-            };
+                return {
+                    ...row,
+                    orgUnit: await getCountryName(this.api, row.orgUnit),
+                    submissionStatus: statusItems.find(item => item.value === row.status)?.text ?? "",
+                    questionnaireCompleted:
+                        (Object.keys(completeDataSetRegistration).length
+                            ? completeDataSetRegistration.completeDataSetRegistrations[0].completed
+                            : false) ?? false,
+                };
+            } catch (error) {
+                return row;
+            }
         });
 
         const filteredRows = rows.filter(
             row =>
-                (_.isEmpty(orgUnitIds) ? row.orgUnit : orgUnitIds.includes(row.orgUnit)) &&
+                (_.isEmpty(orgUnitIds) || !row.orgUnit ? row : orgUnitIds.includes(row.orgUnit)) &&
                 periods.includes(String(row.period)) &&
-                (completionStatus === undefined
-                    ? row.questionnaireCompleted
-                    : row.questionnaireCompleted === completionStatus) &&
-                (submissionStatus === undefined ? row.status : row.status === submissionStatus)
+                (completionStatus !== undefined ? row.questionnaireCompleted === completionStatus : row) &&
+                (!submissionStatus ? row : row.status === submissionStatus)
         );
 
         const rowsInPage = _(filteredRows)
@@ -104,16 +114,6 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
     async approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
         const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
         const newSubmissionValues = await getNewSubmissionValues(this.api, items, objects, "APPROVED");
-
-        // const completeCheckResponses: CompleteDataSetRegistrationsType[] = await promiseMap(newItems, async newItem =>
-        //     this.api
-        //         .get<any>("/completeDataSetRegistrations", {
-        //             dataSet: "OYc0CihXiSn",
-        //             period: newItem.period,
-        //             orgUnit: newItem.orgUnit,
-        //         })
-        //         .getData()
-        // );
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
