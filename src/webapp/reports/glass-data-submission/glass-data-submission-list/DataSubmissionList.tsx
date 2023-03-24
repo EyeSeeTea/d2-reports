@@ -67,10 +67,10 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     getValue: row => (row.questionnaireCompleted ? "Completed" : "Not completed"),
                 },
                 {
-                    name: "module",
-                    text: i18n.t("Datasets uploaded"),
+                    name: "dataSetsUploaded",
+                    text: i18n.t("DataSets uploaded"),
                     sortable: true,
-                    getValue: row => (row.module ? "Uploaded" : "Not uploaded"),
+                    getValue: row => (row.dataSetsUploaded ? "Uploaded" : "Not uploaded"),
                 },
                 {
                     name: "submissionStatus",

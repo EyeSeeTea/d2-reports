@@ -6,11 +6,11 @@ import {
 
 export interface DataSubmissionViewModel {
     id: string;
-    module: string;
     orgUnit: string;
     period: string;
     status: Status;
     questionnaireCompleted: boolean;
+    dataSetsUploaded: boolean;
     submissionStatus: string;
 }
 
@@ -30,9 +30,9 @@ export function getDataSubmissionViews(_config: Config, items: GLASSDataSubmissi
             id: getDataSubmissionItemId(item),
             orgUnit: item.orgUnit,
             period: item.period,
-            module: item.module,
             status: item.status,
             questionnaireCompleted: item.questionnaireCompleted,
+            dataSetsUploaded: item.dataSetsUploaded,
             submissionStatus: item.submissionStatus,
         };
     });

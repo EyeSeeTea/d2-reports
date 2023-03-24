@@ -49,8 +49,16 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const { paging, sorting, orgUnitIds, periods, completionStatus, submissionStatus } = options;
 
         const objects = (await this.globalStorageClient.getObject<GLASSDataSubmissionItem[]>(namespace)) ?? [];
+        const uploads =
+            (await this.globalStorageClient.getObject<GLASSDataSubmissionItemIdentifier[]>("uploads")) ?? [];
 
         const rows = await promiseMap(objects, async row => {
+            const orgUnit = await getCountryName(this.api, row.orgUnit);
+            const dataSetsUploaded = !!uploads.find(
+                upload => upload.orgUnit === row.orgUnit && upload.module === row.module && upload.period === row.period
+            );
+            const submissionStatus = statusItems.find(item => item.value === row.status)?.text ?? "";
+
             try {
                 const completeDataSetRegistration: CompleteDataSetRegistrationsType = await this.api
                     .get<any>("/completeDataSetRegistrations", {
@@ -62,15 +70,22 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
                 return {
                     ...row,
-                    orgUnit: await getCountryName(this.api, row.orgUnit),
-                    submissionStatus: statusItems.find(item => item.value === row.status)?.text ?? "",
+                    orgUnit,
+                    dataSetsUploaded,
+                    submissionStatus,
                     questionnaireCompleted:
                         (Object.keys(completeDataSetRegistration).length
                             ? completeDataSetRegistration.completeDataSetRegistrations[0].completed
                             : false) ?? false,
                 };
             } catch (error) {
-                return row;
+                return {
+                    ...row,
+                    orgUnit,
+                    dataSetsUploaded,
+                    submissionStatus,
+                    questionnaireCompleted: false,
+                };
             }
         });
 
