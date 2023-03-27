@@ -393,8 +393,6 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             const approvalDataSetId = process.env.REACT_APP_APPROVE_DATASET_ID ?? "fRrt4V8ImqD";
             const uniqueDataSets = _.uniqBy(dataValues, "dataSet");
             const uniqueDataElementsNames = _.uniq(_.map(dataValues, "dataElement"));
-            const uniqueDataSets = _.uniqBy(dataValues, "dataSet");
-            const uniqueDataElementsNames = _.uniq(_.map(dataValues, "dataElement"));
 
             const DSDataElements: { dataSetElements: dataSetElementsType[] }[] = await this.getDSDataElements(
                 uniqueDataSets
@@ -406,11 +404,9 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
             const dataElementsMatchedArray: { [key: string]: any }[] = DSDataElements.flatMap(DSDataElement => {
                 return DSDataElement.dataSetElements.flatMap(element => {
-                return DSDataElement.dataSetElements.flatMap(element => {
                     const dataElement = element.dataElement;
                     if (uniqueDataElementsNames.includes(dataElement.name)) {
                         const othername = dataElement.name + "-APVD";
-                        const ADSDataElement = ADSDataElements.find(DataElement => DataElement.name === othername);
                         const ADSDataElement = ADSDataElements.find(DataElement => DataElement.name === othername);
                         return {
                             origId: dataElement?.id,
