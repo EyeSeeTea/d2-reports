@@ -11,12 +11,26 @@ export class DataStoreStorageClient extends StorageClient {
     constructor(type: "user" | "global", instance: Instance) {
         super();
         this.api = getD2APiFromInstance(instance);
-        this.dataStore =
-            type === "user"
-                ? this.api.userDataStore(d2ReportsDataStoreNamespace)
-                : process.env.REACT_APP_REPORT_VARIANT === "glass-submission"
-                ? this.api.dataStore(glassDataStoreNamespace)
-                : this.api.dataStore(d2ReportsDataStoreNamespace);
+        switch (type) {
+            case "user":
+                switch (process.env.REACT_APP_REPORT_VARIANT) {
+                    case "glass-submission":
+                        this.dataStore = this.api.userDataStore(glassDataStoreNamespace);
+                        break;
+                    default:
+                        this.dataStore = this.api.userDataStore(d2ReportsDataStoreNamespace);
+                }
+                break;
+            case "global":
+                switch (process.env.REACT_APP_REPORT_VARIANT) {
+                    case "glass-submission":
+                        this.dataStore = this.api.dataStore(glassDataStoreNamespace);
+                        break;
+                    default:
+                        this.dataStore = this.api.dataStore(d2ReportsDataStoreNamespace);
+                }
+                break;
+        }
     }
 
     public async getObject<T extends object>(key: string): Promise<T | undefined> {
