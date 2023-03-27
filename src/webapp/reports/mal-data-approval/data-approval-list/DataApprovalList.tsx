@@ -351,7 +351,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
             console.debug("Reloading", reloadKey);
             return { pager, objects: getDataApprovalViews(config, objects, monitoring) };
         },
-        [compositionRoot.malDataApproval, config, oldPeriods, filters, selectablePeriods, monitoring, reloadKey]
+        [compositionRoot.malDataApproval, config, monitoring, oldPeriods, filters, selectablePeriods, reloadKey]
     );
 
     function getUseCaseOptions(filter: DataSetsFilter, selectablePeriods: string[]) {
