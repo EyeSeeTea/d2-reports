@@ -17,6 +17,7 @@ import { promiseMap } from "../../../utils/promises";
 import { Status } from "../../../webapp/reports/glass-data-submission/DataSubmissionViewModel";
 import { Ref } from "../../../domain/common/entities/Base";
 import { statusItems } from "../../../webapp/reports/glass-data-submission/glass-data-submission-list/Filters";
+import { Namespaces } from "../../common/clients/storage/Namespaces";
 
 type CompleteDataSetRegistrationsType = {
     completeDataSetRegistrations: [
@@ -38,7 +39,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
     constructor(private api: D2Api) {
         const instance = new Instance({ url: this.api.baseUrl });
-        this.storageClient = new DataStoreStorageClient("global", instance);
+        this.storageClient = new DataStoreStorageClient("user", instance);
         this.globalStorageClient = new DataStoreStorageClient("global", instance);
     }
 
@@ -50,27 +51,32 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         const objects = (await this.globalStorageClient.getObject<GLASSDataSubmissionItem[]>(namespace)) ?? [];
         const uploads =
-            (await this.globalStorageClient.getObject<GLASSDataSubmissionItemIdentifier[]>("uploads")) ?? [];
+            (await this.globalStorageClient.getObject<GLASSDataSubmissionItemIdentifier[]>(
+                Namespaces.DATA_SUBMISSSIONS_UPLOADS
+            )) ?? [];
 
-        const rows = await promiseMap(objects, async row => {
-            const orgUnit = await getCountryName(this.api, row.orgUnit);
+        const rows = await promiseMap(objects, async object => {
+            const orgUnitName = await getCountryName(this.api, object.orgUnit);
             const dataSetsUploaded = !!uploads.find(
-                upload => upload.orgUnit === row.orgUnit && upload.module === row.module && upload.period === row.period
+                upload =>
+                    upload.orgUnit === object.orgUnit &&
+                    upload.module === object.module &&
+                    upload.period === object.period
             );
-            const submissionStatus = statusItems.find(item => item.value === row.status)?.text ?? "";
+            const submissionStatus = statusItems.find(item => item.value === object.status)?.text ?? "";
 
             try {
                 const completeDataSetRegistration: CompleteDataSetRegistrationsType = await this.api
                     .get<any>("/completeDataSetRegistrations", {
                         dataSet: "OYc0CihXiSn",
-                        period: row.period,
-                        orgUnit: row.orgUnit,
+                        period: object.period,
+                        orgUnit: object.orgUnit,
                     })
                     .getData();
 
                 return {
-                    ...row,
-                    orgUnit,
+                    ...object,
+                    orgUnitName,
                     dataSetsUploaded,
                     submissionStatus,
                     questionnaireCompleted:
@@ -80,8 +86,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 };
             } catch (error) {
                 return {
-                    ...row,
-                    orgUnit,
+                    ...object,
+                    orgUnitName,
                     dataSetsUploaded,
                     submissionStatus,
                     questionnaireCompleted: false,
@@ -128,7 +134,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
     async approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
         const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
-        const newSubmissionValues = await getNewSubmissionValues(this.api, items, objects, "APPROVED");
+        const newSubmissionValues = getNewSubmissionValues(items, objects, "APPROVED");
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
@@ -140,20 +146,19 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         isDatasetUpdate: boolean
     ) {
         const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
-        const newSubmissionValues = await getNewSubmissionValues(
-            this.api,
-            items,
-            objects,
-            isDatasetUpdate ? "APPROVED" : "REJECTED"
-        );
-        const modules = (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>("modules")) ?? [];
+        const modules =
+            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
+                Namespaces.DATA_SUBMISSSIONS_MODULES
+            )) ?? [];
 
-        const userGroups: Ref[] = _.flatMap(
+        const newSubmissionValues = getNewSubmissionValues(items, objects, isDatasetUpdate ? "APPROVED" : "REJECTED");
+        const userGroups = _.flatMap(
             _.compact(
-                items.map(item => {
-                    return modules.find(mod => mod.id === item.module && !_.isEmpty(mod.userGroups))?.userGroups
-                        .captureAccess;
-                })
+                items.map(
+                    item =>
+                        modules.find(mod => mod.id === item.module && !_.isEmpty(mod.userGroups))?.userGroups
+                            .captureAccess
+                )
             )
         ).map(({ id }) => ({ id }));
 
@@ -164,14 +169,14 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
     async reopen(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
         const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
-        const newSubmissionValues = await getNewSubmissionValues(this.api, items, objects, "NOT_COMPLETED");
+        const newSubmissionValues = getNewSubmissionValues(items, objects, "NOT_COMPLETED");
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
 
     async accept(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
         const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
-        const newSubmissionValues = await getNewSubmissionValues(this.api, items, objects, "UPDATE_REQUEST_ACCEPTED");
+        const newSubmissionValues = getNewSubmissionValues(items, objects, "UPDATE_REQUEST_ACCEPTED");
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
@@ -200,43 +205,19 @@ async function getCountryName(api: D2Api, countryId: string): Promise<string> {
     return organisationUnits[0]?.name ?? "";
 }
 
-async function getCountryUid(api: D2Api, countryName?: string): Promise<string> {
-    const { organisationUnits } = await api.metadata
-        .get({
-            organisationUnits: {
-                filter: { name: { eq: countryName } },
-                fields: {
-                    id: true,
-                },
-            },
-        })
-        .getData();
-
-    return organisationUnits[0]?.id ?? "";
-}
-
-async function getNewSubmissionValues(
-    api: D2Api,
+function getNewSubmissionValues(
     items: GLASSDataSubmissionItemIdentifier[],
     objects: GLASSDataSubmissionItem[],
     status: Status
 ) {
-    const newItems: GLASSDataSubmissionItemIdentifier[] = await promiseMap(items, async ob => ({
-        ...ob,
-        orgUnit: await getCountryUid(api, ob.orgUnit),
-    }));
-
-    const newSubmissionValues = _.flatMap(
-        objects.map(object =>
-            newItems.map(item =>
-                item.period === String(object.period) &&
+    return objects.map(object => {
+        const isNewItem = !!items.find(
+            item =>
                 item.orgUnit === object.orgUnit &&
-                item.module === object.module
-                    ? { ...object, status }
-                    : object
-            )
-        )
-    );
+                item.module === object.module &&
+                item.period === String(object.period)
+        );
 
-    return newSubmissionValues;
+        return isNewItem ? { ...object, status } : object;
+    });
 }

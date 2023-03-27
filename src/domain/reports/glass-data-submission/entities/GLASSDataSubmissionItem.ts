@@ -5,6 +5,7 @@ export interface GLASSDataSubmissionItem {
     id: Id;
     module: string;
     orgUnit: string;
+    orgUnitName: string;
     period: string;
     status: Status;
     questionnaireCompleted: boolean;

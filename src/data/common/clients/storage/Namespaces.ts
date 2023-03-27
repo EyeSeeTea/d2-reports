@@ -12,6 +12,8 @@ export const Namespaces = {
     MONITORING: "monitoring",
     DATA_SUBMISSSIONS: "data-submissions",
     DATA_SUBMISSSIONS_USER_COLUMNS: "data-submissions-user-columns",
+    DATA_SUBMISSSIONS_MODULES: "modules",
+    DATA_SUBMISSSIONS_UPLOADS: "uploads",
 };
 
 export const NamespaceProperties: Record<Namespace, string[]> = {
@@ -22,4 +24,6 @@ export const NamespaceProperties: Record<Namespace, string[]> = {
     [Namespaces.MONITORING]: [],
     [Namespaces.DATA_SUBMISSSIONS]: [],
     [Namespaces.DATA_SUBMISSSIONS_USER_COLUMNS]: [],
+    [Namespaces.DATA_SUBMISSSIONS_MODULES]: [],
+    [Namespaces.DATA_SUBMISSSIONS_UPLOADS]: [],
 };

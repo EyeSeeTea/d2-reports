@@ -58,7 +58,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
     const baseConfig: TableConfig<DataSubmissionViewModel> = useMemo(
         () => ({
             columns: [
-                { name: "orgUnit", text: i18n.t("Country"), sortable: true },
+                { name: "orgUnitName", text: i18n.t("Country"), sortable: true },
                 { name: "period", text: i18n.t("Year"), sortable: true },
                 {
                     name: "questionnaireCompleted",
