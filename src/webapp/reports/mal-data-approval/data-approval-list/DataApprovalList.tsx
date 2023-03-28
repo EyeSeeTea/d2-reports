@@ -336,17 +336,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
             disableRevoke,
             enableRevoke,
         ]
-        [
-            compositionRoot.malDataApproval,
-            isMalAdmin,
-            isMalApprover,
-            monitoring,
-            openDialog,
-            reload,
-            snackbar,
-            disableRevoke,
-            enableRevoke,
-        ]
     );
 
     const getRows = useMemo(
@@ -362,7 +351,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
             console.debug("Reloading", reloadKey);
             return { pager, objects: getDataApprovalViews(config, objects, monitoring) };
         },
-        [compositionRoot.malDataApproval, config, oldPeriods, filters, selectablePeriods, reloadKey, monitoring]
+        [compositionRoot.malDataApproval, config, monitoring, oldPeriods, filters, selectablePeriods, reloadKey]
     );
 
     function getUseCaseOptions(filter: DataSetsFilter, selectablePeriods: string[]) {
