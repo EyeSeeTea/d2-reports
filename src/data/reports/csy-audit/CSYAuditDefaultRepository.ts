@@ -32,10 +32,10 @@ export class CSYAuditDefaultRepository implements CSYAuditRepository {
             );
 
             [...Array(response[0]?.length).keys()].map(a => {
-                const resi = _.compact(response.map(res => res[a]));
-                const resi2 = getAuditItems(auditType, resi);
+                const res = _.compact(response.map(res => res[a]));
+                const res2 = getAuditItems(auditType, res);
 
-                auditItems.push(...resi2);
+                auditItems.push(...res2);
                 return auditItems;
             });
 
@@ -125,6 +125,10 @@ const auditQueryStrings = {
         "&dimension=QStbireWKjW&dimension=AlkbwOe8hCK:IN:2;3;5&stage=mnNpBtanIQo",
         "&dimension=WJE7ozQ21LA&dimension=kj3SOKykiDg&dimension=QStbireWKjW&stage=mnNpBtanIQo",
     ],
+    "all-mortality": [
+        "&dimension=ijG1c7IqeZb:IN:7&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+        "&dimension=QStbireWKjW&dimension=CZhIs5wGCiz:IN:5&stage=mnNpBtanIQo",
+    ],
 };
 
 function getAuditItems(auditType: string, response: AnalyticsResponse[]) {
@@ -199,6 +203,17 @@ function getAuditItems(auditType: string, response: AnalyticsResponse[]) {
             );
 
             const matchedIds = gcsAndAvpuIds.filter(item => !euProcedureIds.includes(item));
+
+            const auditItems: AuditItem[] = matchedIds.map(matchedId => ({
+                registerId: matchedId,
+            }));
+
+            return auditItems;
+        }
+        case "all-mortality": {
+            const euMortIds = getColumnValue(response[0], "QStbireWKjW");
+            const inpMortIds = getColumnValue(response[1], "QStbireWKjW");
+            const matchedIds = _.union(euMortIds, inpMortIds);
 
             const auditItems: AuditItem[] = matchedIds.map(matchedId => ({
                 registerId: matchedId,
