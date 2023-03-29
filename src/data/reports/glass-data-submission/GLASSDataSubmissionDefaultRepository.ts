@@ -55,16 +55,13 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 Namespaces.DATA_SUBMISSSIONS_UPLOADS
             )) ?? [];
 
-        const rows = await promiseMap(objects, async object => {
-            const orgUnitName = await this.getCountryName(this.api, object.orgUnit);
-            const dataSetsUploaded = !!uploads.find(
-                upload =>
-                    upload.orgUnit === object.orgUnit &&
-                    upload.module === object.module &&
-                    upload.period === object.period
-            );
-            const submissionStatus = statusItems.find(item => item.value === object.status)?.text ?? "";
+        const uniquePeriodsAndOrgUnits = _.uniqWith(
+            objects.map(ob => ({ period: ob.period, orgUnit: ob.orgUnit })),
+            _.isEqual
+        );
 
+        const uniqueRowValues = await promiseMap(uniquePeriodsAndOrgUnits, async object => {
+            const orgUnitName = await this.getCountryName(this.api, object.orgUnit);
             try {
                 const completeDataSetRegistration: CompleteDataSetRegistrationsType = await this.api
                     .get<any>("/completeDataSetRegistrations", {
@@ -77,22 +74,35 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 return {
                     ...object,
                     orgUnitName,
-                    dataSetsUploaded,
-                    submissionStatus,
                     questionnaireCompleted:
                         (Object.keys(completeDataSetRegistration).length
                             ? completeDataSetRegistration.completeDataSetRegistrations[0].completed
                             : false) ?? false,
                 };
-            } catch (error) {
+            } catch (err) {
                 return {
                     ...object,
                     orgUnitName,
-                    dataSetsUploaded,
-                    submissionStatus,
                     questionnaireCompleted: false,
                 };
             }
+        });
+
+        const rows = objects.map(object => {
+            const match = uniqueRowValues.find(b => b.orgUnit === object.orgUnit && b.period === object.period);
+            const submissionStatus = statusItems.find(item => item.value === object.status)?.text ?? "";
+            const dataSetsUploaded = !!uploads.find(
+                upload =>
+                    upload.orgUnit === object.orgUnit &&
+                    upload.module === object.module &&
+                    upload.period === object.period
+            );
+            return {
+                ...object,
+                ...match,
+                submissionStatus,
+                dataSetsUploaded,
+            };
         });
 
         const filteredRows = rows.filter(
