@@ -38,6 +38,7 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
             { value: "tachypnea", text: i18n.t("Oxygen not administered for patients with tachypnea") },
             { value: "mental", text: i18n.t("Mental status-dependent airway maneuver") },
             { value: "all-mortality", text: i18n.t("All mortality") },
+            { value: "emergency-unit", text: i18n.t("Emergency Unit Mortality") },
         ];
     }, []);
 

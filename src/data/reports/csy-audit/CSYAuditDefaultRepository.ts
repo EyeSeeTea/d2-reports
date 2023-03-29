@@ -129,6 +129,7 @@ const auditQueryStrings = {
         "&dimension=ijG1c7IqeZb:IN:7&dimension=QStbireWKjW&stage=mnNpBtanIQo",
         "&dimension=QStbireWKjW&dimension=CZhIs5wGCiz:IN:5&stage=mnNpBtanIQo",
     ],
+    "emergency-unit": ["&dimension=ijG1c7IqeZb:IN:7&dimension=QStbireWKjW&stage=mnNpBtanIQo"],
 };
 
 function getAuditItems(auditType: string, response: AnalyticsResponse[]) {
@@ -217,6 +218,15 @@ function getAuditItems(auditType: string, response: AnalyticsResponse[]) {
 
             const auditItems: AuditItem[] = matchedIds.map(matchedId => ({
                 registerId: matchedId,
+            }));
+
+            return auditItems;
+        }
+        case "emergency-unit": {
+            const euMortIds = getColumnValue(response[0], "QStbireWKjW");
+
+            const auditItems: AuditItem[] = euMortIds.map(euMortId => ({
+                registerId: euMortId,
             }));
 
             return auditItems;
