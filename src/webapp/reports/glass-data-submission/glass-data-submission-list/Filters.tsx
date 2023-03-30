@@ -8,7 +8,7 @@ import { Id } from "../../../../domain/common/entities/Base";
 import { useAppContext } from "../../../contexts/app-context";
 import _ from "lodash";
 import { getRootIds } from "../../../../domain/common/entities/OrgUnit";
-import { D2Api, MetadataPick } from "../../../../types/d2-api";
+import { D2Api } from "../../../../types/d2-api";
 import i18n from "../../../../locales";
 import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
 import { Dropdown, DropdownProps, MultipleDropdownProps } from "@eyeseetea/d2-ui-components";
@@ -31,27 +31,13 @@ interface FilterOptions {
     periods: string[];
 }
 
-const selectableOULevels = ["1", "2", "3"];
-const orgUnitParams = {
-    organisationUnits: {
-        filter: { level: { in: selectableOULevels } },
-        fields: {
-            id: true,
-            path: true,
-            name: true,
-            level: true,
-            children: {
-                level: true,
-                path: true,
-                children: {
-                    level: true,
-                    path: true,
-                },
-            },
-        },
-    },
-} as const;
-type OrgUnit = MetadataPick<typeof orgUnitParams>["organisationUnits"][number];
+type OrgUnit = {
+    id: string;
+    name: string;
+    level: number;
+    path: string;
+    children?: OrgUnit[];
+};
 
 export const statusItems = [
     { value: "NOT_COMPLETED", text: i18n.t("Not Completed") },
@@ -83,8 +69,32 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
 
     useEffect(() => {
         async function getOrganisationUnits(api: D2Api): Promise<OrgUnit[]> {
-            const { organisationUnits } = await api.metadata.get(orgUnitParams).getData();
-            return _.orderBy(organisationUnits, "level", "asc");
+            const { organisationUnits } = await api.metadata
+                .get({
+                    organisationUnits: {
+                        fields: {
+                            id: true,
+                            name: true,
+                            level: true,
+                            path: true,
+                            children: {
+                                id: true,
+                                name: true,
+                                level: true,
+                                path: true,
+                                children: { id: true, name: true, level: true, path: true },
+                            },
+                        },
+                        filter: { level: { eq: "1" } },
+                    },
+                })
+                .getData();
+
+            const ou2 = organisationUnits.flatMap(ou => ou.children);
+            const ou3 = ou2.flatMap(ou => ou.children);
+            const all = _.union(organisationUnits, ou2, ou3);
+
+            return _.orderBy(all, "level", "asc");
         }
 
         getOrganisationUnits(api).then(value => setOrgUnits(value));
@@ -101,11 +111,14 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
 
             const pathsToAdd = _.flatMap(addedPaths, addedPath => {
                 const orgUnit = orgUnitsByPath[addedPath];
-
                 if (orgUnit && orgUnit.level < countryLevel) {
-                    return [orgUnit, ...orgUnit.children, ...orgUnit.children.flatMap(child => child.children)].map(
-                        ou => ou.path
-                    );
+                    return _.compact(
+                        _.union(
+                            [orgUnit],
+                            orgUnit.children,
+                            orgUnit.children?.flatMap(child => child.children)
+                        )
+                    ).map(ou => ou.path);
                 } else {
                     return [addedPath];
                 }
