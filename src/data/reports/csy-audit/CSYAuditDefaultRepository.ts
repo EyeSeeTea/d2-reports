@@ -184,6 +184,22 @@ const auditQueryStrings = {
         "&dimension=O38wkAQbK9z&dimension=NCvjnccLi17:GE:1&dimension=QStbireWKjW&stage=mnNpBtanIQo",
         "&dimension=O38wkAQbK9z&dimension=xp4OMOI1c1z:GE:1&dimension=QStbireWKjW&stage=mnNpBtanIQo",
     ],
+    "moderate-severe-injuries": [
+        "&dimension=F8UsnxWi9XM:GE:1&dimension=h0XlP7VstW7:GE:3:LE:18&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+        "&dimension=NebmxV8fnTD:GE:1&dimension=fg1VDHZ2QkJ:GE:0:LE:10&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+        "&dimension=UQ8ENntnDDd&dimension=lbnI2bNoDVO:GE:1&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+        "&dimension=UQ8ENntnDDd&dimension=W7WKKF11CDB:GE:1&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+        "&dimension=O38wkAQbK9z&dimension=NCvjnccLi17:GE:1&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+        "&dimension=O38wkAQbK9z&dimension=xp4OMOI1c1z:GE:1&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+    ],
+    "moderate-injuries": [
+        "&dimension=F8UsnxWi9XM:GE:1&dimension=h0XlP7VstW7:GE:3:LE:18&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+        "&dimension=NebmxV8fnTD:GE:1&dimension=fg1VDHZ2QkJ:GE:0:LE:10&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+        "&dimension=UQ8ENntnDDd&dimension=lbnI2bNoDVO:GE:1&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+        "&dimension=UQ8ENntnDDd&dimension=W7WKKF11CDB:GE:1&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+        "&dimension=O38wkAQbK9z&dimension=NCvjnccLi17:GE:1&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+        "&dimension=O38wkAQbK9z&dimension=xp4OMOI1c1z:GE:1&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+    ],
 };
 
 function getAuditItems(auditType: string, response: AnalyticsResponse[]) {
@@ -326,7 +342,44 @@ function getAuditItems(auditType: string, response: AnalyticsResponse[]) {
             );
 
             const matchedIds = _.intersection(..._.filter([gapIds, rtsIds, ktsIds, mgapIds], ids => !_.isEmpty(ids)));
+            const auditItems: AuditItem[] = matchedIds.map(matchedId => ({
+                registerId: matchedId,
+            }));
 
+            return auditItems;
+        }
+        case "moderate-severe-injuries": {
+            // audit definition = (KTS≤13) OR (MGAP≤22) OR (GAP≤18) OR (RTS≤10)
+            const gapIds = getColumnValue(response[0], "QStbireWKjW");
+            const rtsIds = getColumnValue(response[1], "QStbireWKjW");
+
+            const ktsInjuries = getColumnValue(response[2], "QStbireWKjW");
+            const ktsIcc = getColumnValue(response[3], "QStbireWKjW");
+            const ktsIds = combineScores(
+                "QStbireWKjW",
+                "UQ8ENntnDDd",
+                response[2],
+                response[3],
+                ktsInjuries,
+                ktsIcc,
+                0,
+                13
+            );
+
+            const mgapDetails = getColumnValue(response[4], "QStbireWKjW");
+            const mgapIcc = getColumnValue(response[5], "QStbireWKjW");
+            const mgapIds = combineScores(
+                "QStbireWKjW",
+                "O38wkAQbK9z",
+                response[4],
+                response[5],
+                mgapDetails,
+                mgapIcc,
+                3,
+                22
+            );
+
+            const matchedIds = _.intersection(..._.filter([gapIds, rtsIds, ktsIds, mgapIds], ids => !_.isEmpty(ids)));
             const auditItems: AuditItem[] = matchedIds.map(matchedId => ({
                 registerId: matchedId,
             }));
@@ -337,41 +390,3 @@ function getAuditItems(auditType: string, response: AnalyticsResponse[]) {
             return [];
     }
 }
-
-// var kts_ids = combine_scores("QStbireWKjW", kts_icc, "UQ8ENntnDDd", kts_injuries, "UQ8ENntnDDd", kts_bound[0], kts_bound[1])
-
-// function combine_scores(shared_uid, scores1, uid1, scores2, uid2, min_value = 0, max_value = 100) {
-//     var score1_shared = find_col_ind(scores1, shared_uid);
-//     var score2_shared = find_col_ind(scores2, shared_uid);
-//     var shared_ids = intersect_arrays(
-//         extract_values(scores1, score1_shared),
-//         extract_values(scores2, score2_shared)
-//     );
-//     var ids = {};
-//     // Process the first set of scores
-//     ind = find_col_ind(scores1, uid1);
-//     for (var i = 0; i < scores1[0].rows.length; i++) {
-//         var r = scores1[0].rows[i];
-//         var j = r[score1_shared];
-//         if (shared_ids.includes(j)) {
-//             ids[j] = Number(String(r[ind]));
-//         }
-//     }
-//     // Process the second set of scores
-//     ind = find_col_ind(scores2, uid2);
-//     for (var i = 0; i < scores2[0].rows.length; i++) {
-//         var r = scores2[0].rows[i];
-//         var j = r[score2_shared];
-//         if (shared_ids.includes(j)) {
-//             ids[j] += Number(String(r[ind]));
-//         }
-//     }
-//     // Finally, filter the object based in min and max values
-//     for (var val in ids) {
-//         if (!((ids[val] >= min_value) & (ids[val] <= max_value))) {
-//             delete ids[val];
-//         }
-//     }
-
-//     return Object.keys(ids);
-// }
