@@ -15,7 +15,6 @@ export class CSYAuditDefaultRepository implements CSYAuditRepository {
     async get(options: CSYAuditOptions): Promise<PaginatedObjects<AuditItem>> {
         const { paging, year, orgUnitPaths, quarter, auditType } = options;
         const period = !quarter ? year : `${year}${quarter}`;
-
         const orgUnitIds = getOrgUnitIdsFromPaths(orgUnitPaths);
         const auditItems: AuditItem[] = [];
 
@@ -39,6 +38,11 @@ export class CSYAuditDefaultRepository implements CSYAuditRepository {
                 return auditItems;
             });
 
+            const rowsInPage = _(auditItems)
+                .drop((paging.page - 1) * paging.pageSize)
+                .take(paging.pageSize)
+                .value();
+
             const pager: Pager = {
                 page: paging.page,
                 pageSize: paging.pageSize,
@@ -46,7 +50,7 @@ export class CSYAuditDefaultRepository implements CSYAuditRepository {
                 total: auditItems.length,
             };
 
-            return { pager, objects: auditItems };
+            return { pager, objects: rowsInPage };
         } catch (error) {
             console.debug(error);
             return { pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 }, objects: [] };
@@ -95,6 +99,47 @@ function findColumnIndex(response: AnalyticsResponse | undefined, columnId: stri
     return headers.indexOf(columnHeader);
 }
 
+function combineScores(
+    sharedUid: string,
+    columnUid: string,
+    scores1: AnalyticsResponse | undefined,
+    scores2: AnalyticsResponse | undefined,
+    columnValues1: string[],
+    columnValues2: string[],
+    minValue: number,
+    maxValue: number
+) {
+    const score1Shared = findColumnIndex(scores1, sharedUid);
+    const score2Shared = findColumnIndex(scores2, sharedUid);
+    const sharedIds = _.compact(_.intersection(columnValues1, columnValues2));
+
+    const ids: Record<string, any> = {};
+
+    const ind1 = findColumnIndex(scores1, columnUid);
+    scores1?.rows.map(row => {
+        if (sharedIds.includes(row[score1Shared] ?? "")) {
+            ids[row[score1Shared] ?? ""] = row[ind1];
+        }
+        return ids;
+    });
+
+    const ind2 = findColumnIndex(scores2, columnUid);
+    scores2?.rows.map(row => {
+        if (sharedIds.includes(row[score2Shared] ?? "")) {
+            ids[row[score2Shared] ?? ""] += row[ind2];
+        }
+        return ids;
+    });
+
+    for (const val in ids) {
+        if (!(ids[val] >= minValue && ids[val] <= maxValue)) {
+            delete ids[val];
+        }
+    }
+
+    return Object.keys(ids);
+}
+
 function getColumnValue(response: AnalyticsResponse | undefined, columnId: string) {
     const columnIndex = findColumnIndex(response, columnId);
     const values: string[] = [];
@@ -131,6 +176,14 @@ const auditQueryStrings = {
     ],
     "emergency-unit": ["&dimension=ijG1c7IqeZb:IN:7&dimension=QStbireWKjW&stage=mnNpBtanIQo"],
     "hospital-mortality": ["&dimension=QStbireWKjW&dimension=CZhIs5wGCiz:IN:5&stage=mnNpBtanIQo"],
+    "severe-injuries": [
+        "&dimension=F8UsnxWi9XM:GE:1&dimension=h0XlP7VstW7:GE:3:LE:10&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+        "&dimension=NebmxV8fnTD:GE:1&dimension=fg1VDHZ2QkJ:GE:0:LE:3&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+        "&dimension=UQ8ENntnDDd&dimension=lbnI2bNoDVO:GE:1&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+        "&dimension=UQ8ENntnDDd&dimension=W7WKKF11CDB:GE:1&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+        "&dimension=O38wkAQbK9z&dimension=NCvjnccLi17:GE:1&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+        "&dimension=O38wkAQbK9z&dimension=xp4OMOI1c1z:GE:1&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+    ],
 };
 
 function getAuditItems(auditType: string, response: AnalyticsResponse[]) {
@@ -241,7 +294,84 @@ function getAuditItems(auditType: string, response: AnalyticsResponse[]) {
 
             return auditItems;
         }
+        case "severe-injuries": {
+            // audit definition = (KTS<11) OR (MGAP=3-17) OR (GAP=3-10) OR (RTS≤3)
+            const gapIds = getColumnValue(response[0], "QStbireWKjW");
+            const rtsIds = getColumnValue(response[1], "QStbireWKjW");
+
+            const ktsInjuries = getColumnValue(response[2], "QStbireWKjW");
+            const ktsIcc = getColumnValue(response[3], "QStbireWKjW");
+            const ktsIds = combineScores(
+                "QStbireWKjW",
+                "UQ8ENntnDDd",
+                response[2],
+                response[3],
+                ktsInjuries,
+                ktsIcc,
+                0,
+                10
+            );
+
+            const mgapDetails = getColumnValue(response[4], "QStbireWKjW");
+            const mgapIcc = getColumnValue(response[5], "QStbireWKjW");
+            const mgapIds = combineScores(
+                "QStbireWKjW",
+                "O38wkAQbK9z",
+                response[4],
+                response[5],
+                mgapDetails,
+                mgapIcc,
+                3,
+                17
+            );
+
+            const matchedIds = _.intersection(..._.filter([gapIds, rtsIds, ktsIds, mgapIds], ids => !_.isEmpty(ids)));
+
+            const auditItems: AuditItem[] = matchedIds.map(matchedId => ({
+                registerId: matchedId,
+            }));
+
+            return auditItems;
+        }
         default:
             return [];
     }
 }
+
+// var kts_ids = combine_scores("QStbireWKjW", kts_icc, "UQ8ENntnDDd", kts_injuries, "UQ8ENntnDDd", kts_bound[0], kts_bound[1])
+
+// function combine_scores(shared_uid, scores1, uid1, scores2, uid2, min_value = 0, max_value = 100) {
+//     var score1_shared = find_col_ind(scores1, shared_uid);
+//     var score2_shared = find_col_ind(scores2, shared_uid);
+//     var shared_ids = intersect_arrays(
+//         extract_values(scores1, score1_shared),
+//         extract_values(scores2, score2_shared)
+//     );
+//     var ids = {};
+//     // Process the first set of scores
+//     ind = find_col_ind(scores1, uid1);
+//     for (var i = 0; i < scores1[0].rows.length; i++) {
+//         var r = scores1[0].rows[i];
+//         var j = r[score1_shared];
+//         if (shared_ids.includes(j)) {
+//             ids[j] = Number(String(r[ind]));
+//         }
+//     }
+//     // Process the second set of scores
+//     ind = find_col_ind(scores2, uid2);
+//     for (var i = 0; i < scores2[0].rows.length; i++) {
+//         var r = scores2[0].rows[i];
+//         var j = r[score2_shared];
+//         if (shared_ids.includes(j)) {
+//             ids[j] += Number(String(r[ind]));
+//         }
+//     }
+//     // Finally, filter the object based in min and max values
+//     for (var val in ids) {
+//         if (!((ids[val] >= min_value) & (ids[val] <= max_value))) {
+//             delete ids[val];
+//         }
+//     }
+
+//     return Object.keys(ids);
+// }
