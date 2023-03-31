@@ -193,8 +193,8 @@ const auditQueryStrings = {
         "&dimension=O38wkAQbK9z&dimension=xp4OMOI1c1z:GE:1&dimension=QStbireWKjW&stage=mnNpBtanIQo",
     ],
     "moderate-injuries": [
-        "&dimension=F8UsnxWi9XM:GE:1&dimension=h0XlP7VstW7:GE:3:LE:18&dimension=QStbireWKjW&stage=mnNpBtanIQo",
-        "&dimension=NebmxV8fnTD:GE:1&dimension=fg1VDHZ2QkJ:GE:0:LE:10&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+        "&dimension=F8UsnxWi9XM:GE:1&dimension=h0XlP7VstW7:GE:11:LE:18&dimension=QStbireWKjW&stage=mnNpBtanIQo",
+        "&dimension=NebmxV8fnTD:GE:1&dimension=fg1VDHZ2QkJ:GE:4:LE:10&dimension=QStbireWKjW&stage=mnNpBtanIQo",
         "&dimension=UQ8ENntnDDd&dimension=lbnI2bNoDVO:GE:1&dimension=QStbireWKjW&stage=mnNpBtanIQo",
         "&dimension=UQ8ENntnDDd&dimension=W7WKKF11CDB:GE:1&dimension=QStbireWKjW&stage=mnNpBtanIQo",
         "&dimension=O38wkAQbK9z&dimension=NCvjnccLi17:GE:1&dimension=QStbireWKjW&stage=mnNpBtanIQo",
@@ -376,6 +376,44 @@ function getAuditItems(auditType: string, response: AnalyticsResponse[]) {
                 mgapDetails,
                 mgapIcc,
                 3,
+                22
+            );
+
+            const matchedIds = _.intersection(..._.filter([gapIds, rtsIds, ktsIds, mgapIds], ids => !_.isEmpty(ids)));
+            const auditItems: AuditItem[] = matchedIds.map(matchedId => ({
+                registerId: matchedId,
+            }));
+
+            return auditItems;
+        }
+        case "moderate-injuries": {
+            // audit definition = (KTS=11-13) OR (MGAP=18-22) OR (GAP=11-18) OR (RTS=4-10)
+            const gapIds = getColumnValue(response[0], "QStbireWKjW");
+            const rtsIds = getColumnValue(response[1], "QStbireWKjW");
+
+            const ktsInjuries = getColumnValue(response[2], "QStbireWKjW");
+            const ktsIcc = getColumnValue(response[3], "QStbireWKjW");
+            const ktsIds = combineScores(
+                "QStbireWKjW",
+                "UQ8ENntnDDd",
+                response[2],
+                response[3],
+                ktsInjuries,
+                ktsIcc,
+                11,
+                13
+            );
+
+            const mgapDetails = getColumnValue(response[4], "QStbireWKjW");
+            const mgapIcc = getColumnValue(response[5], "QStbireWKjW");
+            const mgapIds = combineScores(
+                "QStbireWKjW",
+                "O38wkAQbK9z",
+                response[4],
+                response[5],
+                mgapDetails,
+                mgapIcc,
+                18,
                 22
             );
 

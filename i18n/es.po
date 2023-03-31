@@ -83,7 +83,34 @@ msgstr ""
 msgid "Register ID"
 msgstr ""
 
-msgid "Mortality"
+msgid "Mortality with low injury severity score"
+msgstr ""
+
+msgid "Oxygen not administered for patients with hypoxia"
+msgstr ""
+
+msgid "Oxygen not administered for patients with tachypnea"
+msgstr ""
+
+msgid "Mental status-dependent airway maneuver"
+msgstr ""
+
+msgid "All mortality"
+msgstr ""
+
+msgid "Emergency Unit"
+msgstr ""
+
+msgid "Hospital Mortality"
+msgstr ""
+
+msgid "Severe injuries by any scoring system"
+msgstr ""
+
+msgid "Moderate or severe injuries by any scoring system"
+msgstr ""
+
+msgid "Moderate injuries by any scoring system"
 msgstr ""
 
 msgid "Yearly"
