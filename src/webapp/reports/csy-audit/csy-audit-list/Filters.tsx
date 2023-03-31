@@ -42,6 +42,7 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
             { value: "hospital-mortality", text: i18n.t("Hospital Mortality") },
             { value: "severe-injuries", text: i18n.t("Severe injuries by any scoring system") },
             { value: "moderate-severe-injuries", text: i18n.t("Moderate or severe injuries by any scoring system") },
+            { value: "moderate-injuries", text: i18n.t("Moderate injuries by any scoring system") },
         ];
     }, []);
 

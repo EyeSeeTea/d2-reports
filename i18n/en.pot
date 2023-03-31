@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2023-03-02T20:07:20.964Z\n"
-"PO-Revision-Date: 2023-03-02T20:07:20.964Z\n"
+"POT-Creation-Date: 2023-03-31T16:32:19.424Z\n"
+"PO-Revision-Date: 2023-03-31T16:32:19.424Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -80,7 +80,34 @@ msgstr ""
 msgid "Register ID"
 msgstr ""
 
-msgid "Mortality"
+msgid "Mortality with low injury severity score"
+msgstr ""
+
+msgid "Oxygen not administered for patients with hypoxia"
+msgstr ""
+
+msgid "Oxygen not administered for patients with tachypnea"
+msgstr ""
+
+msgid "Mental status-dependent airway maneuver"
+msgstr ""
+
+msgid "All mortality"
+msgstr ""
+
+msgid "Emergency Unit"
+msgstr ""
+
+msgid "Hospital Mortality"
+msgstr ""
+
+msgid "Severe injuries by any scoring system"
+msgstr ""
+
+msgid "Moderate or severe injuries by any scoring system"
+msgstr ""
+
+msgid "Moderate injuries by any scoring system"
 msgstr ""
 
 msgid "Yearly"

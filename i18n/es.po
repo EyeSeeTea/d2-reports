@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2023-03-02T20:07:20.964Z\n"
+"POT-Creation-Date: 2023-03-31T16:32:19.424Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -80,7 +80,34 @@ msgstr ""
 msgid "Register ID"
 msgstr ""
 
-msgid "Mortality"
+msgid "Mortality with low injury severity score"
+msgstr ""
+
+msgid "Oxygen not administered for patients with hypoxia"
+msgstr ""
+
+msgid "Oxygen not administered for patients with tachypnea"
+msgstr ""
+
+msgid "Mental status-dependent airway maneuver"
+msgstr ""
+
+msgid "All mortality"
+msgstr ""
+
+msgid "Emergency Unit"
+msgstr ""
+
+msgid "Hospital Mortality"
+msgstr ""
+
+msgid "Severe injuries by any scoring system"
+msgstr ""
+
+msgid "Moderate or severe injuries by any scoring system"
+msgstr ""
+
+msgid "Moderate injuries by any scoring system"
 msgstr ""
 
 msgid "Yearly"
