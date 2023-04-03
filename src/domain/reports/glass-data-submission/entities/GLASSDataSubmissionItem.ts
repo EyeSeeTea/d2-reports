@@ -11,6 +11,11 @@ export interface GLASSDataSubmissionItem {
     questionnaireCompleted: boolean;
     dataSetsUploaded: string;
     submissionStatus: string;
+    statusHistory: {
+        changedAt: string;
+        from: Status;
+        to: Status;
+    }[];
 }
 
 export interface GLASSDataSubmissionItemIdentifier {

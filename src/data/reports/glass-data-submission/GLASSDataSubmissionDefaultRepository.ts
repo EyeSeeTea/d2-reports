@@ -236,7 +236,13 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                     item.period === String(object.period)
             );
 
-            return isNewItem ? { ...object, status } : object;
+            const statusHistory = {
+                changedAt: new Date().toISOString(),
+                from: object.status,
+                to: status,
+            };
+
+            return isNewItem ? { ...object, status, statusHistory: [...object.statusHistory, statusHistory] } : object;
         });
     }
 }
