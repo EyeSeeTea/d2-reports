@@ -11,7 +11,7 @@ import {
     useSnackbar,
 } from "@eyeseetea/d2-ui-components";
 import {
-    Input,
+    TextArea,
     // @ts-ignore
 } from "@dhis2/ui";
 import i18n from "../../../../locales";
@@ -140,8 +140,6 @@ export const DataSubmissionList: React.FC = React.memo(() => {
 
                         setRejectedItems(items);
                         openDialog();
-
-                        reload();
                     },
                     isActive: (rows: DataSubmissionViewModel[]) => {
                         return _.every(rows, row => {
@@ -282,8 +280,9 @@ export const DataSubmissionList: React.FC = React.memo(() => {
 
                         setRejectedState("idle");
                         closeRejectionDialog();
-
                         snackbar.success(i18n.t("Data submissions have been successfully rejected"));
+
+                        reload();
                     } catch {
                         snackbar.error(i18n.t("Error when trying to reject submission"));
                     }
@@ -294,8 +293,9 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                 fullWidth
             >
                 <p>{i18n.t("Please provide a reason for rejecting this data submission:")}</p>
-                <Input
+                <TextArea
                     type="text"
+                    rows={4}
                     onChange={({ value }: { value: string }) => {
                         setRejectionReason(value);
                     }}
