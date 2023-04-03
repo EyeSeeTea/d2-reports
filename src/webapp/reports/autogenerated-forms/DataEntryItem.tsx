@@ -29,7 +29,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
 
     const { type } = dataValue;
     const { options } = dataElement;
-    const disabled = false;
+    const disabled = props.period && props.period !== dataFormInfo.period ? true : false;
     const config = dataFormInfo.metadata.dataForm.options.dataElements[dataElement.id];
     const SingleComponent = config?.widget === "radio" ? SingleSelectRadioWidget : SingleSelectWidget;
     const BooleanComponent = config?.widget === "dropdown" ? BooleanDropdownWidget : YesNoWidget;
