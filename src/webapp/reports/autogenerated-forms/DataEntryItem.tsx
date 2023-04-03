@@ -14,6 +14,7 @@ import SingleSelectRadioWidget from "./widgets/SingleSelectRadioWidget";
 import YesNoWidget from "./widgets/YesNoWidget";
 import FileWidget from "./widgets/FileWidget";
 import DateWidget from "./widgets/DateWidget";
+import YearPickerWidget from "./widgets/YearPickerWidget";
 
 export interface DataEntryItemProps {
     dataElement: DataElement;
@@ -37,8 +38,17 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
         switch (type) {
             case "BOOLEAN":
             case "FILE":
-            case "DATE":
                 return <>Not supported</>;
+            case "DATE":
+                return (
+                    <YearPickerWidget
+                        dataValue={dataValue}
+                        options={options.items}
+                        onValueChange={notifyChange}
+                        state={state}
+                        disabled={disabled}
+                    />
+                );
             case "TEXT":
             case "NUMBER":
                 return dataValue.isMultiple ? (

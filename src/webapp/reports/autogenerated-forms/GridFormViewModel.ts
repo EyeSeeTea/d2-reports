@@ -62,6 +62,7 @@ export class GridViewModel {
         });
 
         const useIndexes =
+            _(rows).every(row => Boolean(row.name.match(/\(\d+\)$/))) &&
             _(rows)
                 .groupBy(row => row.name.replace(/\s*\(\d+\)$/, ""))
                 .size() === 1;
