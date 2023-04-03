@@ -70,7 +70,6 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     name: "dataSetsUploaded",
                     text: i18n.t("DataSets uploaded"),
                     sortable: true,
-                    getValue: row => (row.dataSetsUploaded ? "Uploaded" : "Not uploaded"),
                 },
                 {
                     name: "submissionStatus",

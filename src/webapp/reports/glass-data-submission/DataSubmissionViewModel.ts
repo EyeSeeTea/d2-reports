@@ -11,7 +11,7 @@ export interface DataSubmissionViewModel {
     period: string;
     status: Status;
     questionnaireCompleted: boolean;
-    dataSetsUploaded: boolean;
+    dataSetsUploaded: string;
     submissionStatus: string;
 }
 

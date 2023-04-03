@@ -9,7 +9,7 @@ export interface GLASSDataSubmissionItem {
     period: string;
     status: Status;
     questionnaireCompleted: boolean;
-    dataSetsUploaded: boolean;
+    dataSetsUploaded: string;
     submissionStatus: string;
 }
 

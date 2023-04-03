@@ -33,6 +33,11 @@ type CompleteDataSetRegistrationsType = {
     ];
 };
 
+interface GLASSDataSubmissionItemUpload extends GLASSDataSubmissionItemIdentifier {
+    dataSubmission: string;
+    status: "UPLOADED" | "COMPLETED";
+}
+
 export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmissionRepository {
     private storageClient: StorageClient;
     private globalStorageClient: StorageClient;
@@ -51,7 +56,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         const objects = (await this.globalStorageClient.getObject<GLASSDataSubmissionItem[]>(namespace)) ?? [];
         const uploads =
-            (await this.globalStorageClient.getObject<GLASSDataSubmissionItemIdentifier[]>(
+            (await this.globalStorageClient.getObject<GLASSDataSubmissionItemUpload[]>(
                 Namespaces.DATA_SUBMISSSIONS_UPLOADS
             )) ?? [];
 
@@ -91,12 +96,12 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const rows = objects.map(object => {
             const match = uniqueRowValues.find(b => b.orgUnit === object.orgUnit && b.period === object.period);
             const submissionStatus = statusItems.find(item => item.value === object.status)?.text ?? "";
-            const dataSetsUploaded = !!uploads.find(
-                upload =>
-                    upload.orgUnit === object.orgUnit &&
-                    upload.module === object.module &&
-                    upload.period === object.period
-            );
+
+            const uploadStatus = uploads.filter(upload => upload.dataSubmission === object.id).map(item => item.status);
+            const uploadedDatasets = uploadStatus.filter(item => item === "UPLOADED").length;
+            const completedDatasets = uploadStatus.filter(item => item === "COMPLETED").length;
+            const dataSetsUploaded = `${uploadedDatasets} uploaded, ${completedDatasets} completed`;
+
             return {
                 ...object,
                 ...match,
