@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2023-03-17T16:40:57.701Z\n"
-"PO-Revision-Date: 2023-03-17T16:40:57.701Z\n"
+"POT-Creation-Date: 2023-03-24T14:23:48.965Z\n"
+"PO-Revision-Date: 2023-03-24T14:23:48.965Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -72,6 +72,87 @@ msgid "lastUpdated"
 msgstr ""
 
 msgid "created"
+msgstr ""
+
+msgid "GLASS Data Submission Report"
+msgstr ""
+
+msgid "Country"
+msgstr ""
+
+msgid "Year"
+msgstr ""
+
+msgid "Questionnaire completed"
+msgstr ""
+
+msgid "DataSets uploaded"
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+msgid "Approve"
+msgstr ""
+
+msgid "Error when trying to approve submission"
+msgstr ""
+
+msgid "Accept"
+msgstr ""
+
+msgid "Error when trying to accept submission"
+msgstr ""
+
+msgid "Reject"
+msgstr ""
+
+msgid "Reopen Submission"
+msgstr ""
+
+msgid "Error when trying to reopen submission"
+msgstr ""
+
+msgid "Reject Data Submission"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Data submissions have been successfully rejected"
+msgstr ""
+
+msgid "Error when trying to reject submission"
+msgstr ""
+
+msgid "Not Completed"
+msgstr ""
+
+msgid "Data to be approved by country"
+msgstr ""
+
+msgid "Waiting WHO Approval"
+msgstr ""
+
+msgid "Rejected By WHO"
+msgstr ""
+
+msgid "Approved"
+msgstr ""
+
+msgid "Data update request accepted"
+msgstr ""
+
+msgid "Waiting for WHO to approve your update request"
+msgstr ""
+
+msgid "Completed"
+msgstr ""
+
+msgid "Not completed"
+msgstr ""
+
+msgid "Periods"
 msgstr ""
 
 msgid "Data Element"
@@ -152,9 +233,6 @@ msgstr ""
 msgid "Error when trying to unsubmit data set"
 msgstr ""
 
-msgid "Approve"
-msgstr ""
-
 msgid "Activate monitoring"
 msgstr ""
 
@@ -167,12 +245,6 @@ msgstr ""
 msgid "Check differences"
 msgstr ""
 
-msgid "Completed"
-msgstr ""
-
-msgid "Not completed"
-msgstr ""
-
 msgid "Submitted"
 msgstr ""
 
@@ -180,9 +252,6 @@ msgid "Ready for submission"
 msgstr ""
 
 msgid "Data sets"
-msgstr ""
-
-msgid "Periods"
 msgstr ""
 
 msgid "NHWA Data Approval Status Report"
