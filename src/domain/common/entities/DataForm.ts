@@ -21,7 +21,7 @@ export interface Texts {
 
 export const defaultTexts: Texts = { header: undefined, footer: undefined };
 
-const viewTypes = ["grid", "table", "grid-with-periods"] as const;
+const viewTypes = ["grid", "table", "grid-with-periods", "grid-totals", "grid-coc"] as const;
 export type ViewType = UnionFromValues<typeof DataFormM.viewTypes>;
 
 export interface SectionBase {
@@ -30,10 +30,11 @@ export interface SectionBase {
     dataElements: DataElement[];
     toggle: { type: "none" } | { type: "dataElement"; dataElement: DataElement };
     texts: Texts;
+    tabs: { active: boolean; order?: number };
 }
 
 export interface SectionSimple extends SectionBase {
-    viewType: "table" | "grid";
+    viewType: "table" | "grid" | "grid-totals" | "grid-coc";
 }
 
 export interface SectionWithPeriods extends SectionBase {

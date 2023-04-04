@@ -18,10 +18,11 @@ export type SectionConfig = BasicSectionConfig | GridWithPeriodsSectionConfig;
 interface BaseSectionConfig {
     texts: Texts;
     toggle: { type: "none" } | { type: "dataElement"; code: Code };
+    tabs: { active: true; order: number } | { active: false };
 }
 
 interface BasicSectionConfig extends BaseSectionConfig {
-    viewType: "table" | "grid";
+    viewType: "table" | "grid" | "grid-totals" | "grid-coc";
 }
 
 interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
@@ -33,7 +34,13 @@ const defaultViewType = "table";
 
 const selector = Codec.interface({ code: string });
 
-const viewType = oneOf([exactly("table"), exactly("grid"), exactly("grid-with-periods")]);
+const viewType = oneOf([
+    exactly("table"),
+    exactly("grid"),
+    exactly("grid-totals"),
+    exactly("grid-coc"),
+    exactly("grid-with-periods"),
+]);
 
 const textsCodec = Codec.interface({
     header: optional(oneOf([string, selector])),
@@ -62,6 +69,12 @@ const DataStoreConfigCodec = Codec.interface({
                     Codec.interface({
                         type: exactly("dataElement"),
                         code: string,
+                    })
+                ),
+                tabs: optional(
+                    Codec.interface({
+                        active: exactly(true),
+                        order: number,
                     })
                 ),
                 periods: optional(
@@ -265,6 +278,7 @@ export class Dhis2DataStoreDataForm {
                         header: getText(sectionConfig?.texts?.header),
                         footer: getText(sectionConfig?.texts?.footer),
                     },
+                    tabs: sectionConfig.tabs || { active: false },
                 };
 
                 const config: SectionConfig =
