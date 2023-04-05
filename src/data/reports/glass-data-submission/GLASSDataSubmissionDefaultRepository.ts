@@ -20,7 +20,7 @@ import { statusItems } from "../../../webapp/reports/glass-data-submission/glass
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 
 interface CompleteDataSetRegistrationsResponse {
-    completeDataSetRegistrations: Registration[];
+    completeDataSetRegistrations: Registration[] | undefined;
 }
 
 interface Registration {
@@ -60,10 +60,11 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 Namespaces.DATA_SUBMISSSIONS_UPLOADS
             )) ?? [];
 
-        const baseRows = await this.getBaseRows(objects);
+        const registrations = await this.getRegistrations(objects);
 
         const rows = objects.map(object => {
-            const match = baseRows.find(b => b.orgUnit === object.orgUnit && b.period === object.period);
+            const key = getRegistrationKey({ orgUnitId: object.orgUnit, period: object.period });
+            const match = registrations[key];
             const submissionStatus = statusItems.find(item => item.value === object.status)?.text ?? "";
 
             const uploadStatus = uploads.filter(upload => upload.dataSubmission === object.id).map(item => item.status);
@@ -106,9 +107,11 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         };
     }
 
-    private async getBaseRows(objects: GLASSDataSubmissionItem[]): Promise<SubmissionItemBase[]> {
-        const orgUnitIds = _.uniq(objects.map(obj => obj.orgUnit));
-        const periods = _.uniq(objects.map(obj => obj.period));
+    private async getRegistrations(
+        items: GLASSDataSubmissionItem[]
+    ): Promise<Record<RegistrationKey, RegistrationItemBase>> {
+        const orgUnitIds = _.uniq(items.map(obj => obj.orgUnit));
+        const periods = _.uniq(items.map(obj => obj.period));
         const orgUnitsById = await this.getOrgUnits(orgUnitIds);
 
         const { completeDataSetRegistrations: registrations } = await this.api
@@ -117,29 +120,26 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 orgUnit: orgUnitIds,
                 period: periods,
             })
-            .getData()
-            .catch(() => ({ completeDataSetRegistrations: [] }));
-
-        const getKey = (orgUnitId: Id, period: string) => [orgUnitId, period].join(".");
+            .getData();
 
         const registrationsByOrgUnitPeriod = _.keyBy(registrations, registration =>
-            getKey(registration.organisationUnit, registration.period)
+            getRegistrationKey({ orgUnitId: registration.organisationUnit, period: registration.period })
         );
 
-        return _(objects)
-            .uniqBy(obj => [obj.orgUnit, obj.period].join("."))
-            .map((selector): SubmissionItemBase => {
-                const key = [selector.orgUnit, selector.period].join(".");
+        return _(items)
+            .map((item): RegistrationItemBase => {
+                const key = getRegistrationKey({ orgUnitId: item.orgUnit, period: item.period });
                 const registration = registrationsByOrgUnitPeriod[key];
-                const orgUnitName = orgUnitsById[selector.orgUnit]?.name || "-";
+                const orgUnitName = orgUnitsById[item.orgUnit]?.name || "-";
 
                 return {
-                    orgUnit: selector.orgUnit,
-                    period: selector.period,
+                    orgUnit: item.orgUnit,
+                    period: item.period,
                     orgUnitName: orgUnitName,
                     questionnaireCompleted: registration?.completed ?? false,
                 };
             })
+            .keyBy(item => getRegistrationKey({ orgUnitId: item.orgUnit, period: item.period }))
             .value();
     }
 
@@ -276,7 +276,13 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
     }
 }
 
-type SubmissionItemBase = Pick<
+type RegistrationItemBase = Pick<
     GLASSDataSubmissionItem,
     "orgUnitName" | "orgUnit" | "period" | "questionnaireCompleted"
 >;
+
+function getRegistrationKey(options: { orgUnitId: Id; period: string }): RegistrationKey {
+    return [options.orgUnitId, options.period].join(".");
+}
+
+type RegistrationKey = string; // `${orgUnitId}.${period}`
