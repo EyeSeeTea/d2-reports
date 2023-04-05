@@ -22,7 +22,7 @@ interface BaseSectionConfig {
 }
 
 interface BasicSectionConfig extends BaseSectionConfig {
-    viewType: "table" | "grid" | "grid-totals" | "grid-coc";
+    viewType: "table" | "grid" | "grid-with-totals" | "grid-coc";
 }
 
 interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
@@ -37,7 +37,7 @@ const selector = Codec.interface({ code: string });
 const viewType = oneOf([
     exactly("table"),
     exactly("grid"),
-    exactly("grid-totals"),
+    exactly("grid-with-totals"),
     exactly("grid-coc"),
     exactly("grid-with-periods"),
 ]);

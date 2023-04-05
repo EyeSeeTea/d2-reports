@@ -49,3 +49,13 @@ export interface Option<Value> {
     name: string;
     value: Value;
 }
+
+export type dataInputPeriodsType = Maybe<
+    Array<{
+        closingDate?: string;
+        openingDate?: string;
+        period: {
+            id: string;
+        };
+    }>
+>;

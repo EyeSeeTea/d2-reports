@@ -1,11 +1,13 @@
 import _ from "lodash";
 import { Maybe, UnionFromValues } from "../../../utils/ts-utils";
 import { Id } from "./Base";
-import { DataElement } from "./DataElement";
+import { DataElement, dataInputPeriodsType } from "./DataElement";
 import { Period } from "./DataValue";
 
 export interface DataForm {
     id: Id;
+    expiryDays: number;
+    dataInputPeriods: dataInputPeriodsType;
     dataElements: DataElement[];
     sections: Section[];
     texts: Texts;
@@ -21,7 +23,7 @@ export interface Texts {
 
 export const defaultTexts: Texts = { header: undefined, footer: undefined };
 
-const viewTypes = ["grid", "table", "grid-with-periods", "grid-totals", "grid-coc"] as const;
+const viewTypes = ["grid", "table", "grid-with-periods", "grid-with-totals", "grid-coc"] as const;
 export type ViewType = UnionFromValues<typeof DataFormM.viewTypes>;
 
 export interface SectionBase {
@@ -34,7 +36,7 @@ export interface SectionBase {
 }
 
 export interface SectionSimple extends SectionBase {
-    viewType: "table" | "grid" | "grid-totals" | "grid-coc";
+    viewType: "table" | "grid" | "grid-with-totals" | "grid-coc";
 }
 
 export interface SectionWithPeriods extends SectionBase {

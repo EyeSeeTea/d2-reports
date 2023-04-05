@@ -23,6 +23,8 @@ export class Dhis2DataFormRepository implements DataFormRepository {
 
         return {
             id: dataSet.id,
+            expiryDays: dataSet.expiryDays,
+            dataInputPeriods: dataSet.dataInputPeriods,
             dataElements: _.flatMap(sections, section => section.dataElements),
             sections: sections,
             texts: dataSetConfig.texts,
@@ -99,6 +101,14 @@ function getMetadataQuery(options: { dataSetId: Id }) {
             fields: {
                 id: true,
                 code: true,
+                expiryDays: true,
+                dataInputPeriods: {
+                    closingDate: true,
+                    openingDate: true,
+                    period: {
+                        id: true,
+                    },
+                },
                 sections: {
                     id: true,
                     code: true,
