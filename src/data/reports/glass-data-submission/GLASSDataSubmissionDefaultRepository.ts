@@ -15,23 +15,23 @@ import { StorageClient } from "../../common/clients/storage/StorageClient";
 import { Instance } from "../../common/entities/Instance";
 import { promiseMap } from "../../../utils/promises";
 import { Status } from "../../../webapp/reports/glass-data-submission/DataSubmissionViewModel";
-import { Ref } from "../../../domain/common/entities/Base";
+import { Id, NamedRef, Ref } from "../../../domain/common/entities/Base";
 import { statusItems } from "../../../webapp/reports/glass-data-submission/glass-data-submission-list/Filters";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 
-type CompleteDataSetRegistrationsType = {
-    completeDataSetRegistrations: [
-        {
-            period?: string;
-            dataSet?: string;
-            organisationUnit?: string;
-            attributeOptionCombo?: string;
-            date?: string;
-            storedBy?: string;
-            completed?: boolean;
-        }
-    ];
-};
+interface CompleteDataSetRegistrationsResponse {
+    completeDataSetRegistrations: Registration[];
+}
+
+interface Registration {
+    period: string;
+    dataSet: string;
+    organisationUnit: string;
+    attributeOptionCombo: string;
+    date: string;
+    storedBy: string;
+    completed: boolean;
+}
 
 interface GLASSDataSubmissionItemUpload extends GLASSDataSubmissionItemIdentifier {
     dataSubmission: string;
@@ -60,41 +60,10 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 Namespaces.DATA_SUBMISSSIONS_UPLOADS
             )) ?? [];
 
-        const uniquePeriodsAndOrgUnits = _.uniqWith(
-            objects.map(ob => ({ period: ob.period, orgUnit: ob.orgUnit })),
-            _.isEqual
-        );
-
-        const uniqueRowValues = await promiseMap(uniquePeriodsAndOrgUnits, async object => {
-            const orgUnitName = await this.getCountryName(this.api, object.orgUnit);
-            try {
-                const completeDataSetRegistration: CompleteDataSetRegistrationsType = await this.api
-                    .get<any>("/completeDataSetRegistrations", {
-                        dataSet: "OYc0CihXiSn",
-                        period: object.period,
-                        orgUnit: object.orgUnit,
-                    })
-                    .getData();
-
-                return {
-                    ...object,
-                    orgUnitName,
-                    questionnaireCompleted:
-                        (Object.keys(completeDataSetRegistration).length
-                            ? completeDataSetRegistration.completeDataSetRegistrations[0].completed
-                            : false) ?? false,
-                };
-            } catch (err) {
-                return {
-                    ...object,
-                    orgUnitName,
-                    questionnaireCompleted: false,
-                };
-            }
-        });
+        const baseRows = await this.getBaseRows(objects);
 
         const rows = objects.map(object => {
-            const match = uniqueRowValues.find(b => b.orgUnit === object.orgUnit && b.period === object.period);
+            const match = baseRows.find(b => b.orgUnit === object.orgUnit && b.period === object.period);
             const submissionStatus = statusItems.find(item => item.value === object.status)?.text ?? "";
 
             const uploadStatus = uploads.filter(upload => upload.dataSubmission === object.id).map(item => item.status);
@@ -135,6 +104,66 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             pager,
             objects: rowsInPage,
         };
+    }
+
+    private async getBaseRows(objects: GLASSDataSubmissionItem[]): Promise<SubmissionItemBase[]> {
+        const orgUnitIds = _.uniq(objects.map(obj => obj.orgUnit));
+        const periods = _.uniq(objects.map(obj => obj.period));
+        const orgUnitsById = await this.getOrgUnits(orgUnitIds);
+
+        const { completeDataSetRegistrations: registrations } = await this.api
+            .get<CompleteDataSetRegistrationsResponse>("/completeDataSetRegistrations", {
+                dataSet: "OYc0CihXiSn",
+                orgUnit: orgUnitIds,
+                period: periods,
+            })
+            .getData()
+            .catch(() => ({ completeDataSetRegistrations: [] }));
+
+        const getKey = (orgUnitId: Id, period: string) => [orgUnitId, period].join(".");
+
+        const registrationsByOrgUnitPeriod = _.keyBy(registrations, registration =>
+            getKey(registration.organisationUnit, registration.period)
+        );
+
+        return _(objects)
+            .uniqBy(obj => [obj.orgUnit, obj.period].join("."))
+            .map((selector): SubmissionItemBase => {
+                const key = [selector.orgUnit, selector.period].join(".");
+                const registration = registrationsByOrgUnitPeriod[key];
+                const orgUnitName = orgUnitsById[selector.orgUnit]?.name || "-";
+
+                return {
+                    orgUnit: selector.orgUnit,
+                    period: selector.period,
+                    orgUnitName: orgUnitName,
+                    questionnaireCompleted: registration?.completed ?? false,
+                };
+            })
+            .value();
+    }
+
+    private async getOrgUnits(orgUnitIds: Id[]): Promise<Record<Id, NamedRef>> {
+        const responses = _.chunk(orgUnitIds, 300).map(orgUnitIdsGroup =>
+            this.api.metadata.get({
+                organisationUnits: {
+                    fields: { id: true, displayName: true },
+                    filter: { id: { in: orgUnitIdsGroup } },
+                },
+            })
+        );
+
+        const metadataList = await promiseMap(responses, response => response.getData());
+
+        return _(metadataList)
+            .flatMap(metadata =>
+                metadata.organisationUnits.map(orgUnit => ({
+                    id: orgUnit.id,
+                    name: orgUnit.displayName,
+                }))
+            )
+            .keyBy(orgUnit => orgUnit.id)
+            .value();
     }
 
     async getColumns(namespace: string): Promise<string[]> {
@@ -246,3 +275,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         });
     }
 }
+
+type SubmissionItemBase = Pick<
+    GLASSDataSubmissionItem,
+    "orgUnitName" | "orgUnit" | "period" | "questionnaireCompleted"
+>;
