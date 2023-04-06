@@ -35,7 +35,7 @@ interface Registration {
 
 interface GLASSDataSubmissionItemUpload extends GLASSDataSubmissionItemIdentifier {
     dataSubmission: string;
-    status: "UPLOADED" | "COMPLETED";
+    status: "UPLOADED" | "IMPORTED" | "VALIDATED" | "COMPLETED";
 }
 
 export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmissionRepository {
@@ -70,7 +70,9 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             const uploadStatus = uploads.filter(upload => upload.dataSubmission === object.id).map(item => item.status);
             const uploadedDatasets = uploadStatus.filter(item => item === "UPLOADED").length;
             const completedDatasets = uploadStatus.filter(item => item === "COMPLETED").length;
-            const dataSetsUploaded = `${uploadedDatasets} uploaded, ${completedDatasets} completed`;
+            const importedDatasets = uploadStatus.filter(item => item === "IMPORTED").length;
+            const validatedDatasets = uploadStatus.filter(item => item === "VALIDATED").length;
+            const dataSetsUploaded = `${uploadedDatasets} uploaded, ${completedDatasets} completed, ${importedDatasets} imported, ${validatedDatasets} validated`;
 
             return {
                 ...object,
@@ -242,21 +244,6 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             text: `Please review the messages and the reports to find about the causes of this rejection. You have to upload new datasets.\n Reason for rejection:\n ${message}`,
             userGroups,
         });
-    }
-
-    private async getCountryName(api: D2Api, countryId: string) {
-        const { organisationUnits } = await api.metadata
-            .get({
-                organisationUnits: {
-                    filter: { id: { eq: countryId } },
-                    fields: {
-                        name: true,
-                    },
-                },
-            })
-            .getData();
-
-        return organisationUnits[0]?.name ?? "";
     }
 
     private getNewSubmissionValues(
