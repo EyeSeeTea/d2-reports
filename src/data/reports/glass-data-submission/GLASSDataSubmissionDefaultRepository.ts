@@ -113,17 +113,10 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const orgUnitIds = _.uniq(items.map(obj => obj.orgUnit));
         const periods = _.uniq(items.map(obj => obj.period));
         const orgUnitsById = await this.getOrgUnits(orgUnitIds);
+        const apiRegistrations = await this.getApiRegistrations({ orgUnitIds, periods });
 
-        const { completeDataSetRegistrations: registrations } = await this.api
-            .get<CompleteDataSetRegistrationsResponse>("/completeDataSetRegistrations", {
-                dataSet: "OYc0CihXiSn",
-                orgUnit: orgUnitIds,
-                period: periods,
-            })
-            .getData();
-
-        const registrationsByOrgUnitPeriod = _.keyBy(registrations, registration =>
-            getRegistrationKey({ orgUnitId: registration.organisationUnit, period: registration.period })
+        const registrationsByOrgUnitPeriod = _.keyBy(apiRegistrations, apiReg =>
+            getRegistrationKey({ orgUnitId: apiReg.organisationUnit, period: apiReg.period })
         );
 
         return _(items)
@@ -140,6 +133,20 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 };
             })
             .keyBy(item => getRegistrationKey({ orgUnitId: item.orgUnit, period: item.period }))
+            .value();
+    }
+
+    private async getApiRegistrations(options: { orgUnitIds: Id[]; periods: string[] }): Promise<Registration[]> {
+        const responses = _.chunk(options.orgUnitIds, 300).map(orgUnitIdsGroups =>
+            this.api.get<CompleteDataSetRegistrationsResponse>("/completeDataSetRegistrations", {
+                dataSet: "OYc0CihXiSn",
+                orgUnit: orgUnitIdsGroups,
+                period: options.periods,
+            })
+        );
+
+        return _(await promiseMap(responses, response => response.getData()))
+            .flatMap(r => r.completeDataSetRegistrations || [])
             .value();
     }
 
