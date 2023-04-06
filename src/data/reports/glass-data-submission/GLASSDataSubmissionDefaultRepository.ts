@@ -68,11 +68,32 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             const submissionStatus = statusItems.find(item => item.value === object.status)?.text ?? "";
 
             const uploadStatus = uploads.filter(upload => upload.dataSubmission === object.id).map(item => item.status);
-            const uploadedDatasets = uploadStatus.filter(item => item === "UPLOADED").length;
             const completedDatasets = uploadStatus.filter(item => item === "COMPLETED").length;
-            const importedDatasets = uploadStatus.filter(item => item === "IMPORTED").length;
             const validatedDatasets = uploadStatus.filter(item => item === "VALIDATED").length;
-            const dataSetsUploaded = `${uploadedDatasets} uploaded, ${completedDatasets} completed, ${importedDatasets} imported, ${validatedDatasets} validated`;
+            const importedDatasets = uploadStatus.filter(item => item === "IMPORTED").length;
+            const uploadedDatasets = uploadStatus.filter(item => item === "UPLOADED").length;
+            
+            let dataSetsUploaded = "";
+            if (completedDatasets > 0) {
+              dataSetsUploaded += `${completedDatasets} completed, `;
+            }
+            if (validatedDatasets > 0) {
+              dataSetsUploaded += `${validatedDatasets} validated, `;
+            }
+            if (importedDatasets > 0) {
+              dataSetsUploaded += `${importedDatasets} imported, `;
+            }
+            if (uploadedDatasets > 0) {
+              dataSetsUploaded += `${uploadedDatasets} uploaded, `;
+            }
+            
+            // Remove trailing comma and space if any
+            dataSetsUploaded = dataSetsUploaded.replace(/,\s*$/, "");
+
+            // Show "No datasets" if all variables are 0
+            if (dataSetsUploaded === "") {
+                dataSetsUploaded = "No datasets";
+            }
 
             return {
                 ...object,
