@@ -1,1 +1,1 @@
-export type ReportType = "nhwa" | "mal";
+export type ReportType = "nhwa" | "mal" | "glass";
