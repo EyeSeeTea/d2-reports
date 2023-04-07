@@ -1,7 +1,7 @@
 import { D2Api, DataStore } from "../../../../types/d2-api";
 import { Instance } from "../../entities/Instance";
 import { getD2APiFromInstance } from "../../utils/d2-api";
-import { dataStoreNamespace } from "./Namespaces";
+import { d2ReportsDataStoreNamespace, glassDataStoreNamespace } from "./Namespaces";
 import { StorageClient } from "./StorageClient";
 
 export class DataStoreStorageClient extends StorageClient {
@@ -11,8 +11,26 @@ export class DataStoreStorageClient extends StorageClient {
     constructor(type: "user" | "global", instance: Instance) {
         super();
         this.api = getD2APiFromInstance(instance);
-        this.dataStore =
-            type === "user" ? this.api.userDataStore(dataStoreNamespace) : this.api.dataStore(dataStoreNamespace);
+        switch (type) {
+            case "user":
+                switch (process.env.REACT_APP_REPORT_VARIANT) {
+                    case "glass-submission":
+                        this.dataStore = this.api.userDataStore(glassDataStoreNamespace);
+                        break;
+                    default:
+                        this.dataStore = this.api.userDataStore(d2ReportsDataStoreNamespace);
+                }
+                break;
+            case "global":
+                switch (process.env.REACT_APP_REPORT_VARIANT) {
+                    case "glass-submission":
+                        this.dataStore = this.api.dataStore(glassDataStoreNamespace);
+                        break;
+                    default:
+                        this.dataStore = this.api.dataStore(d2ReportsDataStoreNamespace);
+                }
+                break;
+        }
     }
 
     public async getObject<T extends object>(key: string): Promise<T | undefined> {

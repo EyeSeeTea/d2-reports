@@ -20,13 +20,13 @@ export interface DataCommentsViewModel {
 
 export function getDataCommentsViews(config: Config, dataValues: DataCommentsItem[]): DataCommentsViewModel[] {
     return dataValues.map(dataValue => {
-        if(config.sections !== undefined && config.sections[dataValue.section] !== undefined){
+        if (config.sections !== undefined && config.sections[dataValue.section] !== undefined) {
             return {
                 id: getDataCommentsItemId(dataValue),
                 period: dataValue.period,
                 orgUnit: dataValue.orgUnit.name,
                 dataSet: dataValue.dataSet.name,
-                dataElement: dataValue.dataElement.name, 
+                dataElement: dataValue.dataElement.name,
                 // eslint-disable-next-line
                 section: config.sections[dataValue.section]!.name || "-",
                 categoryOptionCombo: dataValue.categoryOptionCombo.name,
@@ -35,7 +35,7 @@ export function getDataCommentsViews(config: Config, dataValues: DataCommentsIte
                 lastUpdated: dataValue.lastUpdated.toISOString(),
                 storedBy: dataValue.storedBy,
             };
-        }else{
+        } else {
             return {
                 id: getDataCommentsItemId(dataValue),
                 period: dataValue.period,
@@ -49,7 +49,6 @@ export function getDataCommentsViews(config: Config, dataValues: DataCommentsIte
                 lastUpdated: dataValue.lastUpdated.toISOString(),
                 storedBy: dataValue.storedBy,
             };
-
         }
     });
 }
