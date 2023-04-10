@@ -248,7 +248,7 @@ export class Dhis2DataStoreDataForm {
         const res = await api.metadata
             .get({
                 constants: {
-                    fields: { id: true, code: true, description: true },
+                    fields: { id: true, code: true, displayDescription: true },
                     filter: { code: { in: codes } },
                 },
             })
@@ -263,7 +263,7 @@ export class Dhis2DataStoreDataForm {
         const constantsByCode = _.keyBy(this.config.constants, getCode);
 
         const getText = (value: string | { code: string } | undefined) =>
-            typeof value === "string" ? value : value ? constantsByCode[value.code]?.description : "";
+            typeof value === "string" ? value : value ? constantsByCode[value.code]?.displayDescription : "";
 
         const sections = _(dataSetConfig?.sections)
             .toPairs()
@@ -336,7 +336,7 @@ function selectorMatches<T extends { code: string }>(obj: T, selector: Selector)
 interface Constant {
     id: Id;
     code: Code;
-    description: string;
+    displayDescription: string;
 }
 
 let cachedStore: Dhis2DataStoreDataForm | undefined;
