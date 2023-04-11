@@ -26,6 +26,7 @@ export interface GLASSDataSubmissionItemIdentifier {
 
 export interface GLASSDataSubmissionModule {
     id: Id;
+    name: string;
     questionnaires: string;
     userGroups: {
         captureAccess: NamedRef[];
