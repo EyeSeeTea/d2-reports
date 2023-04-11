@@ -70,7 +70,16 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
     ): Promise<PaginatedObjects<GLASSDataSubmissionItem>> {
         const { paging, sorting, orgUnitIds, periods, completionStatus, submissionStatus } = options;
 
-        const objects = (await this.globalStorageClient.getObject<GLASSDataSubmissionItem[]>(namespace)) ?? [];
+        const modules =
+            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
+                Namespaces.DATA_SUBMISSSIONS_MODULES
+            )) ?? [];
+        const objects =
+            (await this.globalStorageClient.getObject<GLASSDataSubmissionItem[]>(namespace))?.filter(object => {
+                const amrModule = modules.find(module => module.name === "AMR")?.id;
+
+                return object.module === amrModule;
+            }) ?? [];
         const uploads =
             (await this.globalStorageClient.getObject<GLASSDataSubmissionItemUpload[]>(
                 Namespaces.DATA_SUBMISSSIONS_UPLOADS
@@ -92,18 +101,14 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             let dataSetsUploaded = "";
             if (completedDatasets > 0) {
                 dataSetsUploaded += `${completedDatasets} completed, `;
-                dataSetsUploaded += `${completedDatasets} completed, `;
             }
             if (validatedDatasets > 0) {
-                dataSetsUploaded += `${validatedDatasets} validated, `;
                 dataSetsUploaded += `${validatedDatasets} validated, `;
             }
             if (importedDatasets > 0) {
                 dataSetsUploaded += `${importedDatasets} imported, `;
-                dataSetsUploaded += `${importedDatasets} imported, `;
             }
             if (uploadedDatasets > 0) {
-                dataSetsUploaded += `${uploadedDatasets} uploaded, `;
                 dataSetsUploaded += `${uploadedDatasets} uploaded, `;
             }
 
