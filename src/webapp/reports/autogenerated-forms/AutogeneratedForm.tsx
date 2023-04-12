@@ -84,12 +84,15 @@ function useDataFormInfo(): [Maybe<DataFormInfo>, boolean] {
     }, [dataForm, compositionRoot, orgUnitId, period, reloadKey, loadingActions]);
 
     // Save the data value but don't update dataValues (it re-renders all the form)
-    const saveDataValue = useCallback(
-        (dataValue: DataValue) => compositionRoot.dataForms.saveValue(dataValue),
-        [compositionRoot]
+    const saveDataValue = useCallback<DataFormInfo["data"]["save"]>(
+        async (dataValue: DataValue) => {
+            if (!dataValues) return dataValues;
+            return compositionRoot.dataForms.saveValue(dataValues, dataValue).then(setDataValues);
+        },
+        [compositionRoot, dataValues]
     );
 
-    const dataFormInfo =
+    const dataFormInfo: Maybe<DataFormInfo> =
         dataForm && dataValues
             ? {
                   metadata: { dataForm },
@@ -108,7 +111,7 @@ export interface DataFormInfo {
     metadata: { dataForm: DataForm };
     data: {
         values: DataValueStore;
-        save: (dataValue: DataValue) => Promise<DataValue>;
+        save: (dataValue: DataValue) => Promise<void>;
     };
     initForm: () => void;
     categoryOptionComboId: Id;
