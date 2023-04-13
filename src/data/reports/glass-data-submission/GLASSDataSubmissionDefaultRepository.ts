@@ -108,14 +108,18 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             let dataSetsUploaded = "";
             if (completedDatasets > 0) {
                 dataSetsUploaded += `${completedDatasets} completed, `;
+                dataSetsUploaded += `${completedDatasets} completed, `;
             }
             if (validatedDatasets > 0) {
+                dataSetsUploaded += `${validatedDatasets} validated, `;
                 dataSetsUploaded += `${validatedDatasets} validated, `;
             }
             if (importedDatasets > 0) {
                 dataSetsUploaded += `${importedDatasets} imported, `;
+                dataSetsUploaded += `${importedDatasets} imported, `;
             }
             if (uploadedDatasets > 0) {
+                dataSetsUploaded += `${uploadedDatasets} uploaded, `;
                 dataSetsUploaded += `${uploadedDatasets} uploaded, `;
             }
 
@@ -357,7 +361,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const recipients = await this.getRecipientUsers(items, modules);
 
         const message = await this.getNotificationText(items, modules, "approved");
-        this.sendNotifications(message, message, recipients);
+        this.sendNotifications(message, message, [], recipients);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
@@ -401,8 +405,6 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         const message = await this.getNotificationText(items, modules, "reopened");
         this.sendNotifications(message, message, recipients);
-
-        await this.postDataSetRegistration(items, false);
 
         await this.postDataSetRegistration(items, false);
 
