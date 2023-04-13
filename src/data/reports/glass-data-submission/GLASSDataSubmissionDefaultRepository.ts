@@ -206,6 +206,30 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         return this.storageClient.saveObject<string[]>(namespace, columns);
     }
 
+    private async getNotificationBody(
+        items: GLASSDataSubmissionItemIdentifier[],
+        modules: GLASSDataSubmissionModule[],
+        status: string
+    ) {
+        const amrModule = modules.find(module => module.name === "AMR")?.name;
+        const orgUnitIds = _(items)
+            .map(({ orgUnit }) => orgUnit)
+            .compact()
+            .uniq()
+            .value();
+        const orgUnitsById = await this.getOrgUnits(orgUnitIds);
+        const itemsWithCountry = items.map(item => {
+            const country = item.orgUnit ? orgUnitsById[item.orgUnit]?.name || "-" : undefined;
+            return { period: item.period, country };
+        });
+
+        const body = `The data submissions in the ${amrModule} module for${itemsWithCountry.map(
+            item => ` ${item.country} in ${item.period}`
+        )} have been ${status} by WHO.`;
+
+        return body;
+    }
+
     async approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
         const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
         const modules =
@@ -224,7 +248,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             )
         ).map(({ id }) => ({ id }));
 
-        const body = "The data submissions have been approved by WHO.";
+        const body = await this.getNotificationBody(items, modules, "approved");
         this.sendNotifications("Approved by WHO", body, userGroups);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
@@ -281,7 +305,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             )
         ).map(({ id }) => ({ id }));
 
-        const body = "The data submission has been reopened by WHO.";
+        const body = await this.getNotificationBody(items, modules, "reopened");
         this.sendNotifications("Submission reopened by WHO", body, userGroups);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
@@ -305,7 +329,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             )
         ).map(({ id }) => ({ id }));
 
-        const body = "The requested dataset update has been accepted by WHO.";
+        const body = await this.getNotificationBody(items, modules, "accepted");
         this.sendNotifications("Accepted by WHO", body, userGroups);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
