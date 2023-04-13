@@ -72,21 +72,21 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             const validatedDatasets = uploadStatus.filter(item => item === "VALIDATED").length;
             const importedDatasets = uploadStatus.filter(item => item === "IMPORTED").length;
             const uploadedDatasets = uploadStatus.filter(item => item === "UPLOADED").length;
-            
+
             let dataSetsUploaded = "";
             if (completedDatasets > 0) {
-              dataSetsUploaded += `${completedDatasets} completed, `;
+                dataSetsUploaded += `${completedDatasets} completed, `;
             }
             if (validatedDatasets > 0) {
-              dataSetsUploaded += `${validatedDatasets} validated, `;
+                dataSetsUploaded += `${validatedDatasets} validated, `;
             }
             if (importedDatasets > 0) {
-              dataSetsUploaded += `${importedDatasets} imported, `;
+                dataSetsUploaded += `${importedDatasets} imported, `;
             }
             if (uploadedDatasets > 0) {
-              dataSetsUploaded += `${uploadedDatasets} uploaded, `;
+                dataSetsUploaded += `${uploadedDatasets} uploaded, `;
             }
-            
+
             // Remove trailing comma and space if any
             dataSetsUploaded = dataSetsUploaded.replace(/,\s*$/, "");
 
@@ -208,7 +208,24 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
     async approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
         const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
+        const modules =
+            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
+                Namespaces.DATA_SUBMISSSIONS_MODULES
+            )) ?? [];
+
         const newSubmissionValues = this.getNewSubmissionValues(items, objects, "APPROVED");
+        const userGroups = _.flatMap(
+            _.compact(
+                items.map(
+                    item =>
+                        modules.find(mod => mod.id === item.module && !_.isEmpty(mod.userGroups))?.userGroups
+                            .captureAccess
+                )
+            )
+        ).map(({ id }) => ({ id }));
+
+        const body = "The data submissions have been approved by WHO.";
+        this.sendNotifications("Approved by WHO", body, userGroups);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
@@ -240,29 +257,64 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             )
         ).map(({ id }) => ({ id }));
 
-        this.sendNotifications(message, userGroups);
+        const body = `Please review the messages and the reports to find about the causes of this rejection. You have to upload new datasets.\n Reason for rejection:\n ${message}`;
+        this.sendNotifications("Rejected by WHO", body, userGroups);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
 
     async reopen(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
         const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
+        const modules =
+            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
+                Namespaces.DATA_SUBMISSSIONS_MODULES
+            )) ?? [];
+
         const newSubmissionValues = this.getNewSubmissionValues(items, objects, "NOT_COMPLETED");
+        const userGroups = _.flatMap(
+            _.compact(
+                items.map(
+                    item =>
+                        modules.find(mod => mod.id === item.module && !_.isEmpty(mod.userGroups))?.userGroups
+                            .captureAccess
+                )
+            )
+        ).map(({ id }) => ({ id }));
+
+        const body = "The data submission has been reopened by WHO.";
+        this.sendNotifications("Submission reopened by WHO", body, userGroups);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
 
     async accept(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
         const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
+        const modules =
+            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
+                Namespaces.DATA_SUBMISSSIONS_MODULES
+            )) ?? [];
+
         const newSubmissionValues = this.getNewSubmissionValues(items, objects, "UPDATE_REQUEST_ACCEPTED");
+        const userGroups = _.flatMap(
+            _.compact(
+                items.map(
+                    item =>
+                        modules.find(mod => mod.id === item.module && !_.isEmpty(mod.userGroups))?.userGroups
+                            .captureAccess
+                )
+            )
+        ).map(({ id }) => ({ id }));
+
+        const body = "The requested dataset update has been accepted by WHO.";
+        this.sendNotifications("Accepted by WHO", body, userGroups);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
 
-    private async sendNotifications(message: string, userGroups: Ref[]): Promise<void> {
+    private async sendNotifications(subject: string, text: string, userGroups: Ref[]): Promise<void> {
         await this.api.messageConversations.post({
-            subject: "Rejected by WHO",
-            text: `Please review the messages and the reports to find about the causes of this rejection. You have to upload new datasets.\n Reason for rejection:\n ${message}`,
+            subject,
+            text,
             userGroups,
         });
     }
