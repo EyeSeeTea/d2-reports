@@ -11,7 +11,7 @@ export class UpdateGLASSSubmissionUseCase implements UseCase {
         items: GLASSDataSubmissionItemIdentifier[],
         message?: string,
         isDatasetUpdate?: boolean
-    ): Promise<void> | undefined {
+    ): Promise<void> | Promise<string> | undefined {
         switch (action) {
             case "approve":
                 return this.submissionRepository.approve(namespace, items);
@@ -21,10 +21,12 @@ export class UpdateGLASSSubmissionUseCase implements UseCase {
                 return this.submissionRepository.reopen(namespace, items);
             case "accept":
                 return this.submissionRepository.accept(namespace, items);
+            case "unapvdDashboard":
+                return this.submissionRepository.getGLASSDashboardId(namespace, items);
             default:
                 return;
         }
     }
 }
 
-type UpdateAction = "approve" | "reject" | "reopen" | "accept";
+type UpdateAction = "approve" | "reject" | "reopen" | "accept" | "unapvdDashboard";
