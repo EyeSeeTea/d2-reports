@@ -54,7 +54,16 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
     ): Promise<PaginatedObjects<GLASSDataSubmissionItem>> {
         const { paging, sorting, orgUnitIds, periods, completionStatus, submissionStatus } = options;
 
-        const objects = (await this.globalStorageClient.getObject<GLASSDataSubmissionItem[]>(namespace)) ?? [];
+        const modules =
+            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
+                Namespaces.DATA_SUBMISSSIONS_MODULES
+            )) ?? [];
+        const objects =
+            (await this.globalStorageClient.getObject<GLASSDataSubmissionItem[]>(namespace))?.filter(object => {
+                const amrModule = modules.find(module => module.name === "AMR")?.id;
+
+                return object.module === amrModule;
+            }) ?? [];
         const uploads =
             (await this.globalStorageClient.getObject<GLASSDataSubmissionItemUpload[]>(
                 Namespaces.DATA_SUBMISSSIONS_UPLOADS
