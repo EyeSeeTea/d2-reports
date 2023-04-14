@@ -476,6 +476,16 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
 
+    async getGLASSDashboardId(_namespace: string, _items: GLASSDataSubmissionItemIdentifier[]): Promise<string> {
+        const modules =
+            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
+                Namespaces.DATA_SUBMISSSIONS_MODULES
+            )) ?? [];
+        const glassUnapvdDashboardId = modules.find(module => module.name === "AMR")?.dashboards.validationReport ?? "";
+
+        return glassUnapvdDashboardId;
+    }
+
     private async postDataSetRegistration(items: GLASSDataSubmissionItemIdentifier[], completed: boolean) {
         const dataSetRegistrations = items.map(item => ({
             dataSet: "OYc0CihXiSn",
@@ -491,16 +501,6 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 { completeDataSetRegistrations: dataSetRegistrations }
             )
             .getData();
-    }
-
-    async getGLASSDashboardId(_namespace: string, _items: GLASSDataSubmissionItemIdentifier[]): Promise<string> {
-        const modules =
-            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
-                Namespaces.DATA_SUBMISSSIONS_MODULES
-            )) ?? [];
-        const glassUnapvdDashboardId = modules.find(module => module.name === "AMR")?.dashboards.validationReport ?? "";
-
-        return glassUnapvdDashboardId;
     }
 
     private async sendNotifications(subject: string, text: string, userGroups: Ref[], users?: Ref[]): Promise<void> {
