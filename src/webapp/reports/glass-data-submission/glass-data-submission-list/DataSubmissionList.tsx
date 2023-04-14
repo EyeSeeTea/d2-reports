@@ -28,11 +28,12 @@ import _ from "lodash";
 import { Filter, Filters } from "./Filters";
 import { Config } from "../../../../domain/common/entities/Config";
 import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
-import { Check, LockOpen, ThumbDown, ThumbUp } from "@material-ui/icons";
+import { Check, Dashboard, LockOpen, ThumbDown, ThumbUp } from "@material-ui/icons";
 import { useBooleanState } from "../../../utils/use-boolean";
+import { goToDhis2Url } from "../../../../utils/utils";
 
 export const DataSubmissionList: React.FC = React.memo(() => {
-    const { compositionRoot, config } = useAppContext();
+    const { api, compositionRoot, config } = useAppContext();
 
     const snackbar = useSnackbar();
     const [reloadKey, reload] = useReload();
@@ -78,6 +79,27 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                 },
             ],
             actions: [
+                {
+                    name: "unapvdDashboard",
+                    text: i18n.t("Go to GLASS Unapproved Dashboard"),
+                    icon: <Dashboard />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseDataSubmissionItemId(item)));
+                        if (items.length === 0) return;
+
+                        const unapvdDashboardId = await compositionRoot.glassDataSubmission.updateStatus(
+                            Namespaces.DATA_SUBMISSSIONS,
+                            "unapvdDashboard",
+                            items
+                        );
+
+                        goToDhis2Url(api.baseUrl, `/dhis-web-dashboard/index.html#/${unapvdDashboardId}`);
+                    },
+                    isActive: (rows: DataSubmissionViewModel[]) => {
+                        return _.every(rows, row => row.status === "PENDING_APPROVAL");
+                    },
+                },
                 {
                     name: "approve",
                     text: i18n.t("Approve"),
@@ -183,7 +205,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot, openDialog, reload, snackbar]
+        [api, compositionRoot.glassDataSubmission, openDialog, reload, snackbar]
     );
 
     const getRows = useMemo(
