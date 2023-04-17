@@ -8,6 +8,7 @@ export interface GLASSDataSubmissionRepository {
     get(options: GLASSDataSubmissionOptions, namespace: string): Promise<PaginatedObjects<GLASSDataSubmissionItem>>;
     getColumns(namespace: string): Promise<string[]>;
     saveColumns(namespace: string, columns: string[]): Promise<void>;
+    dhis2MessageCount(): Promise<number>;
     approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]): Promise<void>;
     reject(
         namespace: string,

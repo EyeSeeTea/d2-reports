@@ -38,6 +38,13 @@ interface GLASSDataSubmissionItemUpload extends GLASSDataSubmissionItemIdentifie
     status: "UPLOADED" | "IMPORTED" | "VALIDATED" | "COMPLETED";
 }
 
+interface MessageConversations {
+    messageConversations: {
+        id: Id;
+        displayName: string;
+    }[];
+}
+
 type DataValueType = {
     dataElement: string;
     period: string;
@@ -229,6 +236,15 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
     async saveColumns(namespace: string, columns: string[]): Promise<void> {
         return this.storageClient.saveObject<string[]>(namespace, columns);
+    }
+
+    async dhis2MessageCount(): Promise<number> {
+        const { messageConversations } =
+            (await this.api
+                .get<MessageConversations>("/messageConversations.json?filter=read%3Aeq%3Afalse")
+                .getData()) ?? [];
+
+        return messageConversations.length;
     }
 
     private async getNotificationBody(
