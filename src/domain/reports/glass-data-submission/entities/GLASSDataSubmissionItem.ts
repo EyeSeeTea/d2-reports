@@ -28,6 +28,10 @@ export interface GLASSDataSubmissionModule {
     id: Id;
     name: string;
     questionnaires: string;
+    dashboards: {
+        reportsMenu: string;
+        validationReport: string;
+    };
     userGroups: {
         captureAccess: NamedRef[];
         readAccess: NamedRef[];
