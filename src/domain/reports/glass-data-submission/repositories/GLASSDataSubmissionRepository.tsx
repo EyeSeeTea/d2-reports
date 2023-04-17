@@ -17,6 +17,7 @@ export interface GLASSDataSubmissionRepository {
     ): Promise<void>;
     reopen(namespace: string, items: GLASSDataSubmissionItemIdentifier[]): Promise<void>;
     accept(namespace: string, items: GLASSDataSubmissionItemIdentifier[]): Promise<void>;
+    getGLASSDashboardId(namespace: string, items: GLASSDataSubmissionItemIdentifier[]): Promise<string>;
 }
 
 export interface GLASSDataSubmissionOptions {
