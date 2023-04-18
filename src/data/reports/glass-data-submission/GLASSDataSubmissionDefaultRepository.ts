@@ -38,6 +38,22 @@ interface GLASSDataSubmissionItemUpload extends GLASSDataSubmissionItemIdentifie
     status: "UPLOADED" | "IMPORTED" | "VALIDATED" | "COMPLETED";
 }
 
+type DataValueType = {
+    dataElement: string;
+    period: string;
+    orgUnit: string;
+    value: string;
+    [key: string]: string;
+};
+
+type DataSetsValueType = {
+    dataSet: string;
+    period: string;
+    orgUnit: string;
+    completeDate?: string;
+    dataValues: DataValueType[];
+};
+
 export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmissionRepository {
     private storageClient: StorageClient;
     private globalStorageClient: StorageClient;
@@ -72,21 +88,21 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             const validatedDatasets = uploadStatus.filter(item => item === "VALIDATED").length;
             const importedDatasets = uploadStatus.filter(item => item === "IMPORTED").length;
             const uploadedDatasets = uploadStatus.filter(item => item === "UPLOADED").length;
-            
+
             let dataSetsUploaded = "";
             if (completedDatasets > 0) {
-              dataSetsUploaded += `${completedDatasets} completed, `;
+                dataSetsUploaded += `${completedDatasets} completed, `;
             }
             if (validatedDatasets > 0) {
-              dataSetsUploaded += `${validatedDatasets} validated, `;
+                dataSetsUploaded += `${validatedDatasets} validated, `;
             }
             if (importedDatasets > 0) {
-              dataSetsUploaded += `${importedDatasets} imported, `;
+                dataSetsUploaded += `${importedDatasets} imported, `;
             }
             if (uploadedDatasets > 0) {
-              dataSetsUploaded += `${uploadedDatasets} uploaded, `;
+                dataSetsUploaded += `${uploadedDatasets} uploaded, `;
             }
-            
+
             // Remove trailing comma and space if any
             dataSetsUploaded = dataSetsUploaded.replace(/,\s*$/, "");
 
@@ -206,8 +222,48 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         return this.storageClient.saveObject<string[]>(namespace, columns);
     }
 
+    private async getDataSetsValue(dataSet: string, orgUnit: string, period: string) {
+        return await this.api
+            .get<DataSetsValueType>("/dataValueSets", {
+                dataSet,
+                orgUnit,
+                period,
+            })
+            .getData();
+    }
+
     async approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
         const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
+        const modules =
+            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
+                Namespaces.DATA_SUBMISSSIONS_MODULES
+            )) ?? [];
+
+        const amrDataSets = modules.find(module => module.name === "AMR")?.dataSets ?? [];
+
+        _.forEach(amrDataSets, async amrDataSet => {
+            await promiseMap(items, async item => {
+                const dataValues = (await this.getDataSetsValue(amrDataSet.id, item.orgUnit ?? "", item.period))
+                    .dataValues;
+
+                if (!_.isEmpty(dataValues)) {
+                    const apvdDataSets = await this.getDataSetsValue(
+                        amrDataSet.approvedId,
+                        item.orgUnit ?? "",
+                        item.period
+                    );
+
+                    await this.api
+                        .post<DataValueType>(
+                            "/dataValueSets.json",
+                            {},
+                            { dataValues: _.union(apvdDataSets.dataValues, dataValues) }
+                        )
+                        .getData();
+                }
+            });
+        });
+
         const newSubmissionValues = this.getNewSubmissionValues(items, objects, "APPROVED");
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
