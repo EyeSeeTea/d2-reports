@@ -111,11 +111,14 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             }
             if (validatedDatasets > 0) {
                 dataSetsUploaded += `${validatedDatasets} validated, `;
+                dataSetsUploaded += `${validatedDatasets} validated, `;
             }
             if (importedDatasets > 0) {
                 dataSetsUploaded += `${importedDatasets} imported, `;
+                dataSetsUploaded += `${importedDatasets} imported, `;
             }
             if (uploadedDatasets > 0) {
+                dataSetsUploaded += `${uploadedDatasets} uploaded, `;
                 dataSetsUploaded += `${uploadedDatasets} uploaded, `;
             }
 
