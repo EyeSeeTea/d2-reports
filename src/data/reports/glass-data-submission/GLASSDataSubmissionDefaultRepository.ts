@@ -280,7 +280,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             })
             .getData();
     }
-
+    
     async approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
         const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
         const modules =
