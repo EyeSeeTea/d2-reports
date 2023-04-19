@@ -299,18 +299,10 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             objects,
             isDatasetUpdate ? "APPROVED" : "REJECTED"
         );
-        const userGroups = _.flatMap(
-            _.compact(
-                items.map(
-                    item =>
-                        modules.find(mod => mod.id === item.module && !_.isEmpty(mod.userGroups))?.userGroups
-                            .captureAccess
-                )
-            )
-        ).map(({ id }) => ({ id }));
+        const recipients = await this.getRecipientUsers(items, modules);
 
         const body = `Please review the messages and the reports to find about the causes of this rejection. You have to upload new datasets.\n Reason for rejection:\n ${message}`;
-        this.sendNotifications("Rejected by WHO", body, userGroups);
+        this.sendNotifications("Rejected by WHO", body, [], recipients);
 
         await this.postDataSetRegistration(items, false);
 
