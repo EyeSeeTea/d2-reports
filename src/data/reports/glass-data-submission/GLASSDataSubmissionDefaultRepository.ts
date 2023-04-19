@@ -255,14 +255,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         return body;
     }
 
-    async approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
-        const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
-        const modules =
-            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
-                Namespaces.DATA_SUBMISSSIONS_MODULES
-            )) ?? [];
-
-        const newSubmissionValues = this.getNewSubmissionValues(items, objects, "APPROVED");
+    private async getRecipientUsers(items: GLASSDataSubmissionItemIdentifier[], modules: GLASSDataSubmissionModule[]) {
         const userGroups = _.flatMap(
             _.compact(
                 items.map(
@@ -271,10 +264,46 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                             .captureAccess
                 )
             )
-        ).map(({ id }) => ({ id }));
+        ).map(({ id }) => id);
+
+        const orgUnits = _(
+            await promiseMap(
+                items,
+                async item =>
+                    await this.api.get<any>(`/organisationUnits/${item.orgUnit}?fields=ancestors,id`).getData()
+            )
+        )
+            .flatMapDeep(obj => [obj.id, _.map(obj.ancestors, "id")])
+            .flatten()
+            .value();
+
+        const { objects: recipientUsers } = await this.api.models.users
+            .get({
+                fields: {
+                    id: true,
+                },
+                filter: {
+                    "organisationUnits.id": { in: orgUnits },
+                    "userGroups.id": { in: userGroups },
+                },
+            })
+            .getData();
+
+        return recipientUsers;
+    }
+
+    async approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
+        const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
+        const modules =
+            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
+                Namespaces.DATA_SUBMISSSIONS_MODULES
+            )) ?? [];
+
+        const newSubmissionValues = this.getNewSubmissionValues(items, objects, "APPROVED");
+        const recipients = await this.getRecipientUsers(items, modules);
 
         const body = await this.getNotificationBody(items, modules, "approved");
-        this.sendNotifications("Approved by WHO", body, userGroups);
+        this.sendNotifications("Approved by WHO", body, [], recipients);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
@@ -320,18 +349,10 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             )) ?? [];
 
         const newSubmissionValues = this.getNewSubmissionValues(items, objects, "NOT_COMPLETED");
-        const userGroups = _.flatMap(
-            _.compact(
-                items.map(
-                    item =>
-                        modules.find(mod => mod.id === item.module && !_.isEmpty(mod.userGroups))?.userGroups
-                            .captureAccess
-                )
-            )
-        ).map(({ id }) => ({ id }));
+        const recipients = await this.getRecipientUsers(items, modules);
 
         const body = await this.getNotificationBody(items, modules, "reopened");
-        this.sendNotifications("Submission reopened by WHO", body, userGroups);
+        this.sendNotifications("Submission reopened by WHO", body, [], recipients);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
@@ -344,18 +365,10 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             )) ?? [];
 
         const newSubmissionValues = this.getNewSubmissionValues(items, objects, "UPDATE_REQUEST_ACCEPTED");
-        const userGroups = _.flatMap(
-            _.compact(
-                items.map(
-                    item =>
-                        modules.find(mod => mod.id === item.module && !_.isEmpty(mod.userGroups))?.userGroups
-                            .captureAccess
-                )
-            )
-        ).map(({ id }) => ({ id }));
+        const recipients = await this.getRecipientUsers(items, modules);
 
         const body = await this.getNotificationBody(items, modules, "accepted");
-        this.sendNotifications("Accepted by WHO", body, userGroups);
+        this.sendNotifications("Accepted by WHO", body, [], recipients);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
@@ -370,11 +383,12 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         return glassUnapvdDashboardId;
     }
 
-    private async sendNotifications(subject: string, text: string, userGroups: Ref[]): Promise<void> {
-        await this.api.messageConversations.post({
+    private async sendNotifications(subject: string, text: string, userGroups: Ref[], users?: Ref[]): Promise<void> {
+        this.api.messageConversations.post({
             subject,
             text,
             userGroups,
+            users,
         });
     }
 
