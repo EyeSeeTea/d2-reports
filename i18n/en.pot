@@ -5,13 +5,16 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2023-03-24T14:23:48.965Z\n"
-"PO-Revision-Date: 2023-03-24T14:23:48.965Z\n"
+"POT-Creation-Date: 2023-04-20T11:58:35.649Z\n"
+"PO-Revision-Date: 2023-04-20T11:58:35.649Z\n"
 
 msgid "<No value>"
 msgstr ""
 
 msgid "- All -"
+msgstr ""
+
+msgid "LOG OUT"
 msgstr ""
 
 msgid "Loading..."
@@ -74,13 +77,46 @@ msgstr ""
 msgid "created"
 msgstr ""
 
+msgid "CSY Summary Table Report"
+msgstr ""
+
+msgid "Group"
+msgstr ""
+
+msgid "Sub-Group"
+msgstr ""
+
+msgid "Yearly"
+msgstr ""
+
+msgid "Quarterly"
+msgstr ""
+
+msgid "Jan - March"
+msgstr ""
+
+msgid "April - June"
+msgstr ""
+
+msgid "July - September"
+msgstr ""
+
+msgid "October - December"
+msgstr ""
+
+msgid "Period Type"
+msgstr ""
+
+msgid "Year"
+msgstr ""
+
+msgid "Quarter"
+msgstr ""
+
 msgid "GLASS Data Submission Report"
 msgstr ""
 
 msgid "Country"
-msgstr ""
-
-msgid "Year"
 msgstr ""
 
 msgid "Questionnaire completed"
@@ -90,6 +126,9 @@ msgid "DataSets uploaded"
 msgstr ""
 
 msgid "Status"
+msgstr ""
+
+msgid "Go to GLASS Unapproved Dashboard"
 msgstr ""
 
 msgid "Approve"

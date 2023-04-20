@@ -34,6 +34,9 @@ import { GetGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-dat
 import { SaveGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-data-submission/usecases/SaveGLASSDataSubmissionColumnsUseCase";
 import { UpdateGLASSSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/UpdateGLASSSubmissionUseCase";
 import { DHIS2MessageCountUseCase } from "./domain/reports/glass-data-submission/usecases/DHIS2MessageCountUseCase";
+import { CSYSummaryDefaultRepository } from "./data/reports/csy-summary/CSYSummaryDefaultRepository";
+import { GetSummaryUseCase } from "./domain/reports/csy-summary/usecases/GetSummaryUseCase";
+import { SaveSummaryUseCase } from "./domain/reports/csy-summary/usecases/SaveSummaryUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -42,6 +45,7 @@ export function getCompositionRoot(api: D2Api) {
     const dataDuplicationRepository = new MalDataApprovalDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
     const glassDataRepository = new GLASSDataSubmissionDefaultRepository(api);
+    const csySummaryRepository = new CSYSummaryDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
 
     return {
@@ -79,6 +83,10 @@ export function getCompositionRoot(api: D2Api) {
             saveColumns: new SaveGLASSDataSubmissionColumnsUseCase(glassDataRepository),
             dhis2MessageCount: new DHIS2MessageCountUseCase(glassDataRepository),
             updateStatus: new UpdateGLASSSubmissionUseCase(glassDataRepository),
+        }),
+        summary: getExecute({
+            get: new GetSummaryUseCase(csySummaryRepository),
+            save: new SaveSummaryUseCase(csySummaryRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),
