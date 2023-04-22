@@ -317,23 +317,6 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
 
-    private async postDataSetRegistration(items: GLASSDataSubmissionItemIdentifier[], completed: boolean) {
-        const dataSetRegistrations = items.map(item => ({
-            dataSet: "OYc0CihXiSn",
-            period: item.period,
-            organisationUnit: item.orgUnit,
-            completed,
-        }));
-
-        await this.api
-            .post<CompleteDataSetRegistrationsResponse>(
-                "/completeDataSetRegistrations",
-                {},
-                { completeDataSetRegistrations: dataSetRegistrations }
-            )
-            .getData();
-    }
-
     async reopen(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
         const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
         const modules =
@@ -354,6 +337,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         const message = await this.getNotificationText(items, modules, "reopened");
         this.sendNotifications(message, message, userGroups);
+
+        await this.postDataSetRegistration(items, false);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
@@ -379,7 +364,26 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const message = await this.getNotificationText(items, modules, "update request accepted");
         this.sendNotifications(message, message, userGroups);
 
+        await this.postDataSetRegistration(items, false);
+
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
+    }
+
+    private async postDataSetRegistration(items: GLASSDataSubmissionItemIdentifier[], completed: boolean) {
+        const dataSetRegistrations = items.map(item => ({
+            dataSet: "OYc0CihXiSn",
+            period: item.period,
+            organisationUnit: item.orgUnit,
+            completed,
+        }));
+
+        await this.api
+            .post<CompleteDataSetRegistrationsResponse>(
+                "/completeDataSetRegistrations",
+                {},
+                { completeDataSetRegistrations: dataSetRegistrations }
+            )
+            .getData();
     }
 
     async getGLASSDashboardId(_namespace: string, _items: GLASSDataSubmissionItemIdentifier[]): Promise<string> {
