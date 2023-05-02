@@ -231,7 +231,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         return messageConversations.length;
     }
 
-    private async getNotificationBody(
+    private async getNotificationText(
         items: GLASSDataSubmissionItemIdentifier[],
         modules: GLASSDataSubmissionModule[],
         status: string
@@ -247,12 +247,15 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             const country = item.orgUnit ? orgUnitsById[item.orgUnit]?.name || "-" : undefined;
             return { period: item.period, country };
         });
+        const multipleItems = items.length > 1;
 
-        const body = `The data submissions in the ${amrModule} module for${itemsWithCountry.map(
-            item => ` ${item.country} in ${item.period}`
-        )} have been ${status} by WHO.`;
+        const text = `The data ${
+            multipleItems ? "submissions" : "submission"
+        } for ${amrModule} module for${itemsWithCountry.map(
+            item => ` year ${item.period} and country ${item.country}`
+        )} ${multipleItems ? "have" : "has"} changed to ${status.toUpperCase()}.`;
 
-        return body;
+        return text;
     }
 
     async approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
@@ -273,8 +276,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             )
         ).map(({ id }) => ({ id }));
 
-        const body = await this.getNotificationBody(items, modules, "approved");
-        this.sendNotifications("Approved by WHO", body, userGroups);
+        const message = await this.getNotificationText(items, modules, "approved");
+        this.sendNotifications(message, message, userGroups);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
@@ -330,8 +333,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             )
         ).map(({ id }) => ({ id }));
 
-        const body = await this.getNotificationBody(items, modules, "reopened");
-        this.sendNotifications("Submission reopened by WHO", body, userGroups);
+        const message = await this.getNotificationText(items, modules, "reopened");
+        this.sendNotifications(message, message, userGroups);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
@@ -354,8 +357,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             )
         ).map(({ id }) => ({ id }));
 
-        const body = await this.getNotificationBody(items, modules, "accepted");
-        this.sendNotifications("Accepted by WHO", body, userGroups);
+        const message = await this.getNotificationText(items, modules, "update request accepted");
+        this.sendNotifications(message, message, userGroups);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
