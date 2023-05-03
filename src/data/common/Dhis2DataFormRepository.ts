@@ -113,7 +113,17 @@ function getMetadataQuery(options: { dataSetId: Id }) {
                     id: true,
                     code: true,
                     displayName: true,
-                    dataElements: { id: true },
+                    dataElements: {
+                        id: true,
+                        categoryCombo: {
+                            id: true,
+                            name: true,
+                            categoryOptionCombos: {
+                                id: true,
+                                name: true,
+                            },
+                        },
+                    },
                 },
             },
             filter: { id: { eq: options.dataSetId } },

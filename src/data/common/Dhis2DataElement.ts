@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { Id } from "../../domain/common/entities/Base";
 import { DataElement } from "../../domain/common/entities/DataElement";
-import { D2Api, MetadataPick } from "../../types/d2-api";
+import { D2Api, D2CategoryCombo, MetadataPick } from "../../types/d2-api";
 import { promiseMap } from "../../utils/promises";
 import { Dhis2DataStoreDataForm } from "./Dhis2DataStoreDataForm";
 
@@ -44,11 +44,59 @@ const dataElementFields = {
         id: true,
         options: { id: true, displayName: true, code: true },
     },
+    categoryCombo: {
+        id: true,
+        name: true,
+        categories: {
+            id: true,
+            name: true,
+            categoryOptions: {
+                id: true,
+                name: true,
+            },
+        },
+        categoryOptionCombos: {
+            id: true,
+            name: true,
+            categoryOptions: true,
+        },
+    },
 } as const;
 
 type D2DataElement = MetadataPick<{
     dataElements: { fields: typeof dataElementFields };
 }>["dataElements"][number];
+
+function makeCocOrderArray(namesArray: string[][]): string[] {
+    return namesArray.reduce((prev, current) => {
+        return prev
+            .map(prevValue => {
+                return current.map(currentValue => {
+                    return `${prevValue}, ${currentValue}`;
+                });
+            })
+            .reduce((prevCombo, currentCombo) => {
+                return prevCombo.concat(currentCombo);
+            });
+    });
+}
+
+function getCocOrdered(categoryCombo: D2CategoryCombo) {
+    const categoryOptionsNamesArray = categoryCombo.categories.map(c => {
+        return c.categoryOptions.flatMap(co => co.name);
+    });
+
+    const cocOrderArray = makeCocOrderArray(categoryOptionsNamesArray);
+
+    const result = cocOrderArray.flatMap(cocOrdered => {
+        const match = categoryCombo.categoryOptionCombos.find(coc => {
+            return coc.name === cocOrdered;
+        });
+        return match ? match : [];
+    });
+
+    return result;
+}
 
 function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataForm): DataElement | null {
     const { valueType } = dataElement;
@@ -64,12 +112,18 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
         : null;
     const optionSetFromCustomConfig = deConfig?.selection?.optionSet;
     const optionSet = optionSetFromCustomConfig || optionSetFromDataElement;
+    const categoryCombination = {
+        id: dataElement.categoryCombo?.id,
+        name: dataElement.categoryCombo?.name,
+        categoryOptionCombos: getCocOrdered(dataElement.categoryCombo as D2CategoryCombo),
+    };
 
     const base = {
         id: dataElement.id,
         code: dataElement.code,
         name: dataElement.displayFormName || dataElement.displayName,
         description: dataElement.displayDescription,
+        categoryCombos: categoryCombination,
         options: optionSet
             ? { isMultiple: Boolean(deConfig?.selection?.isMultiple), items: optionSet.options }
             : undefined,

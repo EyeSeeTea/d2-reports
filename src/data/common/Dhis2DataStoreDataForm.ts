@@ -22,7 +22,7 @@ interface BaseSectionConfig {
 }
 
 interface BasicSectionConfig extends BaseSectionConfig {
-    viewType: "table" | "grid" | "grid-with-totals" | "grid-coc";
+    viewType: "table" | "grid" | "grid-with-totals" | "grid-with-combos";
 }
 
 interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
@@ -38,7 +38,7 @@ const viewType = oneOf([
     exactly("table"),
     exactly("grid"),
     exactly("grid-with-totals"),
-    exactly("grid-coc"),
+    exactly("grid-with-combos"),
     exactly("grid-with-periods"),
 ]);
 
@@ -53,7 +53,7 @@ const DataStoreConfigCodec = Codec.interface({
             Codec.interface({
                 optionSet: optional(selector),
                 isMultiple: optional(boolean),
-                widget: optional(oneOf([exactly("dropdown"), exactly("radio")])),
+                widget: optional(oneOf([exactly("dropdown"), exactly("radio"), exactly("sourceType")])),
             })
         ),
     }),
@@ -93,7 +93,7 @@ interface DataElementConfig {
     selection?: {
         optionSet?: OptionSet;
         isMultiple: boolean;
-        widget: Maybe<"dropdown" | "radio">;
+        widget: Maybe<"dropdown" | "radio" | "sourceType">;
     };
 }
 
