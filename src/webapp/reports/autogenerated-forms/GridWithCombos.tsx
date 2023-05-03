@@ -56,11 +56,7 @@ const GridWithCombos: React.FC<GridWithCombosProps> = props => {
                             {row.items.map((item, idx) =>
                                 item.dataElement ? (
                                     <DataTableCell key={item.dataElement.id + item.dataElement.cocId}>
-                                        <DataElementItem
-                                            dataElement={item.dataElement}
-                                            dataFormInfo={dataFormInfo}
-                                            noComment={true}
-                                        />
+                                        <DataElementItem dataElement={item.dataElement} dataFormInfo={dataFormInfo} />
                                     </DataTableCell>
                                 ) : (
                                     <DataTableCell key={`cell-${idx}`}></DataTableCell>
