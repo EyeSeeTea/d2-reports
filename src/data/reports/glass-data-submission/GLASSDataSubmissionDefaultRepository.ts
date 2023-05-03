@@ -309,6 +309,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const body = `Please review the messages and the reports to find about the causes of this rejection. You have to upload new datasets.\n Reason for rejection:\n ${message}`;
         this.sendNotifications("Rejected by WHO", body, userGroups);
 
+        await this.postDataSetRegistration(items, false);
+
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
 
@@ -332,6 +334,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         const body = await this.getNotificationBody(items, modules, "reopened");
         this.sendNotifications("Submission reopened by WHO", body, userGroups);
+
+        await this.postDataSetRegistration(items, false);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
@@ -357,7 +361,26 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const body = await this.getNotificationBody(items, modules, "accepted");
         this.sendNotifications("Accepted by WHO", body, userGroups);
 
+        await this.postDataSetRegistration(items, false);
+
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
+    }
+
+    private async postDataSetRegistration(items: GLASSDataSubmissionItemIdentifier[], completed: boolean) {
+        const dataSetRegistrations = items.map(item => ({
+            dataSet: "OYc0CihXiSn",
+            period: item.period,
+            organisationUnit: item.orgUnit,
+            completed,
+        }));
+
+        await this.api
+            .post<CompleteDataSetRegistrationsResponse>(
+                "/completeDataSetRegistrations",
+                {},
+                { completeDataSetRegistrations: dataSetRegistrations }
+            )
+            .getData();
     }
 
     async getGLASSDashboardId(_namespace: string, _items: GLASSDataSubmissionItemIdentifier[]): Promise<string> {
