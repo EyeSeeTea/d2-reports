@@ -33,6 +33,8 @@ import { SaveDataFormValueUseCase } from "./domain/common/usecases/SaveDataFormV
 import { GetDataFormUseCase } from "./domain/common/usecases/GetDataFormUseCase";
 import { GetDataFormValuesUseCase } from "./domain/common/usecases/GetDataFormValuesUseCase";
 import { Dhis2DataValueRepository } from "./data/common/Dhis2DataValueRepository";
+import { ApplyToAllUseCase } from "./domain/common/usecases/ApplyToAllUseCase";
+import { SaveGridWithTotalsValueUseCase } from "./domain/common/usecases/SaveGridWithTotalsValue";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -77,6 +79,8 @@ export function getCompositionRoot(api: D2Api) {
             get: new GetDataFormUseCase(dataFormRepository),
             getValues: new GetDataFormValuesUseCase(dataValueRepository),
             saveValue: new SaveDataFormValueUseCase(dataValueRepository),
+            applyToAll: new ApplyToAllUseCase(dataValueRepository),
+            saveWithTotals: new SaveGridWithTotalsValueUseCase(dataValueRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),

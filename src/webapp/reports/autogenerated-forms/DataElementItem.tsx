@@ -12,42 +12,78 @@ export interface DataElementItemProps {
     dataFormInfo: DataFormInfo;
     period?: string; // Override period in dataFormInfo
     onChange?(dataValue: DataValue): void;
+    noComment?: boolean;
+    manualyDisabled?: boolean;
+    total?: DataElement;
+    columnTotal?: DataElement;
+    rowDataElements?: DataElement[];
+    columnDataElements?: DataElement[];
 }
 
 export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props => {
-    const { dataElement, dataFormInfo, period, onChange } = props;
+    const {
+        dataElement,
+        dataFormInfo,
+        period,
+        onChange,
+        noComment,
+        manualyDisabled,
+        total,
+        columnTotal,
+        rowDataElements,
+        columnDataElements,
+    } = props;
+
     const classes = useStyles();
     const elId = _([dataElement.id, period]).compact().join("-");
+    const dataElementCocId = dataElement.cocId ?? dataFormInfo.categoryOptionComboId;
+    const auditId = _([dataElement.id, dataElementCocId, "val"]).compact().join("-");
 
-    const saveDataValueAndNotifyParent = React.useCallback<DataEntryItemProps["onValueChange"]>(
+    const notifyParent = React.useCallback<DataEntryItemProps["onValueChange"]>(
         async dataValue => {
-            const dataValueUpdated = await dataFormInfo.data.save(dataValue);
-            if (onChange) onChange(dataValueUpdated);
-            return dataValueUpdated;
+            if (onChange) onChange(dataValue);
+            return dataValue;
         },
-        [onChange, dataFormInfo.data]
+        [onChange]
     );
 
-    return (
+    return !noComment ? (
         <div id={elId} className={classes.valueWrapper}>
             <div className={classes.valueInput}>
                 <DataEntryItem
                     dataElement={dataElement}
                     dataFormInfo={dataFormInfo}
                     period={period}
-                    onValueChange={saveDataValueAndNotifyParent}
+                    onValueChange={notifyParent}
+                    manualyDisabled={manualyDisabled}
+                    total={total}
+                    columnTotal={columnTotal}
+                    rowDataElements={rowDataElements}
+                    columnDataElements={columnDataElements}
                 />
             </div>
-
-            <CommentIcon
-                dataElementId={dataElement.id}
-                categoryOptionComboId={dataFormInfo.categoryOptionComboId} //
-            />
+            <CommentIcon dataElementId={dataElement.id} categoryOptionComboId={dataElementCocId} />
+        </div>
+    ) : (
+        <div id={elId} className={classes.valueWrapper}>
+            <div className={`${classes.valueInput} entryfield`} id={auditId}>
+                <DataEntryItem
+                    dataElement={dataElement}
+                    dataFormInfo={dataFormInfo}
+                    period={period}
+                    onValueChange={notifyParent}
+                    manualyDisabled={manualyDisabled}
+                    total={total}
+                    columnTotal={columnTotal}
+                    rowDataElements={rowDataElements}
+                    columnDataElements={columnDataElements}
+                />
+            </div>
         </div>
     );
 });
 
 const useStyles = makeStyles({
-    valueInput: { flexGrow: 1 },
+    valueInput: { flexGrow: 1, border: "0 !important" },
     valueWrapper: { display: "flex" },
 });

@@ -1,8 +1,15 @@
 import _ from "lodash";
 import { getId, Id } from "../../domain/common/entities/Base";
 import { DataElement } from "../../domain/common/entities/DataElement";
-import { DataValue, DataValueFile, DateObj, FileResource, Period } from "../../domain/common/entities/DataValue";
-import { DataValueRepository } from "../../domain/common/repositories/DataValueRepository";
+import {
+    DataValue,
+    DataValueFile,
+    DataValueTextMultiple,
+    DateObj,
+    FileResource,
+    Period,
+} from "../../domain/common/entities/DataValue";
+import { DataValueRepository, DataElementRefType } from "../../domain/common/repositories/DataValueRepository";
 import { D2Api, DataValueSetsDataValue } from "../../types/d2-api";
 import { promiseMap } from "../../utils/promises";
 import { assertUnreachable, Maybe } from "../../utils/ts-utils";
@@ -171,11 +178,40 @@ export class Dhis2DataValueRepository implements DataValueRepository {
                         ou: dataValue.orgUnitId,
                         pe: dataValue.period,
                         de: dataValue.dataElement.id,
+                        co: dataValue.dataElement.cocId || dataValue.categoryOptionComboId,
                         value: valueStr,
                     })
                     .getData()
                     .then(() => dataValue);
         }
+    }
+
+    async applyToAll(
+        dataValue: DataValueTextMultiple,
+        sourceTypeDeList: DataElementRefType[]
+    ): Promise<"SUCCESS" | "ERROR" | "WARNING" | "OK"> {
+        const valueStr = this.getStrValue(dataValue);
+
+        const stDataValues = sourceTypeDeList.map(de => {
+            return {
+                dataElement: de.id,
+                value: valueStr,
+                orgUnit: dataValue.orgUnitId,
+                period: dataValue.period,
+                categoryOptionCombo: dataValue.dataElement.cocId || dataValue.categoryOptionComboId,
+            };
+        });
+
+        const stDataPost = {
+            period: dataValue.period,
+            orgUnit: dataValue.orgUnitId,
+            dataValues: stDataValues,
+        };
+
+        return this.api.dataValues
+            .postSetAsync({}, stDataPost)
+            .getData()
+            .then(response => response.status);
     }
 
     private async deleteFileDataValue(dataValue: DataValueFile): Promise<DataValue> {

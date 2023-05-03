@@ -45,7 +45,11 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                             </DataTableCell>
 
                             <DataTableCell key={dataElement.id}>
-                                <DataElementItem dataElement={dataElement} dataFormInfo={dataFormInfo} />
+                                <DataElementItem
+                                    dataElement={dataElement}
+                                    dataFormInfo={dataFormInfo}
+                                    noComment={true}
+                                />
                             </DataTableCell>
                         </DataTableRow>
                     ))}

@@ -11,7 +11,7 @@ export interface CommentIconProps {
 export const CommentIcon: React.FC<CommentIconProps> = React.memo(props => {
     const { dataElementId, categoryOptionComboId } = props;
     const { api } = useAppContext();
-    const tagId = `${dataElementId}-${categoryOptionComboId}-comment"`;
+    const tagId = `${dataElementId}-${categoryOptionComboId}-comment`;
     const title = i18n.t("View comment and audit history");
 
     return (

@@ -116,14 +116,18 @@ export class DataValueStore {
         return new DataValueStore({ ...this.store, [key]: dataValue });
     }
 
-    getOrEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
+    get(dataElement: DataElement, base: DataValueBase): Maybe<DataValue> {
         const key = getStoreKey({
             dataElementId: dataElement.id,
             period: base.period,
-            categoryOptionComboId: base.categoryOptionComboId,
+            categoryOptionComboId: dataElement.cocId ?? base.categoryOptionComboId,
         });
 
         return this.store[key] || getEmpty(dataElement, base);
+    }
+
+    getOrEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
+        return this.get(dataElement, base) || getEmpty(dataElement, base);
     }
 }
 
