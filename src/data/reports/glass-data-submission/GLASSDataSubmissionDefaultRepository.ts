@@ -449,7 +449,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         const body = await this.getNotificationBody(items, modules, "reopened");
         this.sendNotifications("Submission reopened by WHO", body, [], recipients);
-
+        await this.postDataSetRegistration(items, false);
+        
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
 
@@ -465,6 +466,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         const body = await this.getNotificationBody(items, modules, "accepted");
         this.sendNotifications("Accepted by WHO", body, [], recipients);
+        await this.postDataSetRegistration(items, false);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
