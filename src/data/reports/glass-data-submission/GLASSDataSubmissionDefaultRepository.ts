@@ -53,7 +53,7 @@ type DataValueType = {
     [key: string]: string;
 };
 
-type DataSetsValueType = {
+type DataValueSetsType = {
     dataSet: string;
     period: string;
     orgUnit: string;
@@ -313,12 +313,42 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
     private async getDataSetsValue(dataSet: string, orgUnit: string, period: string) {
         return await this.api
-            .get<DataSetsValueType>("/dataValueSets", {
+            .get<DataValueSetsType>("/dataValueSets", {
                 dataSet,
                 orgUnit,
                 period,
             })
             .getData();
+    }
+
+    private async getDSDataElements(dataSet: string) {
+        return await this.api
+            .get<any>(`/dataSets/${dataSet}`, { fields: "dataSetElements[dataElement[id,name]]" })
+            .getData();
+    }
+
+    private makeDataValuesArray(
+        approvalDataSetId: string,
+        dataValueSets: DataValueType[],
+        dataElementsMatchedArray: { [key: string]: any }[]
+    ) {
+        return dataValueSets.flatMap(dataValueSet => {
+            const dataValue = { ...dataValueSet };
+            const destId = dataElementsMatchedArray.find(
+                dataElementsMatchedObj => dataElementsMatchedObj.origId === dataValueSet.dataElement
+            )?.destId;
+
+            if (!_.isEmpty(destId) && !_.isEmpty(dataValue.value)) {
+                dataValue.dataElement = destId;
+                dataValue.dataSet = approvalDataSetId;
+                delete dataValue.lastUpdated;
+                delete dataValue.comment;
+
+                return dataValue;
+            } else {
+                return [];
+            }
+        });
     }
 
     async approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
@@ -332,23 +362,44 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         _.forEach(amrDataSets, async amrDataSet => {
             await promiseMap(items, async item => {
-                const dataValues = (await this.getDataSetsValue(amrDataSet.id, item.orgUnit ?? "", item.period))
+                const dataValueSets = (await this.getDataSetsValue(amrDataSet.id, item.orgUnit ?? "", item.period))
                     .dataValues;
 
-                if (!_.isEmpty(dataValues)) {
-                    const apvdDataSets = await this.getDataSetsValue(
+                if (!_.isEmpty(dataValueSets)) {
+                    const DSDataElements: { dataSetElements: { dataElement: NamedRef }[] } =
+                        await this.getDSDataElements(amrDataSet.id);
+                    const ADSDataElements: { dataSetElements: { dataElement: NamedRef }[] } =
+                        await this.getDSDataElements(amrDataSet.approvedId);
+
+                    const uniqueDataElementsIds = _.uniq(_.map(dataValueSets, "dataElement"));
+                    const dataElementsMatchedArray = DSDataElements.dataSetElements.map(element => {
+                        const dataElement = element.dataElement;
+                        if (uniqueDataElementsIds.includes(dataElement.id)) {
+                            const apvdName = dataElement.name + "-APVD";
+                            const ADSDataElement = ADSDataElements.dataSetElements.find(
+                                element => element.dataElement.name === apvdName
+                            );
+                            return {
+                                origId: dataElement.id,
+                                destId: ADSDataElement?.dataElement.id,
+                                name: dataElement.name,
+                            };
+                        } else {
+                            return [];
+                        }
+                    });
+
+                    const dataValuesToPost = this.makeDataValuesArray(
                         amrDataSet.approvedId,
-                        item.orgUnit ?? "",
-                        item.period
+                        dataValueSets,
+                        dataElementsMatchedArray
                     );
 
-                    await this.api
-                        .post<DataValueType>(
-                            "/dataValueSets.json",
-                            {},
-                            { dataValues: _.union(apvdDataSets.dataValues, dataValues) }
-                        )
-                        .getData();
+                    await promiseMap(_.chunk(dataValuesToPost, 1000), async dataValuesGroup => {
+                        return await this.api.dataValues
+                            .postSet({}, { dataValues: _.reject(dataValuesGroup, _.isEmpty) })
+                            .getData();
+                    });
                 }
             });
         });
