@@ -277,7 +277,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         ).map(({ id }) => ({ id }));
 
         const message = await this.getNotificationText(items, modules, "approved");
-        this.sendNotifications(message, message, userGroups);
+        this.sendNotifications(message, message, recipients);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
@@ -328,7 +328,9 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         ).map(({ id }) => ({ id }));
 
         const message = await this.getNotificationText(items, modules, "reopened");
-        this.sendNotifications(message, message, userGroups);
+        this.sendNotifications(message, message, recipients);
+
+        await this.postDataSetRegistration(items, false);
 
         await this.postDataSetRegistration(items, false);
 
@@ -354,7 +356,9 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         ).map(({ id }) => ({ id }));
 
         const message = await this.getNotificationText(items, modules, "update request accepted");
-        this.sendNotifications(message, message, userGroups);
+        this.sendNotifications(message, message, recipients);
+
+        await this.postDataSetRegistration(items, false);
 
         await this.postDataSetRegistration(items, false);
 
