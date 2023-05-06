@@ -76,9 +76,28 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 Namespaces.DATA_SUBMISSSIONS_UPLOADS
             )) ?? [];
 
-        const registrations = await this.getRegistrations(objects);
+        const userOrgUnits = (await this.api.get<{ organisationUnits: Ref[] }>("/me").getData()).organisationUnits.map(
+            ou => ou.id
+        );
+        const { organisationUnits } = await this.api
+            .get<any>(
+                "/metadata?organisationUnits:fields=children[children[id,level],id,level],id,level&organisationUnits:filter=level:eq:1"
+            )
+            .getData();
+        const orgUnitsWithChildren = _(userOrgUnits)
+            .flatMap(ou => {
+                const res = flattenNodes(flattenNodes(organisationUnits).filter(res => res.id === ou)).map(
+                    node => node.id
+                );
+                return res;
+            })
+            .uniq()
+            .value();
+        const filteredObjects = objects.filter(object => orgUnitsWithChildren.includes(object.orgUnit));
 
-        const rows = objects.map(object => {
+        const registrations = await this.getRegistrations(filteredObjects);
+
+        const rows = filteredObjects.map(object => {
             const key = getRegistrationKey({ orgUnitId: object.orgUnit, period: object.period });
             const match = registrations[key];
             const submissionStatus = statusItems.find(item => item.value === object.status)?.text ?? "";
@@ -441,3 +460,12 @@ function getRegistrationKey(options: { orgUnitId: Id; period: string }): Registr
 }
 
 type RegistrationKey = string; // `${orgUnitId}.${period}`
+
+const flattenNodes = (orgUnitNodes: OrgUnitNode[]): OrgUnitNode[] =>
+    _.flatMap(orgUnitNodes, node => (node.children ? [node, ...flattenNodes(node.children)] : [node]));
+
+type OrgUnitNode = {
+    level: number;
+    id: string;
+    children?: OrgUnitNode[];
+};
