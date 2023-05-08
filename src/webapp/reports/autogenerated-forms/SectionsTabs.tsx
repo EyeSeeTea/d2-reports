@@ -1,4 +1,5 @@
 import React from "react";
+import styled from "styled-components";
 import { Tabs, Tab, Box } from "@material-ui/core";
 import { Section, SectionWithPeriods, ViewType } from "../../../domain/common/entities/DataForm";
 import TableForm from "./TableForm";
@@ -74,6 +75,12 @@ const TabPanel: React.FC<TabProps> = React.memo(props => {
     );
 });
 
+const TabsWithScroll = styled(Tabs)`
+    .MuiTabs-fixed {
+        overflow: auto !important;
+    }
+`;
+
 const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
     const { sections, dataFormInfo } = props;
     const [activeTab, setActiveTab] = React.useState(0);
@@ -84,7 +91,7 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
     return (
         <Box sx={{ width: "100%" }}>
             <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-                <Tabs value={activeTab} onChange={handleChange}>
+                <TabsWithScroll value={activeTab} onChange={handleChange}>
                     {sections.flatMap(section => {
                         const order = section.tabs.order;
                         if (isTabHeader(order)) {
@@ -100,7 +107,7 @@ const SectionsTabs: React.FC<TabPanelProps> = React.memo(props => {
                             return [];
                         }
                     })}
-                </Tabs>
+                </TabsWithScroll>
             </Box>
             {sections.map(section => {
                 return (

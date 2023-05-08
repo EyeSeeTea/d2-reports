@@ -1106,7 +1106,7 @@ interface Column {
     cocName?: string;
 }
 
-interface Row {
+export interface Row {
     name: string;
     total?: DataElement;
     rowDataElements?: DataElement[];
@@ -1154,7 +1154,6 @@ export class GridWithTotalsViewModel {
 
         const rows = subsections.map(subsection => {
             const total = totalList.find(t => t.name === subsection.name) as DataElement;
-
             const index = subsection.name.split(separator)[0];
             const totalRowIndex = index?.split(".")[0];
 
@@ -1163,7 +1162,7 @@ export class GridWithTotalsViewModel {
             });
 
             const section1 = section.id === "yzMn16Bp1wV";
-            const hasTotals = index?.length === 3 && !_.isEmpty(totalRowIndex) && section1;
+            const hasTotals = index?.split(".").length === 2 && !_.isEmpty(totalRowIndex) && section1;
             const rowDisabled = section1 && indexedDEs.length > 1 ? index === totalRowIndex : false;
 
             const items = columns.map(column => {
@@ -1180,7 +1179,8 @@ export class GridWithTotalsViewModel {
 
                     columnDataElements = indexedDEs.filter(de => {
                         return (
-                            de.name.match(/^\d.\d - /g) && de.name.endsWith(`${dataElement?.name.split(separator)[0]}`)
+                            de.name.match(/^\d+\.\d+ - /g) &&
+                            de.name.endsWith(`${dataElement?.name.split(separator)[0]}`)
                         );
                     });
                 }

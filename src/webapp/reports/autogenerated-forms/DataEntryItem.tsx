@@ -15,6 +15,7 @@ import FileWidget from "./widgets/FileWidget";
 import DateWidget from "./widgets/DateWidget";
 import YearPickerWidget from "./widgets/YearPickerWidget";
 import SourceTypeWidget from "./widgets/SourceTypeWidget";
+import { Row } from "./GridWithTotalsViewModel";
 
 export interface DataEntryItemProps {
     dataElement: DataElement;
@@ -26,6 +27,8 @@ export interface DataEntryItemProps {
     columnTotal?: DataElement;
     rowDataElements?: DataElement[];
     columnDataElements?: DataElement[];
+    cocId: string;
+    rows?: Row[];
 }
 
 function isInputExpired(
@@ -53,7 +56,7 @@ function isInputExpired(
 }
 
 const DataEntryItem: React.FC<DataEntryItemProps> = props => {
-    const { dataElement, dataFormInfo, manualyDisabled: handDisabled, rowDataElements } = props;
+    const { dataElement, dataFormInfo, manualyDisabled: handDisabled, rowDataElements, rows } = props;
     const [dataValue, state, notifyChange] = useUpdatableDataValueWithFeedback(props);
 
     const { type } = dataValue;
@@ -105,6 +108,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
                             disabled={disabled}
                             sourceTypeDEs={sourceTypeDEs}
                             rowDataElements={rowDataElements}
+                            rows={rows}
                         />
                     );
                 } else {
@@ -204,7 +208,7 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
 };
 
 function useUpdatableDataValueWithFeedback(options: DataEntryItemProps) {
-    const { dataFormInfo, dataElement, total, columnTotal, rowDataElements, columnDataElements } = options;
+    const { cocId, dataFormInfo, dataElement, total, columnTotal, rowDataElements, columnDataElements } = options;
     const [state, setState] = React.useState<WidgetState>("original");
     const selector = React.useMemo(() => {
         return {
@@ -225,9 +229,8 @@ function useUpdatableDataValueWithFeedback(options: DataEntryItemProps) {
     const notifyChange = React.useCallback(
         dataValue => {
             setState("saving");
-
             if (total && columnTotal && rowDataElements && columnDataElements) {
-                saveWithTotals(dataValue, total, columnTotal, rowDataElements, columnDataElements)
+                saveWithTotals(dataValue, total, columnTotal, rowDataElements, columnDataElements, cocId)
                     .then(() => setState("saveSuccessful"))
                     .catch(() => setState("saveError"));
             } else {
@@ -236,7 +239,7 @@ function useUpdatableDataValueWithFeedback(options: DataEntryItemProps) {
                     .catch(() => setState("saveError"));
             }
         },
-        [columnDataElements, columnTotal, rowDataElements, save, saveWithTotals, total]
+        [columnDataElements, columnTotal, rowDataElements, save, saveWithTotals, total, cocId]
     );
 
     return [dataValue, state, notifyChange] as const;

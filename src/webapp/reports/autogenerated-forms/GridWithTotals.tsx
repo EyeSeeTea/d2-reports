@@ -39,22 +39,24 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                 <span className={classes.header}>#</span>{" "}
                             </DataTableColumnHeader>
                         ) : (
-                            <DataTableColumnHeader width="400px"></DataTableColumnHeader>
+                            <DataTableColumnHeader width="400px" fixed top="0"></DataTableColumnHeader>
                         )}
 
                         {fistSection ? (
-                            <DataTableColumnHeader key={`column-Total`}>
+                            <DataTableColumnHeader fixed top="0" key={`column-Total`}>
                                 <span>Total</span>
                             </DataTableColumnHeader>
                         ) : null}
 
                         {grid.columns.map(column =>
                             column.deName && column.cocName ? (
-                                <DataTableColumnHeader key={`column-${column.name}`}>
+                                <DataTableColumnHeader fixed top="0" key={`column-${column.name}`}>
                                     <span>{column.name}</span>
                                 </DataTableColumnHeader>
                             ) : (
                                 <DataTableColumnHeader
+                                    fixed
+                                    top="0"
                                     key={`column-${column.name}`}
                                     className={column.name === "Source Type" ? classes.source : ""}
                                 >
@@ -92,6 +94,7 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                                 dataFormInfo={dataFormInfo}
                                                 noComment={false}
                                                 columnTotal={item.columnTotal}
+                                                rows={grid.rows}
                                             />
                                         </DataTableCell>
                                     ) : (
