@@ -25,7 +25,7 @@ const Component: React.FC = () => {
         case "wmr-national-policies": {
             return <WMRNationalPolicies />;
         }
-        case "audit": {
+        case "csy-audit": {
             return <CSYAuditReport />;
         }
         default: {
