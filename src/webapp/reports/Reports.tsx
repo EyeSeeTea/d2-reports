@@ -28,6 +28,7 @@ const Component: React.FC = () => {
         }
         case "csy-audit": {
             return <CSYAuditReport />;
+        }
         case "glass-submission": {
             return <GLASSDataSubmissionReport />;
         }
