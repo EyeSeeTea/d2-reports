@@ -148,7 +148,7 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
                 rootIds={rootIds}
                 selected={filter.orgUnitPaths}
                 setSelected={paths => onChange({ ...filter, orgUnitPaths: paths })}
-                selectableLevels={[1, 2]}
+                selectableLevels={[1, 2, 3]}
             />
 
             <SingleDropdownStyled
