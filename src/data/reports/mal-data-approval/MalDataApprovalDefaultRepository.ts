@@ -529,7 +529,9 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                 .post<any>("/dataValueSets.json", {}, { dataValues: _.reject(apvdDataValues, _.isEmpty) })
                 .getData();
 
-            return copyResponse.status === "SUCCESS";
+            return copyResponse.response
+                ? copyResponse.response.status === "SUCCESS"
+                : copyResponse.status === "SUCCESS";
         }
     }
 

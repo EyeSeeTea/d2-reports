@@ -31,6 +31,12 @@ import { DuplicateDataValuesUseCase } from "./domain/reports/mal-data-approval/u
 import { CSYAuditDefaultRepository } from "./data/reports/csy-audit/CSYAuditDefaultRepository";
 import { GetAuditUseCase } from "./domain/reports/csy-audit/usecases/GetAuditUseCase";
 import { SaveAuditUseCase } from "./domain/reports/csy-audit/usecases/SaveAuditUseCase";
+import { GLASSDataSubmissionDefaultRepository } from "./data/reports/glass-data-submission/GLASSDataSubmissionDefaultRepository";
+import { GetGLASSDataSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSDataSubmissionUseCase";
+import { GetGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSDataSubmissionColumnsUseCase";
+import { SaveGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-data-submission/usecases/SaveGLASSDataSubmissionColumnsUseCase";
+import { UpdateGLASSSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/UpdateGLASSSubmissionUseCase";
+import { DHIS2MessageCountUseCase } from "./domain/reports/glass-data-submission/usecases/DHIS2MessageCountUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -39,6 +45,7 @@ export function getCompositionRoot(api: D2Api) {
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
     const dataDuplicationRepository = new MalDataApprovalDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
+    const glassDataRepository = new GLASSDataSubmissionDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
 
     return {
@@ -73,6 +80,12 @@ export function getCompositionRoot(api: D2Api) {
         audit: getExecute({
             get: new GetAuditUseCase(csyAuditRepository),
             save: new SaveAuditUseCase(csyAuditRepository),
+        glassDataSubmission: getExecute({
+            get: new GetGLASSDataSubmissionUseCase(glassDataRepository),
+            getColumns: new GetGLASSDataSubmissionColumnsUseCase(glassDataRepository),
+            saveColumns: new SaveGLASSDataSubmissionColumnsUseCase(glassDataRepository),
+            dhis2MessageCount: new DHIS2MessageCountUseCase(glassDataRepository),
+            updateStatus: new UpdateGLASSSubmissionUseCase(glassDataRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),

@@ -81,7 +81,6 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
     const { values: filter, options: filterOptions, onChange } = props;
 
     const [periodType, setPerType] = useState<string>("yearly");
-
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
 
     const periodTypeItems = React.useMemo(() => {
