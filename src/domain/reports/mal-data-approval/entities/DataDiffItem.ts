@@ -20,25 +20,11 @@ export interface DataDiffItemIdentifier {
 }
 
 export function getDataDiffItemId(item: DataDiffItem): string {
-    return [
-        item.dataSetUid,
-        item.period,
-        item.orgUnitUid,
-        item.dataElement,
-        item.value,
-        item.comment,
-    ].join("|||");
+    return [item.dataSetUid, item.period, item.orgUnitUid, item.dataElement, item.value, item.comment].join("|||");
 }
 
 export function parseDataDiffItemId(string: string): DataDiffItemIdentifier | undefined {
-    const [
-        dataSet,
-        period,
-        orgUnit,
-        dataElement,
-        value,
-        comment,
-    ] = string.split("|||");
+    const [dataSet, period, orgUnit, dataElement, value, comment] = string.split("|||");
 
     if (!dataSet || !period || !orgUnit || !dataElement || !value) return undefined;
 

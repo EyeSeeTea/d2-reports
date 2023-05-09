@@ -1,63 +1,62 @@
-import { Dropdown, DropdownProps, MultipleDropdownProps } from "@eyeseetea/d2-ui-components";
-import _ from "lodash";
 import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
-import { Id, NamedRef } from "../../../../domain/common/entities/Base";
-import { getOrgUnitsFromId, getRootIds } from "../../../../domain/common/entities/OrgUnit";
-import i18n from "../../../../locales";
-import { D2Api } from "../../../../types/d2-api";
-import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
 import {
     OrgUnitsFilterButton,
     OrgUnitsFilterButtonProps,
 } from "../../../components/org-units-filter/OrgUnitsFilterButton";
+import { Id } from "../../../../domain/common/entities/Base";
 import { useAppContext } from "../../../contexts/app-context";
+import _ from "lodash";
+import { getRootIds } from "../../../../domain/common/entities/OrgUnit";
+import { D2Api } from "../../../../types/d2-api";
+import i18n from "../../../../locales";
+import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
+import { Dropdown, DropdownProps, MultipleDropdownProps } from "@eyeseetea/d2-ui-components";
+import { Status } from "../DataSubmissionViewModel";
 
 export interface DataSetsFiltersProps {
-    values: DataSetsFilter;
+    values: Filter;
     options: FilterOptions;
-    onChange: React.Dispatch<React.SetStateAction<DataSetsFilter>>;
+    onChange: React.Dispatch<React.SetStateAction<Filter>>;
 }
 
-export interface DataSetsFilter {
-    dataSetIds: Id[];
+export interface Filter {
     orgUnitPaths: Id[];
     periods: string[];
     completionStatus?: boolean;
-    approvalStatus?: boolean;
+    submissionStatus?: Status;
 }
 
 interface FilterOptions {
-    dataSets: NamedRef[];
     periods: string[];
 }
 
-interface OrgUnit {
-    id: Id;
-    path: string;
+type OrgUnit = {
+    id: string;
     name: string;
     level: number;
-    children: {
-        level: number;
-        path: string;
-    }[];
-}
+    path: string;
+    children?: OrgUnit[];
+};
+
+export const statusItems = [
+    { value: "NOT_COMPLETED", text: i18n.t("Not Completed") },
+    { value: "COMPLETE", text: i18n.t("Data to be approved by country") },
+    { value: "PENDING_APPROVAL", text: i18n.t("Waiting WHO Approval") },
+    { value: "REJECTED", text: i18n.t("Rejected By WHO") },
+    { value: "APPROVED", text: i18n.t("Approved") },
+    { value: "UPDATE_REQUEST_ACCEPTED", text: i18n.t("Data update request accepted") },
+    { value: "PENDING_UPDATE_APPROVAL", text: i18n.t("Waiting for WHO to approve your update request") },
+];
 
 export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { config, api } = useAppContext();
     const { values: filter, options: filterOptions, onChange } = props;
 
-    const dataSetItems = useMemoOptionsFromNamedRef(filterOptions.dataSets);
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
 
     const [orgUnits, setOrgUnits] = useState<OrgUnit[]>([]);
-    const dataSetOrgUnits = getOrgUnitsFromId(config.orgUnits, orgUnits);
-    const selectableOUs = _.union(
-        orgUnits.filter(org => org.level < 3),
-        dataSetOrgUnits
-    );
-    const selectableIds = selectableOUs.map(ou => ou.id);
-    const rootIds = React.useMemo(() => getRootIds(selectableOUs), [selectableOUs]);
+    const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
 
     const completionStatusItems = React.useMemo(() => {
         return [
@@ -66,35 +65,39 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         ];
     }, []);
 
-    const approvalStatusItems = React.useMemo(() => {
-        return [
-            { value: "true", text: i18n.t("Submitted") },
-            { value: "false", text: i18n.t("Ready for submission") },
-        ];
-    }, []);
+    const submissionStatusItems = React.useMemo(() => statusItems, []);
 
     useEffect(() => {
-        async function getOrganisationUnits(api: D2Api, levels: string[]): Promise<OrgUnit[]> {
+        async function getOrganisationUnits(api: D2Api): Promise<OrgUnit[]> {
             const { organisationUnits } = await api.metadata
                 .get({
                     organisationUnits: {
-                        filter: { level: { in: levels } },
                         fields: {
                             id: true,
-                            path: true,
                             name: true,
                             level: true,
-                            children: { level: true, path: true },
+                            path: true,
+                            children: {
+                                id: true,
+                                name: true,
+                                level: true,
+                                path: true,
+                                children: { id: true, name: true, level: true, path: true },
+                            },
                         },
+                        filter: { level: { eq: "1" } },
                     },
                 })
                 .getData();
 
-            return _.orderBy(organisationUnits, "level", "asc");
+            const ou2 = organisationUnits.flatMap(ou => ou.children);
+            const ou3 = ou2.flatMap(ou => ou.children);
+            const all = _.union(organisationUnits, ou2, ou3);
+
+            return _.orderBy(all, "level", "asc");
         }
 
-        const levels = ["1", "2", "3"];
-        getOrganisationUnits(api, levels).then(value => setOrgUnits(value));
+        getOrganisationUnits(api).then(value => setOrgUnits(value));
     }, [api]);
 
     const { orgUnitPaths } = filter;
@@ -108,9 +111,14 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
 
             const pathsToAdd = _.flatMap(addedPaths, addedPath => {
                 const orgUnit = orgUnitsByPath[addedPath];
-
                 if (orgUnit && orgUnit.level < countryLevel) {
-                    return [orgUnit, ...orgUnit.children].map(ou => ou.path);
+                    return _.compact(
+                        _.union(
+                            [orgUnit],
+                            orgUnit.children,
+                            orgUnit.children?.flatMap(child => child.children)
+                        )
+                    ).map(ou => ou.path);
                 } else {
                     return [addedPath];
                 }
@@ -131,11 +139,6 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         [onChange, orgUnitPaths, orgUnitsByPath]
     );
 
-    const setDataSetIds = React.useCallback<DropdownHandler>(
-        dataSetIds => onChange(prev => ({ ...prev, dataSetIds })),
-        [onChange]
-    );
-
     const setPeriods = React.useCallback<DropdownHandler>(
         periods => onChange(prev => ({ ...prev, periods })),
         [onChange]
@@ -148,9 +151,9 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         [onChange]
     );
 
-    const setApprovalStatus = React.useCallback<SingleDropdownHandler>(
-        approvalStatus => {
-            onChange(filter => ({ ...filter, approvalStatus: toBool(approvalStatus) }));
+    const setSubmissionStatus = React.useCallback<SingleDropdownHandler>(
+        submissionStatus => {
+            onChange(filter => ({ ...filter, submissionStatus: submissionStatus as Status }));
         },
         [onChange]
     );
@@ -163,14 +166,6 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 selected={filter.orgUnitPaths}
                 setSelected={setOrgUnitPaths}
                 selectableLevels={[1, 2, 3]}
-                selectableIds={selectableIds}
-            />
-
-            <DropdownStyled
-                items={dataSetItems}
-                values={filter.dataSetIds}
-                onChange={setDataSetIds}
-                label={i18n.t("Data sets")}
             />
 
             <DropdownStyled
@@ -184,14 +179,14 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 items={completionStatusItems}
                 value={fromBool(filter.completionStatus)}
                 onChange={setCompletionStatus}
-                label={i18n.t("Completion status")}
+                label={i18n.t("Questionnaire completed")}
             />
 
             <SingleDropdownStyled
-                items={approvalStatusItems}
-                value={fromBool(filter.approvalStatus)}
-                onChange={setApprovalStatus}
-                label={i18n.t("Submission status")}
+                items={submissionStatusItems}
+                value={filter.submissionStatus}
+                onChange={setSubmissionStatus}
+                label={i18n.t("Status")}
             />
         </Container>
     );
@@ -200,12 +195,6 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
 function useMemoOptionsFromStrings(options: string[]) {
     return useMemo(() => {
         return options.map(option => ({ value: option, text: option }));
-    }, [options]);
-}
-
-function useMemoOptionsFromNamedRef(options: NamedRef[]) {
-    return useMemo(() => {
-        return options.map(option => ({ value: option.id, text: option.name }));
     }, [options]);
 }
 
@@ -221,7 +210,7 @@ const DropdownStyled = styled(MultipleDropdown)`
 
 const SingleDropdownStyled = styled(Dropdown)`
     margin-left: -10px;
-    width: 180px;
+    width: 250px;
 `;
 
 function toBool(s: string | undefined): boolean | undefined {
