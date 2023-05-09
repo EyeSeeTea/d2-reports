@@ -80,6 +80,7 @@ export function getCompositionRoot(api: D2Api) {
         audit: getExecute({
             get: new GetAuditUseCase(csyAuditRepository),
             save: new SaveAuditUseCase(csyAuditRepository),
+        }),
         glassDataSubmission: getExecute({
             get: new GetGLASSDataSubmissionUseCase(glassDataRepository),
             getColumns: new GetGLASSDataSubmissionColumnsUseCase(glassDataRepository),
