@@ -15,6 +15,7 @@ import { Section } from "../../../../src/domain/common/entities/DataForm";
 import { DataElementItem } from "./DataElementItem";
 import { makeStyles } from "@material-ui/core";
 import DataTableSection from "./DataTableSection";
+import { isDev } from "../../..";
 
 export interface GridWithTotalsProps {
     dataFormInfo: DataFormInfo;
@@ -22,6 +23,7 @@ export interface GridWithTotalsProps {
 }
 
 const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
+    const topValue = isDev ? "0" : "48px";
     const { dataFormInfo, section } = props;
 
     const grid = React.useMemo(() => GridWithTotalsViewModel.get(section), [section]);
@@ -39,24 +41,24 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                 <span className={classes.header}>#</span>{" "}
                             </DataTableColumnHeader>
                         ) : (
-                            <DataTableColumnHeader width="400px" fixed top="0"></DataTableColumnHeader>
+                            <DataTableColumnHeader width="400px" fixed top={topValue}></DataTableColumnHeader>
                         )}
 
                         {fistSection ? (
-                            <DataTableColumnHeader fixed top="0" key={`column-Total`}>
+                            <DataTableColumnHeader fixed top={topValue} key={`column-Total`}>
                                 <span>Total</span>
                             </DataTableColumnHeader>
                         ) : null}
 
                         {grid.columns.map(column =>
                             column.deName && column.cocName ? (
-                                <DataTableColumnHeader fixed top="0" key={`column-${column.name}`}>
+                                <DataTableColumnHeader fixed top={topValue} key={`column-${column.name}`}>
                                     <span>{column.name}</span>
                                 </DataTableColumnHeader>
                             ) : (
                                 <DataTableColumnHeader
                                     fixed
-                                    top="0"
+                                    top={topValue}
                                     key={`column-${column.name}`}
                                     className={column.name === "Source Type" ? classes.source : ""}
                                 >
