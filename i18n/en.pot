@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2023-03-13T21:16:50.784Z\n"
-"PO-Revision-Date: 2023-03-13T21:16:50.784Z\n"
+"POT-Creation-Date: 2023-05-11T11:59:18.688Z\n"
+"PO-Revision-Date: 2023-05-11T11:59:18.688Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -114,6 +114,26 @@ msgid "Empty"
 msgstr ""
 
 msgid "Reload Validation"
+msgstr ""
+
+msgid "Confirm Validation Reload"
+msgstr ""
+
+msgid "Confirm"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid ""
+"This action will delete the stored data and process all the Indicators and "
+"Program Indicators from this DHIS2 instance."
+msgstr ""
+
+msgid "This will take a long time."
+msgstr ""
+
+msgid "Are you sure?"
 msgstr ""
 
 msgid "Indicators"

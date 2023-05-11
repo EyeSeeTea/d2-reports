@@ -21,13 +21,15 @@ import {
     getDataQualityProgramIndicatorViews,
 } from "./DataQualityViewModel";
 import { useBooleanState } from "../../utils/use-boolean";
+import ReloadWarningModal from "../../components/reload_warning/ReloadWarningModal";
 
 export const DataQualityList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
 
     const [visibleIndicatorColumns, setVisibleIndicatorColumns] = useState<string[]>();
     const [visibleProgramIndicatorColumns, setVisibleProgramIndicatorColumns] = useState<string[]>();
-    const [isReloading, { enable: startReloading, disable: stopReloading }] = useBooleanState(false);
+    const [isReloadModal, { enable: openReloadModal, disable: closeReloadModal }] = useBooleanState(false);
+    const [isReloading, { enable: confirmReload, disable: stopReloading }] = useBooleanState(false);
     const [isLoading, { enable: startLoading, disable: stopLoading }] = useBooleanState(false);
 
     useEffect(() => {
@@ -49,9 +51,10 @@ export const DataQualityList: React.FC = React.memo(() => {
 
     useEffect(() => {
         if (isReloading) {
+            closeReloadModal();
             reloadValidationData().then(() => stopReloading());
         }
-    }, [reloadValidationData, isReloading, stopReloading]);
+    }, [reloadValidationData, isReloading, stopReloading, closeReloadModal]);
 
     useEffect(() => {
         startLoading();
@@ -229,11 +232,13 @@ export const DataQualityList: React.FC = React.memo(() => {
                 color="primary"
                 variant="contained"
                 onClick={async () => {
-                    startReloading();
+                    openReloadModal();
                 }}
             >
                 {i18n.t("Reload Validation")}
             </Button>
+
+            <ReloadWarningModal isOpen={isReloadModal} onSave={confirmReload} onCancel={closeReloadModal} />
 
             <Typography variant="h6" gutterBottom>
                 {i18n.t("Indicators")}
