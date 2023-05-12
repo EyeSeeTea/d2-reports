@@ -28,6 +28,12 @@ import { GenerateSortOrderUseCase } from "./domain/reports/mal-data-approval/use
 import { GetMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/GetMonitoringUseCase";
 import { SaveMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/SaveMonitoringUseCase";
 import { DuplicateDataValuesUseCase } from "./domain/reports/mal-data-approval/usecases/DuplicateDataValuesUseCase";
+import { GLASSDataSubmissionDefaultRepository } from "./data/reports/glass-data-submission/GLASSDataSubmissionDefaultRepository";
+import { GetGLASSDataSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSDataSubmissionUseCase";
+import { GetGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSDataSubmissionColumnsUseCase";
+import { SaveGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-data-submission/usecases/SaveGLASSDataSubmissionColumnsUseCase";
+import { UpdateGLASSSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/UpdateGLASSSubmissionUseCase";
+import { DHIS2MessageCountUseCase } from "./domain/reports/glass-data-submission/usecases/DHIS2MessageCountUseCase";
 import { DataQualityDefaultRepository } from "./data/reports/data-quality/DataQualityDefaultRepository";
 import { GetIndicatorsUseCase } from "./domain/reports/data-quality/usecases/GetIndicatorsUseCase";
 import { GetProgramIndicatorsUseCase } from "./domain/reports/data-quality/usecases/GetProgramIndicatorsUseCase";
@@ -44,6 +50,7 @@ export function getCompositionRoot(api: D2Api) {
     const dataDuplicationRepository = new MalDataApprovalDefaultRepository(api);
     const dataQualityRepository = new DataQualityDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
+    const glassDataRepository = new GLASSDataSubmissionDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
 
     return {
@@ -75,6 +82,12 @@ export function getCompositionRoot(api: D2Api) {
             getSortOrder: new GetSortOrderUseCase(dataDuplicationRepository),
             generateSortOrder: new GenerateSortOrderUseCase(dataDuplicationRepository),
         }),
+        glassDataSubmission: getExecute({
+            get: new GetGLASSDataSubmissionUseCase(glassDataRepository),
+            getColumns: new GetGLASSDataSubmissionColumnsUseCase(glassDataRepository),
+            saveColumns: new SaveGLASSDataSubmissionColumnsUseCase(glassDataRepository),
+            dhis2MessageCount: new DHIS2MessageCountUseCase(glassDataRepository),
+            updateStatus: new UpdateGLASSSubmissionUseCase(glassDataRepository),
         dataQuality: getExecute({
             getIndicators: new GetIndicatorsUseCase(dataQualityRepository),
             getProgramIndicators: new GetProgramIndicatorsUseCase(dataQualityRepository),

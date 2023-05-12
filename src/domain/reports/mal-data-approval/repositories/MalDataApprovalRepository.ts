@@ -29,6 +29,7 @@ export interface MalDataApprovalOptions {
     paging: Paging;
     sorting: Sorting<MalDataApprovalItem>;
     periods: string[];
+    useOldPeriods?: boolean;
     orgUnitIds: Id[];
     dataSetIds: Id[];
     approvalStatus?: boolean;
