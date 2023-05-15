@@ -45,6 +45,22 @@ interface MessageConversations {
     }[];
 }
 
+type DataValueType = {
+    dataElement: string;
+    period: string;
+    orgUnit: string;
+    value: string;
+    [key: string]: string;
+};
+
+type DataValueSetsType = {
+    dataSet: string;
+    period: string;
+    orgUnit: string;
+    completeDate?: string;
+    dataValues: DataValueType[];
+};
+
 export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmissionRepository {
     private storageClient: StorageClient;
     private globalStorageClient: StorageClient;
@@ -292,12 +308,98 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         return recipientUsers;
     }
 
+    private async getDataSetsValue(dataSet: string, orgUnit: string, period: string) {
+        return await this.api
+            .get<DataValueSetsType>("/dataValueSets", {
+                dataSet,
+                orgUnit,
+                period,
+            })
+            .getData();
+    }
+
+    private async getDSDataElements(dataSet: string) {
+        return await this.api
+            .get<any>(`/dataSets/${dataSet}`, { fields: "dataSetElements[dataElement[id,name]]" })
+            .getData();
+    }
+
+    private makeDataValuesArray(
+        approvalDataSetId: string,
+        dataValueSets: DataValueType[],
+        dataElementsMatchedArray: { [key: string]: any }[]
+    ) {
+        return dataValueSets.flatMap(dataValueSet => {
+            const dataValue = { ...dataValueSet };
+            const destId = dataElementsMatchedArray.find(
+                dataElementsMatchedObj => dataElementsMatchedObj.origId === dataValueSet.dataElement
+            )?.destId;
+
+            if (!_.isEmpty(destId) && !_.isEmpty(dataValue.value)) {
+                dataValue.dataElement = destId;
+                dataValue.dataSet = approvalDataSetId;
+                delete dataValue.lastUpdated;
+                delete dataValue.comment;
+
+                return dataValue;
+            } else {
+                return [];
+            }
+        });
+    }
+
     async approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
         const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
         const modules =
             (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
                 Namespaces.DATA_SUBMISSSIONS_MODULES
             )) ?? [];
+
+        const amrDataSets = modules.find(module => module.name === "AMR")?.dataSets ?? [];
+
+        _.forEach(amrDataSets, async amrDataSet => {
+            await promiseMap(items, async item => {
+                const dataValueSets = (await this.getDataSetsValue(amrDataSet.id, item.orgUnit ?? "", item.period))
+                    .dataValues;
+
+                if (!_.isEmpty(dataValueSets)) {
+                    const DSDataElements: { dataSetElements: { dataElement: NamedRef }[] } =
+                        await this.getDSDataElements(amrDataSet.id);
+                    const ADSDataElements: { dataSetElements: { dataElement: NamedRef }[] } =
+                        await this.getDSDataElements(amrDataSet.approvedId);
+
+                    const uniqueDataElementsIds = _.uniq(_.map(dataValueSets, "dataElement"));
+                    const dataElementsMatchedArray = DSDataElements.dataSetElements.map(element => {
+                        const dataElement = element.dataElement;
+                        if (uniqueDataElementsIds.includes(dataElement.id)) {
+                            const apvdName = dataElement.name + "-APVD";
+                            const ADSDataElement = ADSDataElements.dataSetElements.find(
+                                element => element.dataElement.name === apvdName
+                            );
+                            return {
+                                origId: dataElement.id,
+                                destId: ADSDataElement?.dataElement.id,
+                                name: dataElement.name,
+                            };
+                        } else {
+                            return [];
+                        }
+                    });
+
+                    const dataValuesToPost = this.makeDataValuesArray(
+                        amrDataSet.approvedId,
+                        dataValueSets,
+                        dataElementsMatchedArray
+                    );
+
+                    await promiseMap(_.chunk(dataValuesToPost, 1000), async dataValuesGroup => {
+                        return await this.api.dataValues
+                            .postSet({}, { dataValues: _.reject(dataValuesGroup, _.isEmpty) })
+                            .getData();
+                    });
+                }
+            });
+        });
 
         const newSubmissionValues = this.getNewSubmissionValues(items, objects, "APPROVED");
         const recipients = await this.getRecipientUsers(items, modules);
@@ -347,9 +449,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         const body = await this.getNotificationBody(items, modules, "reopened");
         this.sendNotifications("Submission reopened by WHO", body, [], recipients);
-
         await this.postDataSetRegistration(items, false);
-
+        
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
 
@@ -365,10 +466,19 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         const body = await this.getNotificationBody(items, modules, "accepted");
         this.sendNotifications("Accepted by WHO", body, [], recipients);
-
         await this.postDataSetRegistration(items, false);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
+    }
+
+    async getGLASSDashboardId(_namespace: string, _items: GLASSDataSubmissionItemIdentifier[]): Promise<string> {
+        const modules =
+            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
+                Namespaces.DATA_SUBMISSSIONS_MODULES
+            )) ?? [];
+        const glassUnapvdDashboardId = modules.find(module => module.name === "AMR")?.dashboards.validationReport ?? "";
+
+        return glassUnapvdDashboardId;
     }
 
     private async postDataSetRegistration(items: GLASSDataSubmissionItemIdentifier[], completed: boolean) {
@@ -386,16 +496,6 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 { completeDataSetRegistrations: dataSetRegistrations }
             )
             .getData();
-    }
-
-    async getGLASSDashboardId(_namespace: string, _items: GLASSDataSubmissionItemIdentifier[]): Promise<string> {
-        const modules =
-            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
-                Namespaces.DATA_SUBMISSSIONS_MODULES
-            )) ?? [];
-        const glassUnapvdDashboardId = modules.find(module => module.name === "AMR")?.dashboards.validationReport ?? "";
-
-        return glassUnapvdDashboardId;
     }
 
     private async sendNotifications(subject: string, text: string, userGroups: Ref[], users?: Ref[]): Promise<void> {
