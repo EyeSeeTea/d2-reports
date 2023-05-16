@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2023-03-24T14:23:48.965Z\n"
+"POT-Creation-Date: 2023-05-16T08:28:37.760Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -12,6 +12,9 @@ msgid "<No value>"
 msgstr ""
 
 msgid "- All -"
+msgstr ""
+
+msgid "LOG OUT"
 msgstr ""
 
 msgid "Loading..."
@@ -140,46 +143,10 @@ msgstr ""
 msgid "Quarter"
 msgstr ""
 
-msgid "Mortality"
-msgstr ""
-
-msgid "Yearly"
-msgstr ""
-
-msgid "Quarterly"
-msgstr ""
-
-msgid "Jan - March"
-msgstr ""
-
-msgid "April - June"
-msgstr ""
-
-msgid "July - September"
-msgstr ""
-
-msgid "October - December"
-msgstr ""
-
-msgid "Audit Type"
-msgstr ""
-
-msgid "Period Type"
-msgstr ""
-
-msgid "Year"
-msgstr ""
-
-msgid "Quarter"
-msgstr ""
-
 msgid "GLASS Data Submission Report"
 msgstr ""
 
 msgid "Country"
-msgstr ""
-
-msgid "Year"
 msgstr ""
 
 msgid "Questionnaire completed"
@@ -189,6 +156,9 @@ msgid "DataSets uploaded"
 msgstr ""
 
 msgid "Status"
+msgstr ""
+
+msgid "Go to GLASS Unapproved Dashboard"
 msgstr ""
 
 msgid "Approve"
@@ -333,15 +303,6 @@ msgid "Error when trying to unsubmit data set"
 msgstr ""
 
 msgid "Activate monitoring"
-msgstr ""
-
-msgid "Activate monitoring"
-msgstr ""
-
-msgid "Deactivate monitoring"
-msgstr ""
-
-msgid "Check Difference"
 msgstr ""
 
 msgid "Deactivate monitoring"
