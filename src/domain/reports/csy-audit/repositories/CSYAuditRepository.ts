@@ -14,4 +14,5 @@ export interface CSYAuditOptions {
     year: string;
     quarter?: string;
     orgUnitPaths: string[];
+    auditType: string;
 }

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Filter, Filters } from "./Filters";
+import { Filter, Filters, auditTypeItems } from "./Filters";
 import { Config } from "../../../../domain/common/entities/Config";
 import { useAppContext } from "../../../contexts/app-context";
 import _ from "lodash";
@@ -13,7 +13,7 @@ import {
     useObjectsTable,
 } from "@eyeseetea/d2-ui-components";
 import StorageIcon from "@material-ui/icons/Storage";
-import i18n from "@eyeseetea/d2-ui-components/locales";
+import i18n from "../../../../locales";
 import { useReload } from "../../../utils/use-reload";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import { AuditItem } from "../../../../domain/reports/csy-audit/entities/AuditItem";
@@ -88,10 +88,20 @@ export const CSYAuditList: React.FC = React.memo(() => {
         },
     };
 
+    const auditDefinition =
+        auditTypeItems.find(auditTypeItem => auditTypeItem.value === filters.auditType)?.auditDefinition ?? "";
+
     return (
-        <ObjectsList<AuditViewModel> {...tableProps} onChangeSearch={undefined} globalActions={[downloadCsv]}>
-            <Filters values={filters} options={filterOptions} onChange={setFilters} />
-        </ObjectsList>
+        <React.Fragment>
+            <ObjectsList<AuditViewModel> {...tableProps} onChangeSearch={undefined} globalActions={[downloadCsv]}>
+                <div>
+                    <Filters values={filters} options={filterOptions} onChange={setFilters} />
+                    <p>
+                        Audit Definition: <strong>{auditDefinition}</strong>
+                    </p>
+                </div>
+            </ObjectsList>
+        </React.Fragment>
     );
 });
 
