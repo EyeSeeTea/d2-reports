@@ -5,13 +5,16 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2023-03-24T14:23:48.965Z\n"
-"PO-Revision-Date: 2023-03-24T14:23:48.965Z\n"
+"POT-Creation-Date: 2023-05-16T08:28:37.760Z\n"
+"PO-Revision-Date: 2023-05-16T08:28:37.760Z\n"
 
 msgid "<No value>"
 msgstr ""
 
 msgid "- All -"
+msgstr ""
+
+msgid "LOG OUT"
 msgstr ""
 
 msgid "Loading..."
@@ -74,13 +77,76 @@ msgstr ""
 msgid "created"
 msgstr ""
 
+msgid "CSY Audit Report"
+msgstr ""
+
+msgid "Register ID"
+msgstr ""
+
+msgid "Mortality with low injury severity score"
+msgstr ""
+
+msgid "Oxygen not administered for patients with hypoxia"
+msgstr ""
+
+msgid "Oxygen not administered for patients with tachypnea"
+msgstr ""
+
+msgid "Mental status-dependent airway maneuver"
+msgstr ""
+
+msgid "All mortality"
+msgstr ""
+
+msgid "Emergency Unit"
+msgstr ""
+
+msgid "Hospital Mortality"
+msgstr ""
+
+msgid "Severe injuries by any scoring system"
+msgstr ""
+
+msgid "Moderate or severe injuries by any scoring system"
+msgstr ""
+
+msgid "Moderate injuries by any scoring system"
+msgstr ""
+
+msgid "Yearly"
+msgstr ""
+
+msgid "Quarterly"
+msgstr ""
+
+msgid "Jan - March"
+msgstr ""
+
+msgid "April - June"
+msgstr ""
+
+msgid "July - September"
+msgstr ""
+
+msgid "October - December"
+msgstr ""
+
+msgid "Audit Type"
+msgstr ""
+
+msgid "Period Type"
+msgstr ""
+
+msgid "Year"
+msgstr ""
+
+msgid "Quarter"
+msgstr ""
+
 msgid "GLASS Data Submission Report"
 msgstr ""
 
 msgid "Country"
-msgstr ""
-
-msgid "Year"
 msgstr ""
 
 msgid "Questionnaire completed"
@@ -90,6 +156,9 @@ msgid "DataSets uploaded"
 msgstr ""
 
 msgid "Status"
+msgstr ""
+
+msgid "Go to GLASS Unapproved Dashboard"
 msgstr ""
 
 msgid "Approve"
