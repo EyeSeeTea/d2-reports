@@ -26,7 +26,7 @@ export class SaveGridWithTotalsValueUseCase {
                 categoryOptionComboId: cocId,
             };
             let storeUpdated = store.set(currentDataValue);
-            await this.dataValueRepository.save(dataValue);
+            // await this.dataValueRepository.save(dataValue);
 
             // SAVE ROW TOTAL
             const selector = {
@@ -68,7 +68,10 @@ export class SaveGridWithTotalsValueUseCase {
             colTotalDataValue.value = newColTotalValue.toString();
 
             storeUpdated = storeUpdated.set(colTotalDataValue);
-            await this.dataValueRepository.save(colTotalDataValue);
+            await Promise.all([
+                this.dataValueRepository.save(dataValue),
+                this.dataValueRepository.save(colTotalDataValue),
+            ]);
 
             return storeUpdated;
         }

@@ -40,14 +40,13 @@ export class ApplyToAllUseCase {
                         categoryOptionComboId: dataValue.categoryOptionComboId,
                     }) as DataValueTextMultiple;
                     de.values = dataValue.values;
-                    storeWithNewValues = store.set(de);
+                    storeWithNewValues = storeWithNewValues.set(de);
                     return { id: sourceCol.dataElement.id, name: sourceCol.dataElement.name };
                 }
                 return undefined;
             })
             .compact()
             .value();
-
         await this.dataValueRepository.applyToAll(dataValue, sourceTypeToUpdate);
         return storeWithNewValues;
     }

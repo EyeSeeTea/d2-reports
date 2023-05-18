@@ -109,6 +109,18 @@ function useDataFormInfo(): [Maybe<DataFormInfo>, boolean] {
 
     const defaultCategoryOptionComboId = config.categoryOptionCombos.default.id;
 
+    React.useEffect(() => {
+        // Hiding arrows for input of type number
+        // adding directly to css works in dev, but not in data entry.
+        const css =
+                "input::-webkit-outer-spin-button,input::-webkit-inner-spin-button {-webkit-appearance: none !important; margin: 0; } input[type=number] { -moz-appearance: textfield !important; }",
+            head = document.head || document.getElementsByTagName("head")[0],
+            style = document.createElement("style");
+        style.setAttribute("id", "disabled-arrows-css");
+        style.appendChild(document.createTextNode(css));
+        head.appendChild(style);
+    }, []);
+
     useEffect(() => {
         compositionRoot.dataForms.get({ dataSetId, period }).then(setDataForm);
     }, [compositionRoot, dataSetId, period]);

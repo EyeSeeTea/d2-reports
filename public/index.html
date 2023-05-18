@@ -22,6 +22,11 @@
         <title>DHIS2 Reports</title>
     </head>
     <body>
+        <script>
+            document.querySelectorAll("style[data-jss]").forEach(item => {
+                item.remove();
+            });
+        </script>
         <noscript> You need to enable JavaScript to run this app. </noscript>
         <div id="root"></div>
         <!--

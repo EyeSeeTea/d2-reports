@@ -36,6 +36,22 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
             <DataTable className={classes.table}>
                 <TableHead>
                     <DataTableRow>
+                        <DataTableColumnHeader width="400px"></DataTableColumnHeader>
+                        <DataTableColumnHeader></DataTableColumnHeader>
+                        {grid.parentColumns.map(column => {
+                            return (
+                                <DataTableColumnHeader
+                                    key={column.name}
+                                    className={classes.centerSpan}
+                                    colSpan={String(column.colSpan)}
+                                >
+                                    <span>{column.name}</span>
+                                </DataTableColumnHeader>
+                            );
+                        })}
+                        {section.id === "yzMn16Bp1wV" && <DataTableColumnHeader></DataTableColumnHeader>}
+                    </DataTableRow>
+                    <DataTableRow>
                         {grid.useIndexes ? (
                             <DataTableColumnHeader width="30px">
                                 <span className={classes.header}>#</span>{" "}
@@ -53,7 +69,7 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                         {grid.columns.map(column =>
                             column.deName && column.cocName ? (
                                 <DataTableColumnHeader fixed top={topValue} key={`column-${column.name}`}>
-                                    <span>{column.name}</span>
+                                    <span>{column.cocName}</span>
                                 </DataTableColumnHeader>
                             ) : (
                                 <DataTableColumnHeader
@@ -73,7 +89,9 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                     {grid.rows.map((row, idx) => (
                         <DataTableRow key={`policy-${row.name}`}>
                             <DataTableCell>
-                                <span>{grid.useIndexes ? (idx + 1).toString() : row.name}</span>
+                                <p style={{ paddingLeft: row.includePadding ? `${row.includePadding * 10}px` : "0" }}>
+                                    {grid.useIndexes ? (idx + 1).toString() : row.name}
+                                </p>
                             </DataTableCell>
 
                             {fistSection && row.total ? (
@@ -109,7 +127,7 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                                 dataElement={item.dataElement}
                                                 dataFormInfo={dataFormInfo}
                                                 noComment={true}
-                                                manualyDisabled={row.rowDisabled}
+                                                manualyDisabled={row.name.startsWith("41 -") ? false : row.rowDisabled}
                                                 total={row.total}
                                                 columnTotal={item.columnTotal}
                                                 rowDataElements={row.rowDataElements}
@@ -134,6 +152,11 @@ const useStyles = makeStyles({
     header: { fontSize: "1.4em", fontWeight: "bold" as const },
     table: { borderWidth: "3px !important" },
     source: { maxWidth: "35% !important", width: "33% !important", minWidth: "15% !important" },
+    centerSpan: {
+        "& span": {
+            alignItems: "center",
+        },
+    },
 });
 
 export default React.memo(GridWithTotals);

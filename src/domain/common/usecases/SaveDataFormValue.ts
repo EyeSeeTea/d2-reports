@@ -11,7 +11,10 @@ export class SaveDataFormValueUseCase {
         if (_.isEqual(existingDataValue, dataValue)) {
             return store;
         } else {
-            const storeUpdated = store.set(dataValue);
+            const storeUpdated = store.set({
+                ...dataValue,
+                categoryOptionComboId: dataValue.dataElement.cocId || dataValue.categoryOptionComboId,
+            });
             await this.dataValueRepository.save(dataValue);
             return storeUpdated;
         }

@@ -1053,6 +1053,23 @@ const totalList = [
     {
         type: "NUMBER",
         numberType: "INTEGER_ZERO_OR_POSITIVE",
+        id: "WwrNxNlvDEg",
+        code: "9999sup411-Total",
+        name: "41.1 - Field Epidemiologist",
+        categoryCombos: {
+            id: "JzvGfLYkX17",
+            name: "default",
+            categoryOptionCombos: [
+                {
+                    id: "Xr12mI7VPn3",
+                    name: "default",
+                },
+            ],
+        },
+    },
+    {
+        type: "NUMBER",
+        numberType: "INTEGER_ZERO_OR_POSITIVE",
         id: "orsq4lQakbk",
         code: "9999sup-Total",
         name: "42 - Anesthesiologist",
@@ -1093,6 +1110,7 @@ export interface Grid {
     toggle: Section["toggle"];
     useIndexes: boolean;
     texts: Texts;
+    parentColumns: ParentColumn[];
 }
 
 interface SubSectionGrid {
@@ -1108,6 +1126,8 @@ interface Column {
 
 export interface Row {
     name: string;
+    includePadding: number;
+    disableTotalSum: boolean;
     total?: DataElement;
     rowDataElements?: DataElement[];
     rowDisabled?: boolean;
@@ -1118,6 +1138,11 @@ export interface Row {
         dataElement: DataElement | undefined;
     }>;
 }
+
+type ParentColumn = {
+    name: string;
+    colSpan: number;
+};
 
 const separator = " - ";
 
@@ -1152,6 +1177,13 @@ export class GridWithTotalsViewModel {
             })
             .value();
 
+        const parentColumns = _(columns)
+            .map(c => (c.deName && c.cocName ? c.deName : undefined))
+            .compact()
+            .groupBy()
+            .map((values, name) => ({ name, colSpan: values.length }))
+            .value();
+
         const rows = subsections.map(subsection => {
             const total = totalList.find(t => t.name === subsection.name) as DataElement;
             const index = subsection.name.split(separator)[0];
@@ -1161,9 +1193,8 @@ export class GridWithTotalsViewModel {
                 return totalRowIndex ? de.name.startsWith(`${totalRowIndex}.`) : [];
             });
 
-            const section1 = section.id === "yzMn16Bp1wV";
-            const hasTotals = index?.split(".").length === 2 && !_.isEmpty(totalRowIndex) && section1;
-            const rowDisabled = section1 && indexedDEs.length > 1 ? index === totalRowIndex : false;
+            const hasTotals = index?.split(".").length === 2 && !_.isEmpty(totalRowIndex);
+            const rowDisabled = indexedDEs.length > 1 ? index === totalRowIndex : false;
 
             const items = columns.map(column => {
                 const dataElement = subsection.dataElements.find(de => de.name === column.name);
@@ -1198,11 +1229,17 @@ export class GridWithTotalsViewModel {
                 });
             }
 
+            // Since we cannot add spaces or tabs in a form name
+            // we're adding a little padding of each row number
+            const includePadding = index ? index.split(".").length - 1 : 0;
+
             return {
                 name: subsection.name,
+                includePadding,
                 total: total,
+                disableTotalSum: subsection.name.startsWith("41.1 -"),
                 rowDataElements: rowDataElements,
-                rowDisabled: rowDisabled,
+                rowDisabled,
                 items: items,
             };
         });
@@ -1221,6 +1258,7 @@ export class GridWithTotalsViewModel {
             toggle: section.toggle,
             texts: section.texts,
             useIndexes: useIndexes,
+            parentColumns,
         };
     }
 }
