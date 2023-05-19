@@ -40,6 +40,12 @@ const base = {
         constantCode: "",
         approvalWorkflows: { namePrefix: "AMR" },
     },
+    audit: {
+        dataSets: { namePrefix: "", nameExcluded: /-APVD$/ },
+        sqlViewNames: [],
+        constantCode: "",
+        approvalWorkflows: { namePrefix: "" },
+    },
 };
 
 export class Dhis2ConfigRepository implements ConfigRepository {
