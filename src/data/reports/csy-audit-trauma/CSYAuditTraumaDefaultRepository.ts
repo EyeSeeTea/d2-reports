@@ -1,7 +1,10 @@
 import _ from "lodash";
 import { PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
-import { AuditItem } from "../../../domain/reports/csy-audit/entities/AuditItem";
-import { CSYAuditOptions, CSYAuditRepository } from "../../../domain/reports/csy-audit/repositories/CSYAuditRepository";
+import { AuditItem } from "../../../domain/reports/csy-audit-trauma/entities/AuditItem";
+import {
+    CSYAuditTraumaOptions,
+    CSYAuditTraumaRepository,
+} from "../../../domain/reports/csy-audit-trauma/repositories/CSYAuditTraumaRepository";
 import { AnalyticsResponse, D2Api, Pager } from "../../../types/d2-api";
 import { getOrgUnitIdsFromPaths } from "../../../domain/common/entities/OrgUnit";
 import { CsvWriterDataSource } from "../../common/CsvWriterCsvDataSource";
@@ -9,10 +12,10 @@ import { CsvData } from "../../common/CsvDataSource";
 import { downloadFile } from "../../common/utils/download-file";
 import { promiseMap } from "../../../utils/promises";
 
-export class CSYAuditDefaultRepository implements CSYAuditRepository {
+export class CSYAuditTraumaDefaultRepository implements CSYAuditTraumaRepository {
     constructor(private api: D2Api) {}
 
-    async get(options: CSYAuditOptions): Promise<PaginatedObjects<AuditItem>> {
+    async get(options: CSYAuditTraumaOptions): Promise<PaginatedObjects<AuditItem>> {
         const { paging, year, orgUnitPaths, quarter, auditType } = options;
         const period = !quarter ? year : `${year}${quarter}`;
         const orgUnitIds = getOrgUnitIdsFromPaths(orgUnitPaths);
