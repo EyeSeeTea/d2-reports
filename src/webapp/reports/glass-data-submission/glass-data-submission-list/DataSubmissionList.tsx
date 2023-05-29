@@ -35,9 +35,13 @@ import { goToDhis2Url } from "../../../../utils/utils";
 export const DataSubmissionList: React.FC = React.memo(() => {
     const { api, compositionRoot, config } = useAppContext();
 
+    const userGroupNames = config.currentUser.userGroups.map(ug => ug.name);
+    const isAMRuser = userGroupNames.some(name => name.includes("AMR-AMR"));
+    const isEGASPUser = userGroupNames.some(name => name.includes("AMR-EGASP"));
+
     const snackbar = useSnackbar();
     const [reloadKey, reload] = useReload();
-    const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
+    const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config, isEGASPUser, isAMRuser));
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [rejectionReason, setRejectionReason] = useState<string>("");
     const [rejectedItems, setRejectedItems] = useState<GLASSDataSubmissionItemIdentifier[]>([]);
@@ -60,7 +64,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
         () => ({
             columns: [
                 { name: "orgUnitName", text: i18n.t("Country"), sortable: true },
-                { name: "period", text: i18n.t("Year"), sortable: true },
+                { name: "period", text: i18n.t(isEGASPUser ? "Period" : "Year"), sortable: true },
                 {
                     name: "questionnaireCompleted",
                     text: i18n.t("Questionnaire completed"),
@@ -205,7 +209,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [api, compositionRoot.glassDataSubmission, openDialog, reload, snackbar]
+        [api, compositionRoot.glassDataSubmission, isEGASPUser, openDialog, reload, snackbar]
     );
 
     const getRows = useMemo(
@@ -282,7 +286,12 @@ export const DataSubmissionList: React.FC = React.memo(() => {
             onChangeSearch={undefined}
             onReorderColumns={saveReorderedColumns}
         >
-            <Filters values={filters} options={filterOptions} onChange={setFilters} />
+            <Filters
+                values={filters}
+                options={filterOptions}
+                onChange={setFilters}
+                userPermissions={{ amrUser: isAMRuser, egaspUser: isEGASPUser }}
+            />
             <ConfirmationDialog
                 isOpen={isDialogOpen}
                 title={i18n.t("Reject Data Submission")}
@@ -336,10 +345,12 @@ export function getSortingFromTableSorting(
     };
 }
 
-function getEmptyDataValuesFilter(_config: Config): Filter {
+function getEmptyDataValuesFilter(_config: Config, isEGASPUser: boolean, isAMRUser: boolean): Filter {
     return {
+        module: isEGASPUser && isAMRUser ? "AMR" : isEGASPUser ? "EGASP" : "AMR",
         orgUnitPaths: [],
         periods: [],
+        quarters: ["Q1"],
         completionStatus: undefined,
         submissionStatus: undefined,
     };

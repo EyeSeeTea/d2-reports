@@ -15,6 +15,8 @@ export interface DataSubmissionViewModel {
     submissionStatus: string;
 }
 
+export type Module = "AMR" | "EGASP";
+
 export type Status =
     | "NOT_COMPLETED"
     | "COMPLETE"

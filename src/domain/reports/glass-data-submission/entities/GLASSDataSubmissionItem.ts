@@ -1,9 +1,9 @@
-import { Status } from "../../../../webapp/reports/glass-data-submission/DataSubmissionViewModel";
+import { Module, Status } from "../../../../webapp/reports/glass-data-submission/DataSubmissionViewModel";
 import { Id, NamedRef } from "../../../common/entities/Base";
 
 export interface GLASSDataSubmissionItem {
     id: Id;
-    module: string;
+    module: Module;
     orgUnit: string;
     orgUnitName: string;
     period: string;

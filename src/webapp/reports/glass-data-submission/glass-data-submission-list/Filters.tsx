@@ -12,17 +12,20 @@ import { D2Api } from "../../../../types/d2-api";
 import i18n from "../../../../locales";
 import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
 import { Dropdown, DropdownProps, MultipleDropdownProps } from "@eyeseetea/d2-ui-components";
-import { Status } from "../DataSubmissionViewModel";
+import { Module, Status } from "../DataSubmissionViewModel";
 
 export interface DataSetsFiltersProps {
     values: Filter;
     options: FilterOptions;
     onChange: React.Dispatch<React.SetStateAction<Filter>>;
+    userPermissions: { amrUser: boolean; egaspUser: boolean };
 }
 
 export interface Filter {
+    module: Module;
     orgUnitPaths: Id[];
     periods: string[];
+    quarters: string[];
     completionStatus?: boolean;
     submissionStatus?: Status;
 }
@@ -51,12 +54,40 @@ export const statusItems = [
 
 export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { config, api } = useAppContext();
-    const { values: filter, options: filterOptions, onChange } = props;
+    const { values: filter, options: filterOptions, onChange, userPermissions } = props;
+    const { amrUser, egaspUser } = userPermissions;
 
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
 
+    const quarterItems = React.useMemo(() => {
+        return [
+            { value: "Q1", text: i18n.t("January-March") },
+            { value: "Q2", text: i18n.t("April-June") },
+            { value: "Q3", text: i18n.t("July-September") },
+            { value: "Q4", text: i18n.t("October-December") },
+        ];
+    }, []);
+
     const [orgUnits, setOrgUnits] = useState<OrgUnit[]>([]);
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
+
+    const moduleItems = React.useMemo(() => {
+        const modules = [
+            { value: "AMR", text: i18n.t("AMR") },
+            { value: "EGASP", text: i18n.t("EGASP") },
+        ];
+
+        switch (true) {
+            case amrUser && egaspUser:
+                return modules;
+            case amrUser:
+                return modules.filter(module => module.value === "AMR");
+            case egaspUser:
+                return modules.filter(module => module.value === "EGASP");
+            default:
+                return modules;
+        }
+    }, [amrUser, egaspUser]);
 
     const completionStatusItems = React.useMemo(() => {
         return [
@@ -103,6 +134,13 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { orgUnitPaths } = filter;
     const orgUnitsByPath = React.useMemo(() => _.keyBy(orgUnits, ou => ou.path), [orgUnits]);
 
+    const setModule = React.useCallback<SingleDropdownHandler>(
+        module => {
+            onChange(filter => ({ ...filter, module: module as Module }));
+        },
+        [onChange]
+    );
+
     const setOrgUnitPaths = React.useCallback<OrgUnitsFilterButtonProps["setSelected"]>(
         newSelectedPaths => {
             const prevSelectedPaths = orgUnitPaths;
@@ -144,6 +182,11 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         [onChange]
     );
 
+    const setQuarters = React.useCallback<DropdownHandler>(
+        quarters => onChange(prev => ({ ...prev, quarters })),
+        [onChange]
+    );
+
     const setCompletionStatus = React.useCallback<SingleDropdownHandler>(
         completionStatus => {
             onChange(filter => ({ ...filter, completionStatus: toBool(completionStatus) }));
@@ -160,6 +203,14 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
 
     return (
         <Container>
+            <SingleDropdownStyled
+                items={moduleItems}
+                value={filter.module}
+                onChange={setModule}
+                label={i18n.t("Module")}
+                hideEmpty
+            />
+
             <OrgUnitsFilterButton
                 api={api}
                 rootIds={rootIds}
@@ -168,12 +219,17 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 selectableLevels={[1, 2, 3]}
             />
 
-            <DropdownStyled
-                items={periodItems}
-                values={filter.periods}
-                onChange={setPeriods}
-                label={i18n.t("Periods")}
-            />
+            <DropdownStyled items={periodItems} values={filter.periods} onChange={setPeriods} label={i18n.t("Years")} />
+
+            {filter.module === "EGASP" && (
+                <DropdownStyled
+                    items={quarterItems}
+                    values={filter.quarters}
+                    onChange={setQuarters}
+                    label={i18n.t("Quarters")}
+                    hideEmpty
+                />
+            )}
 
             <SingleDropdownStyled
                 items={completionStatusItems}

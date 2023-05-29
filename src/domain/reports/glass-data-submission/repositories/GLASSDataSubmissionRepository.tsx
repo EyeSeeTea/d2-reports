@@ -1,4 +1,4 @@
-import { Status } from "../../../../webapp/reports/glass-data-submission/DataSubmissionViewModel";
+import { Module, Status } from "../../../../webapp/reports/glass-data-submission/DataSubmissionViewModel";
 import { Id } from "../../../common/entities/Base";
 import { Config } from "../../../common/entities/Config";
 import { PaginatedObjects, Paging, Sorting } from "../../../common/entities/PaginatedObjects";
@@ -26,6 +26,8 @@ export interface GLASSDataSubmissionOptions {
     paging: Paging;
     sorting: Sorting<GLASSDataSubmissionItem>;
     periods: string[];
+    quarters: string[];
+    module: Module;
     orgUnitIds: Id[];
     completionStatus?: boolean;
     submissionStatus?: Status;

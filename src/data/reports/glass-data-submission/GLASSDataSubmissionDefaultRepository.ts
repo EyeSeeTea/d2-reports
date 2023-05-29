@@ -75,7 +75,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         options: GLASSDataSubmissionOptions,
         namespace: string
     ): Promise<PaginatedObjects<GLASSDataSubmissionItem>> {
-        const { paging, sorting, orgUnitIds, periods, completionStatus, submissionStatus } = options;
+        const { paging, sorting, module, orgUnitIds, periods, quarters, completionStatus, submissionStatus } = options;
 
         const modules =
             (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
@@ -84,9 +84,11 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const objects =
             (await this.globalStorageClient.getObject<GLASSDataSubmissionItem[]>(namespace))?.filter(object => {
                 const amrModule = modules.find(module => module.name === "AMR")?.id;
+                const egaspModule = modules.find(module => module.name === "EGASP")?.id;
 
-                return object.module === amrModule;
+                return module === "AMR" ? object.module === amrModule : object.module === egaspModule;
             }) ?? [];
+
         const uploads =
             (await this.globalStorageClient.getObject<GLASSDataSubmissionItemUpload[]>(
                 Namespaces.DATA_SUBMISSSIONS_UPLOADS
@@ -154,12 +156,14 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             };
         });
 
-        const filteredRows = rows.filter(
-            row =>
-                (_.isEmpty(orgUnitIds) || !row.orgUnit ? row : orgUnitIds.includes(row.orgUnit)) &&
-                periods.includes(String(row.period)) &&
-                (completionStatus !== undefined ? row.questionnaireCompleted === completionStatus : row) &&
-                (!submissionStatus ? row : row.status === submissionStatus)
+        const quarterPeriods = _.flatMap(periods, year => quarters.map(quarter => `${year}${quarter}`));
+
+        const filteredRows = rows.filter(row =>
+            (_.isEmpty(orgUnitIds) || !row.orgUnit ? row : orgUnitIds.includes(row.orgUnit)) && module === "AMR"
+                ? periods.includes(String(row.period))
+                : quarterPeriods.includes(String(row.period)) &&
+                  (completionStatus !== undefined ? row.questionnaireCompleted === completionStatus : row) &&
+                  (!submissionStatus ? row : row.status === submissionStatus)
         );
 
         const rowsInPage = _(filteredRows)
