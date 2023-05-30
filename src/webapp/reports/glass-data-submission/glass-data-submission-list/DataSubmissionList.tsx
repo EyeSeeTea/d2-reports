@@ -125,9 +125,9 @@ export const DataSubmissionList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: (rows: DataSubmissionViewModel[]) => {
-                        return _.every(rows, row => row.status === "PENDING_APPROVAL");
-                    },
+                    // isActive: (rows: DataSubmissionViewModel[]) => {
+                    //     return _.every(rows, row => row.status === "PENDING_APPROVAL");
+                    // },
                 },
                 {
                     name: "accept",

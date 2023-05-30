@@ -24,10 +24,15 @@ export interface GLASSDataSubmissionItemIdentifier {
     module: string | undefined;
 }
 
+export interface DataSetIds {
+    id: Id;
+    approvedId: Id;
+}
+
 export interface GLASSDataSubmissionModule {
     id: Id;
     name: string;
-    dataSets: { id: Id; approvedId: Id }[];
+    dataSets: DataSetIds[];
     questionnaires: string;
     dashboards: {
         reportsMenu: string;
