@@ -227,7 +227,6 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                     values={filter.quarters}
                     onChange={setQuarters}
                     label={i18n.t("Quarters")}
-                    hideEmpty
                 />
             )}
 

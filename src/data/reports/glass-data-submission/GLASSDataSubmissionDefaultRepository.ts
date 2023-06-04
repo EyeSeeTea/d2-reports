@@ -4,7 +4,7 @@ import {
     GLASSDataSubmissionItem,
     GLASSDataSubmissionItemIdentifier,
     GLASSDataSubmissionModule,
-    DataSetIds,
+    ApprovalIds,
 } from "../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 import {
     GLASSDataSubmissionOptions,
@@ -351,7 +351,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             .getData();
     }
 
-    private async getProgramEvents(program: string, orgUnit: string, _period: string) {
+    private async getProgramEvents(program: string, orgUnit: string) {
         return await this.api.events
             .get({
                 program,
@@ -394,8 +394,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const module = modules.find(module => module.id === _.first(items)?.module)?.name ?? "";
 
         if (module === "EGASP") {
-            const egaspProgram = "SOjanrinfuG";
-            await this.duplicateProgram(egaspProgram, items);
+            const egaspPrograms = modules.find(module => module.name === "EGASP")?.programs ?? [];
+            _.forEach(egaspPrograms, async egaspProgram => this.duplicateProgram(egaspProgram, items));
         } else {
             const amrDataSets = modules.find(module => module.name === "AMR")?.dataSets ?? [];
             _.forEach(amrDataSets, async amrDataSet => await this.duplicateDataSet(amrDataSet, items));
@@ -410,7 +410,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
 
-    private async duplicateDataSet(dataSet: DataSetIds, items: GLASSDataSubmissionItemIdentifier[]) {
+    private async duplicateDataSet(dataSet: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
         await promiseMap(items, async item => {
             const dataValueSets = (await this.getDataSetsValue(dataSet.id, item.orgUnit ?? "", item.period)).dataValues;
 
@@ -455,9 +455,9 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         });
     }
 
-    private async duplicateProgram(program: string, items: GLASSDataSubmissionItemIdentifier[]) {
+    private async duplicateProgram(program: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
         await promiseMap(items, async item => {
-            const events = (await this.getProgramEvents(program, item.orgUnit ?? "", item.period)).events.map(event => {
+            const events = (await this.getProgramEvents(program.id, item.orgUnit ?? "")).events.map(event => {
                 return {
                     program: event.program,
                     orgUnit: event.orgUnit,
@@ -472,7 +472,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             if (!_.isEmpty(events)) {
                 const eventsToPost = events.map(event => {
                     return {
-                        program: event.program,
+                        program: program.approvedId,
                         orgUnit: event.orgUnit,
                         eventDate: event.eventDate,
                         status: event.status,

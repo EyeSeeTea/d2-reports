@@ -235,6 +235,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
         return {
             ...filter,
             periods: _.isEmpty(filter.periods) ? selectablePeriods : filter.periods,
+            quarters: _.isEmpty(filter.quarters) ? ["Q1", "Q2", "Q3", "Q4"] : filter.quarters,
             orgUnitIds: getOrgUnitIdsFromPaths(filter.orgUnitPaths),
         };
     }

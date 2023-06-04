@@ -24,7 +24,7 @@ export interface GLASSDataSubmissionItemIdentifier {
     module: string | undefined;
 }
 
-export interface DataSetIds {
+export interface ApprovalIds {
     id: Id;
     approvedId: Id;
 }
@@ -32,7 +32,8 @@ export interface DataSetIds {
 export interface GLASSDataSubmissionModule {
     id: Id;
     name: string;
-    dataSets: DataSetIds[];
+    dataSets: ApprovalIds[];
+    programs: ApprovalIds[];
     questionnaires: string;
     dashboards: {
         reportsMenu: string;
