@@ -152,42 +152,6 @@ msgstr ""
 msgid "Sub-Group"
 msgstr ""
 
-msgid "Yearly"
-msgstr ""
-
-msgid "Quarterly"
-msgstr ""
-
-msgid "Jan - March"
-msgstr ""
-
-msgid "April - June"
-msgstr ""
-
-msgid "July - September"
-msgstr ""
-
-msgid "October - December"
-msgstr ""
-
-msgid "Period Type"
-msgstr ""
-
-msgid "Year"
-msgstr ""
-
-msgid "Quarter"
-msgstr ""
-
-msgid "CSY Summary Table Report"
-msgstr ""
-
-msgid "Group"
-msgstr ""
-
-msgid "Sub-Group"
-msgstr ""
-
 msgid "< 1 yr"
 msgstr ""
 
@@ -224,34 +188,7 @@ msgstr ""
 msgid "Patient Characteristics"
 msgstr ""
 
-msgid "Yearly"
-msgstr ""
-
-msgid "Quarterly"
-msgstr ""
-
-msgid "Jan - March"
-msgstr ""
-
-msgid "April - June"
-msgstr ""
-
-msgid "July - September"
-msgstr ""
-
-msgid "October - December"
-msgstr ""
-
 msgid "Summary Type"
-msgstr ""
-
-msgid "Period Type"
-msgstr ""
-
-msgid "Year"
-msgstr ""
-
-msgid "Quarter"
 msgstr ""
 
 msgid "CSY Summary Report - Mortality by Injury Severity"

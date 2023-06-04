@@ -336,17 +336,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
             disableRevoke,
             enableRevoke,
         ]
-        [
-            compositionRoot.malDataApproval,
-            isMalAdmin,
-            isMalApprover,
-            monitoring,
-            openDialog,
-            reload,
-            snackbar,
-            disableRevoke,
-            enableRevoke,
-        ]
     );
 
     const getRows = useMemo(
