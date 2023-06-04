@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2023-04-20T11:58:35.649Z\n"
+"POT-Creation-Date: 2023-06-04T17:05:25.418Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -86,6 +86,42 @@ msgstr ""
 msgid "Sub-Group"
 msgstr ""
 
+msgid "< 1 yr"
+msgstr ""
+
+msgid "1 - 4 yr"
+msgstr ""
+
+msgid "5 - 9 yr"
+msgstr ""
+
+msgid "10 - 14 yr"
+msgstr ""
+
+msgid "15 - 19 yr"
+msgstr ""
+
+msgid "20 - 40 yr"
+msgstr ""
+
+msgid "40 - 60 yr"
+msgstr ""
+
+msgid "60 - 80 yr"
+msgstr ""
+
+msgid "80+ yr"
+msgstr ""
+
+msgid "Unknown"
+msgstr ""
+
+msgid "Total"
+msgstr ""
+
+msgid "Patient Characteristics"
+msgstr ""
+
 msgid "Yearly"
 msgstr ""
 
@@ -104,6 +140,9 @@ msgstr ""
 msgid "October - December"
 msgstr ""
 
+msgid "Summary Type"
+msgstr ""
+
 msgid "Period Type"
 msgstr ""
 
@@ -111,6 +150,21 @@ msgid "Year"
 msgstr ""
 
 msgid "Quarter"
+msgstr ""
+
+msgid "CSY Summary Report - Mortality by Injury Severity"
+msgstr ""
+
+msgid "Scoring System"
+msgstr ""
+
+msgid "Severity"
+msgstr ""
+
+msgid "Mortality"
+msgstr ""
+
+msgid "Mortality Injury Severity"
 msgstr ""
 
 msgid "GLASS Data Submission Report"
