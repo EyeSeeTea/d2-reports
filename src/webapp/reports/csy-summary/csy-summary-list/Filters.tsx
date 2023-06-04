@@ -15,6 +15,7 @@ export interface FiltersProps {
 }
 
 export interface Filter {
+    summaryType: string;
     orgUnitPaths: Id[];
     periodType: string;
     year: string;
@@ -24,6 +25,13 @@ export interface Filter {
 interface FilterOptions {
     periods: string[];
 }
+
+export const summaryTypeItems = [
+    {
+        value: "patient-characteristics",
+        text: i18n.t("Patient Characteristics"),
+    },
+];
 
 export const Filters: React.FC<FiltersProps> = React.memo(props => {
     const { config, api } = useAppContext();
@@ -44,12 +52,19 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
 
     const quarterPeriodItems = React.useMemo(() => {
         return [
-            { value: "01", text: i18n.t("Jan - March") },
-            { value: "04", text: i18n.t("April - June") },
-            { value: "07", text: i18n.t("July - September") },
-            { value: "10", text: i18n.t("October - December") },
+            { value: "Q1", text: i18n.t("Jan - March") },
+            { value: "Q2", text: i18n.t("April - June") },
+            { value: "Q3", text: i18n.t("July - September") },
+            { value: "Q4", text: i18n.t("October - December") },
         ];
     }, []);
+
+    const setSummaryType = React.useCallback<SingleDropdownHandler>(
+        summaryType => {
+            onChange(filter => ({ ...filter, summaryType: summaryType ?? "" }));
+        },
+        [onChange]
+    );
 
     const setQuarterPeriod = React.useCallback<SingleDropdownHandler>(
         quarterPeriod => {
@@ -68,7 +83,7 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
     const setPeriodType = React.useCallback<SingleDropdownHandler>(
         periodType => {
             setPerType(periodType ?? "yearly");
-            setQuarterPeriod(undefined);
+            setQuarterPeriod(periodType !== "yearly" ? "Q1" : undefined);
 
             onChange(filter => ({ ...filter, periodType: periodType ?? "yearly" }));
         },
@@ -77,12 +92,20 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
 
     return (
         <Container>
+            <SummaryTypeDropdown
+                items={summaryTypeItems}
+                value={filter.summaryType}
+                onChange={setSummaryType}
+                label={i18n.t("Summary Type")}
+                hideEmpty
+            />
+
             <OrgUnitsFilterButton
                 api={api}
                 rootIds={rootIds}
                 selected={filter.orgUnitPaths}
                 setSelected={paths => onChange({ ...filter, orgUnitPaths: paths })}
-                selectableLevels={[2]}
+                selectableLevels={[1, 2, 3]}
             />
 
             <SingleDropdownStyled
@@ -126,6 +149,11 @@ const Container = styled.div`
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
+`;
+
+const SummaryTypeDropdown = styled(Dropdown)`
+    margin-left: -10px;
+    width: 200px;
 `;
 
 const SingleDropdownStyled = styled(Dropdown)`

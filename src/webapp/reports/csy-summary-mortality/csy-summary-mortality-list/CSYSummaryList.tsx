@@ -13,7 +13,7 @@ import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
 import { useReload } from "../../../utils/use-reload";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
-import { SummaryItem } from "../../../../domain/reports/csy-summary/entities/SummaryItem";
+import { SummaryItem } from "../../../../domain/reports/csy-summary-mortality/entities/SummaryItem";
 import { Filter, Filters } from "./Filters";
 import { Config } from "../../../../domain/common/entities/Config";
 import _ from "lodash";
@@ -33,12 +33,14 @@ export const CSYSummaryList: React.FC = React.memo(() => {
     const baseConfig: TableConfig<SummaryViewModel> = useMemo(
         () => ({
             columns: [
-                { name: "group", text: i18n.t("Group"), sortable: true },
-                { name: "subGroup", text: i18n.t("Sub-Group"), sortable: true },
+                { name: "scoringSystem", text: i18n.t("Scoring System"), sortable: true },
+                { name: "severity", text: i18n.t("Severity"), sortable: true },
+                { name: "mortality", text: i18n.t("Mortality"), sortable: true },
+                { name: "total", text: i18n.t("Total"), sortable: true },
             ],
             actions: [],
             initialSorting: {
-                field: "group" as const,
+                field: "scoringSystem" as const,
                 order: "asc" as const,
             },
             paginationOptions: {
@@ -51,19 +53,18 @@ export const CSYSummaryList: React.FC = React.memo(() => {
 
     const getRows = useMemo(
         () => async (_search: string, paging: TablePagination, sorting: TableSorting<SummaryViewModel>) => {
-            const { pager, objects } = await compositionRoot.summary.get({
+            const { pager, objects } = await compositionRoot.summaryMortality.get({
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
-                year: "",
-                orgUnitPaths: [],
+                ...filters,
             });
 
             setSorting(sorting);
             console.debug("Reloading", reloadKey);
             return { pager, objects: getSummaryViews(config, objects) };
         },
-        [config, compositionRoot, reloadKey]
+        [compositionRoot.summaryMortality, config, filters, reloadKey]
     );
 
     const tableProps = useObjectsTable(baseConfig, getRows);
@@ -81,14 +82,14 @@ export const CSYSummaryList: React.FC = React.memo(() => {
         icon: <StorageIcon />,
         onClick: async () => {
             if (!sorting) return;
-            const { objects: summaryItems } = await compositionRoot.summary.get({
+            const { objects: summaryItems } = await compositionRoot.summaryMortality.get({
                 config,
                 paging: { page: 1, pageSize: 100000 },
                 sorting: getSortingFromTableSorting(sorting),
                 ...filters,
             });
 
-            compositionRoot.summary.save("summary-table-report.csv", summaryItems);
+            compositionRoot.summaryMortality.save("summary-table-report.csv", summaryItems);
         },
     };
 
@@ -101,13 +102,14 @@ export const CSYSummaryList: React.FC = React.memo(() => {
 
 export function getSortingFromTableSorting(sorting: TableSorting<SummaryViewModel>): Sorting<SummaryItem> {
     return {
-        field: sorting.field === "id" ? "group" : sorting.field,
+        field: sorting.field === "id" ? "scoringSystem" : sorting.field,
         direction: sorting.order,
     };
 }
 
 function getEmptyDataValuesFilter(_config: Config): Filter {
     return {
+        summaryType: "injury-epidemiology",
         orgUnitPaths: [],
         year: "2020",
         periodType: "yearly",
