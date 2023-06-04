@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2023-05-16T08:28:37.760Z\n"
-"PO-Revision-Date: 2023-05-16T08:28:37.760Z\n"
+"POT-Creation-Date: 2023-06-04T17:06:14.327Z\n"
+"PO-Revision-Date: 2023-06-04T17:06:14.327Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -215,13 +215,37 @@ msgstr ""
 msgid "Waiting for WHO to approve your update request"
 msgstr ""
 
+msgid "January-March"
+msgstr ""
+
+msgid "April-June"
+msgstr ""
+
+msgid "July-September"
+msgstr ""
+
+msgid "October-December"
+msgstr ""
+
+msgid "AMR"
+msgstr ""
+
+msgid "EGASP"
+msgstr ""
+
 msgid "Completed"
 msgstr ""
 
 msgid "Not completed"
 msgstr ""
 
-msgid "Periods"
+msgid "Module"
+msgstr ""
+
+msgid "Years"
+msgstr ""
+
+msgid "Quarters"
 msgstr ""
 
 msgid "Data Element"
@@ -321,6 +345,9 @@ msgid "Ready for submission"
 msgstr ""
 
 msgid "Data sets"
+msgstr ""
+
+msgid "Periods"
 msgstr ""
 
 msgid "NHWA Data Approval Status Report"
