@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2023-05-28T18:26:36.817Z\n"
-"PO-Revision-Date: 2023-05-28T18:26:36.817Z\n"
+"POT-Creation-Date: 2023-05-28T18:55:43.867Z\n"
+"PO-Revision-Date: 2023-05-28T18:55:43.867Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -144,6 +144,18 @@ msgid "Quarter"
 msgstr ""
 
 msgid "CSY Audit Report - Trauma Care"
+msgstr ""
+
+msgid "Overall Mortality in EU"
+msgstr ""
+
+msgid "Low acuity triage with EU disposition ICU"
+msgstr ""
+
+msgid "Highest triage category and time to first provider >30min ​"
+msgstr ""
+
+msgid "Initial RBG low and Glucose not given"
 msgstr ""
 
 msgid "GLASS Data Submission Report"

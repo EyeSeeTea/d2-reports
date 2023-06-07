@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2023-05-28T18:26:36.817Z\n"
+"POT-Creation-Date: 2023-05-28T18:55:43.867Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -144,6 +144,18 @@ msgid "Quarter"
 msgstr ""
 
 msgid "CSY Audit Report - Trauma Care"
+msgstr ""
+
+msgid "Overall Mortality in EU"
+msgstr ""
+
+msgid "Low acuity triage with EU disposition ICU"
+msgstr ""
+
+msgid "Highest triage category and time to first provider >30min ​"
+msgstr ""
+
+msgid "Initial RBG low and Glucose not given"
 msgstr ""
 
 msgid "GLASS Data Submission Report"
