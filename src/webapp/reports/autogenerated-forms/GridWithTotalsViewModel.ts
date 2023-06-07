@@ -35,7 +35,7 @@ const totalList = [
         numberType: "INTEGER_ZERO_OR_POSITIVE",
         id: "Yxkvq7nmosQ",
         code: "2211-Total",
-        name: "1.1 - General Medical Practitioners (incl. Family medical practitioners)",
+        name: "1.1 - Generalist Medical Practitioners (incl. Family medical practitioners)",
         categoryCombos: {
             id: "JzvGfLYkX17",
             name: "default",
@@ -69,7 +69,7 @@ const totalList = [
         numberType: "INTEGER_ZERO_OR_POSITIVE",
         id: "mzBQp5cOihy",
         code: "2212pd-Total",
-        name: "1.2.1 - General Paediatricians Practitioners",
+        name: "1.2.1 - General Paediatricians",
         categoryCombos: {
             id: "JzvGfLYkX17",
             name: "default",
@@ -103,7 +103,7 @@ const totalList = [
         numberType: "INTEGER_ZERO_OR_POSITIVE",
         id: "QxPGLy2DUhG",
         code: "2212psy-Total",
-        name: "1.2.3 - Psychiatrists Practitioners",
+        name: "1.2.3 - Psychiatrists",
         categoryCombos: {
             id: "JzvGfLYkX17",
             name: "default",
@@ -120,7 +120,7 @@ const totalList = [
         numberType: "INTEGER_ZERO_OR_POSITIVE",
         id: "nNmvfTuUhng",
         code: "2212med-Total",
-        name: "1.2.4 - Medical group of Specialists Practitioners",
+        name: "1.2.4 - Medical group of Specialists",
         categoryCombos: {
             id: "JzvGfLYkX17",
             name: "default",
@@ -137,7 +137,7 @@ const totalList = [
         numberType: "INTEGER_ZERO_OR_POSITIVE",
         id: "VDeI2btrNih",
         code: "2212surg-Total",
-        name: "1.2.5 - Surgical group of Specialists Practitioners",
+        name: "1.2.5 - Surgical group of Specialists",
         categoryCombos: {
             id: "JzvGfLYkX17",
             name: "default",
@@ -154,7 +154,7 @@ const totalList = [
         numberType: "INTEGER_ZERO_OR_POSITIVE",
         id: "pWXXIlhZ8PI",
         code: "2212oth-Total",
-        name: "1.2.6 - Other Specialists Practitioners",
+        name: "1.2.6 - Other Specialists n.e.c.",
         categoryCombos: {
             id: "JzvGfLYkX17",
             name: "default",
@@ -475,9 +475,9 @@ const totalList = [
     {
         type: "NUMBER",
         numberType: "INTEGER_ZERO_OR_POSITIVE",
-        id: "NC58vY6UBEk",
-        code: "3211-Total",
-        name: "11 - Medical Imaging and Therapeutic Equipment Technicians",
+        id: "RNCFRfcGsEq",
+        code: "3212-Total",
+        name: "11 - Medical and Pathology Laboratory Technicians",
         categoryCombos: {
             id: "JzvGfLYkX17",
             name: "default",
@@ -492,9 +492,9 @@ const totalList = [
     {
         type: "NUMBER",
         numberType: "INTEGER_ZERO_OR_POSITIVE",
-        id: "RNCFRfcGsEq",
-        code: "3212-Total",
-        name: "12 - Medical and Pathology Laboratory Technicians",
+        id: "NC58vY6UBEk",
+        code: "3211-Total",
+        name: "12 - Medical Imaging and Therapeutic Equipment Technicians",
         categoryCombos: {
             id: "JzvGfLYkX17",
             name: "default",
@@ -1127,7 +1127,6 @@ interface Column {
 export interface Row {
     name: string;
     includePadding: number;
-    disableTotalSum: boolean;
     total?: DataElement;
     rowDataElements?: DataElement[];
     rowDisabled?: boolean;
@@ -1230,14 +1229,13 @@ export class GridWithTotalsViewModel {
             }
 
             // Since we cannot add spaces or tabs in a form name
-            // we're adding a little padding of each row number
+            // we're adding a little padding for each row number
             const includePadding = index ? index.split(".").length - 1 : 0;
 
             return {
                 name: subsection.name,
                 includePadding,
                 total: total,
-                disableTotalSum: subsection.name.startsWith("41.1 -"),
                 rowDataElements: rowDataElements,
                 rowDisabled,
                 items: items,

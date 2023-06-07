@@ -145,15 +145,41 @@ function useDataFormInfo(): [Maybe<DataFormInfo>, boolean] {
     const saveDataValue = useCallback<DataFormInfo["data"]["save"]>(
         async (dataValue: DataValue) => {
             if (!dataValues) return dataValues;
-            return compositionRoot.dataForms.saveValue(dataValues, dataValue).then(setDataValues);
+            return compositionRoot.dataForms.saveValue(dataValues, dataValue).then(newStore => {
+                setDataValues(prev => {
+                    if (!prev) return undefined;
+                    return {
+                        get: newStore.get,
+                        set: newStore.set,
+                        getOrEmpty: newStore.getOrEmpty,
+                        store: {
+                            ...prev.store,
+                            ...newStore.store,
+                        },
+                    };
+                });
+            });
         },
         [compositionRoot, dataValues]
     );
 
     const SourceTypeApplyToAll = useCallback<DataFormInfo["data"]["stApplyToAll"]>(
         async (dataValue: DataValueTextMultiple, sourceTypeDEs: DataElementRefType[], rows: Row[]) => {
-            if (!dataValues) return dataValues;
-            return compositionRoot.dataForms.applyToAll(dataValues, dataValue, sourceTypeDEs, rows).then(setDataValues);
+            if (!dataValues) return undefined;
+            return compositionRoot.dataForms.applyToAll(dataValues, dataValue, sourceTypeDEs, rows).then(newStore => {
+                setDataValues(prev => {
+                    if (!prev) return undefined;
+                    return {
+                        get: newStore.get,
+                        set: newStore.set,
+                        getOrEmpty: newStore.getOrEmpty,
+                        store: {
+                            ...prev.store,
+                            ...newStore.store,
+                        },
+                    };
+                });
+            });
         },
         [compositionRoot, dataValues]
     );
@@ -170,7 +196,20 @@ function useDataFormInfo(): [Maybe<DataFormInfo>, boolean] {
             if (!dataValues) return dataValues;
             return compositionRoot.dataForms
                 .saveWithTotals(dataValues, dataValue, total, columnTotal, rowDataElements, columnDataElements, cocId)
-                .then(setDataValues);
+                .then(newStore => {
+                    setDataValues(prev => {
+                        if (!prev) return undefined;
+                        return {
+                            get: newStore.get,
+                            set: newStore.set,
+                            getOrEmpty: newStore.getOrEmpty,
+                            store: {
+                                ...prev.store,
+                                ...newStore.store,
+                            },
+                        };
+                    });
+                });
         },
         [compositionRoot, dataValues]
     );

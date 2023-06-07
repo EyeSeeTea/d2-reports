@@ -94,7 +94,7 @@ type DataValueSelector = string; // `${dataElementId.period.categoryOptionComboI
 export type DataValueStoreD = Record<DataValueSelector, DataValue>;
 
 export class DataValueStore {
-    constructor(private store: DataValueStoreD) {}
+    constructor(public store: DataValueStoreD) {}
 
     static from(dataValues: DataValue[]): DataValueStore {
         const store = _.keyBy(dataValues, dv =>

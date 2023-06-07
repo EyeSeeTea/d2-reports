@@ -70,7 +70,7 @@ export class GridWithCombosViewModel {
 
                 return { name: subsection.name, items: items };
             }),
-            ["name"]
+            [section.id === "ldsKVeQ7XBe" ? "" : "name"]
         );
 
         const useIndexes =

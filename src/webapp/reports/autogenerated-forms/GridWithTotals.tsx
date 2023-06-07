@@ -127,7 +127,11 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                                 dataElement={item.dataElement}
                                                 dataFormInfo={dataFormInfo}
                                                 noComment={true}
-                                                manualyDisabled={row.name.startsWith("41 -") ? false : row.rowDisabled}
+                                                manualyDisabled={
+                                                    row.name.startsWith("41 -") || row.name.startsWith("18 -")
+                                                        ? false
+                                                        : row.rowDisabled
+                                                }
                                                 total={row.total}
                                                 columnTotal={item.columnTotal}
                                                 rowDataElements={row.rowDataElements}

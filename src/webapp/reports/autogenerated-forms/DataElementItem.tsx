@@ -52,7 +52,7 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
 
     return !noComment ? (
         <div id={elId} className={classes.valueWrapper}>
-            <div className={classes.valueInput}>
+            <div className={`${classes.valueInput} sourcetype`} id={auditId}>
                 <DataEntryItem
                     dataElement={dataElement}
                     dataFormInfo={dataFormInfo}
@@ -71,7 +71,7 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
         </div>
     ) : (
         <div id={elId} className={classes.valueWrapper}>
-            <div className={`${classes.valueInput} entryfield`} id={auditId}>
+            <div className={`${classes.valueInput} entryfield2`} id={auditId}>
                 <DataEntryItem
                     dataElement={dataElement}
                     dataFormInfo={dataFormInfo}

@@ -229,7 +229,7 @@ function useUpdatableDataValueWithFeedback(options: DataEntryItemProps) {
     const notifyChange = React.useCallback(
         dataValue => {
             setState("saving");
-            const disableTotalSum = total?.name.startsWith("41.");
+            const disableTotalSum = total?.name.startsWith("41.") || total?.name.startsWith("18");
             if (total && columnTotal && rowDataElements && columnDataElements && !disableTotalSum) {
                 saveWithTotals(dataValue, total, columnTotal, rowDataElements, columnDataElements, cocId)
                     .then(() => setState("saveSuccessful"))
