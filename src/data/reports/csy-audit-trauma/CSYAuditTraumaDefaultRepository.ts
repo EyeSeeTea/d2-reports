@@ -127,9 +127,9 @@ const auditQueryStrings = {
         "&dimension=wfFqGrIfAa4:like:Level%205",
         "&dimension=wfFqGrIfAa4:like:Priority%203",
         "&dimension=wfFqGrIfAa4:like:Minor(Green)",
-        //"&dimension=wfFqGrIfAa4:like:Standard(Green,4)",
-        //"&dimension=wfFqGrIfAa4:like:Non-urgent(Blue,5)",
-        //"&dimension=ijG1c7IqeZb:in:6"
+        "&dimension=wfFqGrIfAa4:like:Standard(Green,4)",
+        "&dimension=wfFqGrIfAa4:like:Non-urgent(Blue,5)",
+        "&dimension=ijG1c7IqeZb:in:6",
     ],
     "highest-triage": [
         "&dimension=wfFqGrIfAa4:like:Red",
@@ -140,12 +140,9 @@ const auditQueryStrings = {
         "&dimension=wfFqGrIfAa4:like:Level%202",
         "&dimension=wfFqGrIfAa4:like:Priority%201",
         "&dimension=wfFqGrIfAa4:like:Immediate(Red)",
-        //"&dimension=wfFqGrIfAa4:like:Immediate(Red,1)",
+        "&dimension=wfFqGrIfAa4:like:Immediate(Red,1)",
     ],
-    "initial-rbg": [
-        "&dimension=bN3ZHmLQX4r:IN:3",
-        //"&dimension=BhjTEQUYYO9:eq:true"
-    ],
+    "initial-rbg": ["&dimension=bN3ZHmLQX4r:IN:3", "&dimension=BhjTEQUYYO9:eq:true"],
 };
 
 function getAuditItems(auditType: string, response: AnalyticsResponse[]) {
