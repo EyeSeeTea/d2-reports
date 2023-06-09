@@ -19,6 +19,7 @@ interface BaseSectionConfig {
     texts: Texts;
     toggle: { type: "none" } | { type: "dataElement"; code: Code };
     tabs: { active: true; order: number } | { active: false };
+    sortRowsBy: string;
 }
 
 interface BasicSectionConfig extends BaseSectionConfig {
@@ -63,6 +64,7 @@ const DataStoreConfigCodec = Codec.interface({
         texts: optional(textsCodec),
         sections: optional(
             sectionConfig({
+                sortRowsBy: optional(string),
                 viewType: optional(viewType),
                 texts: optional(textsCodec),
                 toggle: optional(
@@ -278,6 +280,7 @@ export class Dhis2DataStoreDataForm {
                         header: getText(sectionConfig?.texts?.header),
                         footer: getText(sectionConfig?.texts?.footer),
                     },
+                    sortRowsBy: sectionConfig.sortRowsBy || "",
                     tabs: sectionConfig.tabs || { active: false },
                 };
 

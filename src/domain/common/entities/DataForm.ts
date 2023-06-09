@@ -33,6 +33,7 @@ export interface SectionBase {
     toggle: { type: "none" } | { type: "dataElement"; dataElement: DataElement };
     texts: Texts;
     tabs: { active: boolean; order?: number };
+    sortRowsBy: string;
 }
 
 export interface SectionSimple extends SectionBase {

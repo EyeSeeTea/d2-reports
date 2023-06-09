@@ -48,7 +48,7 @@ const TableForm: React.FC<TableFormProps> = React.memo(props => {
                                 <DataElementItem
                                     dataElement={dataElement}
                                     dataFormInfo={dataFormInfo}
-                                    noComment={true}
+                                    noComment={!dataElement.name.includes("Source type")}
                                 />
                             </DataTableCell>
                         </DataTableRow>

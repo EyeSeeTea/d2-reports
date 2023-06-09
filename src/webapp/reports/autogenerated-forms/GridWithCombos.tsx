@@ -60,7 +60,7 @@ const GridWithCombos: React.FC<GridWithCombosProps> = props => {
                         {grid.columns.map(column => (
                             <DataTableColumnHeader
                                 key={`column-${column.name}`}
-                                className={column.name === "Source type for HWF Inputs & Outputs" ? classes.source : ""}
+                                className={column.name === "Source type for HWF - (Inputs & Outputs)" ? classes.source : ""}
                             >
                                 <span>{column.cocName}</span>
                             </DataTableColumnHeader>
@@ -81,7 +81,7 @@ const GridWithCombos: React.FC<GridWithCombosProps> = props => {
                                         <DataElementItem
                                             dataElement={item.dataElement}
                                             dataFormInfo={dataFormInfo}
-                                            noComment={item.column.name !== "Source type for HWF Inputs & Outputs"}
+                                            noComment={item.column.name !== "Source type for HWF - (Inputs & Outputs)"}
                                         />
                                     </DataTableCell>
                                 ) : (

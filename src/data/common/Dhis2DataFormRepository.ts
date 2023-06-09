@@ -75,6 +75,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 toggle: { type: "none" },
                 texts: config?.texts || defaultTexts,
                 tabs: config?.tabs || { active: false },
+                sortRowsBy: config?.sortRowsBy || '',
                 dataElements: _(section.dataElements)
                     .map(dataElementRef => dataElements[dataElementRef.id])
                     .compact()

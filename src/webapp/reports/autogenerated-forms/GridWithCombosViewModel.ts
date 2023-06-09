@@ -92,7 +92,7 @@ export class GridWithCombosViewModel {
 
                 return { name: subsection.name, items: items };
             }),
-            [section.id === "ldsKVeQ7XBe" ? "" : "name"]
+            [section.sortRowsBy ? section.sortRowsBy : ""]
         );
 
         const useIndexes =
@@ -100,6 +100,8 @@ export class GridWithCombosViewModel {
             _(rows)
                 .groupBy(row => row.name.replace(/\s*\(\d+\)$/, ""))
                 .size() === 1;
+
+            console.log('Rows', rows)
 
         return {
             id: section.id,
@@ -131,10 +133,4 @@ function getDataElementsWithIndexProccessing(section: Section) {
             return { ...dataElement, name: newName };
         }
     });
-}
-
-function getSubsectionName(dataElement: DataElement): string {
-    // Remove index from enumerated data elements (example: `Chemical name (1)` -> `Chemical name`)
-    // so they are grouped with no need to edit each name in the metadata.
-    return _(dataElement.name).split(separator).initial().join(separator);
 }
