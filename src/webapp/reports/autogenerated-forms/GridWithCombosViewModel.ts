@@ -39,13 +39,12 @@ const separator = " - ";
 export class GridWithCombosViewModel {
     static get(section: Section): Grid {
         const dataElements = getDataElementsWithIndexProccessing(section);
-
         const subsections = _(dataElements)
             .flatMap(dataElement => {
-                const cocNames = dataElement.categoryCombos.categoryOptionCombos.map(coc => coc.name);
+                const cocNames = dataElement.categoryCombos.categoryOptionCombos.map(coc => coc[section.catComDisplayName]);
                 return cocNames.flatMap(coc => ({
                     ...dataElement,
-                    cocId: dataElement.categoryCombos.categoryOptionCombos.find(c => c.name === coc)?.id || "cocId",
+                    cocId: dataElement.categoryCombos.categoryOptionCombos.find(c => c[section.catComDisplayName] === coc)?.id || "cocId",
                     name: `${coc} - ${_(dataElement.name).split(separator).last()}`,
                     fullName: dataElement.name,
                     cocName: coc,
@@ -100,8 +99,6 @@ export class GridWithCombosViewModel {
             _(rows)
                 .groupBy(row => row.name.replace(/\s*\(\d+\)$/, ""))
                 .size() === 1;
-
-            console.log('Rows', rows)
 
         return {
             id: section.id,

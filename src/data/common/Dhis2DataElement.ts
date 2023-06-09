@@ -53,6 +53,7 @@ const dataElementFields = {
             categoryOptions: {
                 id: true,
                 name: true,
+                shortName: true,
             },
         },
         categoryOptionCombos: {
@@ -82,17 +83,23 @@ function makeCocOrderArray(namesArray: string[][]): string[] {
 }
 
 function getCocOrdered(categoryCombo: D2CategoryCombo) {
+    const allCategoryOptions = categoryCombo.categories.map(c => {
+        return c.categoryOptions.flatMap(co => ({ name: co.name, shortName: co.shortName}));
+    }).flatMap((categoriesOptions) => {
+        return categoriesOptions.map(co => co);
+    });
+
     const categoryOptionsNamesArray = categoryCombo.categories.map(c => {
         return c.categoryOptions.flatMap(co => co.name);
     });
 
     const cocOrderArray = makeCocOrderArray(categoryOptionsNamesArray);
-
     const result = cocOrderArray.flatMap(cocOrdered => {
         const match = categoryCombo.categoryOptionCombos.find(coc => {
             return coc.name === cocOrdered;
         });
-        return match ? match : [];
+        const categoryOption = allCategoryOptions.find(c => c.name === match?.name);
+        return match ? { ...match, shortName: categoryOption?.shortName  } : [];
     });
 
     return result;

@@ -19,6 +19,7 @@ interface BaseSectionConfig {
     texts: Texts;
     toggle: { type: "none" } | { type: "dataElement"; code: Code };
     tabs: { active: true; order: number } | { active: false };
+    catComDisplayName: "name" | "shortName";
     sortRowsBy: string;
 }
 
@@ -34,6 +35,11 @@ interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
 const defaultViewType = "table";
 
 const selector = Codec.interface({ code: string });
+
+const catComDisplayName = oneOf([
+    exactly("name"),
+    exactly("shortName"),
+]);
 
 const viewType = oneOf([
     exactly("table"),
@@ -86,9 +92,18 @@ const DataStoreConfigCodec = Codec.interface({
                         endOffset: number,
                     })
                 ),
+                catComDisplayName: optional(catComDisplayName),
             })
         ),
     }),
+    
+    // "NHWA_Foreign Trained HWF": {
+    //   "viewType": "shortName"
+    // },
+    // "viewType": "name"
+    // categoryCombinations: sectionConfig({
+    //     viewType: optional(oneOf([exactly("name"), exactly("shortName")])),
+    // })
 });
 
 interface DataElementConfig {
@@ -282,6 +297,7 @@ export class Dhis2DataStoreDataForm {
                     },
                     sortRowsBy: sectionConfig.sortRowsBy || "",
                     tabs: sectionConfig.tabs || { active: false },
+                    catComDisplayName: sectionConfig.catComDisplayName || "name",
                 };
 
                 const config: SectionConfig =
