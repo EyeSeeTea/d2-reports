@@ -30,6 +30,25 @@ const GridWithCombos: React.FC<GridWithCombosProps> = props => {
             <DataTable className={classes.table}>
                 <TableHead>
                     <DataTableRow>
+                        {
+                            grid.parentColumns.length > 0 && (
+                                <DataTableColumnHeader width="400px"></DataTableColumnHeader>
+                            )
+                        }
+                        {grid.parentColumns.map(column => {
+                            return (
+                                <DataTableColumnHeader
+                                    key={column.name}
+                                    className={classes.centerSpan}
+                                    colSpan={String(column.colSpan)}
+                                >
+                                    <span>{column.name}</span>
+                                </DataTableColumnHeader>
+                            );
+                        })}
+                    </DataTableRow>
+
+                    <DataTableRow>
                         {grid.useIndexes ? (
                             <DataTableColumnHeader width="30px">
                                 <span className={classes.header}>#</span>{" "}
@@ -39,8 +58,11 @@ const GridWithCombos: React.FC<GridWithCombosProps> = props => {
                         )}
 
                         {grid.columns.map(column => (
-                            <DataTableColumnHeader key={`column-${column.name}`}>
-                                <span>{column.name}</span>
+                            <DataTableColumnHeader
+                                key={`column-${column.name}`}
+                                className={column.name === "Source type for HWF Inputs & Outputs" ? classes.source : ""}
+                            >
+                                <span>{column.cocName}</span>
                             </DataTableColumnHeader>
                         ))}
                     </DataTableRow>
@@ -59,7 +81,7 @@ const GridWithCombos: React.FC<GridWithCombosProps> = props => {
                                         <DataElementItem
                                             dataElement={item.dataElement}
                                             dataFormInfo={dataFormInfo}
-                                            noComment={true}
+                                            noComment={item.column.name !== "Source type for HWF Inputs & Outputs"}
                                         />
                                     </DataTableCell>
                                 ) : (
@@ -78,6 +100,12 @@ const useStyles = makeStyles({
     wrapper: { margin: 10 },
     header: { fontSize: "1.4em", fontWeight: "bold" as const },
     table: { borderWidth: "3px !important" },
+    source: { maxWidth: "35% !important", width: "33% !important", minWidth: "15% !important" },
+    centerSpan: {
+        "& span": {
+            alignItems: "center",
+        },
+    },
 });
 
 export default React.memo(GridWithCombos);

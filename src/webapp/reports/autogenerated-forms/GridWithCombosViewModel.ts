@@ -10,6 +10,7 @@ export interface Grid {
     toggle: Section["toggle"];
     useIndexes: boolean;
     texts: Texts;
+    parentColumns: ParentColumn[];
 }
 
 interface SubSectionGrid {
@@ -19,12 +20,19 @@ interface SubSectionGrid {
 
 interface Column {
     name: string;
+    deName?: string;
+    cocName?: string;
 }
 
 interface Row {
     name: string;
     items: Array<{ column: Column; dataElement: DataElement | undefined }>;
 }
+
+type ParentColumn = {
+    name: string;
+    colSpan: number;
+};
 
 const separator = " - ";
 
@@ -35,30 +43,44 @@ export class GridWithCombosViewModel {
         const subsections = _(dataElements)
             .flatMap(dataElement => {
                 const cocNames = dataElement.categoryCombos.categoryOptionCombos.map(coc => coc.name);
-
                 return cocNames.flatMap(coc => ({
                     ...dataElement,
                     cocId: dataElement.categoryCombos.categoryOptionCombos.find(c => c.name === coc)?.id || "cocId",
                     name: `${coc} - ${_(dataElement.name).split(separator).last()}`,
+                    fullName: dataElement.name,
+                    cocName: coc,
                 }));
             })
-            .groupBy(dataElement => getSubsectionName(dataElement))
+            .groupBy(dataElement => dataElement.cocName)
             .toPairs()
-            .map(
-                ([groupName, dataElementsForGroup]): SubSectionGrid => ({
+            .map(([groupName, dataElementsForGroup]): SubSectionGrid => {
+                return {
                     name: groupName,
                     dataElements: dataElementsForGroup.map(dataElement => ({
                         ...dataElement,
-                        name: _(dataElement.name).split(separator).last() || "-",
+                        name: dataElement.fullName,
                     })),
-                })
-            )
+                };
+            })
             .value();
 
         const columns: Column[] = _(subsections)
             .flatMap(subsection => subsection.dataElements)
             .uniqBy(de => de.name)
-            .map(de => ({ name: de.name }))
+            .map(de => {
+                return {
+                    name: de.name,
+                    deName: _(de.name).split(separator).first() || "",
+                    cocName: _(de.name).split(separator).last() || "",
+                };
+            })
+            .value();
+
+        const parentColumns = _(columns)
+            .map(c => (c.deName && c.cocName ? c.deName : undefined))
+            .compact()
+            .groupBy()
+            .map((values, name) => ({ name, colSpan: values.length }))
             .value();
 
         const rows = _.orderBy(
@@ -87,6 +109,7 @@ export class GridWithCombosViewModel {
             toggle: section.toggle,
             texts: section.texts,
             useIndexes: useIndexes,
+            parentColumns: parentColumns.length === columns.length ? [] : parentColumns,
         };
     }
 }
