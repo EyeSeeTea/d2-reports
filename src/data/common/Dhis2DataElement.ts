@@ -46,6 +46,7 @@ const dataElementFields = {
     },
     categoryCombo: {
         id: true,
+        code: true,
         name: true,
         categories: {
             id: true,
@@ -82,7 +83,7 @@ function makeCocOrderArray(namesArray: string[][]): string[] {
     });
 }
 
-function getCocOrdered(categoryCombo: D2CategoryCombo) {
+function getCocOrdered(categoryCombo: D2CategoryCombo, config: Dhis2DataStoreDataForm) {
     const allCategoryOptions = categoryCombo.categories.map(c => {
         return c.categoryOptions.flatMap(co => ({ name: co.name, shortName: co.shortName}));
     }).flatMap((categoriesOptions) => {
@@ -102,7 +103,8 @@ function getCocOrdered(categoryCombo: D2CategoryCombo) {
         return match ? { ...match, shortName: categoryOption?.shortName  } : [];
     });
 
-    return result;
+    const keyName = config.categoryCombinationsConfig[categoryCombo.code]?.viewType || "name";
+    return result.map(x => ({ ...x, name: x[keyName] || "" }));
 }
 
 function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataForm): DataElement | null {
@@ -122,7 +124,7 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
     const categoryCombination = {
         id: dataElement.categoryCombo?.id,
         name: dataElement.categoryCombo?.name,
-        categoryOptionCombos: getCocOrdered(dataElement.categoryCombo as D2CategoryCombo),
+        categoryOptionCombos: getCocOrdered(dataElement.categoryCombo as D2CategoryCombo, config),
     };
 
     const base = {

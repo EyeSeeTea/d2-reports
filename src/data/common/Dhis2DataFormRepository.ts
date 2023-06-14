@@ -58,7 +58,6 @@ export class Dhis2DataFormRepository implements DataFormRepository {
 
     private async getSections(dataSet: D2DataSet, config: Dhis2DataStoreDataForm, period: Period) {
         const dataSetConfig = config.getDataSetConfig(dataSet, period);
-
         const dataElementIds = _(dataSet.sections)
             .flatMap(section => section.dataElements)
             .map(getId)
@@ -76,7 +75,6 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 texts: config?.texts || defaultTexts,
                 tabs: config?.tabs || { active: false },
                 sortRowsBy: config?.sortRowsBy || "",
-                catComDisplayName: config?.catComDisplayName || "name",
                 dataElements: _(section.dataElements)
                     .map(dataElementRef => dataElements[dataElementRef.id])
                     .compact()

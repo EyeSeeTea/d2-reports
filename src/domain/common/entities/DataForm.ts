@@ -34,7 +34,6 @@ export interface SectionBase {
     texts: Texts;
     tabs: { active: boolean; order?: number };
     sortRowsBy: string;
-    catComDisplayName: "name" | "shortName";
 }
 
 export interface SectionSimple extends SectionBase {

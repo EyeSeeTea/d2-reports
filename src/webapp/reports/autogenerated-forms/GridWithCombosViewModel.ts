@@ -41,10 +41,10 @@ export class GridWithCombosViewModel {
         const dataElements = getDataElementsWithIndexProccessing(section);
         const subsections = _(dataElements)
             .flatMap(dataElement => {
-                const cocNames = dataElement.categoryCombos.categoryOptionCombos.map(coc => coc[section.catComDisplayName]);
+                const cocNames = dataElement.categoryCombos.categoryOptionCombos.map(coc => coc.name);
                 return cocNames.flatMap(coc => ({
                     ...dataElement,
-                    cocId: dataElement.categoryCombos.categoryOptionCombos.find(c => c[section.catComDisplayName] === coc)?.id || "cocId",
+                    cocId: dataElement.categoryCombos.categoryOptionCombos.find(c => c.name === coc)?.id || "cocId",
                     name: `${coc} - ${_(dataElement.name).split(separator).last()}`,
                     fullName: dataElement.name,
                     cocName: coc,

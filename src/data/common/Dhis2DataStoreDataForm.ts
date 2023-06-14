@@ -19,7 +19,6 @@ interface BaseSectionConfig {
     texts: Texts;
     toggle: { type: "none" } | { type: "dataElement"; code: Code };
     tabs: { active: true; order: number } | { active: false };
-    catComDisplayName: "name" | "shortName";
     sortRowsBy: string;
 }
 
@@ -36,11 +35,6 @@ const defaultViewType = "table";
 
 const selector = Codec.interface({ code: string });
 
-const catComDisplayName = oneOf([
-    exactly("name"),
-    exactly("shortName"),
-]);
-
 const viewType = oneOf([
     exactly("table"),
     exactly("grid"),
@@ -55,6 +49,9 @@ const textsCodec = Codec.interface({
 });
 
 const DataStoreConfigCodec = Codec.interface({
+    categoryCombinations: sectionConfig({
+        viewType: optional(oneOf([exactly("name"), exactly("shortName")])),
+    }),
     dataElements: sectionConfig({
         selection: optional(
             Codec.interface({
@@ -92,18 +89,9 @@ const DataStoreConfigCodec = Codec.interface({
                         endOffset: number,
                     })
                 ),
-                catComDisplayName: optional(catComDisplayName),
             })
         ),
     }),
-    
-    // "NHWA_Foreign Trained HWF": {
-    //   "viewType": "shortName"
-    // },
-    // "viewType": "name"
-    // categoryCombinations: sectionConfig({
-    //     viewType: optional(oneOf([exactly("name"), exactly("shortName")])),
-    // })
 });
 
 interface DataElementConfig {
@@ -148,6 +136,7 @@ interface DataFormStoreConfig {
 const defaultDataStoreConfig: DataFormStoreConfig["custom"] = {
     dataElements: {},
     dataSets: {},
+    categoryCombinations: {}, 
 };
 
 interface DataSet {
@@ -156,11 +145,17 @@ interface DataSet {
     sections: Array<{ id: string; code: string }>;
 }
 
+type CategoryCombinationConfig = {
+    viewType: "name" | "shortName" | undefined;
+}
+
 export class Dhis2DataStoreDataForm {
     public dataElementsConfig: Record<Code, DataElementConfig>;
+    public categoryCombinationsConfig: Record<Code, CategoryCombinationConfig>;
 
     constructor(private config: DataFormStoreConfig) {
         this.dataElementsConfig = this.getDataElementsConfig();
+        this.categoryCombinationsConfig = config.custom.categoryCombinations;
     }
 
     static async build(api: D2Api): Promise<Dhis2DataStoreDataForm> {
@@ -186,6 +181,7 @@ export class Dhis2DataStoreDataForm {
                 const storeConfig: DataFormStoreConfig["custom"] = {
                     dataElements: storeConfigFromDataStore.dataElements || {},
                     dataSets: storeConfigFromDataStore.dataSets || {},
+                    categoryCombinations: storeConfigFromDataStore.categoryCombinations || {},
                 };
 
                 return {
@@ -297,7 +293,6 @@ export class Dhis2DataStoreDataForm {
                     },
                     sortRowsBy: sectionConfig.sortRowsBy || "",
                     tabs: sectionConfig.tabs || { active: false },
-                    catComDisplayName: sectionConfig.catComDisplayName || "name",
                 };
 
                 const config: SectionConfig =
