@@ -33,10 +33,10 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
 
     return (
         <DataTableSection section={grid} dataFormInfo={dataFormInfo}>
-            <DataTable className={classes.table}>
+            <DataTable className={classes.table} layout="fixed" width="initial">
                 <TableHead>
                     <DataTableRow>
-                        <DataTableColumnHeader width="400px"></DataTableColumnHeader>
+                        <DataTableColumnHeader></DataTableColumnHeader>
                         <DataTableColumnHeader></DataTableColumnHeader>
                         {grid.parentColumns.map(column => {
                             return (
@@ -57,18 +57,28 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                 <span className={classes.header}>#</span>{" "}
                             </DataTableColumnHeader>
                         ) : (
-                            <DataTableColumnHeader width="400px" fixed top={topValue}></DataTableColumnHeader>
+                            <DataTableColumnHeader fixed top={topValue}></DataTableColumnHeader>
                         )}
 
                         {fistSection ? (
-                            <DataTableColumnHeader fixed top={topValue} key={`column-Total`}>
+                            <DataTableColumnHeader
+                                className={classes.columnWidth}
+                                fixed
+                                top={topValue}
+                                key={`column-Total`}
+                            >
                                 <span>Total</span>
                             </DataTableColumnHeader>
                         ) : null}
 
                         {grid.columns.map(column =>
                             column.deName && column.cocName ? (
-                                <DataTableColumnHeader fixed top={topValue} key={`column-${column.name}`}>
+                                <DataTableColumnHeader
+                                    fixed
+                                    top={topValue}
+                                    key={`column-${column.name}`}
+                                    className={classes.columnWidth}
+                                >
                                     <span>{column.cocName}</span>
                                 </DataTableColumnHeader>
                             ) : (
@@ -76,7 +86,7 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                                     fixed
                                     top={topValue}
                                     key={`column-${column.name}`}
-                                    className={column.name === "Source Type" ? classes.source : ""}
+                                    className={column.name === "Source Type" ? classes.source : classes.columnWidth}
                                 >
                                     <span>{column.name}</span>
                                 </DataTableColumnHeader>
@@ -88,7 +98,7 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
                 <TableBody>
                     {grid.rows.map((row, idx) => (
                         <DataTableRow key={`policy-${row.name}`}>
-                            <DataTableCell>
+                            <DataTableCell className={classes.td}>
                                 <p style={{ paddingLeft: row.includePadding ? `${row.includePadding * 10}px` : "0" }}>
                                     {grid.useIndexes ? (idx + 1).toString() : row.name}
                                 </p>
@@ -154,7 +164,9 @@ const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
 const useStyles = makeStyles({
     wrapper: { margin: 10 },
     header: { fontSize: "1.4em", fontWeight: "bold" as const },
-    table: { borderWidth: "3px !important" },
+    table: { borderWidth: "3px !important", minWidth: "100%" },
+    td: { minWidth: "400px !important" },
+    columnWidth: { minWidth: "6.2em !important" },
     source: { maxWidth: "35% !important", width: "33% !important", minWidth: "15% !important" },
     centerSpan: {
         "& span": {

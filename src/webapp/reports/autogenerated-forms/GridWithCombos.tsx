@@ -27,14 +27,10 @@ const GridWithCombos: React.FC<GridWithCombosProps> = props => {
 
     return (
         <DataTableSection section={grid} dataFormInfo={dataFormInfo}>
-            <DataTable className={classes.table}>
+            <DataTable className={classes.table} layout="fixed" width="initial">
                 <TableHead>
                     <DataTableRow>
-                        {
-                            grid.parentColumns.length > 0 && (
-                                <DataTableColumnHeader width="400px"></DataTableColumnHeader>
-                            )
-                        }
+                        {grid.parentColumns.length > 0 && <DataTableColumnHeader></DataTableColumnHeader>}
                         {grid.parentColumns.map(column => {
                             return (
                                 <DataTableColumnHeader
@@ -54,13 +50,17 @@ const GridWithCombos: React.FC<GridWithCombosProps> = props => {
                                 <span className={classes.header}>#</span>{" "}
                             </DataTableColumnHeader>
                         ) : (
-                            <DataTableColumnHeader width="400px"></DataTableColumnHeader>
+                            <DataTableColumnHeader></DataTableColumnHeader>
                         )}
 
                         {grid.columns.map(column => (
                             <DataTableColumnHeader
                                 key={`column-${column.name}`}
-                                className={column.name === "Source type for HWF - (Inputs & Outputs)" ? classes.source : ""}
+                                className={
+                                    column.name === "Source type for HWF - (Inputs & Outputs)"
+                                        ? classes.source
+                                        : classes.columnWidth
+                                }
                             >
                                 <span>{column.cocName}</span>
                             </DataTableColumnHeader>
@@ -71,7 +71,7 @@ const GridWithCombos: React.FC<GridWithCombosProps> = props => {
                 <TableBody>
                     {grid.rows.map((row, idx) => (
                         <DataTableRow key={`policy-${row.name}`}>
-                            <DataTableCell>
+                            <DataTableCell className={classes.td}>
                                 <span>{grid.useIndexes ? (idx + 1).toString() : row.name}</span>
                             </DataTableCell>
 
@@ -99,7 +99,9 @@ const GridWithCombos: React.FC<GridWithCombosProps> = props => {
 const useStyles = makeStyles({
     wrapper: { margin: 10 },
     header: { fontSize: "1.4em", fontWeight: "bold" as const },
-    table: { borderWidth: "3px !important" },
+    table: { borderWidth: "3px !important", minWidth: "100%" },
+    td: { minWidth: "400px !important" },
+    columnWidth: { minWidth: "6.2em !important" },
     source: { maxWidth: "35% !important", width: "33% !important", minWidth: "15% !important" },
     centerSpan: {
         "& span": {
