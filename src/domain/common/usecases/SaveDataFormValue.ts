@@ -7,15 +7,20 @@ export class SaveDataFormValueUseCase {
 
     async execute(store: DataValueStore, dataValue: DataValue): Promise<DataValueStore> {
         const existingDataValue = store.get(dataValue.dataElement, dataValue);
-
-        if (_.isEqual(existingDataValue, dataValue)) {
+        if (_.isEqual(existingDataValue, dataValue) && dataValue.type !== "FILE") {
             return store;
         } else {
-            const storeUpdated = store.set({
+            let storeUpdated = store.set({
                 ...dataValue,
                 categoryOptionComboId: dataValue.dataElement.cocId || dataValue.categoryOptionComboId,
             });
-            await this.dataValueRepository.save(dataValue);
+            const dataValueWithUpdate = await this.dataValueRepository.save(dataValue);
+            if (dataValueWithUpdate.type === "FILE") {
+                storeUpdated = store.set({
+                    ...dataValueWithUpdate,
+                    categoryOptionComboId: dataValue.dataElement.cocId || dataValue.categoryOptionComboId,
+                });
+            }
             return storeUpdated;
         }
     }
