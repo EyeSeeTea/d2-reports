@@ -24,11 +24,16 @@ export interface GLASSDataSubmissionItemIdentifier {
     module: string | undefined;
 }
 
+export interface ApprovalIds {
+    id: Id;
+    approvedId: Id;
+}
+
 export interface GLASSDataSubmissionModule {
     id: Id;
     name: string;
-    dataSets: { id: Id; approvedId: Id }[];
-    questionnaires: string;
+    dataSets: ApprovalIds[];
+    questionnaires: ApprovalIds[];
     dashboards: {
         reportsMenu: string;
         validationReport: string;

@@ -1,6 +1,7 @@
 import _ from "lodash";
 import { PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
 import {
+    ApprovalIds,
     GLASSDataSubmissionItem,
     GLASSDataSubmissionItemIdentifier,
     GLASSDataSubmissionModule,
@@ -378,50 +379,10 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             )) ?? [];
 
         const amrDataSets = modules.find(module => module.name === "AMR")?.dataSets ?? [];
+        const amrQuestionnaires = modules.find(module => module.name === "AMR")?.questionnaires ?? [];
 
-        _.forEach(amrDataSets, async amrDataSet => {
-            await promiseMap(items, async item => {
-                const dataValueSets = (await this.getDataSetsValue(amrDataSet.id, item.orgUnit ?? "", item.period))
-                    .dataValues;
-
-                if (!_.isEmpty(dataValueSets)) {
-                    const DSDataElements: { dataSetElements: { dataElement: NamedRef }[] } =
-                        await this.getDSDataElements(amrDataSet.id);
-                    const ADSDataElements: { dataSetElements: { dataElement: NamedRef }[] } =
-                        await this.getDSDataElements(amrDataSet.approvedId);
-
-                    const uniqueDataElementsIds = _.uniq(_.map(dataValueSets, "dataElement"));
-                    const dataElementsMatchedArray = DSDataElements.dataSetElements.map(element => {
-                        const dataElement = element.dataElement;
-                        if (uniqueDataElementsIds.includes(dataElement.id)) {
-                            const apvdName = dataElement.name + "-APVD";
-                            const ADSDataElement = ADSDataElements.dataSetElements.find(
-                                element => element.dataElement.name === apvdName
-                            );
-                            return {
-                                origId: dataElement.id,
-                                destId: ADSDataElement?.dataElement.id,
-                                name: dataElement.name,
-                            };
-                        } else {
-                            return [];
-                        }
-                    });
-
-                    const dataValuesToPost = this.makeDataValuesArray(
-                        amrDataSet.approvedId,
-                        dataValueSets,
-                        dataElementsMatchedArray
-                    );
-
-                    await promiseMap(_.chunk(dataValuesToPost, 1000), async dataValuesGroup => {
-                        return await this.api.dataValues
-                            .postSet({}, { dataValues: _.reject(dataValuesGroup, _.isEmpty) })
-                            .getData();
-                    });
-                }
-            });
-        });
+        _.forEach(amrDataSets, async amrDataSet => await this.duplicateDataSet(amrDataSet, items));
+        _.forEach(amrQuestionnaires, async amrQuestionnaire => await this.duplicateDataSet(amrQuestionnaire, items));
 
         const newSubmissionValues = this.getNewSubmissionValues(items, objects, "APPROVED");
         const recipients = await this.getRecipientUsers(items, modules);
@@ -430,6 +391,51 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         this.sendNotifications(message, message, [], recipients);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
+    }
+
+    private async duplicateDataSet(dataSet: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
+        await promiseMap(items, async item => {
+            const dataValueSets = (await this.getDataSetsValue(dataSet.id, item.orgUnit ?? "", item.period)).dataValues;
+
+            if (!_.isEmpty(dataValueSets)) {
+                const DSDataElements: { dataSetElements: { dataElement: NamedRef }[] } = await this.getDSDataElements(
+                    dataSet.id
+                );
+                const ADSDataElements: { dataSetElements: { dataElement: NamedRef }[] } = await this.getDSDataElements(
+                    dataSet.approvedId
+                );
+
+                const uniqueDataElementsIds = _.uniq(_.map(dataValueSets, "dataElement"));
+                const dataElementsMatchedArray = DSDataElements.dataSetElements.map(element => {
+                    const dataElement = element.dataElement;
+                    if (uniqueDataElementsIds.includes(dataElement.id)) {
+                        const apvdName = dataElement.name + "-APVD";
+                        const ADSDataElement = ADSDataElements.dataSetElements.find(
+                            element => element.dataElement.name === apvdName
+                        );
+                        return {
+                            origId: dataElement.id,
+                            destId: ADSDataElement?.dataElement.id,
+                            name: dataElement.name,
+                        };
+                    } else {
+                        return [];
+                    }
+                });
+
+                const dataValuesToPost = this.makeDataValuesArray(
+                    dataSet.approvedId,
+                    dataValueSets,
+                    dataElementsMatchedArray
+                );
+
+                await promiseMap(_.chunk(dataValuesToPost, 1000), async dataValuesGroup => {
+                    return await this.api.dataValues
+                        .postSet({}, { dataValues: _.reject(dataValuesGroup, _.isEmpty) })
+                        .getData();
+                });
+            }
+        });
     }
 
     async reject(
