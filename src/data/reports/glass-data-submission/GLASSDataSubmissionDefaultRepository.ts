@@ -1,10 +1,10 @@
 import _ from "lodash";
 import { PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
 import {
+    ApprovalIds,
     GLASSDataSubmissionItem,
     GLASSDataSubmissionItemIdentifier,
     GLASSDataSubmissionModule,
-    ApprovalIds,
     GLASSUserPermission,
     EARDataSubmissionItem,
     EARSubmissionItemIdentifier,
