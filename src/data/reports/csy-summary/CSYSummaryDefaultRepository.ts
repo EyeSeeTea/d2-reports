@@ -11,6 +11,7 @@ import { promiseMap } from "../../../utils/promises";
 import { CsvData } from "../../common/CsvDataSource";
 import { CsvWriterDataSource } from "../../common/CsvWriterCsvDataSource";
 import { downloadFile } from "../../common/utils/download-file";
+import { NamedRef } from "../../../domain/common/entities/Base";
 
 export class CSYSummaryDefaultRepository implements CSYSummaryRepository {
     constructor(private api: D2Api) {}
@@ -40,15 +41,15 @@ export class CSYSummaryDefaultRepository implements CSYSummaryRepository {
                             const percentageColumnValues = this.getColumnValue(analyticsReponse, "value");
                             const numeratorColumnValues = this.getColumnValue(analyticsReponse, "numerator");
 
-                            const group = _.chain(
-                                (
-                                    await this.api
-                                        .get<{ displayName: string }>(
-                                            `/indicatorGroups/${queryString}?fields=displayName`
-                                        )
-                                        .getData()
-                                ).displayName
-                            )
+                            const indicatorGroup: { displayName: string; indicators: NamedRef[] } = await this.api
+                                .get<any>(`/indicatorGroups/${queryString}?fields=displayName,indicators[id,name]`)
+                                .getData();
+
+                            const indicatorsInGroup = indicatorGroup.indicators.filter(indicator =>
+                                dataColumnValues.includes(indicator.id)
+                            );
+
+                            const groupName = _.chain(indicatorGroup.displayName)
                                 .split(" ")
                                 .filter(
                                     word =>
@@ -60,20 +61,11 @@ export class CSYSummaryDefaultRepository implements CSYSummaryRepository {
                                 .join(" ")
                                 .value();
 
-                            const indicatorNames: any[] = [];
-                            const row = await promiseMap(dataColumnValues, async dataColumnValue => {
-                                const index = _.indexOf(dataColumnValues, dataColumnValue);
-                                const indicator = (
-                                    await this.api
-                                        .get<{ name: string }>(`/indicators/${dataColumnValue}?fields=name`)
-                                        .getData()
-                                ).name;
-                                const indexOfGroup = indicator.indexOf(group);
-
-                                indicatorNames.push({ name: indicator });
+                            const row = indicatorsInGroup.map(({ name: indicator }, index) => {
+                                const indexOfGroupName = indicator.indexOf(groupName);
 
                                 let firstLetter = 0;
-                                for (let i = indexOfGroup + group.length; i < indicator.length; i++) {
+                                for (let i = indexOfGroupName + groupName.length; i < indicator.length; i++) {
                                     if (indicator[i] === " " || indicator[i] === "-") {
                                         continue;
                                     }
@@ -109,7 +101,7 @@ export class CSYSummaryDefaultRepository implements CSYSummaryRepository {
                                 const value = `${numeratorColumnValues[index]} (${percentageColumnValues[index]}%)`;
 
                                 return {
-                                    group,
+                                    group: groupName,
                                     subGroup,
                                     yearLessThan1: year === "< 1 yr" ? value : "0 (0%)",
                                     year1To4: year === "1 - 4yr" ? value : "0 (0%)",
@@ -125,53 +117,60 @@ export class CSYSummaryDefaultRepository implements CSYSummaryRepository {
                                 };
                             });
 
-                            const grouped = _.groupBy(row, item => `${item.group}-${item.subGroup}`);
-
-                            const result = _.map(grouped, group => ({
-                                group: group[0].group,
-                                subGroup: group[0].subGroup === "" ? "Other" : group[0].subGroup,
-                                yearLessThan1: group.reduce(
-                                    (acc, obj) => (obj.yearLessThan1 !== "0 (0%)" ? obj.yearLessThan1 : acc),
-                                    "0 (0%)"
-                                ),
-                                year1To4: group.reduce(
-                                    (acc, obj) => (obj.year1To4 !== "0 (0%)" ? obj.year1To4 : acc),
-                                    "0 (0%)"
-                                ),
-                                year5To9: group.reduce(
-                                    (acc, obj) => (obj.year5To9 !== "0 (0%)" ? obj.year5To9 : acc),
-                                    "0 (0%)"
-                                ),
-                                year10To14: group.reduce(
-                                    (acc, obj) => (obj.year10To14 !== "0 (0%)" ? obj.year10To14 : acc),
-                                    "0 (0%)"
-                                ),
-                                year15To19: group.reduce(
-                                    (acc, obj) => (obj.year15To19 !== "0 (0%)" ? obj.year15To19 : acc),
-                                    "0 (0%)"
-                                ),
-                                year20To40: group.reduce(
-                                    (acc, obj) => (obj.year20To40 !== "0 (0%)" ? obj.year20To40 : acc),
-                                    "0 (0%)"
-                                ),
-                                year40To60: group.reduce(
-                                    (acc, obj) => (obj.year40To60 !== "0 (0%)" ? obj.year40To60 : acc),
-                                    "0 (0%)"
-                                ),
-                                year60To80: group.reduce(
-                                    (acc, obj) => (obj.year60To80 !== "0 (0%)" ? obj.year60To80 : acc),
-                                    "0 (0%)"
-                                ),
-                                yearGreaterThan80: group.reduce(
-                                    (acc, obj) => (obj.yearGreaterThan80 !== "0 (0%)" ? obj.yearGreaterThan80 : acc),
-                                    "0 (0%)"
-                                ),
-                                unknown: group.reduce(
-                                    (acc, obj) => (obj.unknown !== "0 (0%)" ? obj.unknown : acc),
-                                    "0 (0%)"
-                                ),
-                                total: group.reduce((acc, obj) => (obj.total !== "0 (0%)" ? obj.total : acc), "0 (0%)"),
-                            }));
+                            const result: SummaryItem[] = _.chain(row)
+                                .groupBy(row => `${row.group}-${row.subGroup}`)
+                                .map(groupedRows => {
+                                    return {
+                                        group: groupedRows[0].group,
+                                        subGroup: groupedRows[0].subGroup === "" ? "Other" : groupedRows[0].subGroup,
+                                        yearLessThan1: groupedRows.reduce(
+                                            (acc, obj) => (obj.yearLessThan1 !== "0 (0%)" ? obj.yearLessThan1 : acc),
+                                            "0 (0%)"
+                                        ),
+                                        year1To4: groupedRows.reduce(
+                                            (acc, obj) => (obj.year1To4 !== "0 (0%)" ? obj.year1To4 : acc),
+                                            "0 (0%)"
+                                        ),
+                                        year5To9: groupedRows.reduce(
+                                            (acc, obj) => (obj.year5To9 !== "0 (0%)" ? obj.year5To9 : acc),
+                                            "0 (0%)"
+                                        ),
+                                        year10To14: groupedRows.reduce(
+                                            (acc, obj) => (obj.year10To14 !== "0 (0%)" ? obj.year10To14 : acc),
+                                            "0 (0%)"
+                                        ),
+                                        year15To19: groupedRows.reduce(
+                                            (acc, obj) => (obj.year15To19 !== "0 (0%)" ? obj.year15To19 : acc),
+                                            "0 (0%)"
+                                        ),
+                                        year20To40: groupedRows.reduce(
+                                            (acc, obj) => (obj.year20To40 !== "0 (0%)" ? obj.year20To40 : acc),
+                                            "0 (0%)"
+                                        ),
+                                        year40To60: groupedRows.reduce(
+                                            (acc, obj) => (obj.year40To60 !== "0 (0%)" ? obj.year40To60 : acc),
+                                            "0 (0%)"
+                                        ),
+                                        year60To80: groupedRows.reduce(
+                                            (acc, obj) => (obj.year60To80 !== "0 (0%)" ? obj.year60To80 : acc),
+                                            "0 (0%)"
+                                        ),
+                                        yearGreaterThan80: groupedRows.reduce(
+                                            (acc, obj) =>
+                                                obj.yearGreaterThan80 !== "0 (0%)" ? obj.yearGreaterThan80 : acc,
+                                            "0 (0%)"
+                                        ),
+                                        unknown: groupedRows.reduce(
+                                            (acc, obj) => (obj.unknown !== "0 (0%)" ? obj.unknown : acc),
+                                            "0 (0%)"
+                                        ),
+                                        total: groupedRows.reduce(
+                                            (acc, obj) => (obj.total !== "0 (0%)" ? obj.total : acc),
+                                            "0 (0%)"
+                                        ),
+                                    };
+                                })
+                                .value();
 
                             return result;
                         });
@@ -232,16 +231,16 @@ export class CSYSummaryDefaultRepository implements CSYSummaryRepository {
 // indicator groups
 const summaryQueryStrings = {
     "patient-characteristics": [
-        "fZKMM7uw3Ud",
-        "MoBX2wbZ4Db",
-        //"dYXNSdQFH3X",
+        "yrtwRP26Q35",
+        "IY9sVVwtt1Z",
         "Sdw6iy0I7Bv",
         "LWwKbbP7YgC",
-        "Hd7fLgnzPQ8",
-        "yrtwRP26Q35",
-        "u5uO6aSPFbv",
-        "IY9sVVwtt1Z",
+        //"dYXNSdQFH3X",
+        "fZKMM7uw3Ud",
         "yEg8gT6e7DC",
+        "u5uO6aSPFbv",
+        "MoBX2wbZ4Db",
+        "Hd7fLgnzPQ8",
     ],
 };
 

@@ -8,6 +8,7 @@ import {
 } from "@eyeseetea/d2-ui-components";
 import StorageIcon from "@material-ui/icons/Storage";
 import React, { useMemo, useState } from "react";
+import styled from "styled-components";
 import { SummaryViewModel, getSummaryViews } from "../SummaryViewModel";
 import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
@@ -94,9 +95,25 @@ export const CSYSummaryList: React.FC = React.memo(() => {
     };
 
     return (
-        <ObjectsList<SummaryViewModel> {...tableProps} onChangeSearch={undefined} globalActions={[downloadCsv]}>
-            <Filters values={filters} options={filterOptions} onChange={setFilters} />
-        </ObjectsList>
+        <>
+            <ObjectsList<SummaryViewModel> {...tableProps} onChangeSearch={undefined} globalActions={[downloadCsv]}>
+                <Filters values={filters} options={filterOptions} onChange={setFilters} />
+            </ObjectsList>
+            <Container>
+                <p>*Percentage values are displayed as the percent of total registry cases during period.</p>
+                <p>References:</p>
+                <ReferenceList>
+                    {scoringSystemReferences.map(({ scoringSystem, reference }) => {
+                        return (
+                            <li key={scoringSystem}>
+                                <a href={reference}>{scoringSystem}</a>
+                                {}
+                            </li>
+                        );
+                    })}
+                </ReferenceList>
+            </Container>
+        </>
     );
 });
 
@@ -116,3 +133,40 @@ function getEmptyDataValuesFilter(_config: Config): Filter {
         quarter: undefined,
     };
 }
+
+const scoringSystemReferences = [
+    {
+        scoringSystem: "GAP",
+        reference:
+            "https://www.jaypeejournals.com/eJournals/ShowText.aspx?ID=12905&Type=FREE&TYP=TOP&IN=~/eJournals/images/JPLOGO.gif&IID=1004&isPDF=YES",
+    },
+    {
+        scoringSystem: "MGAP",
+        reference:
+            "https://www.jaypeejournals.com/eJournals/ShowText.aspx?ID=12905&Type=FREE&TYP=TOP&IN=~/eJournals/images/JPLOGO.gif&IID=1004&isPDF=YES",
+    },
+    {
+        scoringSystem: "KTS",
+        reference: "https://www.researchgate.net/publication/27799668_Kampala_Trauma_Score_KTS_is_it_a_new_triage_tool",
+    },
+    {
+        scoringSystem: "RTS",
+        reference:
+            "https://www.jaypeejournals.com/eJournals/ShowText.aspx?ID=12905&Type=FREE&TYP=TOP&IN=~/eJournals/images/JPLOGO.gif&IID=1004&isPDF=YES",
+    },
+];
+
+const Container = styled.div`
+    line-height: 10px;
+    margin-bottom: 0;
+`;
+
+const ReferenceList = styled.ul`
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    text-decoration: none;
+    display: flex;
+    gap: 8px;
+    color: #0099de;
+`;
