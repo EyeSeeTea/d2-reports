@@ -244,7 +244,21 @@ const summaryQueryStrings = {
     ],
 };
 
-const csvFields = ["group", "subGroup"] as const;
+const csvFields = [
+    "group",
+    "subGroup",
+    "yearLessThan1",
+    "year1To4",
+    "year5To9",
+    "year10To14",
+    "year15To19",
+    "year20To40",
+    "year40To60",
+    "year60To80",
+    "yearGreaterThan80",
+    "unknown",
+    "total",
+] as const;
 
 type CsvField = typeof csvFields[number];
 
