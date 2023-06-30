@@ -452,7 +452,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const recipients = await this.getRecipientUsers(items, modules);
 
         const body = `Please review the messages and the reports to find about the causes of this rejection. You have to upload new datasets.\n Reason for rejection:\n ${message}`;
-        this.sendNotifications(body, body, [], recipients);
+
+        this.sendNotifications("Rejected by WHO", body, [], recipients);
 
         await this.postDataSetRegistration(items, false);
 
@@ -470,7 +471,9 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const recipients = await this.getRecipientUsers(items, modules);
 
         const message = await this.getNotificationText(items, modules, "reopened");
-        this.sendNotifications(message, message, recipients);
+
+        this.sendNotifications(message, message, [], recipients);
+
         await this.postDataSetRegistration(items, false);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
