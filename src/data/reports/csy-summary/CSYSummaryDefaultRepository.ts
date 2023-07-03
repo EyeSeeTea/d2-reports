@@ -200,6 +200,17 @@ export class CSYSummaryDefaultRepository implements CSYSummaryRepository {
             (dataValue): SummaryItemRow => ({
                 group: dataValue.group,
                 subGroup: dataValue.subGroup,
+                yearLessThan1: dataValue.yearLessThan1,
+                year1To4: dataValue.year1To4,
+                year5To9: dataValue.year5To9,
+                year10To14: dataValue.year15To19,
+                year15To19: dataValue.year15To19,
+                year20To40: dataValue.year20To40,
+                year40To60: dataValue.year40To60,
+                year60To80: dataValue.year60To80,
+                yearGreaterThan80: dataValue.yearGreaterThan80,
+                unknown: dataValue.unknown,
+                total: dataValue.total,
             })
         );
 
