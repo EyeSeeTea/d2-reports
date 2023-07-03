@@ -11,6 +11,7 @@ interface DataElementBase {
     options?: Options;
     categoryCombos: CategoryCombos;
     cocId?: string;
+    orgUnit?: Id;
 }
 
 export interface DataElementBoolean extends DataElementBase {

@@ -5,7 +5,11 @@ import { DataFormRepository } from "../repositories/DataFormRepository";
 export class GetDataFormUseCase {
     constructor(private dataFormRepository: DataFormRepository) {}
 
-    execute(options: { dataSetId: Id; period: Period }) {
-        return this.dataFormRepository.get({ id: options.dataSetId, period: options.period });
+    execute(options: { dataSetId: Id; period: Period; orgUnitId: Id }) {
+        return this.dataFormRepository.get({
+            id: options.dataSetId,
+            period: options.period,
+            orgUnitId: options.orgUnitId,
+        });
     }
 }

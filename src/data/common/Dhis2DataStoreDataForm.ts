@@ -20,10 +20,11 @@ interface BaseSectionConfig {
     toggle: { type: "none" } | { type: "dataElement"; code: Code };
     tabs: { active: true; order: number } | { active: false };
     sortRowsBy: string;
+    subNationalDataset: string;
 }
 
 interface BasicSectionConfig extends BaseSectionConfig {
-    viewType: "table" | "grid" | "grid-with-totals" | "grid-with-combos";
+    viewType: "table" | "grid" | "grid-with-totals" | "grid-with-combos" | "grid-with-subnational-ous";
 }
 
 interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
@@ -41,6 +42,7 @@ const viewType = oneOf([
     exactly("grid-with-totals"),
     exactly("grid-with-combos"),
     exactly("grid-with-periods"),
+    exactly("grid-with-subnational-ous"),
 ]);
 
 const textsCodec = Codec.interface({
@@ -67,6 +69,7 @@ const DataStoreConfigCodec = Codec.interface({
         texts: optional(textsCodec),
         sections: optional(
             sectionConfig({
+                subNationalDataset: optional(string),
                 sortRowsBy: optional(string),
                 viewType: optional(viewType),
                 texts: optional(textsCodec),
@@ -136,7 +139,7 @@ interface DataFormStoreConfig {
 const defaultDataStoreConfig: DataFormStoreConfig["custom"] = {
     dataElements: {},
     dataSets: {},
-    categoryCombinations: {}, 
+    categoryCombinations: {},
 };
 
 interface DataSet {
@@ -147,7 +150,7 @@ interface DataSet {
 
 type CategoryCombinationConfig = {
     viewType: "name" | "shortName" | undefined;
-}
+};
 
 export class Dhis2DataStoreDataForm {
     public dataElementsConfig: Record<Code, DataElementConfig>;
@@ -188,6 +191,7 @@ export class Dhis2DataStoreDataForm {
                     custom: storeConfig,
                     optionSets: await this.getOptionSets(api, storeConfig),
                     constants: await this.getConstants(api, storeConfig),
+                    subNationals: await this.getSubNationals(api, storeConfig),
                 };
             },
         });
@@ -270,6 +274,50 @@ export class Dhis2DataStoreDataForm {
         return res.constants;
     }
 
+    private static async getSubNationals(
+        api: D2Api,
+        storeConfig: DataFormStoreConfig["custom"]
+    ): Promise<SubNational[]> {
+        const subNationalIds = _(storeConfig.dataSets)
+            .values()
+            .flatMap(dataSet => _.values(dataSet.sections))
+            .flatMap(section => section.subNationalDataset)
+            .compact()
+            .value();
+
+        const response = await api.metadata
+            .get({
+                dataSets: {
+                    filter: {
+                        id: {
+                            in: subNationalIds,
+                        },
+                    },
+                    fields: {
+                        id: true,
+                        organisationUnits: {
+                            id: true,
+                            name: true,
+                            parent: {
+                                id: true,
+                            },
+                        },
+                    },
+                },
+            })
+            .getData();
+
+        const orgUnits = response.dataSets.flatMap(ds => ds.organisationUnits);
+
+        return orgUnits.map(d2OrgUnit => {
+            return {
+                id: d2OrgUnit.id,
+                name: d2OrgUnit.name,
+                parentId: d2OrgUnit.parent.id,
+            };
+        });
+    }
+
     getDataSetConfig(dataSet: DataSet, period: Period): DataSetConfig {
         const dataSetConfig = this.config.custom.dataSets?.[dataSet.code];
         const dataSetDefaultViewType = dataSetConfig?.viewType || defaultViewType;
@@ -292,6 +340,7 @@ export class Dhis2DataStoreDataForm {
                         footer: getText(sectionConfig?.texts?.footer),
                     },
                     sortRowsBy: sectionConfig.sortRowsBy || "",
+                    subNationalDataset: sectionConfig.subNationalDataset || "",
                     tabs: sectionConfig.tabs || { active: false },
                 };
 
@@ -358,3 +407,9 @@ let cachedStore: Dhis2DataStoreDataForm | undefined;
 function sectionConfig<T extends Record<string, Codec<any>>>(properties: T) {
     return optional(record(string, Codec.interface(properties)));
 }
+
+export type SubNational = {
+    id: Id;
+    parentId: Id;
+    name: string;
+};

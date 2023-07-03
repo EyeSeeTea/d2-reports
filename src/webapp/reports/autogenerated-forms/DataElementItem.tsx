@@ -40,7 +40,7 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
     const classes = useStyles();
     const elId = _([dataElement.id, period]).compact().join("-");
     const dataElementCocId = dataElement.cocId ?? dataFormInfo.categoryOptionComboId;
-    const auditId = _([dataElement.id, dataElementCocId, "val"]).compact().join("-");
+    const auditId = _([dataElement.orgUnit, dataElement.id, dataElementCocId, "val"]).compact().join("-");
 
     const notifyParent = React.useCallback<DataEntryItemProps["onValueChange"]>(
         async dataValue => {

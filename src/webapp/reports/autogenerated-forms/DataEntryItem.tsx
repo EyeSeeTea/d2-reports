@@ -212,11 +212,17 @@ function useUpdatableDataValueWithFeedback(options: DataEntryItemProps) {
     const [state, setState] = React.useState<WidgetState>("original");
     const selector = React.useMemo(() => {
         return {
-            orgUnitId: dataFormInfo.orgUnitId,
+            orgUnitId: options.dataElement.orgUnit || dataFormInfo.orgUnitId,
             period: options.period || dataFormInfo.period,
             categoryOptionComboId: dataFormInfo.categoryOptionComboId,
         };
-    }, [dataFormInfo.orgUnitId, options.period, dataFormInfo.period, dataFormInfo.categoryOptionComboId]);
+    }, [
+        options.dataElement.orgUnit,
+        dataFormInfo.orgUnitId,
+        options.period,
+        dataFormInfo.period,
+        dataFormInfo.categoryOptionComboId,
+    ]);
 
     const dataValue = React.useMemo(
         () => dataFormInfo.data.values.getOrEmpty(dataElement, selector),

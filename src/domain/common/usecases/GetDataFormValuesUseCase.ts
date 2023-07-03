@@ -5,7 +5,7 @@ import { DataValueRepository } from "../repositories/DataValueRepository";
 export class GetDataFormValuesUseCase {
     constructor(private dataValueRepository: DataValueRepository) {}
 
-    async execute(dataSetId: Id, options: { orgUnitId: Id; periods: Period[] }): Promise<DataValueStore> {
+    async execute(dataSetId: Id, options: { orgUnits: Id[]; periods: Period[] }): Promise<DataValueStore> {
         const dataValues = await this.dataValueRepository.get({ dataSetId: dataSetId, ...options });
         return DataValueStore.from(dataValues);
     }

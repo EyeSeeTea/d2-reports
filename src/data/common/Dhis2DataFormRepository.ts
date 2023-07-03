@@ -6,17 +6,17 @@ import { Period } from "../../domain/common/entities/DataValue";
 import { DataFormRepository } from "../../domain/common/repositories/DataFormRepository";
 import { D2Api, MetadataPick } from "../../types/d2-api";
 import { Dhis2DataElement } from "./Dhis2DataElement";
-import { Dhis2DataStoreDataForm, SectionConfig } from "./Dhis2DataStoreDataForm";
+import { Dhis2DataStoreDataForm, SectionConfig, SubNational } from "./Dhis2DataStoreDataForm";
 
 export class Dhis2DataFormRepository implements DataFormRepository {
     constructor(private api: D2Api) {}
 
-    async get(options: { id: Id; period: Period }): Promise<DataForm> {
+    async get(options: { id: Id; period: Period; orgUnitId: Id }): Promise<DataForm> {
         const metadata = await this.getMetadata(options);
         const dataSet = metadata.dataSets[0];
         if (!dataSet) return Promise.reject(new Error("Data set not found"));
         const config = await Dhis2DataStoreDataForm.build(this.api);
-        const sections = await this.getSections(dataSet, config, options.period);
+        const sections = await this.getSections(dataSet, config, options.period, options.orgUnitId);
         const dataElements = _.flatMap(sections, section => section.dataElements);
         const dataElementsOptions = this.getDataElementsOptions(dataElements, config);
         const dataSetConfig = config.getDataSetConfig(dataSet, options.period);
@@ -56,8 +56,8 @@ export class Dhis2DataFormRepository implements DataFormRepository {
         return this.api.metadata.get(metadataQuery).getData();
     }
 
-    private async getSections(dataSet: D2DataSet, config: Dhis2DataStoreDataForm, period: Period) {
-        const dataSetConfig = config.getDataSetConfig(dataSet, period);
+    private async getSections(dataSet: D2DataSet, configDataForm: Dhis2DataStoreDataForm, period: Period, orgUnit: Id) {
+        const dataSetConfig = configDataForm.getDataSetConfig(dataSet, period);
         const dataElementIds = _(dataSet.sections)
             .flatMap(section => section.dataElements)
             .map(getId)
@@ -79,6 +79,13 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                     .map(dataElementRef => dataElements[dataElementRef.id])
                     .compact()
                     .value(),
+                subNationals: config?.subNationalDataset
+                    ? // @ts-ignore
+                      _(configDataForm.config.subNationals)
+                          .filter((sn: SubNational) => sn.parentId === orgUnit)
+                          .sortBy(sn => sn.name)
+                          .value()
+                    : [],
             };
 
             if (!config) return { viewType: "table", ...base };

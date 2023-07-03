@@ -102,6 +102,7 @@ export class DataValueStore {
                 dataElementId: dv.dataElement.id,
                 period: dv.period,
                 categoryOptionComboId: dv.categoryOptionComboId,
+                orgUnit: dv.orgUnitId,
             })
         );
         return new DataValueStore(store);
@@ -112,6 +113,7 @@ export class DataValueStore {
             dataElementId: dataValue.dataElement.id,
             period: dataValue.period,
             categoryOptionComboId: dataValue.categoryOptionComboId,
+            orgUnit: dataValue.orgUnitId,
         });
         return new DataValueStore({ ...this.store, [key]: dataValue });
     }
@@ -121,6 +123,7 @@ export class DataValueStore {
             dataElementId: dataElement.id,
             period: base.period,
             categoryOptionComboId: dataElement.cocId ?? base.categoryOptionComboId,
+            orgUnit: base.orgUnitId,
         });
 
         return this.store[key] || getEmpty(dataElement, base);
@@ -155,6 +158,13 @@ function getEmpty(dataElement: DataElement, base: DataValueBase): DataValue {
     }
 }
 
-function getStoreKey(options: { dataElementId: Id; period: Period; categoryOptionComboId: Id }): DataValueSelector {
-    return [options.dataElementId, options.period, options.categoryOptionComboId].join(".");
+function getStoreKey(options: {
+    dataElementId: Id;
+    period: Period;
+    categoryOptionComboId: Id;
+    orgUnit: Id;
+}): DataValueSelector {
+    return _([options.dataElementId, options.period, options.categoryOptionComboId, options.orgUnit])
+        .compact()
+        .join(".");
 }
