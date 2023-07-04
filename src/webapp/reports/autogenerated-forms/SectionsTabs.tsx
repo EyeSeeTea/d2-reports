@@ -45,6 +45,8 @@ function TypeSwitch(props: TypeSwitchProps) {
             return null;
         case "grid-with-combos":
             return <GridWithCombos key={`${section.id}+tab`} dataFormInfo={dataFormInfo} section={section} />;
+        case "grid-with-subnational-ous":
+            return null;
         default:
             assertUnreachable(viewType);
     }

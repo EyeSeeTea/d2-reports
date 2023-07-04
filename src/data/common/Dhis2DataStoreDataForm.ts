@@ -22,7 +22,7 @@ interface BaseSectionConfig {
 }
 
 interface BasicSectionConfig extends BaseSectionConfig {
-    viewType: "table" | "grid" | "grid-with-totals" | "grid-with-combos";
+    viewType: "table" | "grid" | "grid-with-totals" | "grid-with-combos" | "grid-with-subnational-ous";
 }
 
 interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
@@ -40,6 +40,7 @@ const viewType = oneOf([
     exactly("grid-with-totals"),
     exactly("grid-with-combos"),
     exactly("grid-with-periods"),
+    exactly("grid-with-subnational-ous"),
 ]);
 
 const textsCodec = Codec.interface({

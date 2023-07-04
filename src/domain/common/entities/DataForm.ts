@@ -23,7 +23,14 @@ export interface Texts {
 
 export const defaultTexts: Texts = { header: undefined, footer: undefined };
 
-const viewTypes = ["grid", "table", "grid-with-periods", "grid-with-totals", "grid-with-combos"] as const;
+const viewTypes = [
+    "grid",
+    "table",
+    "grid-with-periods",
+    "grid-with-totals",
+    "grid-with-combos",
+    "grid-with-subnational-ous",
+] as const;
 export type ViewType = UnionFromValues<typeof DataFormM.viewTypes>;
 
 export interface SectionBase {
@@ -36,7 +43,7 @@ export interface SectionBase {
 }
 
 export interface SectionSimple extends SectionBase {
-    viewType: "table" | "grid" | "grid-with-totals" | "grid-with-combos";
+    viewType: "table" | "grid" | "grid-with-totals" | "grid-with-combos" | "grid-with-subnational-ous";
 }
 
 export interface SectionWithPeriods extends SectionBase {
