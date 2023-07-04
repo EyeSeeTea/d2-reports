@@ -50,11 +50,13 @@ const GridWithCombos: React.FC<GridWithCombosProps> = props => {
                                 <span className={classes.header}>#</span>{" "}
                             </DataTableColumnHeader>
                         ) : (
-                            <DataTableColumnHeader></DataTableColumnHeader>
+                            <DataTableColumnHeader fixed top="0"></DataTableColumnHeader>
                         )}
 
                         {grid.columns.map(column => (
                             <DataTableColumnHeader
+                                fixed
+                                top="0"
                                 key={`column-${column.name}`}
                                 className={
                                     column.name === "Source type for HWF - (Inputs & Outputs)"

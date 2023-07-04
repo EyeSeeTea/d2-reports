@@ -15,7 +15,6 @@ import { Section } from "../../../../src/domain/common/entities/DataForm";
 import { DataElementItem } from "./DataElementItem";
 import { makeStyles } from "@material-ui/core";
 import DataTableSection from "./DataTableSection";
-import { isDev } from "../../..";
 
 export interface GridWithTotalsProps {
     dataFormInfo: DataFormInfo;
@@ -23,7 +22,7 @@ export interface GridWithTotalsProps {
 }
 
 const GridWithTotals: React.FC<GridWithTotalsProps> = props => {
-    const topValue = isDev ? "0" : "48px";
+    const topValue = "0";
     const { dataFormInfo, section } = props;
 
     const grid = React.useMemo(() => GridWithTotalsViewModel.get(section), [section]);

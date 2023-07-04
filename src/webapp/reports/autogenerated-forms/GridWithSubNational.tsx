@@ -14,7 +14,6 @@ import { DataElementItem } from "./DataElementItem";
 import { makeStyles } from "@material-ui/core";
 import DataTableSection from "./DataTableSection";
 import { GridWithSubNationalViewModel } from "./GridWithSubNationalViewModel";
-import { isDev } from "../../..";
 
 export interface GridWithSubNationalProps {
     dataFormInfo: DataFormInfo;
@@ -22,7 +21,7 @@ export interface GridWithSubNationalProps {
 }
 
 const GridWithSubNational: React.FC<GridWithSubNationalProps> = props => {
-    const topValue = isDev ? "0" : "48px";
+    const topValue = "0";
     const { dataFormInfo } = props;
     const grid = React.useMemo(() => GridWithSubNationalViewModel.get(props.section), [props.section]);
     const classes = useStyles();
