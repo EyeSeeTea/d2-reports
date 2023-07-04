@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2023-05-16T08:28:37.760Z\n"
+"POT-Creation-Date: 2023-07-04T08:43:16.148Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -143,6 +143,27 @@ msgstr ""
 msgid "Quarter"
 msgstr ""
 
+msgid "CSY Summary Report - Mortality by Injury Severity"
+msgstr ""
+
+msgid "Scoring System"
+msgstr ""
+
+msgid "Severity"
+msgstr ""
+
+msgid "Mortality"
+msgstr ""
+
+msgid "Total"
+msgstr ""
+
+msgid "Mortality Injury Severity"
+msgstr ""
+
+msgid "Summary Type"
+msgstr ""
+
 msgid "CSY Summary Table Report"
 msgstr ""
 
@@ -182,28 +203,7 @@ msgstr ""
 msgid "Unknown"
 msgstr ""
 
-msgid "Total"
-msgstr ""
-
 msgid "Patient Characteristics"
-msgstr ""
-
-msgid "Summary Type"
-msgstr ""
-
-msgid "CSY Summary Report - Mortality by Injury Severity"
-msgstr ""
-
-msgid "Scoring System"
-msgstr ""
-
-msgid "Severity"
-msgstr ""
-
-msgid "Mortality"
-msgstr ""
-
-msgid "Mortality Injury Severity"
 msgstr ""
 
 msgid "GLASS Data Submission Report"

@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2023-05-16T08:28:37.760Z\n"
-"PO-Revision-Date: 2023-05-16T08:28:37.760Z\n"
+"POT-Creation-Date: 2023-07-04T08:43:16.148Z\n"
+"PO-Revision-Date: 2023-07-04T08:43:16.148Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -143,6 +143,27 @@ msgstr ""
 msgid "Quarter"
 msgstr ""
 
+msgid "CSY Summary Report - Mortality by Injury Severity"
+msgstr ""
+
+msgid "Scoring System"
+msgstr ""
+
+msgid "Severity"
+msgstr ""
+
+msgid "Mortality"
+msgstr ""
+
+msgid "Total"
+msgstr ""
+
+msgid "Mortality Injury Severity"
+msgstr ""
+
+msgid "Summary Type"
+msgstr ""
+
 msgid "CSY Summary Table Report"
 msgstr ""
 
@@ -182,28 +203,7 @@ msgstr ""
 msgid "Unknown"
 msgstr ""
 
-msgid "Total"
-msgstr ""
-
 msgid "Patient Characteristics"
-msgstr ""
-
-msgid "Summary Type"
-msgstr ""
-
-msgid "CSY Summary Report - Mortality by Injury Severity"
-msgstr ""
-
-msgid "Scoring System"
-msgstr ""
-
-msgid "Severity"
-msgstr ""
-
-msgid "Mortality"
-msgstr ""
-
-msgid "Mortality Injury Severity"
 msgstr ""
 
 msgid "GLASS Data Submission Report"
