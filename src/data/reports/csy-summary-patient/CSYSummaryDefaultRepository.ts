@@ -1,11 +1,11 @@
 import _ from "lodash";
 import { getOrgUnitIdsFromPaths } from "../../../domain/common/entities/OrgUnit";
 import { PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
-import { SummaryItem } from "../../../domain/reports/csy-summary/entities/SummaryItem";
+import { SummaryItem } from "../../../domain/reports/csy-summary-patient/entities/SummaryItem";
 import {
     CSYSummaryOptions,
     CSYSummaryRepository,
-} from "../../../domain/reports/csy-summary/repositories/CSYSummaryRepository";
+} from "../../../domain/reports/csy-summary-patient/repositories/CSYSummaryRepository";
 import { AnalyticsResponse, D2Api, Pager } from "../../../types/d2-api";
 import { promiseMap } from "../../../utils/promises";
 import { CsvData } from "../../common/CsvDataSource";

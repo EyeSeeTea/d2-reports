@@ -13,7 +13,7 @@ import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
 import { useReload } from "../../../utils/use-reload";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
-import { SummaryItem } from "../../../../domain/reports/csy-summary/entities/SummaryItem";
+import { SummaryItem } from "../../../../domain/reports/csy-summary-patient/entities/SummaryItem";
 import { Filter, Filters } from "./Filters";
 import { Config } from "../../../../domain/common/entities/Config";
 import _ from "lodash";

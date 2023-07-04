@@ -6,7 +6,7 @@ import { NHWACommentsReport } from "./nhwa-comments/NHWACommentsReport";
 import { WMRNationalPolicies } from "./wmr-national-policies/WMRNationalPolicies";
 import CSYAuditReport from "./csy-audit/CSYAuditReport";
 import GLASSDataSubmissionReport from "./glass-data-submission/GLASSDataSubmissionReport";
-import CSYSummaryReport from "./csy-summary/CSYSummaryReport";
+import CSYSummaryReport from "./csy-summary-patient/CSYSummaryReport";
 import CSYSummaryReportMortality from "./csy-summary-mortality/CSYSummaryReport";
 
 const widget = process.env.REACT_APP_REPORT_VARIANT || "";

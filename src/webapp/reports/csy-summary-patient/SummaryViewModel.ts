@@ -1,5 +1,5 @@
 import { Config } from "../../../domain/common/entities/Config";
-import { SummaryItem } from "../../../domain/reports/csy-summary/entities/SummaryItem";
+import { SummaryItem } from "../../../domain/reports/csy-summary-patient/entities/SummaryItem";
 
 export interface SummaryViewModel {
     id: string;
