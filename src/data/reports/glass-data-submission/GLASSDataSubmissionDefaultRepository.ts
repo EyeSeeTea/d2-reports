@@ -45,6 +45,22 @@ interface MessageConversations {
     }[];
 }
 
+type DataValueType = {
+    dataElement: string;
+    period: string;
+    orgUnit: string;
+    value: string;
+    [key: string]: string;
+};
+
+type DataValueSetsType = {
+    dataSet: string;
+    period: string;
+    orgUnit: string;
+    completeDate?: string;
+    dataValues: DataValueType[];
+};
+
 export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmissionRepository {
     private storageClient: StorageClient;
     private globalStorageClient: StorageClient;
@@ -76,9 +92,28 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 Namespaces.DATA_SUBMISSSIONS_UPLOADS
             )) ?? [];
 
-        const registrations = await this.getRegistrations(objects);
+        const userOrgUnits = (await this.api.get<{ organisationUnits: Ref[] }>("/me").getData()).organisationUnits.map(
+            ou => ou.id
+        );
+        const { organisationUnits } = await this.api
+            .get<any>(
+                "/metadata?organisationUnits:fields=children[children[id,level],id,level],id,level&organisationUnits:filter=level:eq:1"
+            )
+            .getData();
+        const orgUnitsWithChildren = _(userOrgUnits)
+            .flatMap(ou => {
+                const res = flattenNodes(flattenNodes(organisationUnits).filter(res => res.id === ou)).map(
+                    node => node.id
+                );
+                return res;
+            })
+            .uniq()
+            .value();
+        const filteredObjects = objects.filter(object => orgUnitsWithChildren.includes(object.orgUnit));
 
-        const rows = objects.map(object => {
+        const registrations = await this.getRegistrations(filteredObjects);
+
+        const rows = filteredObjects.map(object => {
             const key = getRegistrationKey({ orgUnitId: object.orgUnit, period: object.period });
             const match = registrations[key];
             const submissionStatus = statusItems.find(item => item.value === object.status)?.text ?? "";
@@ -231,7 +266,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         return messageConversations.length;
     }
 
-    private async getNotificationBody(
+    private async getNotificationText(
         items: GLASSDataSubmissionItemIdentifier[],
         modules: GLASSDataSubmissionModule[],
         status: string
@@ -247,12 +282,15 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             const country = item.orgUnit ? orgUnitsById[item.orgUnit]?.name || "-" : undefined;
             return { period: item.period, country };
         });
+        const multipleItems = items.length > 1;
 
-        const body = `The data submissions in the ${amrModule} module for${itemsWithCountry.map(
-            item => ` ${item.country} in ${item.period}`
-        )} have been ${status} by WHO.`;
+        const text = `The data ${
+            multipleItems ? "submissions" : "submission"
+        } for ${amrModule} module for${itemsWithCountry.map(
+            item => ` year ${item.period} and country ${item.country}`
+        )} ${multipleItems ? "have" : "has"} changed to ${status.toUpperCase()}.`;
 
-        return body;
+        return text;
     }
 
     private async getRecipientUsers(items: GLASSDataSubmissionItemIdentifier[], modules: GLASSDataSubmissionModule[]) {
@@ -292,6 +330,46 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         return recipientUsers;
     }
 
+    private async getDataSetsValue(dataSet: string, orgUnit: string, period: string) {
+        return await this.api
+            .get<DataValueSetsType>("/dataValueSets", {
+                dataSet,
+                orgUnit,
+                period,
+            })
+            .getData();
+    }
+
+    private async getDSDataElements(dataSet: string) {
+        return await this.api
+            .get<any>(`/dataSets/${dataSet}`, { fields: "dataSetElements[dataElement[id,name]]" })
+            .getData();
+    }
+
+    private makeDataValuesArray(
+        approvalDataSetId: string,
+        dataValueSets: DataValueType[],
+        dataElementsMatchedArray: { [key: string]: any }[]
+    ) {
+        return dataValueSets.flatMap(dataValueSet => {
+            const dataValue = { ...dataValueSet };
+            const destId = dataElementsMatchedArray.find(
+                dataElementsMatchedObj => dataElementsMatchedObj.origId === dataValueSet.dataElement
+            )?.destId;
+
+            if (!_.isEmpty(destId) && !_.isEmpty(dataValue.value)) {
+                dataValue.dataElement = destId;
+                dataValue.dataSet = approvalDataSetId;
+                delete dataValue.lastUpdated;
+                delete dataValue.comment;
+
+                return dataValue;
+            } else {
+                return [];
+            }
+        });
+    }
+
     async approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
         const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
         const modules =
@@ -299,11 +377,57 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 Namespaces.DATA_SUBMISSSIONS_MODULES
             )) ?? [];
 
+        const amrDataSets = modules.find(module => module.name === "AMR")?.dataSets ?? [];
+
+        _.forEach(amrDataSets, async amrDataSet => {
+            await promiseMap(items, async item => {
+                const dataValueSets = (await this.getDataSetsValue(amrDataSet.id, item.orgUnit ?? "", item.period))
+                    .dataValues;
+
+                if (!_.isEmpty(dataValueSets)) {
+                    const DSDataElements: { dataSetElements: { dataElement: NamedRef }[] } =
+                        await this.getDSDataElements(amrDataSet.id);
+                    const ADSDataElements: { dataSetElements: { dataElement: NamedRef }[] } =
+                        await this.getDSDataElements(amrDataSet.approvedId);
+
+                    const uniqueDataElementsIds = _.uniq(_.map(dataValueSets, "dataElement"));
+                    const dataElementsMatchedArray = DSDataElements.dataSetElements.map(element => {
+                        const dataElement = element.dataElement;
+                        if (uniqueDataElementsIds.includes(dataElement.id)) {
+                            const apvdName = dataElement.name + "-APVD";
+                            const ADSDataElement = ADSDataElements.dataSetElements.find(
+                                element => element.dataElement.name === apvdName
+                            );
+                            return {
+                                origId: dataElement.id,
+                                destId: ADSDataElement?.dataElement.id,
+                                name: dataElement.name,
+                            };
+                        } else {
+                            return [];
+                        }
+                    });
+
+                    const dataValuesToPost = this.makeDataValuesArray(
+                        amrDataSet.approvedId,
+                        dataValueSets,
+                        dataElementsMatchedArray
+                    );
+
+                    await promiseMap(_.chunk(dataValuesToPost, 1000), async dataValuesGroup => {
+                        return await this.api.dataValues
+                            .postSet({}, { dataValues: _.reject(dataValuesGroup, _.isEmpty) })
+                            .getData();
+                    });
+                }
+            });
+        });
+
         const newSubmissionValues = this.getNewSubmissionValues(items, objects, "APPROVED");
         const recipients = await this.getRecipientUsers(items, modules);
 
-        const body = await this.getNotificationBody(items, modules, "approved");
-        this.sendNotifications("Approved by WHO", body, [], recipients);
+        const message = await this.getNotificationText(items, modules, "approved");
+        this.sendNotifications(message, message, [], recipients);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
@@ -345,9 +469,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const newSubmissionValues = this.getNewSubmissionValues(items, objects, "NOT_COMPLETED");
         const recipients = await this.getRecipientUsers(items, modules);
 
-        const body = await this.getNotificationBody(items, modules, "reopened");
-        this.sendNotifications("Submission reopened by WHO", body, [], recipients);
-
+        const message = await this.getNotificationText(items, modules, "reopened");
+        this.sendNotifications(message, message, [], recipients);
         await this.postDataSetRegistration(items, false);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
@@ -363,12 +486,22 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const newSubmissionValues = this.getNewSubmissionValues(items, objects, "UPDATE_REQUEST_ACCEPTED");
         const recipients = await this.getRecipientUsers(items, modules);
 
-        const body = await this.getNotificationBody(items, modules, "accepted");
-        this.sendNotifications("Accepted by WHO", body, [], recipients);
+        const message = await this.getNotificationText(items, modules, "update request accepted");
+        this.sendNotifications(message, message, [], recipients);
 
         await this.postDataSetRegistration(items, false);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
+    }
+
+    async getGLASSDashboardId(_namespace: string, _items: GLASSDataSubmissionItemIdentifier[]): Promise<string> {
+        const modules =
+            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
+                Namespaces.DATA_SUBMISSSIONS_MODULES
+            )) ?? [];
+        const glassUnapvdDashboardId = modules.find(module => module.name === "AMR")?.dashboards.validationReport ?? "";
+
+        return glassUnapvdDashboardId;
     }
 
     private async postDataSetRegistration(items: GLASSDataSubmissionItemIdentifier[], completed: boolean) {
@@ -386,16 +519,6 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 { completeDataSetRegistrations: dataSetRegistrations }
             )
             .getData();
-    }
-
-    async getGLASSDashboardId(_namespace: string, _items: GLASSDataSubmissionItemIdentifier[]): Promise<string> {
-        const modules =
-            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
-                Namespaces.DATA_SUBMISSSIONS_MODULES
-            )) ?? [];
-        const glassUnapvdDashboardId = modules.find(module => module.name === "AMR")?.dashboards.validationReport ?? "";
-
-        return glassUnapvdDashboardId;
     }
 
     private async sendNotifications(subject: string, text: string, userGroups: Ref[], users?: Ref[]): Promise<void> {
@@ -441,3 +564,12 @@ function getRegistrationKey(options: { orgUnitId: Id; period: string }): Registr
 }
 
 type RegistrationKey = string; // `${orgUnitId}.${period}`
+
+const flattenNodes = (orgUnitNodes: OrgUnitNode[]): OrgUnitNode[] =>
+    _.flatMap(orgUnitNodes, node => (node.children ? [node, ...flattenNodes(node.children)] : [node]));
+
+type OrgUnitNode = {
+    level: number;
+    id: string;
+    children?: OrgUnitNode[];
+};

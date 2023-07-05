@@ -47,7 +47,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
 
     const selectablePeriods = React.useMemo(() => {
         const currentYear = new Date().getFullYear();
-        return _.range(currentYear - 5, currentYear + 1).map(n => n.toString());
+        return _.range(2016, currentYear + 1).map(n => n.toString());
     }, []);
 
     useEffect(() => {

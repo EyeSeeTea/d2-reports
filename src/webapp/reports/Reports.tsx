@@ -5,6 +5,7 @@ import MalDataApprovalStatusReport from "./mal-data-approval/MalDataApprovalRepo
 import { NHWADataApprovalStatusReport } from "./nhwa-approval-status/NHWADataApprovalStatusReport";
 import { NHWACommentsReport } from "./nhwa-comments/NHWACommentsReport";
 import { WMRNationalPolicies } from "./wmr-national-policies/WMRNationalPolicies";
+import CSYAuditReport from "./csy-audit/CSYAuditReport";
 import GLASSDataSubmissionReport from "./glass-data-submission/GLASSDataSubmissionReport";
 
 const widget = process.env.REACT_APP_REPORT_VARIANT || "";
@@ -25,6 +26,9 @@ const Component: React.FC = () => {
         }
         case "wmr-national-policies": {
             return <WMRNationalPolicies />;
+        }
+        case "csy-audit": {
+            return <CSYAuditReport />;
         }
         case "glass-submission": {
             return <GLASSDataSubmissionReport />;
