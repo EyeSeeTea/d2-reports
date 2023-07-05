@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2023-05-16T08:28:37.760Z\n"
-"PO-Revision-Date: 2023-05-16T08:28:37.760Z\n"
+"POT-Creation-Date: 2023-07-05T10:23:56.793Z\n"
+"PO-Revision-Date: 2023-07-05T10:23:56.793Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -97,58 +97,6 @@ msgstr ""
 msgid "created"
 msgstr ""
 
-msgid "Name"
-msgstr ""
-
-msgid "Last Updated"
-msgstr ""
-
-msgid "Denominator"
-msgstr ""
-
-msgid "Valid denominator"
-msgstr ""
-
-msgid "Valid"
-msgstr ""
-
-msgid "Invalid"
-msgstr ""
-
-msgid "Numerator"
-msgstr ""
-
-msgid "Valid Numerator"
-msgstr ""
-
-msgid "Expression"
-msgstr ""
-
-msgid "Valid expression"
-msgstr ""
-
-msgid "Filter"
-msgstr ""
-
-msgid "Valid filter"
-msgstr ""
-
-msgid "Empty"
-msgstr ""
-
-msgid "Reload Validation"
-msgstr ""
-
-msgid "Indicators"
-msgstr ""
-
-msgid "Program Indicators"
-msgstr ""
-
-msgid "Data quality"
-msgstr ""
-
-msgid "GLASS Data Submission Report"
 msgid "CSY Audit Report"
 msgstr ""
 
@@ -213,6 +161,57 @@ msgid "Year"
 msgstr ""
 
 msgid "Quarter"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Last Updated"
+msgstr ""
+
+msgid "Denominator"
+msgstr ""
+
+msgid "Valid denominator"
+msgstr ""
+
+msgid "Valid"
+msgstr ""
+
+msgid "Invalid"
+msgstr ""
+
+msgid "Numerator"
+msgstr ""
+
+msgid "Valid Numerator"
+msgstr ""
+
+msgid "Expression"
+msgstr ""
+
+msgid "Valid expression"
+msgstr ""
+
+msgid "Filter"
+msgstr ""
+
+msgid "Valid filter"
+msgstr ""
+
+msgid "Empty"
+msgstr ""
+
+msgid "Reload Validation"
+msgstr ""
+
+msgid "Indicators"
+msgstr ""
+
+msgid "Program Indicators"
+msgstr ""
+
+msgid "Data quality"
 msgstr ""
 
 msgid "GLASS Data Submission Report"
