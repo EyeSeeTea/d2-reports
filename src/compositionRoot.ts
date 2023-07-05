@@ -88,6 +88,7 @@ export function getCompositionRoot(api: D2Api) {
             saveColumns: new SaveGLASSDataSubmissionColumnsUseCase(glassDataRepository),
             dhis2MessageCount: new DHIS2MessageCountUseCase(glassDataRepository),
             updateStatus: new UpdateGLASSSubmissionUseCase(glassDataRepository),
+        }),
         dataQuality: getExecute({
             getIndicators: new GetIndicatorsUseCase(dataQualityRepository),
             getProgramIndicators: new GetProgramIndicatorsUseCase(dataQualityRepository),
