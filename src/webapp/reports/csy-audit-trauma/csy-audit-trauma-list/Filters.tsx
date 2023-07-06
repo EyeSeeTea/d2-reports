@@ -27,26 +27,52 @@ interface FilterOptions {
 
 export const auditTypeItems = [
     {
-        value: "overall-mortality",
-        text: i18n.t("Overall Mortality in EU"),
-        auditDefinition: "ETA_EU Dispo = Morgue or Died or ETA_Facility Dispo = Morgue or Died",
-    },
-    {
-        value: "low-acuity",
-        text: i18n.t("Low acuity triage with EU disposition ICU"),
+        value: "mortality",
+        text: i18n.t("Mortality with low injury severity score"),
         auditDefinition:
-            "Triage Category = Priority 3 || Minor (Green) || Level 4 || Level 5 || Standard (Green, 4) || Non-urgent (Blue, 5) || Level IV || Level V || Category 4 || Cateogry 5 || Green AND time difference between EU Arrival date and time AND ETA_EU Dispo = Intesive Care Unit (ICU)",
+            "(EU Disposition = Death) OR (Hospital Disposition = Death) AND (KTS=14-16) OR (MGAP=23-29) OR (GAP=19-24) OR (RTS=11-12)",
     },
     {
-        value: "highest-triage",
-        text: i18n.t("Highest triage category and time to first provider >30min​"),
+        value: "hypoxia",
+        text: i18n.t("Oxygen not administered for patients with hypoxia"),
+        auditDefinition: "Initial Oxygen Sat < 92 AND EU Procedures != Supplemental Oxygen Administration",
+    },
+    {
+        value: "tachypnea",
+        text: i18n.t("Oxygen not administered for patients with tachypnea"),
+        auditDefinition: "Initial Spontaneous RR <12 OR >30 AND EU Procedures != Supplemental Oxygen Administration",
+    },
+    {
+        value: "mental",
+        text: i18n.t("Mental status-dependent airway maneuver"),
         auditDefinition:
-            "Triage Category = Red || Category I || Level I || Level II || Immediate (Red, 1) || Level 1 || Level 2 || Immediate (Red) || Priority 1 AND time difference from EU Arrival Date and Time to EU Provider Date and Time",
+            "GCS total < 8 OR AVPU=(P OR U) AND EU Procedures ≠ Endotracheal intubation, Surgical airway, OR Assisted Ventilation",
     },
     {
-        value: "initial-rbg",
-        text: i18n.t("Initial RBG low and Glucose not given"),
-        auditDefinition: "Initial RBG = Low AND Glucose not ticked under the EU Medications and Fluids section",
+        value: "all-mortality",
+        text: i18n.t("All mortality"),
+        auditDefinition: "EU Disposition = Mortuary or Died OR Hospital Disposition = Morgue or Died",
+    },
+    { value: "emergency-unit", text: i18n.t("Emergency Unit"), auditDefinition: "EU Disposition = Mortuary or Died" },
+    {
+        value: "hospital-mortality",
+        text: i18n.t("Hospital Mortality"),
+        auditDefinition: "Hospital Disposition = Morgue or Died",
+    },
+    {
+        value: "severe-injuries",
+        text: i18n.t("Severe injuries by any scoring system"),
+        auditDefinition: "(KTS<11) OR (MGAP=3-17) OR (GAP=3-10) OR (RTS≤3)",
+    },
+    {
+        value: "moderate-severe-injuries",
+        text: i18n.t("Moderate or severe injuries by any scoring system"),
+        auditDefinition: "(KTS≤13) OR (MGAP≤22) OR (GAP≤18) OR (RTS≤10)",
+    },
+    {
+        value: "moderate-injuries",
+        text: i18n.t("Moderate injuries by any scoring system"),
+        auditDefinition: "(KTS=11-13) OR (MGAP=18-22) OR (GAP=11-18) OR (RTS=4-10)",
     },
 ];
 

@@ -114,7 +114,7 @@ export function getSortingFromTableSorting(sorting: TableSorting<AuditViewModel>
 
 function getEmptyDataValuesFilter(_config: Config): Filter {
     return {
-        auditType: "mortality",
+        auditType: "overall-mortality",
         orgUnitPaths: [],
         year: "2020",
         periodType: "yearly",
