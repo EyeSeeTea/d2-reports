@@ -40,7 +40,13 @@ const base = {
         constantCode: "",
         approvalWorkflows: { namePrefix: "AMR" },
     },
-    audit: {
+    auditEmergency: {
+        dataSets: { namePrefix: "", nameExcluded: /-APVD$/ },
+        sqlViewNames: [],
+        constantCode: "",
+        approvalWorkflows: { namePrefix: "" },
+    },
+    auditTrauma: {
         dataSets: { namePrefix: "", nameExcluded: /-APVD$/ },
         sqlViewNames: [],
         constantCode: "",

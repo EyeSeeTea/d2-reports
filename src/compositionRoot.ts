@@ -28,19 +28,23 @@ import { GenerateSortOrderUseCase } from "./domain/reports/mal-data-approval/use
 import { GetMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/GetMonitoringUseCase";
 import { SaveMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/SaveMonitoringUseCase";
 import { DuplicateDataValuesUseCase } from "./domain/reports/mal-data-approval/usecases/DuplicateDataValuesUseCase";
-import { CSYAuditDefaultRepository } from "./data/reports/csy-audit/CSYAuditDefaultRepository";
-import { GetAuditUseCase } from "./domain/reports/csy-audit/usecases/GetAuditUseCase";
-import { SaveAuditUseCase } from "./domain/reports/csy-audit/usecases/SaveAuditUseCase";
+import { CSYAuditEmergencyDefaultRepository } from "./data/reports/csy-audit-emergency/CSYAuditEmergencyDefaultRepository";
+import { GetAuditEmergencyUseCase } from "./domain/reports/csy-audit-emergency/usecases/GetAuditEmergencyUseCase";
+import { SaveAuditEmergencyUseCase } from "./domain/reports/csy-audit-emergency/usecases/SaveAuditEmergencyUseCase";
+import { GetAuditTraumaUseCase } from "./domain/reports/csy-audit-trauma/usecases/GetAuditTraumaUseCase";
+import { SaveAuditTraumaUseCase } from "./domain/reports/csy-audit-trauma/usecases/SaveAuditTraumaUseCase";
 import { GLASSDataSubmissionDefaultRepository } from "./data/reports/glass-data-submission/GLASSDataSubmissionDefaultRepository";
 import { GetGLASSDataSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSDataSubmissionUseCase";
 import { GetGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSDataSubmissionColumnsUseCase";
 import { SaveGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-data-submission/usecases/SaveGLASSDataSubmissionColumnsUseCase";
 import { UpdateGLASSSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/UpdateGLASSSubmissionUseCase";
 import { DHIS2MessageCountUseCase } from "./domain/reports/glass-data-submission/usecases/DHIS2MessageCountUseCase";
+import { CSYAuditTraumaDefaultRepository } from "./data/reports/csy-audit-trauma/CSYAuditTraumaDefaultRepository";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
-    const csyAuditRepository = new CSYAuditDefaultRepository(api);
+    const csyAuditEmergencyRepository = new CSYAuditEmergencyDefaultRepository(api);
+    const csyAuditTraumaRepository = new CSYAuditTraumaDefaultRepository(api);
     const dataCommentsRepository = new NHWADataCommentsDefaultRepository(api);
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
     const dataDuplicationRepository = new MalDataApprovalDefaultRepository(api);
@@ -77,9 +81,13 @@ export function getCompositionRoot(api: D2Api) {
             getSortOrder: new GetSortOrderUseCase(dataDuplicationRepository),
             generateSortOrder: new GenerateSortOrderUseCase(dataDuplicationRepository),
         }),
-        audit: getExecute({
-            get: new GetAuditUseCase(csyAuditRepository),
-            save: new SaveAuditUseCase(csyAuditRepository),
+        auditEmergency: getExecute({
+            get: new GetAuditEmergencyUseCase(csyAuditEmergencyRepository),
+            save: new SaveAuditEmergencyUseCase(csyAuditEmergencyRepository),
+        }),
+        auditTrauma: getExecute({
+            get: new GetAuditTraumaUseCase(csyAuditTraumaRepository),
+            save: new SaveAuditTraumaUseCase(csyAuditTraumaRepository),
         }),
         glassDataSubmission: getExecute({
             get: new GetGLASSDataSubmissionUseCase(glassDataRepository),
