@@ -41,6 +41,6 @@ export function getOrgUnitParentPath(path: OrgUnitPath) {
 
 export function getOrgUnitsFromId(orgUnitIds: string[], orgUnits: OrgUnit[]): OrgUnit[] {
     return orgUnitIds.flatMap(orgUnitId => {
-        return orgUnits.filter(ou => ou.id === orgUnitId)
-    })
+        return orgUnits.filter(ou => ou.id === orgUnitId);
+    });
 }

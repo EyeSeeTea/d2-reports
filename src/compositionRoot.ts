@@ -36,14 +36,29 @@ import { GetSubscriptionSortOrderUseCase } from "./domain/reports/mal-data-subsc
 import { GenerateSubscriptionSortOrderUseCase } from "./domain/reports/mal-data-subscription/usecases/GenerateSubscriptionSortOrderUseCase";
 import { SaveSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/SaveSubscriptionUseCase";
 import { GetSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/GetSubscriptionUseCase";
+import { CSYAuditEmergencyDefaultRepository } from "./data/reports/csy-audit-emergency/CSYAuditEmergencyDefaultRepository";
+import { GetAuditEmergencyUseCase } from "./domain/reports/csy-audit-emergency/usecases/GetAuditEmergencyUseCase";
+import { SaveAuditEmergencyUseCase } from "./domain/reports/csy-audit-emergency/usecases/SaveAuditEmergencyUseCase";
+import { GetAuditTraumaUseCase } from "./domain/reports/csy-audit-trauma/usecases/GetAuditTraumaUseCase";
+import { SaveAuditTraumaUseCase } from "./domain/reports/csy-audit-trauma/usecases/SaveAuditTraumaUseCase";
+import { GLASSDataSubmissionDefaultRepository } from "./data/reports/glass-data-submission/GLASSDataSubmissionDefaultRepository";
+import { GetGLASSDataSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSDataSubmissionUseCase";
+import { GetGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSDataSubmissionColumnsUseCase";
+import { SaveGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-data-submission/usecases/SaveGLASSDataSubmissionColumnsUseCase";
+import { UpdateGLASSSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/UpdateGLASSSubmissionUseCase";
+import { DHIS2MessageCountUseCase } from "./domain/reports/glass-data-submission/usecases/DHIS2MessageCountUseCase";
+import { CSYAuditTraumaDefaultRepository } from "./data/reports/csy-audit-trauma/CSYAuditTraumaDefaultRepository";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
+    const csyAuditEmergencyRepository = new CSYAuditEmergencyDefaultRepository(api);
+    const csyAuditTraumaRepository = new CSYAuditTraumaDefaultRepository(api);
     const dataCommentsRepository = new NHWADataCommentsDefaultRepository(api);
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
     const dataDuplicationRepository = new MalDataApprovalDefaultRepository(api);
     const dataSubscriptionRepository = new MalDataSubscriptionDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
+    const glassDataRepository = new GLASSDataSubmissionDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
 
     return {
@@ -83,6 +98,21 @@ export function getCompositionRoot(api: D2Api) {
             generateSortOrder: new GenerateSubscriptionSortOrderUseCase(dataSubscriptionRepository),
             getSubscription: new GetSubscriptionUseCase(dataSubscriptionRepository),
             saveSubscription: new SaveSubscriptionUseCase(dataSubscriptionRepository),
+        }),
+        auditEmergency: getExecute({
+            get: new GetAuditEmergencyUseCase(csyAuditEmergencyRepository),
+            save: new SaveAuditEmergencyUseCase(csyAuditEmergencyRepository),
+        }),
+        auditTrauma: getExecute({
+            get: new GetAuditTraumaUseCase(csyAuditTraumaRepository),
+            save: new SaveAuditTraumaUseCase(csyAuditTraumaRepository),
+        }),
+        glassDataSubmission: getExecute({
+            get: new GetGLASSDataSubmissionUseCase(glassDataRepository),
+            getColumns: new GetGLASSDataSubmissionColumnsUseCase(glassDataRepository),
+            saveColumns: new SaveGLASSDataSubmissionColumnsUseCase(glassDataRepository),
+            dhis2MessageCount: new DHIS2MessageCountUseCase(glassDataRepository),
+            updateStatus: new UpdateGLASSSubmissionUseCase(glassDataRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),

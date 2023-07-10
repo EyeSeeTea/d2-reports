@@ -5,6 +5,9 @@ import MalDataSubscriptionStatusReport from "./mal-data-subscription/MalDataSubs
 import { NHWADataApprovalStatusReport } from "./nhwa-approval-status/NHWADataApprovalStatusReport";
 import { NHWACommentsReport } from "./nhwa-comments/NHWACommentsReport";
 import { WMRNationalPolicies } from "./wmr-national-policies/WMRNationalPolicies";
+import CSYAuditEmergencyReport from "./csy-audit-emergency/CSYAuditEmergencyReport";
+import GLASSDataSubmissionReport from "./glass-data-submission/GLASSDataSubmissionReport";
+import CSYAuditTraumaReport from "./csy-audit-trauma/CSYAuditTraumaReport";
 
 const widget = process.env.REACT_APP_REPORT_VARIANT || "";
 
@@ -27,6 +30,15 @@ const Component: React.FC = () => {
         }
         case "wmr-national-policies": {
             return <WMRNationalPolicies />;
+        }
+        case "csy-audit-emergency": {
+            return <CSYAuditEmergencyReport />;
+        }
+        case "csy-audit-trauma": {
+            return <CSYAuditTraumaReport />;
+        }
+        case "glass-submission": {
+            return <GLASSDataSubmissionReport />;
         }
         default: {
             return <p>{`Please provide a valid REACT_APP_REPORT_VARIANT`}</p>;
