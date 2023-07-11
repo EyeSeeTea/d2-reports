@@ -4,6 +4,7 @@ import { Maybe, UnionFromValues } from "../../../utils/ts-utils";
 import { Id } from "./Base";
 import { DataElement, dataInputPeriodsType } from "./DataElement";
 import { Period } from "./DataValue";
+import { titleVariant } from "./TitleVariant";
 
 export interface DataForm {
     id: Id;
@@ -43,6 +44,7 @@ export interface SectionBase {
     tabs: { active: boolean; order?: number };
     sortRowsBy: string;
     subNationals: SubNational[];
+    titleVariant: titleVariant;
 }
 
 export interface SectionSimple extends SectionBase {

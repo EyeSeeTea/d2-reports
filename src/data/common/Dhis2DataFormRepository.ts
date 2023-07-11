@@ -86,6 +86,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                           .sortBy(sn => sn.name)
                           .value()
                     : [],
+                titleVariant: config?.titleVariant,
             };
 
             if (!config) return { viewType: "table", ...base };

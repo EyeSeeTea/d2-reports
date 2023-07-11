@@ -1,6 +1,7 @@
 import _ from "lodash";
 import { Section, Texts } from "../../../domain/common/entities/DataForm";
 import { DataElement } from "../../../domain/common/entities/DataElement";
+import { titleVariant } from "../../../domain/common/entities/TitleVariant";
 
 export interface Grid {
     id: string;
@@ -10,6 +11,7 @@ export interface Grid {
     toggle: Section["toggle"];
     useIndexes: boolean;
     texts: Texts;
+    titleVariant: titleVariant;
 }
 
 interface SubSectionGrid {
@@ -75,6 +77,7 @@ export class GridViewModel {
             toggle: section.toggle,
             texts: section.texts,
             useIndexes: useIndexes,
+            titleVariant: section.titleVariant,
         };
     }
 }

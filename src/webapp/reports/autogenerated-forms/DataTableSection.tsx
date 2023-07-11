@@ -14,6 +14,7 @@ export interface DataTableProps {
 
 interface DataTableSectionObj {
     name: string;
+    titleVariant?: Section["titleVariant"];
     texts: Section["texts"];
     toggle: Section["toggle"];
 }
@@ -32,9 +33,11 @@ const DataTableSection: React.FC<DataTableProps> = React.memo(props => {
         }
     }, [toggle, dataFormInfo]);
 
+    const titleStyle = section.titleVariant ? `${classes.title} ${classes[section.titleVariant]}` : classes.title;
+
     return (
         <div className={classes.wrapper}>
-            <h3 className={classes.title}>{section.name}</h3>
+            <h3 className={titleStyle}>{section.name}</h3>
 
             <Html content={section.texts.header} />
 
@@ -61,6 +64,30 @@ const useStyles = makeStyles({
     toggleTitle: { marginBottom: 10 },
     title: { textAlign: "center" },
     subtitle: { textAlign: "center", marginBottom: 10 },
+    h1: {
+        fontSize: "6rem !important",
+        margin: "18px !important",
+    },
+    h2: {
+        fontSize: "3.75rem !important",
+        margin: "18px !important",
+    },
+    h3: {
+        fontSize: "3rem !important",
+        margin: "18px !important",
+    },
+    h4: {
+        fontSize: "2.125rem !important",
+        margin: "18px !important",
+    },
+    h5: {
+        fontSize: "1.5rem !important",
+        margin: "18px !important",
+    },
+    h6: {
+        fontSize: "1.25rem !important",
+        margin: "18px !important",
+    },
 });
 
 function isDataValueEnabled(dataValue: DataValue): boolean {

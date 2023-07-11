@@ -7,6 +7,7 @@ import { Code, getCode, Id, NamedRef } from "../../domain/common/entities/Base";
 import { Option } from "../../domain/common/entities/DataElement";
 import { Period } from "../../domain/common/entities/DataValue";
 import { Texts } from "../../domain/common/entities/DataForm";
+import { titleVariant } from "../../domain/common/entities/TitleVariant";
 
 interface DataSetConfig {
     texts: Texts;
@@ -21,6 +22,7 @@ interface BaseSectionConfig {
     tabs: { active: true; order: number } | { active: false };
     sortRowsBy: string;
     subNationalDataset: string;
+    titleVariant: titleVariant;
 }
 
 interface BasicSectionConfig extends BaseSectionConfig {
@@ -43,6 +45,15 @@ const viewType = oneOf([
     exactly("grid-with-combos"),
     exactly("grid-with-periods"),
     exactly("grid-with-subnational-ous"),
+]);
+
+const titleVariantType = oneOf([
+    exactly("h1"),
+    exactly("h2"),
+    exactly("h3"),
+    exactly("h4"),
+    exactly("h5"),
+    exactly("h6"),
 ]);
 
 const textsCodec = Codec.interface({
@@ -79,6 +90,7 @@ const DataStoreConfigCodec = Codec.interface({
                         code: string,
                     })
                 ),
+                titleVariant: optional(titleVariantType),
                 tabs: optional(
                     Codec.interface({
                         active: exactly(true),
@@ -342,6 +354,7 @@ export class Dhis2DataStoreDataForm {
                     sortRowsBy: sectionConfig.sortRowsBy || "",
                     subNationalDataset: sectionConfig.subNationalDataset || "",
                     tabs: sectionConfig.tabs || { active: false },
+                    titleVariant: sectionConfig.titleVariant,
                 };
 
                 const config: SectionConfig =
