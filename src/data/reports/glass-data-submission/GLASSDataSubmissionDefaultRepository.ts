@@ -85,9 +85,13 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const objects =
             (await this.globalStorageClient.getObject<GLASSDataSubmissionItem[]>(namespace))?.filter(object => {
                 const amrModule = modules.find(module => module.name === "AMR")?.id;
+                const amrIndividualModule = modules.find(module => module.name === "AMR - Individual")?.id;
                 const egaspModule = modules.find(module => module.name === "EGASP")?.id;
 
-                return module === "AMR" ? object.module === amrModule : object.module === egaspModule;
+                if (module === "AMR") return object.module === amrModule;
+                else if (module === "AMR - Individual") return object.module === amrIndividualModule;
+                else if (module === "EGASP") return object.module === egaspModule;
+                else return [];
             }) ?? [];
 
         const uploads =
@@ -159,13 +163,14 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         const quarterPeriods = _.flatMap(periods, year => quarters.map(quarter => `${year}${quarter}`));
 
-        const filteredRows = rows.filter(row =>
-            (_.isEmpty(orgUnitIds) || !row.orgUnit ? row : orgUnitIds.includes(row.orgUnit)) && module === "AMR"
+        const filteredRows = rows.filter(row => {
+            return (_.isEmpty(orgUnitIds) || !row.orgUnit ? row : orgUnitIds.includes(row.orgUnit)) &&
+                module !== "EGASP"
                 ? periods.includes(String(row.period))
                 : quarterPeriods.includes(String(row.period)) &&
-                  (completionStatus !== undefined ? row.questionnaireCompleted === completionStatus : row) &&
-                  (!submissionStatus ? row : row.status === submissionStatus)
-        );
+                      (completionStatus !== undefined ? row.questionnaireCompleted === completionStatus : row) &&
+                      (!submissionStatus ? row : row.status === submissionStatus);
+        });
 
         const rowsInPage = _(filteredRows)
             .orderBy([row => row[sorting.field]], [sorting.direction])
@@ -385,7 +390,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
     }
 
     async approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
-        const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
+        //const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
         const modules =
             (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
                 Namespaces.DATA_SUBMISSSIONS_MODULES
@@ -393,21 +398,28 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         const module = modules.find(module => module.id === _.first(items)?.module)?.name ?? "";
 
-        if (module === "EGASP") {
-            const egaspPrograms = modules.find(module => module.name === "EGASP")?.programs ?? [];
-            _.forEach(egaspPrograms, async egaspProgram => this.duplicateProgram(egaspProgram, items));
-        } else {
+        if (module === "AMR") {
             const amrDataSets = modules.find(module => module.name === "AMR")?.dataSets ?? [];
             _.forEach(amrDataSets, async amrDataSet => await this.duplicateDataSet(amrDataSet, items));
         }
+        if (module === "AMR - Individual") {
+            const amrIndividualPrograms = modules.find(module => module.name === "AMR - Individual")?.programs ?? [];
+            _.forEach(amrIndividualPrograms, async amrIndividualProgram => {
+                await this.duplicateProgramStages(amrIndividualProgram, items);
+            });
+        }
+        if (module === "EGASP") {
+            const egaspPrograms = modules.find(module => module.name === "EGASP")?.programs ?? [];
+            _.forEach(egaspPrograms, async egaspProgram => await this.duplicateProgram(egaspProgram, items));
+        }
 
-        const newSubmissionValues = this.getNewSubmissionValues(items, objects, "APPROVED");
-        const recipients = await this.getRecipientUsers(items, modules);
+        // const newSubmissionValues = this.getNewSubmissionValues(items, objects, "APPROVED");
+        // const recipients = await this.getRecipientUsers(items, modules);
 
-        const message = await this.getNotificationText(items, modules, "approved");
-        this.sendNotifications(message, message, [], recipients);
+        // const message = await this.getNotificationText(items, modules, "approved");
+        // this.sendNotifications(message, message, [], recipients);
 
-        return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
+        // return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
 
     private async duplicateDataSet(dataSet: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
@@ -457,7 +469,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
     private async duplicateProgram(program: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
         await promiseMap(items, async item => {
-            const events = (await this.getProgramEvents(program.id, item.orgUnit ?? "")).events.map(event => {
+            const programEvents = (await this.getProgramEvents(program.id, item.orgUnit ?? "")).events;
+            const events = programEvents.map(event => {
                 return {
                     program: event.program,
                     orgUnit: event.orgUnit,
@@ -486,6 +499,43 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                     return await this.api.events.post({}, { events: _.reject(eventsGroup, _.isEmpty) }).getData();
                 });
             }
+        });
+    }
+
+    private async duplicateProgramStages(program: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
+        await promiseMap(items, async item => {
+            const programEvents = (await this.getProgramEvents(program.id, item.orgUnit ?? "")).events;
+
+            await promiseMap(programEvents, async programEvent => {
+                const programStageEvents = (
+                    await this.api.events
+                        .get({
+                            event: programEvent.event,
+                            program: program.id,
+                            programStage: program.programStageId,
+                            orgUnit: item.orgUnit,
+                        })
+                        .getData()
+                ).events;
+
+                if (!_.isEmpty(programStageEvents)) {
+                    const eventsToPost = programStageEvents.map(event => ({
+                        program: program.approvedId,
+                        programStage: program.programStageApprovedId,
+                        orgUnit: event.orgUnit,
+                        event: event.event,
+                        eventDate: event.eventDate,
+                        status: event.status,
+                        dataValues: event.dataValues,
+                    }));
+
+                    await promiseMap(
+                        _.chunk(eventsToPost, 100),
+                        async eventsGroup =>
+                            await this.api.events.post({}, { events: _.reject(eventsGroup, _.isEmpty) }).getData()
+                    );
+                }
+            });
         });
     }
 

@@ -38,10 +38,13 @@ export const DataSubmissionList: React.FC = React.memo(() => {
     const userGroupNames = config.currentUser.userGroups.map(ug => ug.name);
     const isAMRuser = userGroupNames.some(name => name.includes("AMR-AMR"));
     const isEGASPUser = userGroupNames.some(name => name.includes("AMR-EGASP"));
+    const isAMRIndividualUser = userGroupNames.some(name => name.includes("AMR-EGASP"));
 
     const snackbar = useSnackbar();
     const [reloadKey, reload] = useReload();
-    const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config, isEGASPUser, isAMRuser));
+    const [filters, setFilters] = useState(() =>
+        getEmptyDataValuesFilter(config, isEGASPUser, isAMRuser, isAMRIndividualUser)
+    );
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [rejectionReason, setRejectionReason] = useState<string>("");
     const [rejectedItems, setRejectedItems] = useState<GLASSDataSubmissionItemIdentifier[]>([]);
@@ -291,7 +294,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                 values={filters}
                 options={filterOptions}
                 onChange={setFilters}
-                userPermissions={{ amrUser: isAMRuser, egaspUser: isEGASPUser }}
+                userPermissions={{ amrUser: isAMRuser, egaspUser: isEGASPUser, amrIndividualUser: isAMRIndividualUser }}
             />
             <ConfirmationDialog
                 isOpen={isDialogOpen}
@@ -346,7 +349,12 @@ export function getSortingFromTableSorting(
     };
 }
 
-function getEmptyDataValuesFilter(_config: Config, isEGASPUser: boolean, isAMRUser: boolean): Filter {
+function getEmptyDataValuesFilter(
+    _config: Config,
+    isEGASPUser: boolean,
+    isAMRUser: boolean,
+    isAMRIndividualUser: boolean
+): Filter {
     return {
         module: isEGASPUser && isAMRUser ? "AMR" : isEGASPUser ? "EGASP" : "AMR",
         orgUnitPaths: [],

@@ -18,7 +18,7 @@ export interface DataSetsFiltersProps {
     values: Filter;
     options: FilterOptions;
     onChange: React.Dispatch<React.SetStateAction<Filter>>;
-    userPermissions: { amrUser: boolean; egaspUser: boolean };
+    userPermissions: { amrUser: boolean; egaspUser: boolean; amrIndividualUser: boolean };
 }
 
 export interface Filter {
@@ -55,7 +55,7 @@ export const statusItems = [
 export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { config, api } = useAppContext();
     const { values: filter, options: filterOptions, onChange, userPermissions } = props;
-    const { amrUser, egaspUser } = userPermissions;
+    const { amrUser, egaspUser, amrIndividualUser } = userPermissions;
 
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
 
@@ -75,19 +75,22 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         const modules = [
             { value: "AMR", text: i18n.t("AMR") },
             { value: "EGASP", text: i18n.t("EGASP") },
+            { value: "AMR - Individual", text: i18n.t("AMR - Individual") },
         ];
 
         switch (true) {
-            case amrUser && egaspUser:
+            case amrUser && egaspUser && amrIndividualUser:
                 return modules;
             case amrUser:
                 return modules.filter(module => module.value === "AMR");
             case egaspUser:
                 return modules.filter(module => module.value === "EGASP");
+            case amrIndividualUser:
+                return modules.filter(module => module.value === "AMR - Individual");
             default:
                 return modules;
         }
-    }, [amrUser, egaspUser]);
+    }, [amrIndividualUser, amrUser, egaspUser]);
 
     const completionStatusItems = React.useMemo(() => {
         return [

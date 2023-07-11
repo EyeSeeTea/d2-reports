@@ -27,6 +27,8 @@ export interface GLASSDataSubmissionItemIdentifier {
 export interface ApprovalIds {
     id: Id;
     approvedId: Id;
+    programStageId: Id;
+    programStageApprovedId: Id;
 }
 
 export interface GLASSDataSubmissionModule {
