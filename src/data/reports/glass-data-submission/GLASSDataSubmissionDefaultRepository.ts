@@ -390,7 +390,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
     }
 
     async approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
-        //const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
+        const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
         const modules =
             (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
                 Namespaces.DATA_SUBMISSSIONS_MODULES
@@ -413,13 +413,13 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             _.forEach(egaspPrograms, async egaspProgram => await this.duplicateProgram(egaspProgram, items));
         }
 
-        // const newSubmissionValues = this.getNewSubmissionValues(items, objects, "APPROVED");
-        // const recipients = await this.getRecipientUsers(items, modules);
+        const newSubmissionValues = this.getNewSubmissionValues(items, objects, "APPROVED");
+        const recipients = await this.getRecipientUsers(items, modules);
 
-        // const message = await this.getNotificationText(items, modules, "approved");
-        // this.sendNotifications(message, message, [], recipients);
+        const message = await this.getNotificationText(items, modules, "approved");
+        this.sendNotifications(message, message, [], recipients);
 
-        // return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
+        return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
 
     private async duplicateDataSet(dataSet: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
