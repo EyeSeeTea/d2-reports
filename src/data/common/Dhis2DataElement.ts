@@ -84,11 +84,13 @@ function makeCocOrderArray(namesArray: string[][]): string[] {
 }
 
 function getCocOrdered(categoryCombo: D2CategoryCombo, config: Dhis2DataStoreDataForm) {
-    const allCategoryOptions = categoryCombo.categories.map(c => {
-        return c.categoryOptions.flatMap(co => ({ name: co.name, shortName: co.shortName}));
-    }).flatMap((categoriesOptions) => {
-        return categoriesOptions.map(co => co);
-    });
+    const allCategoryOptions = categoryCombo.categories
+        .map(c => {
+            return c.categoryOptions.flatMap(co => ({ name: co.name, shortName: co.shortName }));
+        })
+        .flatMap(categoriesOptions => {
+            return categoriesOptions.map(co => co);
+        });
 
     const categoryOptionsNamesArray = categoryCombo.categories.map(c => {
         return c.categoryOptions.flatMap(co => co.name);
@@ -100,7 +102,7 @@ function getCocOrdered(categoryCombo: D2CategoryCombo, config: Dhis2DataStoreDat
             return coc.name === cocOrdered;
         });
         const categoryOption = allCategoryOptions.find(c => c.name === match?.name);
-        return match ? { ...match, shortName: categoryOption?.shortName  } : [];
+        return match ? { ...match, shortName: categoryOption?.shortName } : [];
     });
 
     const keyName = config.categoryCombinationsConfig[categoryCombo.code]?.viewType || "name";
@@ -141,21 +143,21 @@ function getDataElement(dataElement: D2DataElement, config: Dhis2DataStoreDataFo
     switch (valueType) {
         case "TEXT":
         case "LONG_TEXT":
-            return { type: "TEXT", ...base };
+            return { type: "TEXT", related: undefined, ...base };
         case "INTEGER":
         case "INTEGER_NEGATIVE":
         case "INTEGER_POSITIVE":
         case "INTEGER_ZERO_OR_POSITIVE":
         case "NUMBER":
-            return { type: "NUMBER", numberType: valueType, ...base };
+            return { type: "NUMBER", numberType: valueType, related: undefined, ...base };
         case "BOOLEAN":
-            return { type: "BOOLEAN", isTrueOnly: false, ...base };
+            return { type: "BOOLEAN", isTrueOnly: false, related: undefined, ...base };
         case "TRUE_ONLY":
-            return { type: "BOOLEAN", isTrueOnly: true, ...base };
+            return { type: "BOOLEAN", isTrueOnly: true, related: undefined, ...base };
         case "FILE_RESOURCE":
-            return { type: "FILE", ...base };
+            return { type: "FILE", related: undefined, ...base };
         case "DATE":
-            return { type: "DATE", ...base };
+            return { type: "DATE", related: undefined, ...base };
         default:
             console.error(
                 `Data element [name=${dataElement.displayName}, id=${dataElement.id}, valueType=${dataElement.valueType}] skipped, valueType not supported`

@@ -12,6 +12,7 @@ interface DataElementBase {
     categoryCombos: CategoryCombos;
     cocId?: string;
     orgUnit?: Id;
+    related: { dataElement: DataElement; value: string } | undefined;
 }
 
 export interface DataElementBoolean extends DataElementBase {

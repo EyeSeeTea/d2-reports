@@ -76,7 +76,21 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 tabs: config?.tabs || { active: false },
                 sortRowsBy: config?.sortRowsBy || "",
                 dataElements: _(section.dataElements)
-                    .map(dataElementRef => dataElements[dataElementRef.id])
+                    .map(dataElementRef => {
+                        const dataElement = dataElements[dataElementRef.id];
+                        if (!dataElement) return undefined;
+                        const deHideConfig = configDataForm.dataElementsConfig[dataElementRef.code]?.selection?.visible;
+                        const d2DataElement = deHideConfig
+                            ? section.dataElements.find(de => de.code === deHideConfig.dataElementCode)
+                            : undefined;
+                        const deRelated = d2DataElement ? dataElements[d2DataElement.id] : undefined;
+                        return {
+                            ...dataElement,
+                            related: deRelated
+                                ? { dataElement: deRelated, value: deHideConfig?.value || "" }
+                                : undefined,
+                        };
+                    })
                     .compact()
                     .value(),
                 subNationals: config?.subNationalDataset
@@ -123,6 +137,7 @@ function getMetadataQuery(options: { dataSetId: Id }) {
                     displayName: true,
                     dataElements: {
                         id: true,
+                        code: true,
                         categoryCombo: {
                             id: true,
                             name: true,

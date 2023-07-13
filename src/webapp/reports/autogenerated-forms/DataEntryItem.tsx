@@ -55,6 +55,36 @@ function isInputExpired(
     }
 }
 
+function getValueAccordingType(dataValue: DataValue) {
+    switch (dataValue.type) {
+        case "BOOLEAN":
+            return dataValue.value;
+        case "FILE":
+            return undefined;
+        case "DATE":
+            return dataValue.value;
+        case "TEXT":
+            return dataValue.isMultiple ? dataValue.values.join(",") : dataValue.value;
+        case "NUMBER":
+            return dataValue.isMultiple ? dataValue.values.join(",") : dataValue.value;
+        default:
+            assertUnreachable(dataValue);
+    }
+}
+
+function isVisible(dataElement: DataElement, dataFormInfo: DataFormInfo, period: string | undefined) {
+    if (dataElement.related) {
+        const dataValue = dataFormInfo.data.values.getOrEmpty(dataElement.related.dataElement, {
+            orgUnitId: dataElement.orgUnit || dataFormInfo.orgUnitId,
+            period: period || dataFormInfo.period,
+            categoryOptionComboId: dataFormInfo.categoryOptionComboId,
+        });
+        const value = getValueAccordingType(dataValue);
+        return dataElement.related.value === String(value);
+    }
+    return true;
+}
+
 const DataEntryItem: React.FC<DataEntryItemProps> = props => {
     const { dataElement, dataFormInfo, manualyDisabled: handDisabled, rowDataElements, rows } = props;
     const [dataValue, state, notifyChange] = useUpdatableDataValueWithFeedback(props);
@@ -72,6 +102,10 @@ const DataEntryItem: React.FC<DataEntryItemProps> = props => {
     const config = dataFormInfo.metadata.dataForm.options.dataElements[dataElement.id];
     const SingleComponent = config?.widget === "radio" ? SingleSelectRadioWidget : SingleSelectWidget;
     const BooleanComponent = config?.widget === "dropdown" ? BooleanDropdownWidget : YesNoWidget;
+
+    if (!isVisible(dataElement, dataFormInfo, props.period)) {
+        return null;
+    }
 
     if (options) {
         switch (type) {

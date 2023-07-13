@@ -71,6 +71,12 @@ const DataStoreConfigCodec = Codec.interface({
                 optionSet: optional(selector),
                 isMultiple: optional(boolean),
                 widget: optional(oneOf([exactly("dropdown"), exactly("radio"), exactly("sourceType")])),
+                visible: optional(
+                    Codec.interface({
+                        dataElementCode: optional(string),
+                        value: optional(string),
+                    })
+                ),
             })
         ),
     }),
@@ -114,6 +120,7 @@ interface DataElementConfig {
         optionSet?: OptionSet;
         isMultiple: boolean;
         widget: Maybe<"dropdown" | "radio" | "sourceType">;
+        visible: { dataElementCode: string; value: string } | undefined;
     };
 }
 
@@ -389,11 +396,18 @@ export class Dhis2DataStoreDataForm {
                     ? this.config.optionSets.find(optionSet => selectorMatches(optionSet, optionSetRef))
                     : undefined;
 
+                const deToHideCode = config.selection?.visible?.dataElementCode;
+                const deToHideValue = config.selection?.visible?.value;
+
                 const dataElementConfig: DataElementConfig = {
                     selection: {
                         isMultiple: optionSetSelector.isMultiple || false,
                         optionSet: optionSet,
                         widget: optionSetSelector.widget,
+                        visible:
+                            !_.isUndefined(deToHideCode) && !_.isUndefined(deToHideValue)
+                                ? { dataElementCode: deToHideCode, value: deToHideValue }
+                                : undefined,
                     },
                 };
 
