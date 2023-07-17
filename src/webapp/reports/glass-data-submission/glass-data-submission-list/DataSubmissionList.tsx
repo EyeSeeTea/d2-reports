@@ -20,6 +20,7 @@ import { useReload } from "../../../utils/use-reload";
 import {
     GLASSDataSubmissionItem,
     GLASSDataSubmissionItemIdentifier,
+    GLASSUserPermission,
     parseDataSubmissionItemId,
 } from "../../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
@@ -35,16 +36,12 @@ import { goToDhis2Url } from "../../../../utils/utils";
 export const DataSubmissionList: React.FC = React.memo(() => {
     const { api, compositionRoot, config } = useAppContext();
 
-    const userGroupNames = config.currentUser.userGroups.map(ug => ug.name);
-    const isAMRuser = userGroupNames.some(name => name.includes("AMR-AMR"));
-    const isEGASPUser = userGroupNames.some(name => name.includes("AMR-EGASP"));
-    const isAMRIndividualUser = userGroupNames.some(name => name.includes("AMR-EGASP"));
-
     const snackbar = useSnackbar();
     const [reloadKey, reload] = useReload();
     const [filters, setFilters] = useState(() =>
-        getEmptyDataValuesFilter(config, isEGASPUser, isAMRuser, isAMRIndividualUser)
+        getEmptyDataValuesFilter(config, isEGASPUser, isAMRUser, isAMRIndividualUser)
     );
+    const [userGroupPermissions, setUserGroupPermissions] = useState<GLASSUserPermission>();
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [rejectionReason, setRejectionReason] = useState<string>("");
     const [rejectedItems, setRejectedItems] = useState<GLASSDataSubmissionItemIdentifier[]>([]);
@@ -52,12 +49,26 @@ export const DataSubmissionList: React.FC = React.memo(() => {
     const [isDatasetUpdate, setDatasetUpdate] = useState<boolean>(false);
     const [isDialogOpen, { enable: openDialog, disable: closeDialog }] = useBooleanState(false);
 
+    const userGroupIds = config.currentUser.userGroups.map(ug => ug.id);
+    const isAMRUser = userGroupIds.some(id =>
+        userGroupPermissions?.amrPermissions.map(permission => permission.id).includes(id)
+    );
+    const isAMRIndividualUser = userGroupIds.some(id =>
+        userGroupPermissions?.amrIndividualPermissions.map(permission => permission.id).includes(id)
+    );
+    const isEGASPUser = userGroupIds.some(id =>
+        userGroupPermissions?.egaspPermissions.map(permission => permission.id).includes(id)
+    );
+
     const selectablePeriods = React.useMemo(() => {
         const currentYear = new Date().getFullYear();
         return _.range(2016, currentYear + 1).map(n => n.toString());
     }, []);
 
     useEffect(() => {
+        compositionRoot.glassDataSubmission.getUserGroupPermissions().then(permissions => {
+            setUserGroupPermissions(permissions);
+        });
         compositionRoot.glassDataSubmission.getColumns(Namespaces.DATA_SUBMISSSIONS_USER_COLUMNS).then(columns => {
             setVisibleColumns(columns);
         });
@@ -294,7 +305,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                 values={filters}
                 options={filterOptions}
                 onChange={setFilters}
-                userPermissions={{ amrUser: isAMRuser, egaspUser: isEGASPUser, amrIndividualUser: isAMRIndividualUser }}
+                userPermissions={{ isAMRUser, isEGASPUser, isAMRIndividualUser }}
             />
             <ConfirmationDialog
                 isOpen={isDialogOpen}
@@ -355,8 +366,18 @@ function getEmptyDataValuesFilter(
     isAMRUser: boolean,
     isAMRIndividualUser: boolean
 ): Filter {
+    const allPermissions = isEGASPUser && isAMRIndividualUser && isAMRUser;
+    const amrIndividualPermissions = isAMRIndividualUser && (!isEGASPUser || !isAMRUser);
+    const egaspPermissions = isEGASPUser && (!isAMRUser || !isAMRIndividualUser);
+
     return {
-        module: isEGASPUser && isAMRUser ? "AMR" : isEGASPUser ? "EGASP" : "AMR",
+        module: allPermissions
+            ? "AMR"
+            : amrIndividualPermissions
+            ? "AMRIndividual"
+            : egaspPermissions
+            ? "EGASP"
+            : "AMR",
         orgUnitPaths: [],
         periods: [],
         quarters: ["Q1"],

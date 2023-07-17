@@ -5,6 +5,7 @@ import {
     GLASSDataSubmissionItemIdentifier,
     GLASSDataSubmissionModule,
     ApprovalIds,
+    GLASSUserPermission,
 } from "../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 import {
     GLASSDataSubmissionOptions,
@@ -89,7 +90,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 const egaspModule = modules.find(module => module.name === "EGASP")?.id;
 
                 if (module === "AMR") return object.module === amrModule;
-                else if (module === "AMR - Individual") return object.module === amrIndividualModule;
+                else if (module === "AMRIndividual") return object.module === amrIndividualModule;
                 else if (module === "EGASP") return object.module === egaspModule;
                 else return [];
             }) ?? [];
@@ -189,6 +190,20 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             pager,
             objects: rowsInPage,
         };
+    }
+
+    async getUserGroupPermissions(): Promise<GLASSUserPermission> {
+        const modules =
+            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
+                Namespaces.DATA_SUBMISSSIONS_MODULES
+            )) ?? [];
+
+        const amrPermissions = modules.find(module => module.name === "AMR")?.userGroups.approveAccess ?? [];
+        const amrIndividualPermissions =
+            modules.find(module => module.name === "AMR - Individual")?.userGroups.approveAccess ?? [];
+        const egaspPermissions = modules.find(module => module.name === "EGASP")?.userGroups.approveAccess ?? [];
+
+        return { amrPermissions, amrIndividualPermissions, egaspPermissions };
     }
 
     private async getRegistrations(

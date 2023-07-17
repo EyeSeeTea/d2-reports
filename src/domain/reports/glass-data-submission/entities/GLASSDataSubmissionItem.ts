@@ -44,7 +44,14 @@ export interface GLASSDataSubmissionModule {
     userGroups: {
         captureAccess: NamedRef[];
         readAccess: NamedRef[];
+        approveAccess: NamedRef[];
     };
+}
+
+export interface GLASSUserPermission {
+    amrPermissions: NamedRef[];
+    amrIndividualPermissions: NamedRef[];
+    egaspPermissions: NamedRef[];
 }
 
 export function getDataSubmissionItemId(submissionItem: GLASSDataSubmissionItem): string {

@@ -2,10 +2,15 @@ import { Module, Status } from "../../../../webapp/reports/glass-data-submission
 import { Id } from "../../../common/entities/Base";
 import { Config } from "../../../common/entities/Config";
 import { PaginatedObjects, Paging, Sorting } from "../../../common/entities/PaginatedObjects";
-import { GLASSDataSubmissionItem, GLASSDataSubmissionItemIdentifier } from "../entities/GLASSDataSubmissionItem";
+import {
+    GLASSDataSubmissionItem,
+    GLASSDataSubmissionItemIdentifier,
+    GLASSUserPermission,
+} from "../entities/GLASSDataSubmissionItem";
 
 export interface GLASSDataSubmissionRepository {
     get(options: GLASSDataSubmissionOptions, namespace: string): Promise<PaginatedObjects<GLASSDataSubmissionItem>>;
+    getUserGroupPermissions(): Promise<GLASSUserPermission>;
     getColumns(namespace: string): Promise<string[]>;
     saveColumns(namespace: string, columns: string[]): Promise<void>;
     dhis2MessageCount(): Promise<number>;
