@@ -47,13 +47,13 @@ const base = {
         approvalWorkflows: { namePrefix: "" },
     },
     summary: {
-        dataSets: { namePrefix: "", nameExcluded: /-APVD$/ },
+        dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
         sqlViewNames: [],
         constantCode: "",
         approvalWorkflows: { namePrefix: "" },
     },
     "summary-mortality": {
-        dataSets: { namePrefix: "", nameExcluded: /-APVD$/ },
+        dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
         sqlViewNames: [],
         constantCode: "",
         approvalWorkflows: { namePrefix: "" },
