@@ -1,12 +1,12 @@
 import { UseCase } from "../../../../compositionRoot";
 import { PaginatedObjects } from "../../../common/entities/PaginatedObjects";
 import { AuditItem } from "../entities/AuditItem";
-import { CSYAuditOptions, CSYAuditRepository } from "../repositories/CSYAuditRepository";
+import { CSYAuditTraumaOptions, CSYAuditTraumaRepository } from "../repositories/CSYAuditTraumaRepository";
 
-type AuditOptions = CSYAuditOptions;
+type AuditOptions = CSYAuditTraumaOptions;
 
-export class GetAuditUseCase implements UseCase {
-    constructor(private auditRepository: CSYAuditRepository) {}
+export class GetAuditTraumaUseCase implements UseCase {
+    constructor(private auditRepository: CSYAuditTraumaRepository) {}
 
     execute(options: AuditOptions): Promise<PaginatedObjects<AuditItem>> {
         // FUTURE: Return a Future-like instead, to allow better error handling and cancellation.

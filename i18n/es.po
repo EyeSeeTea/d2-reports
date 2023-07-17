@@ -77,7 +77,7 @@ msgstr ""
 msgid "created"
 msgstr ""
 
-msgid "CSY Audit Report"
+msgid "CSY Audit Report - Emergency Care"
 msgstr ""
 
 msgid "Register ID"
@@ -141,6 +141,21 @@ msgid "Year"
 msgstr ""
 
 msgid "Quarter"
+msgstr ""
+
+msgid "CSY Audit Report - Trauma Care"
+msgstr ""
+
+msgid "Overall Mortality in EU"
+msgstr ""
+
+msgid "Low acuity triage with EU disposition ICU"
+msgstr ""
+
+msgid "Highest triage category and time to first provider >30min ​"
+msgstr ""
+
+msgid "Initial RBG low and Glucose not given"
 msgstr ""
 
 msgid "GLASS Data Submission Report"
