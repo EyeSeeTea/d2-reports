@@ -12,8 +12,10 @@ export function getReportType(): ReportType {
             return "summary";
         case "csy-summary-mortality":
             return "summary-mortality";
-        case "csy-audit":
-            return "audit";
+        case "csy-audit-emergency":
+            return "auditEmergency";
+        case "csy-audit-trauma":
+            return "auditTrauma";
         default:
             return "nhwa";
     }

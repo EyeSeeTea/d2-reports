@@ -16,9 +16,9 @@ import StorageIcon from "@material-ui/icons/Storage";
 import i18n from "../../../../locales";
 import { useReload } from "../../../utils/use-reload";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
-import { AuditItem } from "../../../../domain/reports/csy-audit/entities/AuditItem";
+import { AuditItem } from "../../../../domain/reports/csy-audit-emergency/entities/AuditItem";
 
-export const CSYAuditList: React.FC = React.memo(() => {
+export const CSYAuditEmergencyList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
 
     const [reloadKey, _reload] = useReload();
@@ -48,7 +48,7 @@ export const CSYAuditList: React.FC = React.memo(() => {
 
     const getRows = useMemo(
         () => async (_search: string, paging: TablePagination, sorting: TableSorting<AuditViewModel>) => {
-            const { pager, objects } = await compositionRoot.audit.get({
+            const { pager, objects } = await compositionRoot.auditEmergency.get({
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
@@ -77,14 +77,14 @@ export const CSYAuditList: React.FC = React.memo(() => {
         icon: <StorageIcon />,
         onClick: async () => {
             if (!sorting) return;
-            const { objects: auditItems } = await compositionRoot.audit.get({
+            const { objects: auditItems } = await compositionRoot.auditEmergency.get({
                 config,
                 paging: { page: 1, pageSize: 100000 },
                 sorting: getSortingFromTableSorting(sorting),
                 ...filters,
             });
 
-            compositionRoot.audit.save("audit-report.csv", auditItems);
+            compositionRoot.auditEmergency.save("audit-report.csv", auditItems);
         },
     };
 
@@ -114,7 +114,7 @@ export function getSortingFromTableSorting(sorting: TableSorting<AuditViewModel>
 
 function getEmptyDataValuesFilter(_config: Config): Filter {
     return {
-        auditType: "mortality",
+        auditType: "overall-mortality",
         orgUnitPaths: [],
         year: "2020",
         periodType: "yearly",

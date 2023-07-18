@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2023-07-04T08:43:16.148Z\n"
-"PO-Revision-Date: 2023-07-04T08:43:16.148Z\n"
+"POT-Creation-Date: 2023-07-18T07:35:32.769Z\n"
+"PO-Revision-Date: 2023-07-18T07:35:32.769Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -77,40 +77,22 @@ msgstr ""
 msgid "created"
 msgstr ""
 
-msgid "CSY Audit Report"
+msgid "CSY Audit Report - Emergency Care"
 msgstr ""
 
 msgid "Register ID"
 msgstr ""
 
-msgid "Mortality with low injury severity score"
+msgid "Overall Mortality in EU"
 msgstr ""
 
-msgid "Oxygen not administered for patients with hypoxia"
+msgid "Low acuity triage with EU disposition ICU"
 msgstr ""
 
-msgid "Oxygen not administered for patients with tachypnea"
+msgid "Highest triage category and time to first provider >30min​"
 msgstr ""
 
-msgid "Mental status-dependent airway maneuver"
-msgstr ""
-
-msgid "All mortality"
-msgstr ""
-
-msgid "Emergency Unit"
-msgstr ""
-
-msgid "Hospital Mortality"
-msgstr ""
-
-msgid "Severe injuries by any scoring system"
-msgstr ""
-
-msgid "Moderate or severe injuries by any scoring system"
-msgstr ""
-
-msgid "Moderate injuries by any scoring system"
+msgid "Initial RBG low and Glucose not given"
 msgstr ""
 
 msgid "Yearly"
@@ -141,6 +123,39 @@ msgid "Year"
 msgstr ""
 
 msgid "Quarter"
+msgstr ""
+
+msgid "CSY Audit Report - Trauma Care"
+msgstr ""
+
+msgid "Mortality with low injury severity score"
+msgstr ""
+
+msgid "Oxygen not administered for patients with hypoxia"
+msgstr ""
+
+msgid "Oxygen not administered for patients with tachypnea"
+msgstr ""
+
+msgid "Mental status-dependent airway maneuver"
+msgstr ""
+
+msgid "All mortality"
+msgstr ""
+
+msgid "Emergency Unit"
+msgstr ""
+
+msgid "Hospital Mortality"
+msgstr ""
+
+msgid "Severe injuries by any scoring system"
+msgstr ""
+
+msgid "Moderate or severe injuries by any scoring system"
+msgstr ""
+
+msgid "Moderate injuries by any scoring system"
 msgstr ""
 
 msgid "CSY Summary Report - Mortality by Injury Severity"

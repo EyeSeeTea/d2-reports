@@ -1,42 +1,39 @@
 import _ from "lodash";
 import { PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
-import { AuditItem } from "../../../domain/reports/csy-audit/entities/AuditItem";
-import { CSYAuditOptions, CSYAuditRepository } from "../../../domain/reports/csy-audit/repositories/CSYAuditRepository";
+import { AuditItem } from "../../../domain/reports/csy-audit-trauma/entities/AuditItem";
 import { AnalyticsResponse, D2Api, Pager } from "../../../types/d2-api";
 import { getOrgUnitIdsFromPaths } from "../../../domain/common/entities/OrgUnit";
 import { CsvWriterDataSource } from "../../common/CsvWriterCsvDataSource";
 import { CsvData } from "../../common/CsvDataSource";
 import { downloadFile } from "../../common/utils/download-file";
 import { promiseMap } from "../../../utils/promises";
+import {
+    CSYAuditTraumaOptions,
+    CSYAuditTraumaRepository,
+} from "../../../domain/reports/csy-audit-trauma/repositories/CSYAuditTraumaRepository";
 
-export class CSYAuditDefaultRepository implements CSYAuditRepository {
+export class CSYAuditTraumaDefaultRepository implements CSYAuditTraumaRepository {
     constructor(private api: D2Api) {}
 
-    async get(options: CSYAuditOptions): Promise<PaginatedObjects<AuditItem>> {
+    async get(options: CSYAuditTraumaOptions): Promise<PaginatedObjects<AuditItem>> {
         const { paging, year, orgUnitPaths, quarter, auditType } = options;
         const period = !quarter ? year : `${year}${quarter}`;
         const orgUnitIds = getOrgUnitIdsFromPaths(orgUnitPaths);
-        const auditItems: AuditItem[] = [];
 
         try {
-            const response = await promiseMap(
-                auditQueryStrings[auditType as keyof typeof auditQueryStrings],
-                async queryString => {
+            const response = _(
+                await promiseMap(auditQueryStrings[auditType as keyof typeof auditQueryStrings], async queryString => {
                     return await promiseMap(orgUnitIds, async orgUnitId => {
                         return await this.api
-                            .get<AnalyticsResponse>(eventQueryUri(orgUnitId, period, queryString))
+                            .get<AnalyticsResponse>(this.eventQueryUri(orgUnitId, period, queryString))
                             .getData();
                     });
-                }
-            );
+                })
+            )
+                .flatten()
+                .value();
 
-            [...Array(response[0]?.length).keys()].map(a => {
-                const res = _.compact(response.map(res => res[a]));
-                const res2 = getAuditItems(auditType, res);
-
-                auditItems.push(...res2);
-                return auditItems;
-            });
+            const auditItems = getAuditItems(auditType, response);
 
             const rowsInPage = _(auditItems)
                 .drop((paging.page - 1) * paging.pageSize)
@@ -72,6 +69,20 @@ export class CSYAuditDefaultRepository implements CSYAuditRepository {
 
         await downloadFile(csvContents, filename, "text/csv");
     }
+
+    private eventQueryUri(orgUnit: string, period: string, query: string) {
+        const uri =
+            // auqdJ66DqAT => WHO Clinical Registry - Trauma Care program
+            "/analytics/events/query/auqdJ66DqAT.json?dimension=pe:" +
+            period +
+            "&dimension=ou:" +
+            orgUnit +
+            query +
+            // QStbireWKjW => ETA Registry ID dataElement
+            // mnNpBtanIQo => WHO Clinical Registry - Trauma program stage
+            "&pageSize=100000";
+        return uri;
+    }
 }
 
 const csvFields = ["registerId"] as const;
@@ -79,17 +90,6 @@ const csvFields = ["registerId"] as const;
 type CsvField = typeof csvFields[number];
 
 type AuditItemRow = Record<CsvField, string>;
-
-function eventQueryUri(orgUnit: string, period: string, query: string) {
-    const uri =
-        "/analytics/events/query/auqdJ66DqAT.json?dimension=pe:" +
-        period +
-        "&dimension=ou:" +
-        orgUnit +
-        query +
-        "&pageSize=100000";
-    return uri;
-}
 
 function findColumnIndex(response: AnalyticsResponse | undefined, columnId: string) {
     const headers = response?.headers ?? [];
