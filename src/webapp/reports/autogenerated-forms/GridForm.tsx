@@ -71,7 +71,11 @@ const GridForm: React.FC<GridFormProps> = props => {
                             {row.items.map((item, idx) =>
                                 item.dataElement ? (
                                     <DataTableCell key={item.dataElement.id}>
-                                        <DataElementItem dataElement={item.dataElement} dataFormInfo={dataFormInfo} />
+                                        <DataElementItem
+                                            noComment={item.disableComments}
+                                            dataElement={item.dataElement}
+                                            dataFormInfo={dataFormInfo}
+                                        />
                                     </DataTableCell>
                                 ) : (
                                     <DataTableCell key={`cell-${idx}`}></DataTableCell>

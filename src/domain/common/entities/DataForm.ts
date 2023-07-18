@@ -45,6 +45,7 @@ export interface SectionBase {
     sortRowsBy: string;
     subNationals: SubNational[];
     titleVariant: titleVariant;
+    disableComments: boolean;
 }
 
 export interface SectionSimple extends SectionBase {

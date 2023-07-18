@@ -23,6 +23,7 @@ interface BaseSectionConfig {
     sortRowsBy: string;
     subNationalDataset: string;
     titleVariant: titleVariant;
+    disableComments: boolean;
 }
 
 interface BasicSectionConfig extends BaseSectionConfig {
@@ -82,10 +83,12 @@ const DataStoreConfigCodec = Codec.interface({
     }),
 
     dataSets: sectionConfig({
+        disableComments: optional(boolean),
         viewType: optional(viewType),
         texts: optional(textsCodec),
         sections: optional(
             sectionConfig({
+                disableComments: optional(boolean),
                 subNationalDataset: optional(string),
                 sortRowsBy: optional(string),
                 viewType: optional(viewType),
@@ -337,6 +340,10 @@ export class Dhis2DataStoreDataForm {
         });
     }
 
+    private getCommentsVisibility(dataSetValue: Maybe<boolean>, sectionValue: Maybe<boolean>) {
+        return sectionValue ?? dataSetValue ?? false;
+    }
+
     getDataSetConfig(dataSet: DataSet, period: Period): DataSetConfig {
         const dataSetConfig = this.config.custom.dataSets?.[dataSet.code];
         const dataSetDefaultViewType = dataSetConfig?.viewType || defaultViewType;
@@ -344,7 +351,6 @@ export class Dhis2DataStoreDataForm {
 
         const getText = (value: string | { code: string } | undefined) =>
             typeof value === "string" ? value : value ? constantsByCode[value.code]?.displayDescription : "";
-
         const sections = _(dataSetConfig?.sections)
             .toPairs()
             .map(([code, sectionConfig]) => {
@@ -362,6 +368,10 @@ export class Dhis2DataStoreDataForm {
                     subNationalDataset: sectionConfig.subNationalDataset || "",
                     tabs: sectionConfig.tabs || { active: false },
                     titleVariant: sectionConfig.titleVariant,
+                    disableComments: this.getCommentsVisibility(
+                        dataSetConfig?.disableComments,
+                        sectionConfig.disableComments
+                    ),
                 };
 
                 const config: SectionConfig =

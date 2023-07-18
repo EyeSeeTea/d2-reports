@@ -25,7 +25,7 @@ interface Column {
 
 interface Row {
     name: string;
-    items: Array<{ column: Column; dataElement: DataElement | undefined }>;
+    items: Array<{ column: Column; dataElement: DataElement | undefined; disableComments: boolean }>;
 }
 
 const separator = " - ";
@@ -57,7 +57,7 @@ export class GridViewModel {
         const rows = subsections.map(subsection => {
             const items = columns.map(column => {
                 const dataElement = subsection.dataElements.find(de => de.name === column.name);
-                return { column, dataElement };
+                return { column, dataElement, disableComments: section.disableComments };
             });
 
             return { name: subsection.name, items: items };

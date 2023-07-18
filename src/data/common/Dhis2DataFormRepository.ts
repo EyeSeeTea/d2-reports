@@ -75,6 +75,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 texts: config?.texts || defaultTexts,
                 tabs: config?.tabs || { active: false },
                 sortRowsBy: config?.sortRowsBy || "",
+                disableComments: config?.disableComments ?? false,
                 dataElements: _(section.dataElements)
                     .map(dataElementRef => {
                         const dataElement = dataElements[dataElementRef.id];
