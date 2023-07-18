@@ -1,11 +1,12 @@
-import React, { useMemo, useState } from "react";
-import { OrgUnitsFilterButton } from "../../../components/org-units-filter/OrgUnitsFilterButton";
+import { useMemo, useState } from "react";
 import { useAppContext } from "../../../contexts/app-context";
 import { Id } from "../../../../domain/common/entities/Base";
-import { getRootIds } from "../../../../domain/common/entities/OrgUnit";
+import React from "react";
+import { OrgUnitsFilterButton } from "../../../components/org-units-filter/OrgUnitsFilterButton";
 import styled from "styled-components";
 import { Dropdown, DropdownProps } from "@eyeseetea/d2-ui-components";
 import i18n from "../../../../locales";
+import { getRootIds } from "../../../../domain/common/entities/OrgUnit";
 
 export interface FiltersProps {
     values: Filter;
@@ -14,7 +15,7 @@ export interface FiltersProps {
 }
 
 export interface Filter {
-    auditType: string;
+    summaryType: string;
     orgUnitPaths: Id[];
     periodType: string;
     year: string;
@@ -25,54 +26,10 @@ interface FilterOptions {
     periods: string[];
 }
 
-export const auditTypeItems = [
+export const summaryTypeItems = [
     {
-        value: "mortality",
-        text: i18n.t("Mortality with low injury severity score"),
-        auditDefinition:
-            "(EU Disposition = Death) OR (Hospital Disposition = Death) AND (KTS=14-16) OR (MGAP=23-29) OR (GAP=19-24) OR (RTS=11-12)",
-    },
-    {
-        value: "hypoxia",
-        text: i18n.t("Oxygen not administered for patients with hypoxia"),
-        auditDefinition: "Initial Oxygen Sat < 92 AND EU Procedures != Supplemental Oxygen Administration",
-    },
-    {
-        value: "tachypnea",
-        text: i18n.t("Oxygen not administered for patients with tachypnea"),
-        auditDefinition: "Initial Spontaneous RR <12 OR >30 AND EU Procedures != Supplemental Oxygen Administration",
-    },
-    {
-        value: "mental",
-        text: i18n.t("Mental status-dependent airway maneuver"),
-        auditDefinition:
-            "GCS total < 8 OR AVPU=(P OR U) AND EU Procedures ≠ Endotracheal intubation, Surgical airway, OR Assisted Ventilation",
-    },
-    {
-        value: "all-mortality",
-        text: i18n.t("All mortality"),
-        auditDefinition: "EU Disposition = Mortuary or Died OR Hospital Disposition = Morgue or Died",
-    },
-    { value: "emergency-unit", text: i18n.t("Emergency Unit"), auditDefinition: "EU Disposition = Mortuary or Died" },
-    {
-        value: "hospital-mortality",
-        text: i18n.t("Hospital Mortality"),
-        auditDefinition: "Hospital Disposition = Morgue or Died",
-    },
-    {
-        value: "severe-injuries",
-        text: i18n.t("Severe injuries by any scoring system"),
-        auditDefinition: "(KTS<11) OR (MGAP=3-17) OR (GAP=3-10) OR (RTS≤3)",
-    },
-    {
-        value: "moderate-severe-injuries",
-        text: i18n.t("Moderate or severe injuries by any scoring system"),
-        auditDefinition: "(KTS≤13) OR (MGAP≤22) OR (GAP≤18) OR (RTS≤10)",
-    },
-    {
-        value: "moderate-injuries",
-        text: i18n.t("Moderate injuries by any scoring system"),
-        auditDefinition: "(KTS=11-13) OR (MGAP=18-22) OR (GAP=11-18) OR (RTS=4-10)",
+        value: "patient-characteristics",
+        text: i18n.t("Patient Characteristics"),
     },
 ];
 
@@ -102,9 +59,9 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
         ];
     }, []);
 
-    const setAuditType = React.useCallback<SingleDropdownHandler>(
-        auditType => {
-            onChange(filter => ({ ...filter, auditType: auditType ?? "" }));
+    const setSummaryType = React.useCallback<SingleDropdownHandler>(
+        summaryType => {
+            onChange(filter => ({ ...filter, summaryType: summaryType ?? "" }));
         },
         [onChange]
     );
@@ -112,6 +69,13 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
     const setQuarterPeriod = React.useCallback<SingleDropdownHandler>(
         quarterPeriod => {
             onChange(filter => ({ ...filter, quarter: quarterPeriod ?? "" }));
+        },
+        [onChange]
+    );
+
+    const setYear = React.useCallback<SingleDropdownHandler>(
+        year => {
+            onChange(filter => ({ ...filter, year: year ?? "" }));
         },
         [onChange]
     );
@@ -126,20 +90,13 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
         [onChange, setQuarterPeriod]
     );
 
-    const setYear = React.useCallback<SingleDropdownHandler>(
-        year => {
-            onChange(filter => ({ ...filter, year: year ?? "" }));
-        },
-        [onChange]
-    );
-
     return (
         <Container>
-            <AuditTypeDropdown
-                items={auditTypeItems}
-                value={filter.auditType}
-                onChange={setAuditType}
-                label={i18n.t("Audit Type")}
+            <SummaryTypeDropdown
+                items={summaryTypeItems}
+                value={filter.summaryType}
+                onChange={setSummaryType}
+                label={i18n.t("Summary Type")}
                 hideEmpty
             />
 
@@ -194,9 +151,9 @@ const Container = styled.div`
     flex-wrap: wrap;
 `;
 
-const AuditTypeDropdown = styled(Dropdown)`
+const SummaryTypeDropdown = styled(Dropdown)`
     margin-left: -10px;
-    width: 420px;
+    width: 200px;
 `;
 
 const SingleDropdownStyled = styled(Dropdown)`
