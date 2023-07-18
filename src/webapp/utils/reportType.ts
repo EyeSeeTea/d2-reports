@@ -8,7 +8,11 @@ export function getReportType(): ReportType {
             return "mal";
         case report === "glass-submission":
             return "glass";
-        case report === "csy-audit-emergency":
+        case "csy-summary":
+            return "summary";
+        case "csy-summary-mortality":
+            return "summary-mortality";
+        case "csy-audit-emergency":
             return "auditEmergency";
         case report === "csy-audit-trauma":
             return "auditTrauma";

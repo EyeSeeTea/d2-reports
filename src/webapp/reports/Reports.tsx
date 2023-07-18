@@ -7,6 +7,8 @@ import { NHWACommentsReport } from "./nhwa-comments/NHWACommentsReport";
 import { WMRNationalPolicies } from "./wmr-national-policies/WMRNationalPolicies";
 import CSYAuditEmergencyReport from "./csy-audit-emergency/CSYAuditEmergencyReport";
 import GLASSDataSubmissionReport from "./glass-data-submission/GLASSDataSubmissionReport";
+import CSYSummaryReport from "./csy-summary-patient/CSYSummaryReport";
+import CSYSummaryReportMortality from "./csy-summary-mortality/CSYSummaryReport";
 import CSYAuditTraumaReport from "./csy-audit-trauma/CSYAuditTraumaReport";
 
 const widget = process.env.REACT_APP_REPORT_VARIANT || "";
@@ -36,6 +38,12 @@ const Component: React.FC = () => {
         }
         case "csy-audit-trauma": {
             return <CSYAuditTraumaReport />;
+        }
+        case "csy-summary": {
+            return <CSYSummaryReport />;
+        }
+        case "csy-summary-mortality": {
+            return <CSYSummaryReportMortality />;
         }
         case "glass-submission": {
             return <GLASSDataSubmissionReport />;
