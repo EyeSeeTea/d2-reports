@@ -41,13 +41,13 @@ const base = {
         approvalWorkflows: { namePrefix: "AMR" },
     },
     auditEmergency: {
-        dataSets: { namePrefix: "", nameExcluded: /-APVD$/ },
+        dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
         sqlViewNames: [],
         constantCode: "",
         approvalWorkflows: { namePrefix: "" },
     },
     auditTrauma: {
-        dataSets: { namePrefix: "", nameExcluded: /-APVD$/ },
+        dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
         sqlViewNames: [],
         constantCode: "",
         approvalWorkflows: { namePrefix: "" },
