@@ -52,7 +52,7 @@ const base = {
         constantCode: "",
         approvalWorkflows: { namePrefix: "" },
     },
-    summary: {
+    "summary-patient": {
         dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
         sqlViewNames: [],
         constantCode: "",
