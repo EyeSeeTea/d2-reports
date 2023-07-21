@@ -39,7 +39,7 @@ const Component: React.FC = () => {
         case "csy-audit-trauma": {
             return <CSYAuditTraumaReport />;
         }
-        case "csy-summary": {
+        case "csy-summary-patient": {
             return <CSYSummaryReport />;
         }
         case "csy-summary-mortality": {

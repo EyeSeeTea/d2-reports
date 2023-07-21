@@ -43,18 +43,18 @@ const base = {
         approvalWorkflows: { namePrefix: "AMR" },
     },
     auditEmergency: {
-        dataSets: { namePrefix: "", nameExcluded: /-APVD$/ },
+        dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
         sqlViewNames: [],
         constantCode: "",
         approvalWorkflows: { namePrefix: "" },
     },
     auditTrauma: {
-        dataSets: { namePrefix: "", nameExcluded: /-APVD$/ },
+        dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
         sqlViewNames: [],
         constantCode: "",
         approvalWorkflows: { namePrefix: "" },
     },
-    summary: {
+    "summary-patient": {
         dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
         sqlViewNames: [],
         constantCode: "",
@@ -74,17 +74,6 @@ export class Dhis2ConfigRepository implements ConfigRepository {
     async get(): Promise<Config> {
         const { dataSets, constants, sqlViews: existedSqlViews, dataApprovalWorkflows } = await this.getMetadata();
         const filteredDataSets = getFilteredDataSets(dataSets);
-
-        const expectedSqlViews = base[this.type].sqlViewNames;
-
-        const existedSqlViewNames = existedSqlViews.map(({ name }) => name);
-        const missingSQLViews = expectedSqlViews.filter(
-            expectedSqlView => !existedSqlViewNames.includes(expectedSqlView)
-        );
-
-        if (missingSQLViews.length > 0) {
-            throw new Error(`Missing SQL views: ${missingSQLViews.join("\n")}`);
-        }
 
         const sqlViews = existedSqlViews.reduce((acc, sqlView) => {
             return { ...acc, [sqlView.name]: sqlView };
