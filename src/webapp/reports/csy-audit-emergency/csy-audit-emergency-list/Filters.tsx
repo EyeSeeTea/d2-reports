@@ -47,6 +47,12 @@ export const auditTypeItems = [
         text: i18n.t("Initial RBG low and Glucose not given"),
         auditDefinition: "Initial RBG = Low AND Glucose not given at EU",
     },
+    {
+        value: "shock-ivf",
+        text: i18n.t("Shock and IVF including Blood"),
+        auditDefinition:
+            "(Age>=16 OR Age category = adult - age unknown) AND Initial SBP<90mmHg AND  (Section: Emergency Unit Interventions > Medications and Fluids) IV Fluids = not done",
+    },
 ];
 
 export const Filters: React.FC<FiltersProps> = React.memo(props => {

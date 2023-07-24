@@ -118,6 +118,12 @@ const auditQueryStrings = {
         "&dimension=yJfWxXN5Rel",
     ],
     "initial-rbg": ["&dimension=bN3ZHmLQX4r:IN:3", "&dimension=BhjTEQUYYO9"],
+    "shock-ivf": [
+        "&dimension=aZCay6g4LX6:GE:16",
+        "&dimension=PaU3O4hknYt:IN:3",
+        "&dimension=hWdpU2Wqfvy:LT:90",
+        "&dimension=neKXuzIRaFm",
+    ],
 };
 
 function getAuditItems(auditType: string, response: AnalyticsResponse[]) {
@@ -179,6 +185,24 @@ function getAuditItems(auditType: string, response: AnalyticsResponse[]) {
             const glucoseNotTickedIds = _.filter(glucoseInEUIds, (_, index) => glucoseEvents[index] !== "1");
 
             const matchedIds = _.intersection(initialRBGIds, glucoseNotTickedIds);
+
+            const auditItems: AuditItem[] = matchedIds.map(matchedId => ({
+                registerId: matchedId,
+            }));
+
+            return auditItems;
+        }
+        case "shock-ivf": {
+            const ageGreaterThan16Ids = getColumnValue(response[0], "QStbireWKjW");
+            const ageCategoryAdultUnknownIds = getColumnValue(response[1], "QStbireWKjW");
+            const initialSBPIds = getColumnValue(response[2], "QStbireWKjW");
+            const ivfInEUIds = getColumnValue(response[3], "QStbireWKjW");
+            const ivfEvents = getColumnValue(response[3], "neKXuzIRaFm");
+
+            const ageAdultIds = _.union(ageGreaterThan16Ids, ageCategoryAdultUnknownIds);
+            const ivfNotTickedIds = _.filter(ivfInEUIds, (_, index) => ivfEvents[index] !== "1");
+
+            const matchedIds = _.intersection(ageAdultIds, initialSBPIds, ivfNotTickedIds);
 
             const auditItems: AuditItem[] = matchedIds.map(matchedId => ({
                 registerId: matchedId,
