@@ -6,8 +6,10 @@ import {
     GLASSDataSubmissionModule,
     ApprovalIds,
     GLASSUserPermission,
+    EARDataSubmissionItem,
 } from "../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 import {
+    EARDataSubmissionOptions,
     GLASSDataSubmissionOptions,
     GLASSDataSubmissionRepository,
 } from "../../../domain/reports/glass-data-submission/repositories/GLASSDataSubmissionRepository";
@@ -192,6 +194,64 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         };
     }
 
+    async getEAR(
+        options: EARDataSubmissionOptions,
+        namespace: string
+    ): Promise<PaginatedObjects<EARDataSubmissionItem>> {
+        const { paging, sorting } = options;
+        // const modules =
+        //     (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
+        //         Namespaces.DATA_SUBMISSSIONS_MODULES
+        //     )) ?? [];
+        // const earModule = modules.find(module => module.name === "EAR")?.id;
+
+        const userOrgUnits = (await this.api.get<{ organisationUnits: Ref[] }>("/me").getData()).organisationUnits.map(
+            ou => ou.id
+        );
+        const { organisationUnits } = await this.api
+            .get<any>(
+                "/metadata?organisationUnits:fields=children[children[id,level],id,level],id,level&organisationUnits:filter=level:eq:1"
+            )
+            .getData();
+        const orgUnitsWithChildren = _(userOrgUnits)
+            .flatMap(ou => {
+                const res = flattenNodes(flattenNodes(organisationUnits).filter(res => res.id === ou)).map(
+                    node => node.id
+                );
+                return res;
+            })
+            .uniq()
+            .value();
+
+        const objects = (await this.globalStorageClient.getObject<EARDataSubmissionItem[]>(namespace)) ?? [];
+        const rows = objects.filter(object => orgUnitsWithChildren.includes(object.orgUnit.id));
+        // const filteredRows = rows.filter(row => {
+        //     return (_.isEmpty(orgUnitIds) || !row.orgUnit ? row : orgUnitIds.includes(row.orgUnit.id))
+        //         ? periods.includes(String(row.period))
+        //         : quarterPeriods.includes(String(row.period)) &&
+        //               (completionStatus !== undefined ? row.questionnaireCompleted === completionStatus : row) &&
+        //               (!submissionStatus ? row : row.status === submissionStatus);
+        // });
+
+        const rowsInPage = _(rows)
+            .orderBy([row => row[sorting.field]], [sorting.direction])
+            .drop((paging.page - 1) * paging.pageSize)
+            .take(paging.pageSize)
+            .value();
+
+        const pager: Pager = {
+            page: paging.page,
+            pageSize: paging.pageSize,
+            pageCount: Math.ceil(rows.length / paging.pageSize),
+            total: rows.length,
+        };
+
+        return {
+            pager,
+            objects: rowsInPage,
+        };
+    }
+
     async getUserGroupPermissions(): Promise<GLASSUserPermission> {
         const modules =
             (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
@@ -278,7 +338,17 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         return columns ?? [];
     }
 
+    async getEARColumns(namespace: string): Promise<string[]> {
+        const columns = await this.storageClient.getObject<string[]>(namespace);
+
+        return columns ?? [];
+    }
+
     async saveColumns(namespace: string, columns: string[]): Promise<void> {
+        return this.storageClient.saveObject<string[]>(namespace, columns);
+    }
+
+    async saveEARColumns(namespace: string, columns: string[]): Promise<void> {
         return this.storageClient.saveObject<string[]>(namespace, columns);
     }
 

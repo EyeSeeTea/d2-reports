@@ -16,6 +16,22 @@ export interface GLASSDataSubmissionItem {
         from: Status;
         to: Status;
     }[];
+    creationDate: string;
+}
+
+export interface EARDataSubmissionItem {
+    creationDate: string;
+    id: Id;
+    module: Module;
+    orgUnitId: string;
+    orgUnitName: string;
+    orgUnit: NamedRef;
+    status: Status;
+    statusHistory: {
+        changedAt: string;
+        from: Status;
+        to: Status;
+    }[];
 }
 
 export interface GLASSDataSubmissionItemIdentifier {

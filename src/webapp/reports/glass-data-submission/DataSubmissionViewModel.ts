@@ -1,5 +1,6 @@
 import { Config } from "../../../domain/common/entities/Config";
 import {
+    EARDataSubmissionItem,
     GLASSDataSubmissionItem,
     getDataSubmissionItemId,
 } from "../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
@@ -10,12 +11,22 @@ export interface DataSubmissionViewModel {
     orgUnitName: string;
     period: string;
     status: Status;
+    module: Module;
     questionnaireCompleted: boolean;
     dataSetsUploaded: string;
     submissionStatus: string;
 }
 
-export type Module = "AMR" | "EGASP" | "AMRIndividual";
+export interface EARDataSubmissionViewModel {
+    creationDate: string;
+    id: string;
+    module: Module;
+    orgUnitId: string;
+    orgUnitName: string;
+    status: Status;
+}
+
+export type Module = "AMR" | "EGASP" | "AMRIndividual" | "EAR";
 
 export type Status =
     | "NOT_COMPLETED"
@@ -35,9 +46,26 @@ export function getDataSubmissionViews(_config: Config, items: GLASSDataSubmissi
             orgUnitName: item.orgUnitName,
             period: item.period,
             status: item.status,
+            module: item.module,
             questionnaireCompleted: item.questionnaireCompleted,
             dataSetsUploaded: item.dataSetsUploaded,
             submissionStatus: item.submissionStatus,
+        };
+    });
+}
+
+export function getEARDataSubmissionViews(
+    _config: Config,
+    items: EARDataSubmissionItem[]
+): EARDataSubmissionViewModel[] {
+    return items.map(item => {
+        return {
+            id: item.id,
+            orgUnitId: item.orgUnit.id,
+            orgUnitName: item.orgUnit.name,
+            creationDate: item.creationDate,
+            status: item.status,
+            module: item.module,
         };
     });
 }

@@ -41,6 +41,9 @@ import { UpdateGLASSSubmissionUseCase } from "./domain/reports/glass-data-submis
 import { DHIS2MessageCountUseCase } from "./domain/reports/glass-data-submission/usecases/DHIS2MessageCountUseCase";
 import { GetGLASSUserPermissionsUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSUserPermissionsUseCase";
 import { CSYAuditTraumaDefaultRepository } from "./data/reports/csy-audit-trauma/CSYAuditTraumaDefaultRepository";
+import { GetEARDataSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/GetEARDataSubmissionUseCase";
+import { GetEARDataSubmissionColumnsUseCase } from "./domain/reports/glass-data-submission/usecases/GetEARDataSubmissionColumnsUseCase";
+import { SaveEARDataSubmissionColumnsUseCase } from "./domain/reports/glass-data-submission/usecases/SaveEARDataSubmissionColumnsUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -92,9 +95,12 @@ export function getCompositionRoot(api: D2Api) {
         }),
         glassDataSubmission: getExecute({
             get: new GetGLASSDataSubmissionUseCase(glassDataRepository),
+            getEAR: new GetEARDataSubmissionUseCase(glassDataRepository),
             getUserGroupPermissions: new GetGLASSUserPermissionsUseCase(glassDataRepository),
             getColumns: new GetGLASSDataSubmissionColumnsUseCase(glassDataRepository),
+            getEARColumns: new GetEARDataSubmissionColumnsUseCase(glassDataRepository),
             saveColumns: new SaveGLASSDataSubmissionColumnsUseCase(glassDataRepository),
+            saveEARColumns: new SaveEARDataSubmissionColumnsUseCase(glassDataRepository),
             dhis2MessageCount: new DHIS2MessageCountUseCase(glassDataRepository),
             updateStatus: new UpdateGLASSSubmissionUseCase(glassDataRepository),
         }),

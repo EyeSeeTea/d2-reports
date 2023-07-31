@@ -3,6 +3,7 @@ import { Id } from "../../../common/entities/Base";
 import { Config } from "../../../common/entities/Config";
 import { PaginatedObjects, Paging, Sorting } from "../../../common/entities/PaginatedObjects";
 import {
+    EARDataSubmissionItem,
     GLASSDataSubmissionItem,
     GLASSDataSubmissionItemIdentifier,
     GLASSUserPermission,
@@ -10,9 +11,12 @@ import {
 
 export interface GLASSDataSubmissionRepository {
     get(options: GLASSDataSubmissionOptions, namespace: string): Promise<PaginatedObjects<GLASSDataSubmissionItem>>;
+    getEAR(options: EARDataSubmissionOptions, namespace: string): Promise<PaginatedObjects<EARDataSubmissionItem>>;
     getUserGroupPermissions(): Promise<GLASSUserPermission>;
     getColumns(namespace: string): Promise<string[]>;
+    getEARColumns(namespace: string): Promise<string[]>;
     saveColumns(namespace: string, columns: string[]): Promise<void>;
+    saveEARColumns(namespace: string, columns: string[]): Promise<void>;
     dhis2MessageCount(): Promise<number>;
     approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]): Promise<void>;
     reject(
@@ -36,4 +40,12 @@ export interface GLASSDataSubmissionOptions {
     orgUnitIds: Id[];
     completionStatus?: boolean;
     submissionStatus?: Status;
+}
+
+export interface EARDataSubmissionOptions {
+    config: Config;
+    paging: Paging;
+    sorting: Sorting<EARDataSubmissionItem>;
+    module: Module;
+    orgUnitIds: Id[];
 }

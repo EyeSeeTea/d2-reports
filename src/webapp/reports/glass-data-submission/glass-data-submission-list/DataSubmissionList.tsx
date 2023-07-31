@@ -1,5 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { DataSubmissionViewModel, getDataSubmissionViews } from "../DataSubmissionViewModel";
+import {
+    DataSubmissionViewModel,
+    EARDataSubmissionViewModel,
+    getDataSubmissionViews,
+    getEARDataSubmissionViews,
+} from "../DataSubmissionViewModel";
 import {
     ConfirmationDialog,
     ObjectsList,
@@ -18,6 +23,7 @@ import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
 import { useReload } from "../../../utils/use-reload";
 import {
+    EARDataSubmissionItem,
     GLASSDataSubmissionItem,
     GLASSDataSubmissionItemIdentifier,
     GLASSUserPermission,
@@ -69,10 +75,17 @@ export const DataSubmissionList: React.FC = React.memo(() => {
         compositionRoot.glassDataSubmission.getUserGroupPermissions().then(permissions => {
             setUserGroupPermissions(permissions);
         });
-        compositionRoot.glassDataSubmission.getColumns(Namespaces.DATA_SUBMISSSIONS_USER_COLUMNS).then(columns => {
-            setVisibleColumns(columns);
-        });
-    }, [compositionRoot]);
+
+        if (filters.module === "EAR") {
+            compositionRoot.glassDataSubmission.getEARColumns(Namespaces.SIGNALS_USER_COLUMNS).then(columns => {
+                setVisibleColumns(columns);
+            });
+        } else {
+            compositionRoot.glassDataSubmission.getColumns(Namespaces.DATA_SUBMISSSIONS_USER_COLUMNS).then(columns => {
+                setVisibleColumns(columns);
+            });
+        }
+    }, [compositionRoot, filters.module]);
 
     const baseConfig: TableConfig<DataSubmissionViewModel> = useMemo(
         () => ({
@@ -226,6 +239,90 @@ export const DataSubmissionList: React.FC = React.memo(() => {
         [api, compositionRoot.glassDataSubmission, isEGASPUser, openDialog, reload, snackbar]
     );
 
+    const earBaseConfig: TableConfig<EARDataSubmissionViewModel> = useMemo(
+        () => ({
+            columns: [
+                { name: "orgUnitName", text: i18n.t("Country"), sortable: true },
+                { name: "creationDate", text: i18n.t("Creation Date"), sortable: true },
+                { name: "status", text: i18n.t("Status"), sortable: true },
+            ],
+            actions: [
+                {
+                    name: "signalDashboard",
+                    text: i18n.t("Go to Signal"),
+                    icon: <Dashboard />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseDataSubmissionItemId(item)));
+                        if (items.length === 0) return;
+
+                        const unapvdDashboardId = await compositionRoot.glassDataSubmission.updateStatus(
+                            Namespaces.DATA_SUBMISSSIONS,
+                            "unapvdDashboard",
+                            items
+                        );
+
+                        goToDhis2Url(api.baseUrl, `/dhis-web-dashboard/index.html#/${unapvdDashboardId}`);
+                    },
+                },
+                {
+                    name: "approve",
+                    text: i18n.t("Approve"),
+                    icon: <ThumbUp />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseDataSubmissionItemId(item)));
+                        if (items.length === 0) return;
+
+                        try {
+                            await compositionRoot.glassDataSubmission.updateStatus(
+                                Namespaces.DATA_SUBMISSSIONS,
+                                "approve",
+                                items
+                            );
+                        } catch {
+                            snackbar.error(i18n.t("Error when trying to approve submission"));
+                        }
+
+                        reload();
+                    },
+                    isActive: (rows: EARDataSubmissionViewModel[]) => {
+                        return _.every(rows, row => row.status === "PENDING_APPROVAL");
+                    },
+                },
+                {
+                    name: "reject",
+                    text: i18n.t("Reject"),
+                    icon: <ThumbDown />,
+                    multiple: true,
+                    onClick: (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseDataSubmissionItemId(item)));
+                        if (items.length === 0) return;
+
+                        setRejectedItems(items);
+                        openDialog();
+                    },
+                    isActive: (rows: EARDataSubmissionViewModel[]) => {
+                        return _.every(rows, row => {
+                            setDatasetUpdate(row.status === "PENDING_UPDATE_APPROVAL");
+
+                            return row.status === "PENDING_APPROVAL" || row.status === "PENDING_UPDATE_APPROVAL";
+                        });
+                    },
+                },
+            ],
+            initialSorting: {
+                field: "orgUnitId" as const,
+                order: "asc" as const,
+            },
+            paginationOptions: {
+                pageSizeOptions: [10, 20, 50],
+                pageSizeInitialValue: 10,
+            },
+        }),
+        [api, compositionRoot.glassDataSubmission, openDialog, reload, snackbar]
+    );
+
     const getRows = useMemo(
         () => async (_search: string, paging: TablePagination, sorting: TableSorting<DataSubmissionViewModel>) => {
             const { pager, objects } = await compositionRoot.glassDataSubmission.get(
@@ -241,6 +338,25 @@ export const DataSubmissionList: React.FC = React.memo(() => {
             console.debug("Reloading", reloadKey);
 
             return { pager, objects: getDataSubmissionViews(config, objects) };
+        },
+        [compositionRoot, config, filters, reloadKey, selectablePeriods]
+    );
+
+    const getEARRows = useMemo(
+        () => async (_search: string, paging: TablePagination, sorting: TableSorting<EARDataSubmissionViewModel>) => {
+            const { pager, objects } = await compositionRoot.glassDataSubmission.getEAR(
+                {
+                    config,
+                    paging: { page: paging.page, pageSize: paging.pageSize },
+                    sorting: getEARSortingFromTableSorting(sorting),
+                    ...getUseCaseOptions(filters, selectablePeriods),
+                },
+                Namespaces.SIGNALS
+            );
+
+            console.debug("Reloading", reloadKey);
+
+            return { pager, objects: getEARDataSubmissionViews(config, objects) };
         },
         [compositionRoot, config, filters, reloadKey, selectablePeriods]
     );
@@ -266,7 +382,17 @@ export const DataSubmissionList: React.FC = React.memo(() => {
         [compositionRoot, visibleColumns]
     );
 
+    const saveReorderedEARColumns = useCallback(
+        async (columnKeys: Array<keyof EARDataSubmissionViewModel>) => {
+            if (!visibleColumns) return;
+
+            await compositionRoot.glassDataSubmission.saveEARColumns(Namespaces.SIGNALS_USER_COLUMNS, columnKeys);
+        },
+        [compositionRoot, visibleColumns]
+    );
+
     const tableProps = useObjectsTable<DataSubmissionViewModel>(baseConfig, getRows);
+    const earTableProps = useObjectsTable<EARDataSubmissionViewModel>(earBaseConfig, getEARRows);
 
     function getFilterOptions(selectablePeriods: string[]) {
         return {
@@ -289,66 +415,138 @@ export const DataSubmissionList: React.FC = React.memo(() => {
             .value();
     }, [tableProps.columns, visibleColumns]);
 
+    const earColumnsToShow = useMemo<TableColumn<EARDataSubmissionViewModel>[]>(() => {
+        if (!visibleColumns || _.isEmpty(visibleColumns)) return earTableProps.columns;
+
+        const indexes = _(visibleColumns)
+            .map((columnName, idx) => [columnName, idx] as [string, number])
+            .fromPairs()
+            .value();
+
+        return _(earTableProps.columns)
+            .map(column => ({ ...column, hidden: !visibleColumns.includes(column.name) }))
+            .sortBy(column => indexes[column.name] || 0)
+            .value();
+    }, [earTableProps.columns, visibleColumns]);
+
     const closeRejectionDialog = () => {
         closeDialog();
         setRejectionReason("");
     };
 
-    return (
-        <ObjectsList<DataSubmissionViewModel>
-            {...tableProps}
-            columns={columnsToShow}
-            onChangeSearch={undefined}
-            onReorderColumns={saveReorderedColumns}
-        >
-            <Filters
-                values={filters}
-                options={filterOptions}
-                onChange={setFilters}
-                userPermissions={{ isAMRUser, isEGASPUser, isAMRIndividualUser }}
-            />
-            <ConfirmationDialog
-                isOpen={isDialogOpen}
-                title={i18n.t("Reject Data Submission")}
-                onCancel={closeRejectionDialog}
-                cancelText={i18n.t("Cancel")}
-                onSave={async () => {
-                    setRejectedState("loading");
-                    try {
-                        await compositionRoot.glassDataSubmission.updateStatus(
-                            Namespaces.DATA_SUBMISSSIONS,
-                            "reject",
-                            rejectedItems,
-                            rejectionReason,
-                            isDatasetUpdate
-                        );
-
-                        setRejectedState("idle");
-                        closeRejectionDialog();
-                        snackbar.success(i18n.t("Data submissions have been successfully rejected"));
-
-                        reload();
-                    } catch {
-                        snackbar.error(i18n.t("Error when trying to reject submission"));
-                    }
-                }}
-                saveText={rejectedState === "idle" ? "Reject" : "Rejecting"}
-                maxWidth="md"
-                disableSave={!rejectionReason || rejectedState === "loading"}
-                fullWidth
+    if (filters.module === "EAR") {
+        return (
+            <ObjectsList<EARDataSubmissionViewModel>
+                {...earTableProps}
+                columns={earColumnsToShow}
+                onChangeSearch={undefined}
+                onReorderColumns={saveReorderedEARColumns}
             >
-                <p>{i18n.t("Please provide a reason for rejecting this data submission:")}</p>
-                <TextArea
-                    type="text"
-                    rows={4}
-                    onChange={({ value }: { value: string }) => {
-                        setRejectionReason(value);
-                    }}
-                    value={rejectionReason}
+                <Filters
+                    values={filters}
+                    options={filterOptions}
+                    onChange={setFilters}
+                    userPermissions={{ isAMRUser, isEGASPUser, isAMRIndividualUser }}
                 />
-            </ConfirmationDialog>
-        </ObjectsList>
-    );
+                <ConfirmationDialog
+                    isOpen={isDialogOpen}
+                    title={i18n.t("Reject Data Submission")}
+                    onCancel={closeRejectionDialog}
+                    cancelText={i18n.t("Cancel")}
+                    onSave={async () => {
+                        setRejectedState("loading");
+                        try {
+                            await compositionRoot.glassDataSubmission.updateStatus(
+                                Namespaces.DATA_SUBMISSSIONS,
+                                "reject",
+                                rejectedItems,
+                                rejectionReason,
+                                isDatasetUpdate
+                            );
+
+                            setRejectedState("idle");
+                            closeRejectionDialog();
+                            snackbar.success(i18n.t("Data submissions have been successfully rejected"));
+
+                            reload();
+                        } catch {
+                            snackbar.error(i18n.t("Error when trying to reject submission"));
+                        }
+                    }}
+                    saveText={rejectedState === "idle" ? "Reject" : "Rejecting"}
+                    maxWidth="md"
+                    disableSave={!rejectionReason || rejectedState === "loading"}
+                    fullWidth
+                >
+                    <p>{i18n.t("Please provide a reason for rejecting this data submission:")}</p>
+                    <TextArea
+                        type="text"
+                        rows={4}
+                        onChange={({ value }: { value: string }) => {
+                            setRejectionReason(value);
+                        }}
+                        value={rejectionReason}
+                    />
+                </ConfirmationDialog>
+            </ObjectsList>
+        );
+    } else {
+        return (
+            <ObjectsList<DataSubmissionViewModel>
+                {...tableProps}
+                columns={columnsToShow}
+                onChangeSearch={undefined}
+                onReorderColumns={saveReorderedColumns}
+            >
+                <Filters
+                    values={filters}
+                    options={filterOptions}
+                    onChange={setFilters}
+                    userPermissions={{ isAMRUser, isEGASPUser, isAMRIndividualUser }}
+                />
+                <ConfirmationDialog
+                    isOpen={isDialogOpen}
+                    title={i18n.t("Reject Data Submission")}
+                    onCancel={closeRejectionDialog}
+                    cancelText={i18n.t("Cancel")}
+                    onSave={async () => {
+                        setRejectedState("loading");
+                        try {
+                            await compositionRoot.glassDataSubmission.updateStatus(
+                                Namespaces.DATA_SUBMISSSIONS,
+                                "reject",
+                                rejectedItems,
+                                rejectionReason,
+                                isDatasetUpdate
+                            );
+
+                            setRejectedState("idle");
+                            closeRejectionDialog();
+                            snackbar.success(i18n.t("Data submissions have been successfully rejected"));
+
+                            reload();
+                        } catch {
+                            snackbar.error(i18n.t("Error when trying to reject submission"));
+                        }
+                    }}
+                    saveText={rejectedState === "idle" ? "Reject" : "Rejecting"}
+                    maxWidth="md"
+                    disableSave={!rejectionReason || rejectedState === "loading"}
+                    fullWidth
+                >
+                    <p>{i18n.t("Please provide a reason for rejecting this data submission:")}</p>
+                    <TextArea
+                        type="text"
+                        rows={4}
+                        onChange={({ value }: { value: string }) => {
+                            setRejectionReason(value);
+                        }}
+                        value={rejectionReason}
+                    />
+                </ConfirmationDialog>
+            </ObjectsList>
+        );
+    }
 });
 
 export function getSortingFromTableSorting(
@@ -356,6 +554,15 @@ export function getSortingFromTableSorting(
 ): Sorting<GLASSDataSubmissionItem> {
     return {
         field: sorting.field === "id" ? "period" : sorting.field,
+        direction: sorting.order,
+    };
+}
+
+export function getEARSortingFromTableSorting(
+    sorting: TableSorting<EARDataSubmissionViewModel>
+): Sorting<EARDataSubmissionItem> {
+    return {
+        field: sorting.field === "id" ? "creationDate" : sorting.field,
         direction: sorting.order,
     };
 }

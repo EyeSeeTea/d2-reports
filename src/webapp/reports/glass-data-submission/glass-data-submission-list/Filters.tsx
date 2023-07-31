@@ -78,6 +78,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         const modules = [
             { value: "AMR", text: i18n.t("AMR") },
             { value: "AMRIndividual", text: i18n.t("AMR - Individual") },
+            { value: "EAR", text: i18n.t("EAR") },
             { value: "EGASP", text: i18n.t("EGASP") },
         ];
 
@@ -218,7 +219,14 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 selectableLevels={[1, 2, 3]}
             />
 
-            <DropdownStyled items={periodItems} values={filter.periods} onChange={setPeriods} label={i18n.t("Years")} />
+            {filter.module !== "EAR" && (
+                <DropdownStyled
+                    items={periodItems}
+                    values={filter.periods}
+                    onChange={setPeriods}
+                    label={i18n.t("Years")}
+                />
+            )}
 
             {filter.module === "EGASP" && (
                 <DropdownStyled
@@ -229,12 +237,14 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 />
             )}
 
-            <SingleDropdownStyled
-                items={completionStatusItems}
-                value={fromBool(filter.completionStatus)}
-                onChange={setCompletionStatus}
-                label={i18n.t("Questionnaire completed")}
-            />
+            {filter.module !== "EAR" && (
+                <SingleDropdownStyled
+                    items={completionStatusItems}
+                    value={fromBool(filter.completionStatus)}
+                    onChange={setCompletionStatus}
+                    label={i18n.t("Questionnaire completed")}
+                />
+            )}
 
             <SingleDropdownStyled
                 items={submissionStatusItems}
