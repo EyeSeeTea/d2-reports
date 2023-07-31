@@ -24,10 +24,12 @@ import { useAppContext } from "../../../contexts/app-context";
 import { useReload } from "../../../utils/use-reload";
 import {
     EARDataSubmissionItem,
+    EARSubmissionItemIdentifier,
     GLASSDataSubmissionItem,
     GLASSDataSubmissionItemIdentifier,
     GLASSUserPermission,
     parseDataSubmissionItemId,
+    parseEARSubmissionItemId,
 } from "../../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
@@ -51,6 +53,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [rejectionReason, setRejectionReason] = useState<string>("");
     const [rejectedItems, setRejectedItems] = useState<GLASSDataSubmissionItemIdentifier[]>([]);
+    const [rejectedSignals, setRejectedSignals] = useState<EARSubmissionItemIdentifier[]>([]);
     const [rejectedState, setRejectedState] = useState<"loading" | "idle">("idle");
     const [isDatasetUpdate, setDatasetUpdate] = useState<boolean>(false);
     const [isDialogOpen, { enable: openDialog, disable: closeDialog }] = useBooleanState(false);
@@ -251,18 +254,23 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     name: "signalDashboard",
                     text: i18n.t("Go to Signal"),
                     icon: <Dashboard />,
-                    multiple: true,
+                    multiple: false,
                     onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataSubmissionItemId(item)));
+                        const items = _.compact(selectedIds.map(item => parseEARSubmissionItemId(item)));
                         if (items.length === 0) return;
 
-                        const unapvdDashboardId = await compositionRoot.glassDataSubmission.updateStatus(
-                            Namespaces.DATA_SUBMISSSIONS,
-                            "unapvdDashboard",
-                            items
-                        );
+                        const signals = items.map(item => {
+                            return {
+                                orgUnit: item.orgUnit,
+                                module: item.module,
+                                id: item.id,
+                            };
+                        });
 
-                        goToDhis2Url(api.baseUrl, `/dhis-web-dashboard/index.html#/${unapvdDashboardId}`);
+                        goToDhis2Url(
+                            api.baseUrl,
+                            `api/apps/glass/index.html#/signal?orgUnit=${signals[0]?.orgUnit}&period=${signals[0]?.module}&eventId=${signals[0]?.id}`
+                        );
                     },
                 },
                 {
@@ -271,13 +279,16 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     icon: <ThumbUp />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataSubmissionItemId(item)));
+                        const items = _.compact(selectedIds.map(item => parseEARSubmissionItemId(item)));
                         if (items.length === 0) return;
 
                         try {
                             await compositionRoot.glassDataSubmission.updateStatus(
-                                Namespaces.DATA_SUBMISSSIONS,
+                                Namespaces.SIGNALS,
                                 "approve",
+                                [],
+                                undefined,
+                                undefined,
                                 items
                             );
                         } catch {
@@ -286,29 +297,25 @@ export const DataSubmissionList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: (rows: EARDataSubmissionViewModel[]) => {
-                        return _.every(rows, row => row.status === "PENDING_APPROVAL");
-                    },
+                    // isActive: (rows: EARDataSubmissionViewModel[]) => {
+                    //     return _.every(rows, row => row.status === "PENDING_APPROVAL");
+                    // },
                 },
                 {
                     name: "reject",
                     text: i18n.t("Reject"),
                     icon: <ThumbDown />,
                     multiple: true,
-                    onClick: (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataSubmissionItemId(item)));
+                    onClick: async (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseEARSubmissionItemId(item)));
                         if (items.length === 0) return;
 
-                        setRejectedItems(items);
+                        setRejectedSignals(items);
                         openDialog();
                     },
-                    isActive: (rows: EARDataSubmissionViewModel[]) => {
-                        return _.every(rows, row => {
-                            setDatasetUpdate(row.status === "PENDING_UPDATE_APPROVAL");
-
-                            return row.status === "PENDING_APPROVAL" || row.status === "PENDING_UPDATE_APPROVAL";
-                        });
-                    },
+                    // isActive: (rows: EARDataSubmissionViewModel[]) => {
+                    //     return _.every(rows, row => row.status === "PENDING_APPROVAL" || row.status === "PENDING_UPDATE_APPROVAL");
+                    // },
                 },
             ],
             initialSorting: {
@@ -320,7 +327,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [api, compositionRoot.glassDataSubmission, openDialog, reload, snackbar]
+        [api.baseUrl, compositionRoot.glassDataSubmission, openDialog, reload, snackbar]
     );
 
     const getRows = useMemo(
@@ -456,13 +463,24 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     onSave={async () => {
                         setRejectedState("loading");
                         try {
-                            await compositionRoot.glassDataSubmission.updateStatus(
-                                Namespaces.DATA_SUBMISSSIONS,
-                                "reject",
-                                rejectedItems,
-                                rejectionReason,
-                                isDatasetUpdate
-                            );
+                            if (filters.module !== "EAR") {
+                                await compositionRoot.glassDataSubmission.updateStatus(
+                                    Namespaces.DATA_SUBMISSSIONS,
+                                    "reject",
+                                    rejectedItems,
+                                    rejectionReason,
+                                    isDatasetUpdate
+                                );
+                            } else {
+                                await compositionRoot.glassDataSubmission.updateStatus(
+                                    Namespaces.SIGNALS,
+                                    "reject",
+                                    [],
+                                    rejectionReason,
+                                    false,
+                                    rejectedSignals
+                                );
+                            }
 
                             setRejectedState("idle");
                             closeRejectionDialog();
@@ -578,13 +596,7 @@ function getEmptyDataValuesFilter(
     const egaspPermissions = isEGASPUser && (!isAMRUser || !isAMRIndividualUser);
 
     return {
-        module: allPermissions
-            ? "AMR"
-            : amrIndividualPermissions
-            ? "AMRIndividual"
-            : egaspPermissions
-            ? "EGASP"
-            : "AMR",
+        module: "EAR",
         orgUnitPaths: [],
         periods: [],
         quarters: ["Q1"],

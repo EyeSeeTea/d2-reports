@@ -7,6 +7,7 @@ import {
     ApprovalIds,
     GLASSUserPermission,
     EARDataSubmissionItem,
+    EARSubmissionItemIdentifier,
 } from "../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 import {
     EARDataSubmissionOptions,
@@ -366,7 +367,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         modules: GLASSDataSubmissionModule[],
         status: string
     ) {
-        const amrModule = modules.find(module => module.name === "AMR")?.name;
+        const glassModule = modules.find(module => module.id === items[0]?.module)?.name;
         const orgUnitIds = _(items)
             .map(({ orgUnit }) => orgUnit)
             .compact()
@@ -381,8 +382,29 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         const text = `The data ${
             multipleItems ? "submissions" : "submission"
-        } for ${amrModule} module for${itemsWithCountry.map(
+        } for ${glassModule} module for${itemsWithCountry.map(
             item => ` year ${item.period} and country ${item.country}`
+        )} ${multipleItems ? "have" : "has"} changed to ${status.toUpperCase()}.`;
+
+        return text;
+    }
+
+    private async getEARNotificationText(
+        signals: EARSubmissionItemIdentifier[],
+        modules: GLASSDataSubmissionModule[],
+        status: string
+    ) {
+        const glassModule = modules.find(module => module.id === signals[0]?.module)?.name;
+        const orgUnitIds = _(signals)
+            .map(({ orgUnitId }) => orgUnitId)
+            .compact()
+            .uniq()
+            .value();
+        const orgUnitsById = await this.getOrgUnits(orgUnitIds);
+        const multipleItems = signals.length > 1;
+
+        const text = `The notiification approval for ${glassModule} module for${orgUnitIds.map(
+            item => ` country ${orgUnitsById[item]?.name}`
         )} ${multipleItems ? "have" : "has"} changed to ${status.toUpperCase()}.`;
 
         return text;
@@ -404,6 +426,42 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 items,
                 async item =>
                     await this.api.get<any>(`/organisationUnits/${item.orgUnit}?fields=ancestors,id`).getData()
+            )
+        )
+            .flatMapDeep(obj => [obj.id, _.map(obj.ancestors, "id")])
+            .flatten()
+            .value();
+
+        const { objects: recipientUsers } = await this.api.models.users
+            .get({
+                fields: {
+                    id: true,
+                },
+                filter: {
+                    "organisationUnits.id": { in: orgUnits },
+                    "userGroups.id": { in: userGroups },
+                },
+            })
+            .getData();
+
+        return recipientUsers;
+    }
+
+    private async getEARRecipientUsers(items: EARSubmissionItemIdentifier[], modules: GLASSDataSubmissionModule[]) {
+        const userGroups = _.flatMap(
+            _.compact(
+                items.map(
+                    item =>
+                        modules.find(mod => mod.id === item.module && !_.isEmpty(mod.userGroups))?.userGroups.readAccess
+                )
+            )
+        ).map(({ id }) => id);
+
+        const orgUnits = _(
+            await promiseMap(
+                items,
+                async item =>
+                    await this.api.get<any>(`/organisationUnits/${item.orgUnitId}?fields=ancestors,id`).getData()
             )
         )
             .flatMapDeep(obj => [obj.id, _.map(obj.ancestors, "id")])
@@ -474,37 +532,53 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         });
     }
 
-    async approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
-        const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
+    async approve(
+        namespace: string,
+        items: GLASSDataSubmissionItemIdentifier[],
+        signals?: EARSubmissionItemIdentifier[]
+    ) {
         const modules =
             (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
                 Namespaces.DATA_SUBMISSSIONS_MODULES
             )) ?? [];
 
-        const module = modules.find(module => module.id === _.first(items)?.module)?.name ?? "";
+        if (!_.isEmpty(items)) {
+            const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
+            const module = modules.find(module => module.id === _.first(items)?.module)?.name ?? "";
 
-        if (module === "AMR") {
-            const amrDataSets = modules.find(module => module.name === "AMR")?.dataSets ?? [];
-            _.forEach(amrDataSets, async amrDataSet => await this.duplicateDataSet(amrDataSet, items));
+            if (module === "AMR") {
+                const amrDataSets = modules.find(module => module.name === "AMR")?.dataSets ?? [];
+                _.forEach(amrDataSets, async amrDataSet => await this.duplicateDataSet(amrDataSet, items));
+            }
+            if (module === "AMR - Individual") {
+                const amrIndividualPrograms =
+                    modules.find(module => module.name === "AMR - Individual")?.programs ?? [];
+                _.forEach(amrIndividualPrograms, async amrIndividualProgram => {
+                    await this.duplicateProgramStages(amrIndividualProgram, items);
+                });
+            }
+            if (module === "EGASP") {
+                const egaspPrograms = modules.find(module => module.name === "EGASP")?.programs ?? [];
+                _.forEach(egaspPrograms, async egaspProgram => await this.duplicateProgram(egaspProgram, items));
+            }
+
+            const newSubmissionValues = this.getNewSubmissionValues(items, objects, "APPROVED");
+            const recipients = await this.getRecipientUsers(items, modules);
+
+            const message = await this.getNotificationText(items, modules, "approved");
+            this.sendNotifications(message, message, [], recipients);
+
+            return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
+        } else if (signals) {
+            const objects = await this.globalStorageClient.listObjectsInCollection<EARDataSubmissionItem>(namespace);
+            const newSubmissionValues = this.getNewEARSubmissionValues(signals, objects, "APPROVED");
+            const recipients = await this.getEARRecipientUsers(signals, modules);
+
+            const message = await this.getEARNotificationText(signals, modules, "approved");
+            this.sendNotifications(message, message, [], recipients);
+
+            return await this.globalStorageClient.saveObject<EARDataSubmissionItem[]>(namespace, newSubmissionValues);
         }
-        if (module === "AMR - Individual") {
-            const amrIndividualPrograms = modules.find(module => module.name === "AMR - Individual")?.programs ?? [];
-            _.forEach(amrIndividualPrograms, async amrIndividualProgram => {
-                await this.duplicateProgramStages(amrIndividualProgram, items);
-            });
-        }
-        if (module === "EGASP") {
-            const egaspPrograms = modules.find(module => module.name === "EGASP")?.programs ?? [];
-            _.forEach(egaspPrograms, async egaspProgram => await this.duplicateProgram(egaspProgram, items));
-        }
-
-        const newSubmissionValues = this.getNewSubmissionValues(items, objects, "APPROVED");
-        const recipients = await this.getRecipientUsers(items, modules);
-
-        const message = await this.getNotificationText(items, modules, "approved");
-        this.sendNotifications(message, message, [], recipients);
-
-        return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
 
     private async duplicateDataSet(dataSet: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
@@ -628,27 +702,39 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         namespace: string,
         items: GLASSDataSubmissionItemIdentifier[],
         message: string,
-        isDatasetUpdate: boolean
+        isDatasetUpdate: boolean,
+        signals?: EARSubmissionItemIdentifier[]
     ) {
-        const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
         const modules =
             (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
                 Namespaces.DATA_SUBMISSSIONS_MODULES
             )) ?? [];
 
-        const newSubmissionValues = this.getNewSubmissionValues(
-            items,
-            objects,
-            isDatasetUpdate ? "APPROVED" : "REJECTED"
-        );
-        const recipients = await this.getRecipientUsers(items, modules);
+        if (!_.isEmpty(items)) {
+            const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
+            const newSubmissionValues = this.getNewSubmissionValues(
+                items,
+                objects,
+                isDatasetUpdate ? "APPROVED" : "REJECTED"
+            );
+            const recipients = await this.getRecipientUsers(items, modules);
 
-        const body = `Please review the messages and the reports to find about the causes of this rejection. You have to upload new datasets.\n Reason for rejection:\n ${message}`;
-        this.sendNotifications("Rejected by WHO", body, [], recipients);
+            const body = `Please review the messages and the reports to find about the causes of this rejection. You have to upload new datasets.\n Reason for rejection:\n ${message}`;
+            this.sendNotifications("Rejected by WHO", body, [], recipients);
 
-        await this.postDataSetRegistration(items, false);
+            await this.postDataSetRegistration(items, false);
 
-        return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
+            return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
+        } else if (signals) {
+            const objects = await this.globalStorageClient.listObjectsInCollection<EARDataSubmissionItem>(namespace);
+            const newSubmissionValues = this.getNewEARSubmissionValues(signals, objects, "REJECTED");
+            const recipients = await this.getEARRecipientUsers(signals, modules);
+
+            const body = `Please review the messages and the reports to find about the causes of this rejection. You have to upload new datasets.\n Reason for rejection:\n ${message}`;
+            this.sendNotifications("EAR notification rejected", body, [], recipients);
+
+            return await this.globalStorageClient.saveObject<EARDataSubmissionItem[]>(namespace, newSubmissionValues);
+        }
     }
 
     async reopen(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
@@ -742,6 +828,29 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             };
 
             return isNewItem ? { ...object, status, statusHistory: [...object.statusHistory, statusHistory] } : object;
+        });
+    }
+
+    private getNewEARSubmissionValues(
+        signals: EARSubmissionItemIdentifier[],
+        objects: EARDataSubmissionItem[],
+        status: Status
+    ) {
+        return objects.map(object => {
+            const isNewItem = !!signals.find(
+                signal =>
+                    signal.orgUnitId === object.orgUnit.id && signal.module === object.module && signal.id === object.id
+            );
+
+            const statusHistory = {
+                changedAt: new Date().toISOString(),
+                from: object.status,
+                to: status,
+            };
+
+            return isNewItem
+                ? { ...object, status: status, statusHistory: [...object.statusHistory, statusHistory] }
+                : object;
         });
     }
 }

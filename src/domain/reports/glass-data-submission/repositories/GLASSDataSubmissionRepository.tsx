@@ -4,6 +4,7 @@ import { Config } from "../../../common/entities/Config";
 import { PaginatedObjects, Paging, Sorting } from "../../../common/entities/PaginatedObjects";
 import {
     EARDataSubmissionItem,
+    EARSubmissionItemIdentifier,
     GLASSDataSubmissionItem,
     GLASSDataSubmissionItemIdentifier,
     GLASSUserPermission,
@@ -18,12 +19,17 @@ export interface GLASSDataSubmissionRepository {
     saveColumns(namespace: string, columns: string[]): Promise<void>;
     saveEARColumns(namespace: string, columns: string[]): Promise<void>;
     dhis2MessageCount(): Promise<number>;
-    approve(namespace: string, items: GLASSDataSubmissionItemIdentifier[]): Promise<void>;
+    approve(
+        namespace: string,
+        items: GLASSDataSubmissionItemIdentifier[],
+        signals?: EARSubmissionItemIdentifier[]
+    ): Promise<void>;
     reject(
         namespace: string,
         items: GLASSDataSubmissionItemIdentifier[],
         message?: string,
-        isDatasetUpdate?: boolean
+        isDatasetUpdate?: boolean,
+        signals?: EARSubmissionItemIdentifier[]
     ): Promise<void>;
     reopen(namespace: string, items: GLASSDataSubmissionItemIdentifier[]): Promise<void>;
     accept(namespace: string, items: GLASSDataSubmissionItemIdentifier[]): Promise<void>;

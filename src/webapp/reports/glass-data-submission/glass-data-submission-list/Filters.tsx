@@ -58,7 +58,7 @@ export const statusItems = [
 
 export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { config, api } = useAppContext();
-    const { values: filter, options: filterOptions, onChange, userPermissions } = props;
+    const { values: filter, options: filterOptions, onChange } = props;
 
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
 
@@ -82,12 +82,13 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
             { value: "EGASP", text: i18n.t("EGASP") },
         ];
 
-        return _.filter(modules, module => {
-            const permissionKey = `is${module.value}User`;
+        // return _.filter(modules, module => {
+        //     const permissionKey = `is${module.value}User`;
 
-            return userPermissions[permissionKey] ?? false;
-        });
-    }, [userPermissions]);
+        //     return userPermissions[permissionKey] ?? false;
+        // });
+        return modules;
+    }, []);
 
     const completionStatusItems = React.useMemo(() => {
         return [

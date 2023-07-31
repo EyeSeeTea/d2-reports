@@ -3,6 +3,7 @@ import {
     EARDataSubmissionItem,
     GLASSDataSubmissionItem,
     getDataSubmissionItemId,
+    getEARSubmissionItemId,
 } from "../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 
 export interface DataSubmissionViewModel {
@@ -60,7 +61,7 @@ export function getEARDataSubmissionViews(
 ): EARDataSubmissionViewModel[] {
     return items.map(item => {
         return {
-            id: item.id,
+            id: getEARSubmissionItemId(item),
             orgUnitId: item.orgUnit.id,
             orgUnitName: item.orgUnit.name,
             creationDate: item.creationDate,
