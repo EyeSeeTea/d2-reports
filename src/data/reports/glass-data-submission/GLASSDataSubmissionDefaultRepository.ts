@@ -229,7 +229,9 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             .filter(row => {
                 return (
                     (_.isEmpty(orgUnitIds) || !row.orgUnit ? row : orgUnitIds.includes(row.orgUnit.id)) &&
-                    !!(from && new Date(row.creationDate) >= from && to && new Date(row.creationDate) <= to) &&
+                    !!(!from && !to
+                        ? row
+                        : (from && new Date(row.creationDate) >= from) || (to && new Date(row.creationDate) <= to)) &&
                     (!submissionStatus ? row : row.status === submissionStatus)
                 );
             })

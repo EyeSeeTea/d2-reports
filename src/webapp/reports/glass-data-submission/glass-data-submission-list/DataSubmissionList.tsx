@@ -592,7 +592,7 @@ function getEmptyDataValuesFilter(_config: Config, selectableModules: Module[]):
         periods: [],
         quarters: ["Q1"],
         from: undefined,
-        to: new Date(),
+        to: undefined,
         completionStatus: undefined,
         submissionStatus: undefined,
     };

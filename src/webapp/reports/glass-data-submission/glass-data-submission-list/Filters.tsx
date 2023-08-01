@@ -244,10 +244,15 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 />
             ) : (
                 <>
-                    <DatePickerStyled label="From" value={filter.from} maxDate={filter.to} onChange={setStartDate} />
+                    <DatePickerStyled
+                        label="From"
+                        value={filter.from ?? null}
+                        maxDate={filter.to}
+                        onChange={setStartDate}
+                    />
                     <DatePickerStyled
                         label="To"
-                        value={filter.to}
+                        value={filter.to ?? null}
                         minDate={filter.from}
                         maxDate={new Date()}
                         onChange={setEndDate}
