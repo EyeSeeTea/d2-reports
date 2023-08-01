@@ -365,7 +365,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
 
             return { pager, objects: getEARDataSubmissionViews(config, objects) };
         },
-        [compositionRoot, config, filters, reloadKey, selectablePeriods]
+        [compositionRoot.glassDataSubmission, config, filters, reloadKey, selectablePeriods]
     );
 
     function getUseCaseOptions(filter: Filter, selectablePeriods: string[]) {
@@ -455,6 +455,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     onChange={setFilters}
                     userPermissions={{ isAMRUser, isEGASPUser, isAMRIndividualUser }}
                 />
+
                 <ConfirmationDialog
                     isOpen={isDialogOpen}
                     title={i18n.t("Reject Data Submission")}
@@ -600,6 +601,8 @@ function getEmptyDataValuesFilter(
         orgUnitPaths: [],
         periods: [],
         quarters: ["Q1"],
+        from: null,
+        to: new Date(),
         completionStatus: undefined,
         submissionStatus: undefined,
     };

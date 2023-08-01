@@ -54,4 +54,7 @@ export interface EARDataSubmissionOptions {
     sorting: Sorting<EARDataSubmissionItem>;
     module: Module;
     orgUnitIds: Id[];
+    from: Date | null;
+    to: Date | null;
+    submissionStatus?: Status;
 }

@@ -21,7 +21,10 @@ import { Instance } from "../../common/entities/Instance";
 import { promiseMap } from "../../../utils/promises";
 import { Status } from "../../../webapp/reports/glass-data-submission/DataSubmissionViewModel";
 import { Id, NamedRef, Ref } from "../../../domain/common/entities/Base";
-import { statusItems } from "../../../webapp/reports/glass-data-submission/glass-data-submission-list/Filters";
+import {
+    earStatusItems,
+    statusItems,
+} from "../../../webapp/reports/glass-data-submission/glass-data-submission-list/Filters";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 
 interface CompleteDataSetRegistrationsResponse {
@@ -199,12 +202,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         options: EARDataSubmissionOptions,
         namespace: string
     ): Promise<PaginatedObjects<EARDataSubmissionItem>> {
-        const { paging, sorting } = options;
-        // const modules =
-        //     (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
-        //         Namespaces.DATA_SUBMISSSIONS_MODULES
-        //     )) ?? [];
-        // const earModule = modules.find(module => module.name === "EAR")?.id;
+        const { paging, sorting, orgUnitIds, from, to, submissionStatus } = options;
 
         const userOrgUnits = (await this.api.get<{ organisationUnits: Ref[] }>("/me").getData()).organisationUnits.map(
             ou => ou.id
@@ -226,15 +224,23 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         const objects = (await this.globalStorageClient.getObject<EARDataSubmissionItem[]>(namespace)) ?? [];
         const rows = objects.filter(object => orgUnitsWithChildren.includes(object.orgUnit.id));
-        // const filteredRows = rows.filter(row => {
-        //     return (_.isEmpty(orgUnitIds) || !row.orgUnit ? row : orgUnitIds.includes(row.orgUnit.id))
-        //         ? periods.includes(String(row.period))
-        //         : quarterPeriods.includes(String(row.period)) &&
-        //               (completionStatus !== undefined ? row.questionnaireCompleted === completionStatus : row) &&
-        //               (!submissionStatus ? row : row.status === submissionStatus);
-        // });
 
-        const rowsInPage = _(rows)
+        const filteredRows = rows
+            .filter(row => {
+                return _.isEmpty(orgUnitIds) || !row.orgUnit
+                    ? row
+                    : orgUnitIds.includes(row.orgUnit.id) &&
+                      !!(from && new Date(row.creationDate) >= from && to && new Date(row.creationDate) <= to) &&
+                      !submissionStatus
+                    ? row
+                    : row.status === submissionStatus;
+            })
+            .map(row => {
+                const submissionStatus = earStatusItems.find(item => item.value === row.status)?.text ?? "";
+                return { ...row, status: submissionStatus as Status };
+            });
+
+        const rowsInPage = _(filteredRows)
             .orderBy([row => row[sorting.field]], [sorting.direction])
             .drop((paging.page - 1) * paging.pageSize)
             .take(paging.pageSize)
@@ -243,8 +249,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const pager: Pager = {
             page: paging.page,
             pageSize: paging.pageSize,
-            pageCount: Math.ceil(rows.length / paging.pageSize),
-            total: rows.length,
+            pageCount: Math.ceil(filteredRows.length / paging.pageSize),
+            total: filteredRows.length,
         };
 
         return {

@@ -37,7 +37,8 @@ export type Status =
     | "REJECTED"
     | "APPROVED"
     | "ACCEPTED"
-    | "PENDING_UPDATE_APPROVAL";
+    | "PENDING_UPDATE_APPROVAL"
+    | "DRAFT";
 
 export function getDataSubmissionViews(_config: Config, items: GLASSDataSubmissionItem[]): DataSubmissionViewModel[] {
     return items.map(item => {

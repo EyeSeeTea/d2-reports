@@ -11,7 +11,13 @@ import { getRootIds } from "../../../../domain/common/entities/OrgUnit";
 import { D2Api } from "../../../../types/d2-api";
 import i18n from "../../../../locales";
 import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
-import { Dropdown, DropdownProps, MultipleDropdownProps } from "@eyeseetea/d2-ui-components";
+import {
+    Dropdown,
+    DropdownProps,
+    MultipleDropdownProps,
+    DatePicker,
+    DatePickerProps,
+} from "@eyeseetea/d2-ui-components";
 import { Module, Status } from "../DataSubmissionViewModel";
 
 export interface DataSetsFiltersProps {
@@ -30,6 +36,8 @@ export interface Filter {
     orgUnitPaths: Id[];
     periods: string[];
     quarters: string[];
+    from: Date | null;
+    to: Date | null;
     completionStatus?: boolean;
     submissionStatus?: Status;
 }
@@ -54,6 +62,13 @@ export const statusItems = [
     { value: "APPROVED", text: i18n.t("Approved") },
     { value: "UPDATE_REQUEST_ACCEPTED", text: i18n.t("Data update request accepted") },
     { value: "PENDING_UPDATE_APPROVAL", text: i18n.t("Waiting for WHO to approve your update request") },
+];
+
+export const earStatusItems = [
+    { value: "DRAFT", text: i18n.t("Draft") },
+    { value: "PENDING_APPROVAL", text: i18n.t("Waiting WHO Approval") },
+    { value: "REJECTED", text: i18n.t("Rejected By WHO") },
+    { value: "APPROVED", text: i18n.t("Approved") },
 ];
 
 export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
@@ -98,6 +113,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     }, []);
 
     const submissionStatusItems = React.useMemo(() => statusItems, []);
+    const earSubmissionStatusItems = React.useMemo(() => earStatusItems, []);
 
     useEffect(() => {
         async function getOrganisationUnits(api: D2Api): Promise<OrgUnit[]> {
@@ -183,6 +199,13 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         [onChange]
     );
 
+    const setStartDate = React.useCallback<DatePickerHandler>(
+        from => onChange(prev => ({ ...prev, from })),
+        [onChange]
+    );
+
+    const setEndDate = React.useCallback<DatePickerHandler>(to => onChange(prev => ({ ...prev, to })), [onChange]);
+
     const setQuarters = React.useCallback<DropdownHandler>(
         quarters => onChange(prev => ({ ...prev, quarters })),
         [onChange]
@@ -220,13 +243,24 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 selectableLevels={[1, 2, 3]}
             />
 
-            {filter.module !== "EAR" && (
+            {filter.module !== "EAR" ? (
                 <DropdownStyled
                     items={periodItems}
                     values={filter.periods}
                     onChange={setPeriods}
                     label={i18n.t("Years")}
                 />
+            ) : (
+                <>
+                    <DatePickerStyled label="From" value={filter.from} maxDate={filter.to} onChange={setStartDate} />
+                    <DatePickerStyled
+                        label="To"
+                        value={filter.to}
+                        minDate={filter.from}
+                        maxDate={new Date()}
+                        onChange={setEndDate}
+                    />
+                </>
             )}
 
             {filter.module === "EGASP" && (
@@ -248,7 +282,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
             )}
 
             <SingleDropdownStyled
-                items={submissionStatusItems}
+                items={filter.module === "EAR" ? earSubmissionStatusItems : submissionStatusItems}
                 value={filter.submissionStatus}
                 onChange={setSubmissionStatus}
                 label={i18n.t("Status")}
@@ -278,6 +312,10 @@ const SingleDropdownStyled = styled(Dropdown)`
     width: 250px;
 `;
 
+const DatePickerStyled = styled(DatePicker)`
+    margin-top: -8px;
+`;
+
 function toBool(s: string | undefined): boolean | undefined {
     return s === undefined ? undefined : s === "true";
 }
@@ -288,5 +326,6 @@ function fromBool(value: boolean | undefined): string | undefined {
 
 type DropdownHandler = MultipleDropdownProps["onChange"];
 type SingleDropdownHandler = DropdownProps["onChange"];
+type DatePickerHandler = DatePickerProps["onChange"];
 
 const countryLevel = 3;

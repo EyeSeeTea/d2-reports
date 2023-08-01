@@ -11,6 +11,8 @@ export interface GLASSDataSubmissionItem {
     questionnaireCompleted: boolean;
     dataSetsUploaded: string;
     submissionStatus: string;
+    from: Date | null;
+    to: Date | null;
     statusHistory: {
         changedAt: string;
         from: Status;
