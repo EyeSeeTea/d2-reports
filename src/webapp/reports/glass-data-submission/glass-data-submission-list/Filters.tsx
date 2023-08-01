@@ -4,7 +4,7 @@ import {
     OrgUnitsFilterButton,
     OrgUnitsFilterButtonProps,
 } from "../../../components/org-units-filter/OrgUnitsFilterButton";
-import { Id } from "../../../../domain/common/entities/Base";
+import { Id, NamedRef } from "../../../../domain/common/entities/Base";
 import { useAppContext } from "../../../contexts/app-context";
 import _ from "lodash";
 import { getRootIds } from "../../../../domain/common/entities/OrgUnit";
@@ -24,11 +24,7 @@ export interface DataSetsFiltersProps {
     values: Filter;
     options: FilterOptions;
     onChange: React.Dispatch<React.SetStateAction<Filter>>;
-    userPermissions: Permissions;
-}
-
-interface Permissions {
-    [key: string]: boolean;
+    userPermissions: Partial<Record<Module, NamedRef[]>>;
 }
 
 export interface Filter {
@@ -73,7 +69,7 @@ export const earStatusItems = [
 
 export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { config, api } = useAppContext();
-    const { values: filter, options: filterOptions, onChange } = props;
+    const { values: filter, options: filterOptions, onChange, userPermissions } = props;
 
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
 
@@ -97,13 +93,8 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
             { value: "EGASP", text: i18n.t("EGASP") },
         ];
 
-        // return _.filter(modules, module => {
-        //     const permissionKey = `is${module.value}User`;
-
-        //     return userPermissions[permissionKey] ?? false;
-        // });
-        return modules;
-    }, []);
+        return _.filter(modules, module => _.includes(_.keys(userPermissions), module.value));
+    }, [userPermissions]);
 
     const completionStatusItems = React.useMemo(() => {
         return [

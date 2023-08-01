@@ -268,9 +268,15 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const amrPermissions = modules.find(module => module.name === "AMR")?.userGroups.approveAccess ?? [];
         const amrIndividualPermissions =
             modules.find(module => module.name === "AMR - Individual")?.userGroups.approveAccess ?? [];
+        const earPermissions = modules.find(module => module.name === "EAR")?.userGroups.approveAccess ?? [];
         const egaspPermissions = modules.find(module => module.name === "EGASP")?.userGroups.approveAccess ?? [];
 
-        return { amrPermissions, amrIndividualPermissions, egaspPermissions };
+        return {
+            AMR: amrPermissions,
+            AMRIndividual: amrIndividualPermissions,
+            EAR: earPermissions,
+            EGASP: egaspPermissions,
+        };
     }
 
     private async getRegistrations(

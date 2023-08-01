@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
     DataSubmissionViewModel,
     EARDataSubmissionViewModel,
+    Module,
     getDataSubmissionViews,
     getEARDataSubmissionViews,
 } from "../DataSubmissionViewModel";
@@ -46,9 +47,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
 
     const snackbar = useSnackbar();
     const [reloadKey, reload] = useReload();
-    const [filters, setFilters] = useState(() =>
-        getEmptyDataValuesFilter(config, isEGASPUser, isAMRUser, isAMRIndividualUser)
-    );
+    const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config, _.keys(userPermissions)));
     const [userGroupPermissions, setUserGroupPermissions] = useState<GLASSUserPermission>();
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [rejectionReason, setRejectionReason] = useState<string>("");
@@ -59,14 +58,25 @@ export const DataSubmissionList: React.FC = React.memo(() => {
     const [isDialogOpen, { enable: openDialog, disable: closeDialog }] = useBooleanState(false);
 
     const userGroupIds = config.currentUser.userGroups.map(ug => ug.id);
-    const isAMRUser = userGroupIds.some(id =>
-        userGroupPermissions?.amrPermissions.map(permission => permission.id).includes(id)
-    );
-    const isAMRIndividualUser = userGroupIds.some(id =>
-        userGroupPermissions?.amrIndividualPermissions.map(permission => permission.id).includes(id)
-    );
     const isEGASPUser = userGroupIds.some(id =>
-        userGroupPermissions?.egaspPermissions.map(permission => permission.id).includes(id)
+        userGroupPermissions?.EGASP?.map(permission => permission.id).includes(id)
+    );
+
+    const permissions = {
+        AMR: userGroupPermissions?.AMR ?? [],
+        AMRIndividual: userGroupPermissions?.AMRIndividual ?? [],
+        EAR: userGroupPermissions?.EAR ?? [],
+        EGASP: userGroupPermissions?.EGASP ?? [],
+    };
+
+    const userPermissions = _.pickBy(
+        permissions,
+        permission =>
+            !_.isEmpty(permission) &&
+            _.intersection(
+                permission.map(({ id }) => id),
+                userGroupIds
+            ).length > 0
     );
 
     const selectablePeriods = React.useMemo(() => {
@@ -453,7 +463,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     values={filters}
                     options={filterOptions}
                     onChange={setFilters}
-                    userPermissions={{ isAMRUser, isEGASPUser, isAMRIndividualUser }}
+                    userPermissions={userPermissions}
                 />
 
                 <ConfirmationDialog
@@ -521,8 +531,9 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     values={filters}
                     options={filterOptions}
                     onChange={setFilters}
-                    userPermissions={{ isAMRUser, isEGASPUser, isAMRIndividualUser }}
+                    userPermissions={userPermissions}
                 />
+
                 <ConfirmationDialog
                     isOpen={isDialogOpen}
                     title={i18n.t("Reject Data Submission")}
@@ -586,23 +597,14 @@ export function getEARSortingFromTableSorting(
     };
 }
 
-function getEmptyDataValuesFilter(
-    _config: Config,
-    isEGASPUser: boolean,
-    isAMRUser: boolean,
-    isAMRIndividualUser: boolean
-): Filter {
-    const allPermissions = isEGASPUser && isAMRIndividualUser && isAMRUser;
-    const amrIndividualPermissions = isAMRIndividualUser && (!isEGASPUser || !isAMRUser);
-    const egaspPermissions = isEGASPUser && (!isAMRUser || !isAMRIndividualUser);
-
+function getEmptyDataValuesFilter(_config: Config, selectableModules: string[]): Filter {
     return {
-        module: "EAR",
+        module: selectableModules[0] as Module,
         orgUnitPaths: [],
         periods: [],
         quarters: ["Q1"],
         from: null,
-        to: new Date(),
+        to: null,
         completionStatus: undefined,
         submissionStatus: undefined,
     };

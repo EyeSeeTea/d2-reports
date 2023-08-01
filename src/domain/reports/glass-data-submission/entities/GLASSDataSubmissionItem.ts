@@ -73,11 +73,9 @@ export interface GLASSDataSubmissionModule {
     };
 }
 
-export interface GLASSUserPermission {
-    amrPermissions: NamedRef[];
-    amrIndividualPermissions: NamedRef[];
-    egaspPermissions: NamedRef[];
-}
+export type GLASSUserPermission = {
+    [key in Module]: NamedRef[];
+};
 
 export function getDataSubmissionItemId(submissionItem: GLASSDataSubmissionItem): string {
     return [submissionItem.orgUnit, submissionItem.period, submissionItem.module].join("-");
