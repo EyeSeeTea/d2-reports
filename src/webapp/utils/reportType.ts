@@ -8,6 +8,10 @@ export function getReportType(): ReportType {
             return "mal";
         case "glass-submission":
             return "glass";
+        case "csy-summary-patient":
+            return "summary-patient";
+        case "csy-summary-mortality":
+            return "summary-mortality";
         case "csy-audit-emergency":
             return "auditEmergency";
         case "csy-audit-trauma":

@@ -34,19 +34,24 @@ export const auditTypeItems = [
     {
         value: "low-acuity",
         text: i18n.t("Low acuity triage with EU disposition ICU"),
-        auditDefinition:
-            "Triage Category = Priority 3 || Minor (Green) || Level 4 || Level 5 || Standard (Green, 4) || Non-urgent (Blue, 5) || Level IV || Level V || Category 4 || Cateogry 5 || Green AND ETA_EU Dispo = Intesive Care Unit (ICU)",
+        auditDefinition: "EU dispo = ICU AND Triage category = lowest acuity triage category",
     },
     {
         value: "highest-triage",
         text: i18n.t("Highest triage category and time to first provider >30min​"),
         auditDefinition:
-            "Triage Category = Red || Category I || Level I || Level II || Immediate (Red, 1) || Level 1 || Level 2 || Immediate (Red) || Priority 1 AND time difference from EU Arrival Date and Time to EU Provider Date and Time",
+            "Triage category = highest category AND time between EU arrival date and time  to Date and time seen by a  first treating provider > 30 min",
     },
     {
         value: "initial-rbg",
         text: i18n.t("Initial RBG low and Glucose not given"),
-        auditDefinition: "Initial RBG = Low AND Glucose not ticked under the EU Medications and Fluids section",
+        auditDefinition: "Initial RBG = Low AND Glucose not given at EU",
+    },
+    {
+        value: "shock-ivf",
+        text: i18n.t("Shock and IVF including Blood"),
+        auditDefinition:
+            "(Age>=16 OR Age category = adult - age unknown) AND Initial SBP<90mmHg AND  (Section: Emergency Unit Interventions > Medications and Fluids) IV Fluids = not done",
     },
 ];
 

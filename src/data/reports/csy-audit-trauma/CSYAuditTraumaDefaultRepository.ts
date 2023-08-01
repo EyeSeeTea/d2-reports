@@ -61,6 +61,7 @@ export class CSYAuditTraumaDefaultRepository implements CSYAuditTraumaRepository
                 registerId: dataValue.registerId,
             })
         );
+
         const timestamp = new Date().toISOString();
         const csvDataSource = new CsvWriterDataSource();
         const csvData: CsvData<CsvField> = { headers, rows };
