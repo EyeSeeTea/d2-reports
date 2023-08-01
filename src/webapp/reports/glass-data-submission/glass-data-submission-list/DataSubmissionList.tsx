@@ -49,6 +49,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
     const [reloadKey, reload] = useReload();
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config, modules));
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
+    const [visibleEARColumns, setVisibleEARColumns] = useState<string[]>();
     const [modules, setModules] = useState<Module[]>([]);
     const [rejectionReason, setRejectionReason] = useState<string>("");
     const [rejectedItems, setRejectedItems] = useState<GLASSDataSubmissionItemIdentifier[]>([]);
@@ -87,7 +88,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
 
             if (isEARModule) {
                 compositionRoot.glassDataSubmission.getEARColumns(Namespaces.SIGNALS_USER_COLUMNS).then(columns => {
-                    setVisibleColumns(columns);
+                    setVisibleEARColumns(columns);
                 });
             } else {
                 compositionRoot.glassDataSubmission
@@ -400,11 +401,11 @@ export const DataSubmissionList: React.FC = React.memo(() => {
 
     const saveReorderedEARColumns = useCallback(
         async (columnKeys: Array<keyof EARDataSubmissionViewModel>) => {
-            if (!visibleColumns) return;
+            if (!visibleEARColumns) return;
 
             await compositionRoot.glassDataSubmission.saveEARColumns(Namespaces.SIGNALS_USER_COLUMNS, columnKeys);
         },
-        [compositionRoot, visibleColumns]
+        [compositionRoot, visibleEARColumns]
     );
 
     const tableProps = useObjectsTable<DataSubmissionViewModel>(baseConfig, getRows);
@@ -432,18 +433,18 @@ export const DataSubmissionList: React.FC = React.memo(() => {
     }, [tableProps.columns, visibleColumns]);
 
     const earColumnsToShow = useMemo<TableColumn<EARDataSubmissionViewModel>[]>(() => {
-        if (!visibleColumns || _.isEmpty(visibleColumns)) return earTableProps.columns;
+        if (!visibleEARColumns || _.isEmpty(visibleEARColumns)) return earTableProps.columns;
 
-        const indexes = _(visibleColumns)
+        const indexes = _(visibleEARColumns)
             .map((columnName, idx) => [columnName, idx] as [string, number])
             .fromPairs()
             .value();
 
         return _(earTableProps.columns)
-            .map(column => ({ ...column, hidden: !visibleColumns.includes(column.name) }))
+            .map(column => ({ ...column, hidden: !visibleEARColumns.includes(column.name) }))
             .sortBy(column => indexes[column.name] || 0)
             .value();
-    }, [earTableProps.columns, visibleColumns]);
+    }, [earTableProps.columns, visibleEARColumns]);
 
     const closeRejectionDialog = () => {
         closeDialog();
