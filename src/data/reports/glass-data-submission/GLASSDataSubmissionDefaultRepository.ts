@@ -227,13 +227,11 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         const filteredRows = rows
             .filter(row => {
-                return _.isEmpty(orgUnitIds) || !row.orgUnit
-                    ? row
-                    : orgUnitIds.includes(row.orgUnit.id) &&
-                      !!(from && new Date(row.creationDate) >= from && to && new Date(row.creationDate) <= to) &&
-                      !submissionStatus
-                    ? row
-                    : row.status === submissionStatus;
+                return (
+                    (_.isEmpty(orgUnitIds) || !row.orgUnit ? row : orgUnitIds.includes(row.orgUnit.id)) &&
+                    !!(from && new Date(row.creationDate) >= from && to && new Date(row.creationDate) <= to) &&
+                    (!submissionStatus ? row : row.status === submissionStatus)
+                );
             })
             .map(row => {
                 const submissionStatus = earStatusItems.find(item => item.value === row.status)?.text ?? "";

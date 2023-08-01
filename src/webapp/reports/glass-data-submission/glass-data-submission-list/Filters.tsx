@@ -33,8 +33,8 @@ export interface Filter {
     orgUnitPaths: Id[];
     periods: string[];
     quarters: string[];
-    from: Date | null;
-    to: Date | null;
+    from: Date | undefined;
+    to: Date | undefined;
     completionStatus?: boolean;
     submissionStatus?: Status;
 }

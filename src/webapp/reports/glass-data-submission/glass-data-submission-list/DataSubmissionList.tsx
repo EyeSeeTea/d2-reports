@@ -591,8 +591,8 @@ function getEmptyDataValuesFilter(_config: Config, selectableModules: Module[]):
         orgUnitPaths: [],
         periods: [],
         quarters: ["Q1"],
-        from: null,
-        to: null,
+        from: undefined,
+        to: new Date(),
         completionStatus: undefined,
         submissionStatus: undefined,
     };
