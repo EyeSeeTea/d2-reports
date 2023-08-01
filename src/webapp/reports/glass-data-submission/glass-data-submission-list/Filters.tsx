@@ -4,7 +4,7 @@ import {
     OrgUnitsFilterButton,
     OrgUnitsFilterButtonProps,
 } from "../../../components/org-units-filter/OrgUnitsFilterButton";
-import { Id, NamedRef } from "../../../../domain/common/entities/Base";
+import { Id } from "../../../../domain/common/entities/Base";
 import { useAppContext } from "../../../contexts/app-context";
 import _ from "lodash";
 import { getRootIds } from "../../../../domain/common/entities/OrgUnit";
@@ -24,7 +24,8 @@ export interface DataSetsFiltersProps {
     values: Filter;
     options: FilterOptions;
     onChange: React.Dispatch<React.SetStateAction<Filter>>;
-    userPermissions: Partial<Record<Module, NamedRef[]>>;
+    userPermissions: Module[];
+    isEARModule?: boolean;
 }
 
 export interface Filter {
@@ -69,7 +70,7 @@ export const earStatusItems = [
 
 export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { config, api } = useAppContext();
-    const { values: filter, options: filterOptions, onChange, userPermissions } = props;
+    const { values: filter, options: filterOptions, onChange, userPermissions, isEARModule } = props;
 
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
 
@@ -93,7 +94,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
             { value: "EGASP", text: i18n.t("EGASP") },
         ];
 
-        return _.filter(modules, module => _.includes(_.keys(userPermissions), module.value));
+        return _.filter(modules, module => _.includes(userPermissions, module.value));
     }, [userPermissions]);
 
     const completionStatusItems = React.useMemo(() => {
@@ -220,7 +221,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         <Container>
             <SingleDropdownStyled
                 items={moduleItems}
-                value={filter.module}
+                value={isEARModule ? "EAR" : filter.module}
                 onChange={setModule}
                 label={i18n.t("Module")}
                 hideEmpty
@@ -234,7 +235,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 selectableLevels={[1, 2, 3]}
             />
 
-            {filter.module !== "EAR" ? (
+            {!isEARModule ? (
                 <DropdownStyled
                     items={periodItems}
                     values={filter.periods}
@@ -263,7 +264,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 />
             )}
 
-            {filter.module !== "EAR" && (
+            {!isEARModule && (
                 <SingleDropdownStyled
                     items={completionStatusItems}
                     value={fromBool(filter.completionStatus)}
@@ -273,7 +274,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
             )}
 
             <SingleDropdownStyled
-                items={filter.module === "EAR" ? earSubmissionStatusItems : submissionStatusItems}
+                items={isEARModule ? earSubmissionStatusItems : submissionStatusItems}
                 value={filter.submissionStatus}
                 onChange={setSubmissionStatus}
                 label={i18n.t("Status")}

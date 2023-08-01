@@ -28,7 +28,6 @@ import {
     EARSubmissionItemIdentifier,
     GLASSDataSubmissionItem,
     GLASSDataSubmissionItemIdentifier,
-    GLASSUserPermission,
     parseDataSubmissionItemId,
     parseEARSubmissionItemId,
 } from "../../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
@@ -41,15 +40,16 @@ import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUn
 import { Check, Dashboard, LockOpen, ThumbDown, ThumbUp } from "@material-ui/icons";
 import { useBooleanState } from "../../../utils/use-boolean";
 import { goToDhis2Url } from "../../../../utils/utils";
+import { Spinner } from "../../../components/objects-list/Spinner";
 
 export const DataSubmissionList: React.FC = React.memo(() => {
     const { api, compositionRoot, config } = useAppContext();
 
     const snackbar = useSnackbar();
     const [reloadKey, reload] = useReload();
-    const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config, _.keys(userPermissions)));
-    const [userGroupPermissions, setUserGroupPermissions] = useState<GLASSUserPermission>();
+    const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config, modules));
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
+    const [modules, setModules] = useState<Module[]>([]);
     const [rejectionReason, setRejectionReason] = useState<string>("");
     const [rejectedItems, setRejectedItems] = useState<GLASSDataSubmissionItemIdentifier[]>([]);
     const [rejectedSignals, setRejectedSignals] = useState<EARSubmissionItemIdentifier[]>([]);
@@ -57,26 +57,11 @@ export const DataSubmissionList: React.FC = React.memo(() => {
     const [isDatasetUpdate, setDatasetUpdate] = useState<boolean>(false);
     const [isDialogOpen, { enable: openDialog, disable: closeDialog }] = useBooleanState(false);
 
-    const userGroupIds = config.currentUser.userGroups.map(ug => ug.id);
-    const isEGASPUser = userGroupIds.some(id =>
-        userGroupPermissions?.EGASP?.map(permission => permission.id).includes(id)
-    );
-
-    const permissions = {
-        AMR: userGroupPermissions?.AMR ?? [],
-        AMRIndividual: userGroupPermissions?.AMRIndividual ?? [],
-        EAR: userGroupPermissions?.EAR ?? [],
-        EGASP: userGroupPermissions?.EGASP ?? [],
-    };
-
-    const userPermissions = _.pickBy(
-        permissions,
-        permission =>
-            !_.isEmpty(permission) &&
-            _.intersection(
-                permission.map(({ id }) => id),
-                userGroupIds
-            ).length > 0
+    const userGroupIds = useMemo(() => config.currentUser.userGroups.map(ug => ug.id), [config.currentUser]);
+    const isEGASPUser = !!modules.find(module => module === "EGASP");
+    const isEARModule = useMemo(
+        () => filters.module === "EAR" || (modules.length === 1 && _.first(modules) === "EAR"),
+        [filters.module, modules]
     );
 
     const selectablePeriods = React.useMemo(() => {
@@ -86,19 +71,33 @@ export const DataSubmissionList: React.FC = React.memo(() => {
 
     useEffect(() => {
         compositionRoot.glassDataSubmission.getUserGroupPermissions().then(permissions => {
-            setUserGroupPermissions(permissions);
-        });
+            const modules = _.keys(
+                _.pickBy(
+                    permissions,
+                    permission =>
+                        !_.isEmpty(permission) &&
+                        _.intersection(
+                            permission.map(({ id }) => id),
+                            userGroupIds
+                        ).length > 0
+                )
+            );
 
-        if (filters.module === "EAR") {
-            compositionRoot.glassDataSubmission.getEARColumns(Namespaces.SIGNALS_USER_COLUMNS).then(columns => {
-                setVisibleColumns(columns);
-            });
-        } else {
-            compositionRoot.glassDataSubmission.getColumns(Namespaces.DATA_SUBMISSSIONS_USER_COLUMNS).then(columns => {
-                setVisibleColumns(columns);
-            });
-        }
-    }, [compositionRoot, filters.module]);
+            setModules(modules as Module[]);
+
+            if (isEARModule) {
+                compositionRoot.glassDataSubmission.getEARColumns(Namespaces.SIGNALS_USER_COLUMNS).then(columns => {
+                    setVisibleColumns(columns);
+                });
+            } else {
+                compositionRoot.glassDataSubmission
+                    .getColumns(Namespaces.DATA_SUBMISSSIONS_USER_COLUMNS)
+                    .then(columns => {
+                        setVisibleColumns(columns);
+                    });
+            }
+        });
+    }, [compositionRoot, isEARModule, userGroupIds]);
 
     const baseConfig: TableConfig<DataSubmissionViewModel> = useMemo(
         () => ({
@@ -451,7 +450,9 @@ export const DataSubmissionList: React.FC = React.memo(() => {
         setRejectionReason("");
     };
 
-    if (filters.module === "EAR") {
+    if (_.isEmpty(modules)) {
+        return <Spinner isVisible />;
+    } else if (isEARModule) {
         return (
             <ObjectsList<EARDataSubmissionViewModel>
                 {...earTableProps}
@@ -460,46 +461,37 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                 onReorderColumns={saveReorderedEARColumns}
             >
                 <Filters
+                    isEARModule={isEARModule}
                     values={filters}
                     options={filterOptions}
                     onChange={setFilters}
-                    userPermissions={userPermissions}
+                    userPermissions={modules}
                 />
 
                 <ConfirmationDialog
                     isOpen={isDialogOpen}
-                    title={i18n.t("Reject Data Submission")}
+                    title={i18n.t("Reject Notification")}
                     onCancel={closeRejectionDialog}
                     cancelText={i18n.t("Cancel")}
                     onSave={async () => {
                         setRejectedState("loading");
                         try {
-                            if (filters.module !== "EAR") {
-                                await compositionRoot.glassDataSubmission.updateStatus(
-                                    Namespaces.DATA_SUBMISSSIONS,
-                                    "reject",
-                                    rejectedItems,
-                                    rejectionReason,
-                                    isDatasetUpdate
-                                );
-                            } else {
-                                await compositionRoot.glassDataSubmission.updateStatus(
-                                    Namespaces.SIGNALS,
-                                    "reject",
-                                    [],
-                                    rejectionReason,
-                                    false,
-                                    rejectedSignals
-                                );
-                            }
+                            await compositionRoot.glassDataSubmission.updateStatus(
+                                Namespaces.SIGNALS,
+                                "reject",
+                                [],
+                                rejectionReason,
+                                false,
+                                rejectedSignals
+                            );
 
                             setRejectedState("idle");
                             closeRejectionDialog();
-                            snackbar.success(i18n.t("Data submissions have been successfully rejected"));
+                            snackbar.success(i18n.t("Notifications have been successfully rejected"));
 
                             reload();
                         } catch {
-                            snackbar.error(i18n.t("Error when trying to reject submission"));
+                            snackbar.error(i18n.t("Error when trying to reject notification"));
                         }
                     }}
                     saveText={rejectedState === "idle" ? "Reject" : "Rejecting"}
@@ -507,7 +499,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     disableSave={!rejectionReason || rejectedState === "loading"}
                     fullWidth
                 >
-                    <p>{i18n.t("Please provide a reason for rejecting this data submission:")}</p>
+                    <p>{i18n.t("Please provide a reason for rejecting this notification:")}</p>
                     <TextArea
                         type="text"
                         rows={4}
@@ -527,12 +519,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                 onChangeSearch={undefined}
                 onReorderColumns={saveReorderedColumns}
             >
-                <Filters
-                    values={filters}
-                    options={filterOptions}
-                    onChange={setFilters}
-                    userPermissions={userPermissions}
-                />
+                <Filters values={filters} options={filterOptions} onChange={setFilters} userPermissions={modules} />
 
                 <ConfirmationDialog
                     isOpen={isDialogOpen}
@@ -597,9 +584,9 @@ export function getEARSortingFromTableSorting(
     };
 }
 
-function getEmptyDataValuesFilter(_config: Config, selectableModules: string[]): Filter {
+function getEmptyDataValuesFilter(_config: Config, selectableModules: Module[]): Filter {
     return {
-        module: selectableModules[0] as Module,
+        module: _.first(selectableModules) ?? "AMR",
         orgUnitPaths: [],
         periods: [],
         quarters: ["Q1"],
