@@ -9,6 +9,7 @@ export interface MalDataApprovalItem {
     approvalWorkflow: string | undefined;
     completed: boolean;
     validated: boolean;
+    approved?: boolean;
     lastUpdatedValue: string | undefined;
     lastDateOfSubmission: string | undefined;
     lastDateOfApproval: string | undefined;

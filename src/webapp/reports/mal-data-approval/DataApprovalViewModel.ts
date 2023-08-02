@@ -24,6 +24,7 @@ export interface DataApprovalViewModel {
     lastDateOfApproval: Date | undefined;
     modificationCount: string | undefined;
     monitoring: boolean | undefined;
+    approved: boolean | undefined;
 }
 
 export function getDataApprovalViews(
@@ -53,6 +54,7 @@ export function getDataApprovalViews(
                 : undefined,
             modificationCount: item.modificationCount,
             monitoring: getDataDuplicationItemMonitoringValue(item, monitoring),
+            approved: item.approved,
         };
     });
 }

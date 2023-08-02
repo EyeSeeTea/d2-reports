@@ -131,6 +131,7 @@ type SqlField =
     | "approvalworkflow"
     | "completed"
     | "validated"
+    | "approved"
     | "lastupdatedvalue"
     | "lastdateofsubmission"
     | "lastdateofapproval"
@@ -148,6 +149,7 @@ const fieldMapping: Record<keyof MalDataApprovalItem, SqlField> = {
     approvalWorkflow: "approvalworkflow",
     completed: "completed",
     validated: "validated",
+    approved: "approved",
     lastUpdatedValue: "lastupdatedvalue",
     lastDateOfSubmission: "lastdateofsubmission",
     lastDateOfApproval: "lastdateofapproval",
@@ -251,7 +253,21 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             )
             .getData();
 
-        return mergeHeadersAndData(options, periods, headerRows, rows);
+        const { pager, objects } = mergeHeadersAndData(options, periods, headerRows, rows);
+        const objectsInPage = await promiseMap(objects, async item => {
+            const approved = (
+                await this.api
+                    .get<any>("/dataApprovals", { ds: item.dataSetUid, pe: item.period, ou: item.orgUnitUid })
+                    .getData()
+            ).mayUnapprove;
+
+            return {
+                ...item,
+                approved,
+            };
+        });
+
+        return { pager, objects: objectsInPage };
         // A data value is not associated to a specific data set, but we can still map it
         // through the data element (1 data value -> 1 data element -> N data sets).
     }
