@@ -62,6 +62,7 @@ interface Period {
 
 declare global {
     interface Window {
+        viewHist: (dataElementId: string, cocId: string) => void;
         // It should be set when rendered in Data Entry App, but not on development.
         dhis2?: {
             de: {

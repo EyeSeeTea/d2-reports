@@ -7,6 +7,7 @@ import { CommentIcon } from "./CommentIcon";
 import DataEntryItem, { DataEntryItemProps } from "./DataEntryItem";
 import { DataValue } from "../../../domain/common/entities/DataValue";
 import { Row } from "./GridWithTotalsViewModel";
+import { isDev } from "../../..";
 
 export interface DataElementItemProps {
     dataElement: DataElement;
@@ -50,6 +51,12 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
         [onChange]
     );
 
+    const onDoubleClick = () => {
+        if (!isDev) {
+            window.viewHist(dataElement.id, dataElementCocId);
+        }
+    };
+
     return !noComment ? (
         <div id={elId} className={classes.valueWrapper}>
             <div className={`${classes.valueInput} sourcetype`} id={auditId}>
@@ -71,7 +78,7 @@ export const DataElementItem: React.FC<DataElementItemProps> = React.memo(props 
         </div>
     ) : (
         <div id={elId} className={classes.valueWrapper}>
-            <div className={`${classes.valueInput} entryfield2`} id={auditId}>
+            <div onDoubleClick={() => onDoubleClick()} className={`${classes.valueInput} entryfield2`} id={auditId}>
                 <DataEntryItem
                     dataElement={dataElement}
                     dataFormInfo={dataFormInfo}
