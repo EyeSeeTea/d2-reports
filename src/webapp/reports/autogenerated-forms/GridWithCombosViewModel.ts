@@ -28,11 +28,20 @@ interface Row {
 
 const separator = " - ";
 
-export class GridViewModel {
+export class GridWithCombosViewModel {
     static get(section: Section): Grid {
         const dataElements = getDataElementsWithIndexProccessing(section);
 
         const subsections = _(dataElements)
+            .flatMap(dataElement => {
+                const cocNames = dataElement.categoryCombos.categoryOptionCombos.map(coc => coc.name);
+
+                return cocNames.flatMap(coc => ({
+                    ...dataElement,
+                    cocId: dataElement.categoryCombos.categoryOptionCombos.find(c => c.name === coc)?.id || "cocId",
+                    name: `${coc} - ${_(dataElement.name).split(separator).last()}`,
+                }));
+            })
             .groupBy(dataElement => getSubsectionName(dataElement))
             .toPairs()
             .map(
@@ -52,14 +61,17 @@ export class GridViewModel {
             .map(de => ({ name: de.name }))
             .value();
 
-        const rows = subsections.map(subsection => {
-            const items = columns.map(column => {
-                const dataElement = subsection.dataElements.find(de => de.name === column.name);
-                return { column, dataElement };
-            });
+        const rows = _.orderBy(
+            subsections.map(subsection => {
+                const items = columns.map(column => {
+                    const dataElement = subsection.dataElements.find(de => de.name === column.name);
+                    return { column, dataElement };
+                });
 
-            return { name: subsection.name, items: items };
-        });
+                return { name: subsection.name, items: items };
+            }),
+            ["name"]
+        );
 
         const useIndexes =
             _(rows).every(row => Boolean(row.name.match(/\(\d+\)$/))) &&
@@ -78,21 +90,6 @@ export class GridViewModel {
         };
     }
 }
-
-/** Move the data element index to the row name, so indexed data elements are automatically grouped 
-
-    Input:
-        MAL - Compound name (1)
-        MAL - Compound name (2)
-        MAL - Compound symbol (1)
-        MAL - Compound symbol (2)
-
-    Output:
-        MAL (1) - Compound name
-        MAL (2) - Compound name
-        MAL (1) - Compound symbol
-        MAL (2) - Compound symbol
-*/
 
 function getDataElementsWithIndexProccessing(section: Section) {
     return section.dataElements.map((dataElement): typeof dataElement => {

@@ -18,10 +18,11 @@ export type SectionConfig = BasicSectionConfig | GridWithPeriodsSectionConfig;
 interface BaseSectionConfig {
     texts: Texts;
     toggle: { type: "none" } | { type: "dataElement"; code: Code };
+    tabs: { active: true; order: number } | { active: false };
 }
 
 interface BasicSectionConfig extends BaseSectionConfig {
-    viewType: "table" | "grid";
+    viewType: "table" | "grid" | "grid-with-totals" | "grid-with-combos";
 }
 
 interface GridWithPeriodsSectionConfig extends BaseSectionConfig {
@@ -33,7 +34,13 @@ const defaultViewType = "table";
 
 const selector = Codec.interface({ code: string });
 
-const viewType = oneOf([exactly("table"), exactly("grid"), exactly("grid-with-periods")]);
+const viewType = oneOf([
+    exactly("table"),
+    exactly("grid"),
+    exactly("grid-with-totals"),
+    exactly("grid-with-combos"),
+    exactly("grid-with-periods"),
+]);
 
 const textsCodec = Codec.interface({
     header: optional(oneOf([string, selector])),
@@ -46,7 +53,7 @@ const DataStoreConfigCodec = Codec.interface({
             Codec.interface({
                 optionSet: optional(selector),
                 isMultiple: optional(boolean),
-                widget: optional(oneOf([exactly("dropdown"), exactly("radio")])),
+                widget: optional(oneOf([exactly("dropdown"), exactly("radio"), exactly("sourceType")])),
             })
         ),
     }),
@@ -62,6 +69,12 @@ const DataStoreConfigCodec = Codec.interface({
                     Codec.interface({
                         type: exactly("dataElement"),
                         code: string,
+                    })
+                ),
+                tabs: optional(
+                    Codec.interface({
+                        active: exactly(true),
+                        order: number,
                     })
                 ),
                 periods: optional(
@@ -80,7 +93,7 @@ interface DataElementConfig {
     selection?: {
         optionSet?: OptionSet;
         isMultiple: boolean;
-        widget: Maybe<"dropdown" | "radio">;
+        widget: Maybe<"dropdown" | "radio" | "sourceType">;
     };
 }
 
@@ -235,7 +248,7 @@ export class Dhis2DataStoreDataForm {
         const res = await api.metadata
             .get({
                 constants: {
-                    fields: { id: true, code: true, description: true },
+                    fields: { id: true, code: true, displayDescription: true },
                     filter: { code: { in: codes } },
                 },
             })
@@ -250,7 +263,7 @@ export class Dhis2DataStoreDataForm {
         const constantsByCode = _.keyBy(this.config.constants, getCode);
 
         const getText = (value: string | { code: string } | undefined) =>
-            typeof value === "string" ? value : value ? constantsByCode[value.code]?.description : "";
+            typeof value === "string" ? value : value ? constantsByCode[value.code]?.displayDescription : "";
 
         const sections = _(dataSetConfig?.sections)
             .toPairs()
@@ -265,6 +278,7 @@ export class Dhis2DataStoreDataForm {
                         header: getText(sectionConfig?.texts?.header),
                         footer: getText(sectionConfig?.texts?.footer),
                     },
+                    tabs: sectionConfig.tabs || { active: false },
                 };
 
                 const config: SectionConfig =
@@ -322,7 +336,7 @@ function selectorMatches<T extends { code: string }>(obj: T, selector: Selector)
 interface Constant {
     id: Id;
     code: Code;
-    description: string;
+    displayDescription: string;
 }
 
 let cachedStore: Dhis2DataStoreDataForm | undefined;

@@ -1,16 +1,18 @@
 import _ from "lodash";
 import { Maybe, UnionFromValues } from "../../../utils/ts-utils";
 import { Id } from "./Base";
-import { DataElement } from "./DataElement";
+import { DataElement, dataInputPeriodsType } from "./DataElement";
 import { Period } from "./DataValue";
 
 export interface DataForm {
     id: Id;
+    expiryDays: number;
+    dataInputPeriods: dataInputPeriodsType;
     dataElements: DataElement[];
     sections: Section[];
     texts: Texts;
     options: {
-        dataElements: Record<Id, { widget: "dropdown" | "radio" }>;
+        dataElements: Record<Id, { widget: "dropdown" | "radio" | "sourceType" }>;
     };
 }
 
@@ -21,7 +23,7 @@ export interface Texts {
 
 export const defaultTexts: Texts = { header: undefined, footer: undefined };
 
-const viewTypes = ["grid", "table", "grid-with-periods"] as const;
+const viewTypes = ["grid", "table", "grid-with-periods", "grid-with-totals", "grid-with-combos"] as const;
 export type ViewType = UnionFromValues<typeof DataFormM.viewTypes>;
 
 export interface SectionBase {
@@ -30,10 +32,11 @@ export interface SectionBase {
     dataElements: DataElement[];
     toggle: { type: "none" } | { type: "dataElement"; dataElement: DataElement };
     texts: Texts;
+    tabs: { active: boolean; order?: number };
 }
 
 export interface SectionSimple extends SectionBase {
-    viewType: "table" | "grid";
+    viewType: "table" | "grid" | "grid-with-totals" | "grid-with-combos";
 }
 
 export interface SectionWithPeriods extends SectionBase {

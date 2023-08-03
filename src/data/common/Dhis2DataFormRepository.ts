@@ -23,6 +23,8 @@ export class Dhis2DataFormRepository implements DataFormRepository {
 
         return {
             id: dataSet.id,
+            expiryDays: dataSet.expiryDays,
+            dataInputPeriods: dataSet.dataInputPeriods,
             dataElements: _.flatMap(sections, section => section.dataElements),
             sections: sections,
             texts: dataSetConfig.texts,
@@ -72,6 +74,7 @@ export class Dhis2DataFormRepository implements DataFormRepository {
                 name: section.displayName,
                 toggle: { type: "none" },
                 texts: config?.texts || defaultTexts,
+                tabs: config?.tabs || { active: false },
                 dataElements: _(section.dataElements)
                     .map(dataElementRef => dataElements[dataElementRef.id])
                     .compact()
@@ -98,11 +101,29 @@ function getMetadataQuery(options: { dataSetId: Id }) {
             fields: {
                 id: true,
                 code: true,
+                expiryDays: true,
+                dataInputPeriods: {
+                    closingDate: true,
+                    openingDate: true,
+                    period: {
+                        id: true,
+                    },
+                },
                 sections: {
                     id: true,
                     code: true,
                     displayName: true,
-                    dataElements: { id: true },
+                    dataElements: {
+                        id: true,
+                        categoryCombo: {
+                            id: true,
+                            name: true,
+                            categoryOptionCombos: {
+                                id: true,
+                                name: true,
+                            },
+                        },
+                    },
                 },
             },
             filter: { id: { eq: options.dataSetId } },

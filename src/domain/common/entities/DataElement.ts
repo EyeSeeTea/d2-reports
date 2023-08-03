@@ -7,8 +7,10 @@ interface DataElementBase {
     id: Id;
     code: Code;
     name: string;
-    description: string;
-    options: Options;
+    description?: string;
+    options?: Options;
+    categoryCombos: CategoryCombos;
+    cocId?: string;
 }
 
 export interface DataElementBoolean extends DataElementBase {
@@ -35,6 +37,15 @@ export interface DataElementDate extends DataElementBase {
 
 type Options = Maybe<{ isMultiple: boolean; items: Option<string>[] }>;
 
+type CategoryCombos = {
+    id: Id;
+    name: string;
+    categoryOptionCombos: {
+        id: Id;
+        name: string;
+    }[];
+};
+
 type NumberType =
     | "NUMBER"
     | "INTEGER_ZERO_OR_POSITIVE"
@@ -49,3 +60,13 @@ export interface Option<Value> {
     name: string;
     value: Value;
 }
+
+export type dataInputPeriodsType = Maybe<
+    Array<{
+        closingDate?: string;
+        openingDate?: string;
+        period: {
+            id: string;
+        };
+    }>
+>;
