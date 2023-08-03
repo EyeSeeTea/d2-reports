@@ -14,6 +14,7 @@ export const SQL_VIEW_DATA_DUPLICATION_NAME = "MAL Data Approval Status";
 export const SQL_VIEW_OLD_DATA_DUPLICATION_NAME = "MAL Data Approval Status Pre 2000";
 export const SQL_VIEW_MAL_METADATA_NAME = "MAL Data approval header";
 export const SQL_VIEW_MAL_DIFF_NAME = "MAL Data Approval Diff";
+export const SQL_VIEW_MAL_DATAELEMENTS_NAME = "MAL - Approval Dataelements";
 
 const base = {
     nhwa: {
@@ -29,6 +30,7 @@ const base = {
             SQL_VIEW_DATA_DUPLICATION_NAME,
             SQL_VIEW_MAL_METADATA_NAME,
             SQL_VIEW_MAL_DIFF_NAME,
+            SQL_VIEW_MAL_DATAELEMENTS_NAME,
             SQL_VIEW_OLD_DATA_DUPLICATION_NAME,
         ],
         constantCode: "",

@@ -1,6 +1,7 @@
 import React from "react";
 import { AdminReport } from "./admin/AdminReport";
 import MalDataApprovalStatusReport from "./mal-data-approval/MalDataApprovalReport";
+import MalDataSubscriptionStatusReport from "./mal-data-subscription/MalDataSubscriptionReport";
 import { NHWADataApprovalStatusReport } from "./nhwa-approval-status/NHWADataApprovalStatusReport";
 import { NHWACommentsReport } from "./nhwa-comments/NHWACommentsReport";
 import { WMRNationalPolicies } from "./wmr-national-policies/WMRNationalPolicies";
@@ -22,6 +23,9 @@ const Component: React.FC = () => {
         }
         case "mal-approval-status": {
             return <MalDataApprovalStatusReport />;
+        }
+        case "mal-subscription-status": {
+            return <MalDataSubscriptionStatusReport />;
         }
         case "admin": {
             return <AdminReport />;
