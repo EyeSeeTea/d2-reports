@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2023-07-18T07:35:32.769Z\n"
-"PO-Revision-Date: 2023-07-18T07:35:32.769Z\n"
+"POT-Creation-Date: 2023-08-04T08:10:00.129Z\n"
+"PO-Revision-Date: 2023-08-04T08:10:00.129Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -77,7 +77,7 @@ msgstr ""
 msgid "created"
 msgstr ""
 
-msgid "CSY Audit Report - Emergency Care"
+msgid "CSY Audit Filters - Emergency Care"
 msgstr ""
 
 msgid "Register ID"
@@ -93,6 +93,9 @@ msgid "Highest triage category and time to first provider >30min​"
 msgstr ""
 
 msgid "Initial RBG low and Glucose not given"
+msgstr ""
+
+msgid "Shock and IVF including Blood"
 msgstr ""
 
 msgid "Yearly"
@@ -125,7 +128,7 @@ msgstr ""
 msgid "Quarter"
 msgstr ""
 
-msgid "CSY Audit Report - Trauma Care"
+msgid "CSY Audit Filters - Trauma Care"
 msgstr ""
 
 msgid "Mortality with low injury severity score"
@@ -179,7 +182,7 @@ msgstr ""
 msgid "Summary Type"
 msgstr ""
 
-msgid "CSY Summary Table Report"
+msgid "CSY Summary Table Report - Patient Characteristics"
 msgstr ""
 
 msgid "Group"
@@ -401,6 +404,33 @@ msgstr ""
 msgid "Data sets"
 msgstr ""
 
+msgid "Malaria Data Subscription Report"
+msgstr ""
+
+msgid "Subscription status"
+msgstr ""
+
+msgid "Sections"
+msgstr ""
+
+msgid "Last Date of Subscription"
+msgstr ""
+
+msgid "Subscribe"
+msgstr ""
+
+msgid "Unsubscribe"
+msgstr ""
+
+msgid "Element Type"
+msgstr ""
+
+msgid "Subscription Status"
+msgstr ""
+
+msgid "Section"
+msgstr ""
+
 msgid "NHWA Data Approval Status Report"
 msgstr ""
 
@@ -422,9 +452,6 @@ msgstr ""
 msgid "NHWA Comments Report"
 msgstr ""
 
-msgid "Section"
-msgstr ""
-
 msgid "Category option combo"
 msgstr ""
 
@@ -435,9 +462,6 @@ msgid "Last updated"
 msgstr ""
 
 msgid "Stored by"
-msgstr ""
-
-msgid "Sections"
 msgstr ""
 
 msgid "Toggle filters"
