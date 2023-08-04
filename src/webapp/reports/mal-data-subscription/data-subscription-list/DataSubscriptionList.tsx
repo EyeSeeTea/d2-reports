@@ -61,8 +61,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                     name: "subscription",
                     text: i18n.t("Subscription status"),
                     sortable: true,
-                    getValue: row =>
-                        row.subscription ? "Subscribed" : "Not subscribed",
+                    getValue: row => (row.subscription ? "Subscribed" : "Not subscribed"),
                 },
                 { name: "sectionName", text: i18n.t("Sections"), sortable: true },
                 {
@@ -193,13 +192,12 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
             return sections;
         }
         getDatasetSections().then(sections => setSections(sections));
-    });
+    }, [api]);
 
     const getFilterOptions = useCallback(
         (_config: Config) => {
             return {
                 sections: sections,
-                elementType: ["Data Elements"],
                 subscription: ["Subscribed", "Not Subscribed"],
             };
         },
@@ -246,6 +244,6 @@ function getEmptyDataValuesFilter(_config: Config): DataElementsFilter {
     return {
         sections: [],
         dataElementIds: [],
-        elementTypes: [],
+        elementType: "dataElements",
     };
 }

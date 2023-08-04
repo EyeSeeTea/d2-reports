@@ -1,4 +1,4 @@
-import { MultipleDropdownProps } from "@eyeseetea/d2-ui-components";
+import { Dropdown, DropdownProps, MultipleDropdownProps } from "@eyeseetea/d2-ui-components";
 import React, { useMemo } from "react";
 import styled from "styled-components";
 import i18n from "../../../../locales";
@@ -12,14 +12,13 @@ export interface DataElementsFiltersProps {
 }
 
 export interface DataElementsFilter {
-    elementTypes: string[];
+    elementType: string;
     dataElementIds: string[];
     sections: string[];
 }
 
 interface FilterOptions {
     sections: NamedRef[];
-    elementType: string[];
     subscription: string[];
 }
 
@@ -27,7 +26,14 @@ export const Filters: React.FC<DataElementsFiltersProps> = React.memo(props => {
     const { values: filter, options: filterOptions, onChange } = props;
 
     const sectionItems = useMemoOptionsFromNamedRef(filterOptions.sections);
-    const elementTypeItems = useMemoOptionsFromStrings(filterOptions.elementType);
+    const elementTypeItems = React.useMemo(() => {
+        return [
+            { value: "dataElements", text: i18n.t("Data Elements") },
+            { value: "dashboards", text: i18n.t("Dashboards") },
+            { value: "visualizations", text: i18n.t("Visualizations") },
+        ];
+    }, []);
+
     const subscriptionTypeItems = useMemoOptionsFromStrings(filterOptions.subscription);
 
     const setSections = React.useCallback<DropdownHandler>(
@@ -35,8 +41,8 @@ export const Filters: React.FC<DataElementsFiltersProps> = React.memo(props => {
         [onChange]
     );
 
-    const setElementType = React.useCallback<DropdownHandler>(
-        elementTypes => onChange(prev => ({ ...prev, elementTypes })),
+    const setElementType = React.useCallback<SingleDropdownHandler>(
+        elementType => onChange(prev => ({ ...prev, elementType: elementType ?? "dataElements" })),
         [onChange]
     );
 
@@ -47,11 +53,12 @@ export const Filters: React.FC<DataElementsFiltersProps> = React.memo(props => {
 
     return (
         <Container>
-            <DropdownStyled
+            <SingleDropdownStyled
                 items={elementTypeItems}
-                values={filter.sections}
+                value={filter.elementType}
                 onChange={setElementType}
                 label={i18n.t("Element Type")}
+                hideEmpty
             />
 
             <DropdownStyled
@@ -81,6 +88,11 @@ const DropdownStyled = styled(MultipleDropdown)`
     margin-left: -10px;
 `;
 
+const SingleDropdownStyled = styled(Dropdown)`
+    margin-left: -10px;
+    width: 180px;
+`;
+
 function useMemoOptionsFromNamedRef(options: NamedRef[]) {
     return useMemo(() => {
         return options.map(option => ({ value: option.id, text: option.name }));
@@ -94,3 +106,4 @@ function useMemoOptionsFromStrings(options: string[]) {
 }
 
 type DropdownHandler = MultipleDropdownProps["onChange"];
+type SingleDropdownHandler = DropdownProps["onChange"];

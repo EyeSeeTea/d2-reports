@@ -80,39 +80,42 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
     }
 
     async get(options: MalDataSubscriptionOptions): Promise<PaginatedObjects<MalDataSubscriptionItem>> {
-        const { config, elementTypes, dataElementIds, sections } = options; // ?
-        const { sorting, paging } = options; // ?
+        const { config, elementType, dataElementIds, sections, sorting, paging } = options;
 
-        const sqlViews = new Dhis2SqlViews(this.api);
-        const allDataSetIds = _.values(config.dataSets).map(ds => ds.id); // ?
+        if (elementType === "dataElements") {
+            const sqlViews = new Dhis2SqlViews(this.api);
+            const allDataSetIds = _.values(config.dataSets).map(ds => ds.id); // ?
 
-        const { pager, rows } = await sqlViews
-            .query<Variables, SqlField>(
-                getSqlViewId(config, SQL_VIEW_MAL_DATAELEMENTS_NAME),
-                {
-                    dataSets: sqlViewJoinIds(allDataSetIds),
-                    elementType: sqlViewJoinIds(elementTypes),
-                    sectionId: sqlViewJoinIds(sections),
-                    dataElementId: sqlViewJoinIds(dataElementIds),
-                    orderByColumn: fieldMapping[sorting.field],
-                    orderByDirection: sorting.direction,
-                },
-                paging
-            )
-            .getData();
+            const { pager, rows } = await sqlViews
+                .query<Variables, SqlField>(
+                    getSqlViewId(config, SQL_VIEW_MAL_DATAELEMENTS_NAME),
+                    {
+                        dataSets: sqlViewJoinIds(allDataSetIds),
+                        elementType,
+                        sectionId: sqlViewJoinIds(sections),
+                        dataElementId: sqlViewJoinIds(dataElementIds),
+                        orderByColumn: fieldMapping[sorting.field],
+                        orderByDirection: sorting.direction,
+                    },
+                    paging
+                )
+                .getData();
 
-        const items: Array<MalDataSubscriptionItem> = rows.map(
-            (item): MalDataSubscriptionItem => ({
-                dataElementName: item.dataelementname,
-                subscription: Boolean(item.subscription),
-                sectionName: item.sectionname,
-                sectionId: item.sectionuid,
-                dataElementId: item.dataelementuid,
-                lastDateOfSubscription: item.lastdateofsubscription,
-            })
-        );
+            const items: Array<MalDataSubscriptionItem> = rows.map(
+                (item): MalDataSubscriptionItem => ({
+                    dataElementName: item.dataelementname,
+                    subscription: Boolean(item.subscription),
+                    sectionName: item.sectionname,
+                    sectionId: item.sectionuid,
+                    dataElementId: item.dataelementuid,
+                    lastDateOfSubscription: item.lastdateofsubscription,
+                })
+            );
 
-        return { pager, objects: items };
+            return { pager, objects: items };
+        } else {
+            return { pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 }, objects: [] };
+        }
     }
 
     async getColumns(namespace: string): Promise<string[]> {
