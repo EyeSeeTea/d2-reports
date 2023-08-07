@@ -30,7 +30,6 @@ export const Filters: React.FC<DataElementsFiltersProps> = React.memo(props => {
         return [
             { value: "dataElements", text: i18n.t("Data Elements") },
             { value: "dashboards", text: i18n.t("Dashboards") },
-            { value: "visualizations", text: i18n.t("Visualizations") },
         ];
     }, []);
 
@@ -68,12 +67,14 @@ export const Filters: React.FC<DataElementsFiltersProps> = React.memo(props => {
                 label={i18n.t("Subscription Status")}
             />
 
-            <DropdownStyled
-                items={sectionItems}
-                values={filter.sections}
-                onChange={setSections}
-                label={i18n.t("Section")}
-            />
+            {filter.elementType === "dataElements" && (
+                <DropdownStyled
+                    items={sectionItems}
+                    values={filter.sections}
+                    onChange={setSections}
+                    label={i18n.t("Section")}
+                />
+            )}
         </Container>
     );
 });

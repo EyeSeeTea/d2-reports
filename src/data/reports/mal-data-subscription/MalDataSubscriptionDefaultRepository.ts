@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { D2Api, Id, PaginatedObjects } from "../../../types/d2-api";
+import { D2Api, Id, Pager, PaginatedObjects } from "../../../types/d2-api";
 import { promiseMap } from "../../../utils/promises";
 import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
 import { StorageClient } from "../../common/clients/storage/StorageClient";
@@ -16,6 +16,7 @@ import {
     MalDataSubscriptionRepository,
 } from "../../../domain/reports/mal-data-subscription/repositories/MalDataSubscriptionRepository";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
+import { NamedRef } from "../../../domain/common/entities/Base";
 
 export interface Pagination {
     page: number;
@@ -114,7 +115,82 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
 
             return { pager, objects: items };
         } else {
-            return { pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 }, objects: [] };
+            const { dashboards } = await this.api
+                .get<{ dashboards: NamedRef[]; pager: Pager }>("/dashboards?fields=id,name")
+                .getData();
+
+            const objects: Array<MalDataSubscriptionItem> = dashboards.map(dashboard => ({
+                dataElementName: dashboard.name,
+                subscription: false,
+                sectionName: "",
+                sectionId: dashboard.id,
+                dataElementId: dashboard.id,
+                lastDateOfSubscription: "",
+            }));
+
+            const rowsInPage = _(objects)
+                .orderBy([row => row[sorting.field]], [sorting.direction])
+                .drop((paging.page - 1) * paging.pageSize)
+                .take(paging.pageSize)
+                .value();
+
+            const visualizationIds = await promiseMap(rowsInPage, async row => {
+                const { dashboardItems } = await this.api
+                    .get<{
+                        dashboardItems: {
+                            visualization: {
+                                dataDimensionItems:
+                                    | {
+                                          indicator: { numerator: string; denominator: string } | undefined;
+                                      }[]
+                                    | undefined;
+                            };
+                        }[];
+                    }>(
+                        `/dashboards/${row.sectionId}?fields=dashboardItems[visualization[dataDimensionItems[indicator[id,name,numerator,denominator]]]]`
+                    )
+                    .getData();
+
+                const indicatorVariables = _(dashboardItems)
+                    .map(item =>
+                        item.visualization?.dataDimensionItems?.map(dimensionItem => [
+                            dimensionItem.indicator?.numerator,
+                            dimensionItem.indicator?.denominator,
+                        ])
+                    )
+                    .flattenDeep()
+                    .compact()
+                    .value();
+                const dataElementVariables = _.uniq(
+                    _.compact(_.flatMap(indicatorVariables, str => str.match(/#{([a-zA-Z0-9]+)}/g)))
+                );
+
+                const dataElementIds = dataElementVariables
+                    .map(token => token.slice(2, -1))
+                    .filter(id => /^[a-zA-Z0-9]+$/.test(id));
+                const dataElements = await promiseMap(dataElementIds, async id => {
+                    return await this.api.get<NamedRef>(`/dataElements/${id}?fields=id,name`).getData();
+                });
+
+                console.log({ indicatorVariables, dataElementVariables, dataElementIds, dataElements });
+
+                return _({
+                    dataElements,
+                })
+                    .keyBy(_item => row.sectionId)
+                    .value();
+            });
+
+            const pager: Pager = {
+                page: paging.page,
+                pageSize: paging.pageSize,
+                pageCount: Math.ceil(objects.length / paging.pageSize),
+                total: objects.length,
+            };
+
+            console.log({ elementType, dashboards, visualizationIds });
+
+            return { pager, objects: rowsInPage };
         }
     }
 
