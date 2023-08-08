@@ -40,7 +40,6 @@ import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUn
 import { Check, Dashboard, LockOpen, ThumbDown, ThumbUp } from "@material-ui/icons";
 import { useBooleanState } from "../../../utils/use-boolean";
 import { goToDhis2Url } from "../../../../utils/utils";
-import { Spinner } from "../../../components/objects-list/Spinner";
 
 export const DataSubmissionList: React.FC = React.memo(() => {
     const { api, compositionRoot, config } = useAppContext();
@@ -257,6 +256,13 @@ export const DataSubmissionList: React.FC = React.memo(() => {
             columns: [
                 { name: "orgUnitName", text: i18n.t("Country"), sortable: true },
                 { name: "creationDate", text: i18n.t("Creation Date"), sortable: true },
+                {
+                    name: "levelOfConfidentiality",
+                    text: i18n.t("Level of Confidentiality"),
+                    sortable: true,
+                    getValue: row =>
+                        row.levelOfConfidentiality === "CONFIDENTIAL" ? "Confidential" : "Non-Confidential",
+                },
                 { name: "status", text: i18n.t("Status"), sortable: true },
             ],
             actions: [
@@ -452,7 +458,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
     };
 
     if (_.isEmpty(modules)) {
-        return <Spinner isVisible />;
+        return null;
     } else if (isEARModule !== undefined) {
         return (
             <ObjectsList<EARDataSubmissionViewModel>

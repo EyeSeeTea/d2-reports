@@ -351,17 +351,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         return columns ?? [];
     }
 
-    async getEARColumns(namespace: string): Promise<string[]> {
-        const columns = await this.storageClient.getObject<string[]>(namespace);
-
-        return columns ?? [];
-    }
-
     async saveColumns(namespace: string, columns: string[]): Promise<void> {
-        return this.storageClient.saveObject<string[]>(namespace, columns);
-    }
-
-    async saveEARColumns(namespace: string, columns: string[]): Promise<void> {
         return this.storageClient.saveObject<string[]>(namespace, columns);
     }
 
@@ -415,7 +405,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const orgUnitsById = await this.getOrgUnits(orgUnitIds);
         const multipleItems = signals.length > 1;
 
-        const text = `The notiification approval for ${glassModule} module for${orgUnitIds.map(
+        const text = `The signal approval for ${glassModule} module for${orgUnitIds.map(
             item => ` country ${orgUnitsById[item]?.name}`
         )} ${multipleItems ? "have" : "has"} changed to ${status.toUpperCase()}.`;
 
@@ -731,9 +721,9 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             );
             const recipients = await this.getRecipientUsers(items, modules);
 
-        const body = `Please review the messages and the reports to find about the causes of this rejection. You have to upload new datasets.\n Reason for rejection:\n ${message}`;
+            const body = `Please review the messages and the reports to find about the causes of this rejection. You have to upload new datasets.\n Reason for rejection:\n ${message}`;
 
-        this.sendNotifications("Rejected by WHO", body, [], recipients);
+            this.sendNotifications("Rejected by WHO", body, [], recipients);
 
             await this.postDataSetRegistration(items, false);
 
@@ -743,8 +733,9 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             const newSubmissionValues = this.getNewEARSubmissionValues(signals, objects, "REJECTED");
             const recipients = await this.getEARRecipientUsers(signals, modules);
 
-            const body = `Please review the messages and the reports to find about the causes of this rejection. You have to upload new datasets.\n Reason for rejection:\n ${message}`;
-            this.sendNotifications("EAR notification rejected", body, [], recipients);
+            const message = await this.getEARNotificationText(signals, modules, "rejected");
+            const body = `Please review the messages to find about the causes of this rejection.\n Reason for rejection:\n ${message}`;
+            this.sendNotifications(message, body, [], recipients);
 
             return await this.globalStorageClient.saveObject<EARDataSubmissionItem[]>(namespace, newSubmissionValues);
         }

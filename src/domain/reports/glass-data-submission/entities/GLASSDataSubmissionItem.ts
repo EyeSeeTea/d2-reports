@@ -28,6 +28,7 @@ export interface EARDataSubmissionItem {
     orgUnitId: string;
     orgUnitName: string;
     orgUnit: NamedRef;
+    levelOfConfidentiality: "CONFIDENTIAL" | "NON-CONFIDENTIAL";
     status: Status;
     statusHistory: {
         changedAt: string;

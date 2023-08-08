@@ -24,6 +24,7 @@ export interface EARDataSubmissionViewModel {
     module: Module;
     orgUnitId: string;
     orgUnitName: string;
+    levelOfConfidentiality: "CONFIDENTIAL" | "NON-CONFIDENTIAL";
     status: Status;
 }
 
@@ -67,6 +68,7 @@ export function getEARDataSubmissionViews(
             orgUnitName: item.orgUnit.name,
             creationDate: item.creationDate,
             status: item.status,
+            levelOfConfidentiality: item.levelOfConfidentiality,
             module: item.module,
         };
     });
