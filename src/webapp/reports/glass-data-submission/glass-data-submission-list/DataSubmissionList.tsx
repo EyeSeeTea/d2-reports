@@ -458,7 +458,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
 
     if (_.isEmpty(modules)) {
         return null;
-    } else if (isEARModule !== undefined) {
+    } else if (isEARModule) {
         return (
             <ObjectsList<EARDataSubmissionViewModel>
                 {...earTableProps}
