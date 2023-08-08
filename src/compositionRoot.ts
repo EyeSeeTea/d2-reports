@@ -54,6 +54,12 @@ import { CSYSummaryMortalityDefaultRepository } from "./data/reports/csy-summary
 import { GetSummaryMortalityUseCase } from "./domain/reports/csy-summary-mortality/usecases/GetSummaryUseCase";
 import { SaveSummaryMortalityUseCase } from "./domain/reports/csy-summary-mortality/usecases/SaveSummaryUseCase";
 import { CSYAuditTraumaDefaultRepository } from "./data/reports/csy-audit-trauma/CSYAuditTraumaDefaultRepository";
+import { GetAutoCompleteComputeValuesUseCase } from "./domain/reports/nhwa-auto-complete-compute/usecases/GetAutoCompleteComputeValuesUseCase";
+import { DataSetD2Repository } from "./data/common/DataSetD2Repository";
+import { DataValuesD2Repository } from "./data/common/DataValuesD2Repository";
+import { FixAutoCompleteComputeValuesUseCase } from "./domain/reports/nhwa-auto-complete-compute/usecases/FixAutoCompleteComputeValuesUseCase";
+import { GetOrgUnitsByLevelUseCase } from "./domain/common/usecases/GetOrgUnitsByLevelUseCase";
+import { AutoCompleteComputeSettingsD2Repository } from "./data/reports/nhwa-auto-complete-compute/AutoCompleteComputeSettingsD2Repository";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -68,6 +74,9 @@ export function getCompositionRoot(api: D2Api) {
     const csySummaryRepository = new CSYSummaryDefaultRepository(api);
     const csySummaryMortalityRepository = new CSYSummaryMortalityDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
+    const dataSetRepository = new DataSetD2Repository(api);
+    const dataValuesRepository = new DataValuesD2Repository(api);
+    const autoCompleteComputeSettingsRepository = new AutoCompleteComputeSettingsD2Repository(api);
 
     return {
         admin: getExecute({
@@ -132,10 +141,19 @@ export function getCompositionRoot(api: D2Api) {
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),
+            getByLevel: new GetOrgUnitsByLevelUseCase(orgUnitsRepository),
         }),
         config: getExecute({
             get: new GetConfig(configRepository),
         }),
+        nhwa: {
+            getAutoCompleteComputeValues: new GetAutoCompleteComputeValuesUseCase(
+                dataSetRepository,
+                dataValuesRepository,
+                autoCompleteComputeSettingsRepository
+            ),
+            fixAutoCompleteComputeValues: new FixAutoCompleteComputeValuesUseCase(dataValuesRepository),
+        },
     };
 }
 
