@@ -263,7 +263,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     getValue: row =>
                         row.levelOfConfidentiality === "CONFIDENTIAL" ? "Confidential" : "Non-Confidential",
                 },
-                { name: "status", text: i18n.t("Status"), sortable: true },
+                { name: "submissionStatus", text: i18n.t("Status"), sortable: true },
             ],
             actions: [
                 {
@@ -271,7 +271,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     text: i18n.t("Go to Signal"),
                     icon: <Dashboard />,
                     multiple: false,
-                    onClick: async (selectedIds: string[]) => {
+                    onClick: (selectedIds: string[]) => {
                         const items = _.compact(selectedIds.map(item => parseEARSubmissionItemId(item)));
                         if (items.length === 0) return;
 
@@ -308,7 +308,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                                 items
                             );
                         } catch {
-                            snackbar.error(i18n.t("Error when trying to approve submission"));
+                            snackbar.error(i18n.t("Error when trying to approve signal"));
                         }
 
                         reload();
@@ -329,9 +329,9 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                         setRejectedSignals(items);
                         openDialog();
                     },
-                    isActive: (rows: EARDataSubmissionViewModel[]) => {
-                        return _.every(rows, row => row.status === "PENDING_APPROVAL");
-                    },
+                    // isActive: (rows: EARDataSubmissionViewModel[]) => {
+                    //     return _.every(rows, row => row.status === "PENDING_APPROVAL");
+                    // },
                 },
             ],
             initialSorting: {
@@ -376,7 +376,6 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                 },
                 Namespaces.SIGNALS
             );
-
             console.debug("Reloading", reloadKey);
 
             return { pager, objects: getEARDataSubmissionViews(config, objects) };
@@ -477,7 +476,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
 
                 <ConfirmationDialog
                     isOpen={isDialogOpen}
-                    title={i18n.t("Reject Notification")}
+                    title={i18n.t("Reject Signal")}
                     onCancel={closeRejectionDialog}
                     cancelText={i18n.t("Cancel")}
                     onSave={async () => {
@@ -494,11 +493,11 @@ export const DataSubmissionList: React.FC = React.memo(() => {
 
                             setRejectedState("idle");
                             closeRejectionDialog();
-                            snackbar.success(i18n.t("Notifications have been successfully rejected"));
+                            snackbar.success(i18n.t("Signals have been successfully rejected"));
 
                             reload();
                         } catch {
-                            snackbar.error(i18n.t("Error when trying to reject notification"));
+                            snackbar.error(i18n.t("Error when trying to reject signal"));
                         }
                     }}
                     saveText={rejectedState === "idle" ? "Reject" : "Rejecting"}
@@ -506,7 +505,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     disableSave={!rejectionReason || rejectedState === "loading"}
                     fullWidth
                 >
-                    <p>{i18n.t("Please provide a reason for rejecting this notification:")}</p>
+                    <p>{i18n.t("Please provide a reason for rejecting this signal:")}</p>
                     <TextArea
                         type="text"
                         rows={4}

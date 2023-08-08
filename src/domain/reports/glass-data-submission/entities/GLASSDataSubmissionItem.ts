@@ -30,6 +30,7 @@ export interface EARDataSubmissionItem {
     orgUnit: NamedRef;
     levelOfConfidentiality: "CONFIDENTIAL" | "NON-CONFIDENTIAL";
     status: Status;
+    submissionStatus: string;
     statusHistory: {
         changedAt: string;
         from: Status;
@@ -46,8 +47,10 @@ export interface GLASSDataSubmissionItemIdentifier {
 export interface EARSubmissionItemIdentifier {
     orgUnit?: NamedRef;
     orgUnitId: string | undefined;
+    orgUnitName: string | undefined;
     id: string;
     module: string | undefined;
+    levelOfConfidentiality: string | undefined;
 }
 
 export interface ApprovalIds {
@@ -83,7 +86,13 @@ export function getDataSubmissionItemId(submissionItem: GLASSDataSubmissionItem)
 }
 
 export function getEARSubmissionItemId(submissionItem: EARDataSubmissionItem): string {
-    return [submissionItem.orgUnit.id, submissionItem.module, submissionItem.id].join("-");
+    return [
+        submissionItem.orgUnit.id,
+        submissionItem.orgUnit.name,
+        submissionItem.module,
+        submissionItem.id,
+        submissionItem.levelOfConfidentiality,
+    ].join("-");
 }
 
 export function parseDataSubmissionItemId(string: string): GLASSDataSubmissionItemIdentifier | undefined {
@@ -94,8 +103,9 @@ export function parseDataSubmissionItemId(string: string): GLASSDataSubmissionIt
 }
 
 export function parseEARSubmissionItemId(string: string): EARSubmissionItemIdentifier | undefined {
-    const [orgUnitId, module, id] = string.split("-");
+    const [orgUnitId, orgUnitName, module, id, levelOfConfidentiality] = string.split("-");
+
     if (!id) return undefined;
 
-    return { module, id, orgUnitId };
+    return { module, id, orgUnitId, orgUnitName, levelOfConfidentiality };
 }

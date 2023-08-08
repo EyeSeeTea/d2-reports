@@ -237,7 +237,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             })
             .map(row => {
                 const submissionStatus = earStatusItems.find(item => item.value === row.status)?.text ?? "";
-                return { ...row, status: submissionStatus as Status };
+                return { ...row, submissionStatus };
             });
 
         const rowsInPage = _(filteredRows)
@@ -391,23 +391,23 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         return text;
     }
 
-    private async getEARNotificationText(
+    private getEARNotificationText(
         signals: EARSubmissionItemIdentifier[],
         modules: GLASSDataSubmissionModule[],
         status: string
     ) {
-        const glassModule = modules.find(module => module.id === signals[0]?.module)?.name;
-        const orgUnitIds = _(signals)
-            .map(({ orgUnitId }) => orgUnitId)
-            .compact()
-            .uniq()
-            .value();
-        const orgUnitsById = await this.getOrgUnits(orgUnitIds);
-        const multipleItems = signals.length > 1;
+        const earModule = modules.find(module => module.id === signals[0]?.module)?.name;
 
-        const text = `The signal approval for ${glassModule} module for${orgUnitIds.map(
-            item => ` country ${orgUnitsById[item]?.name}`
-        )} ${multipleItems ? "have" : "has"} changed to ${status.toUpperCase()}.`;
+        const text = signals
+            .map(
+                signal =>
+                    `${
+                        signal.levelOfConfidentiality === "CONFIDENTIAL" ? "Confidential" : "Non-Confidential"
+                    } Signal for ${earModule} module and country ${
+                        signal.orgUnitName
+                    } ${status} at ${new Date().toISOString()}`
+            )
+            .join("\n");
 
         return text;
     }
@@ -576,7 +576,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             const newSubmissionValues = this.getNewEARSubmissionValues(signals, objects, "APPROVED");
             const recipients = await this.getEARRecipientUsers(signals, modules);
 
-            const message = await this.getEARNotificationText(signals, modules, "approved");
+            const message = this.getEARNotificationText(signals, modules, "approved");
             this.sendNotifications(message, message, [], recipients);
 
             return await this.globalStorageClient.saveObject<EARDataSubmissionItem[]>(namespace, newSubmissionValues);
@@ -733,9 +733,10 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             const newSubmissionValues = this.getNewEARSubmissionValues(signals, objects, "REJECTED");
             const recipients = await this.getEARRecipientUsers(signals, modules);
 
-            const message = await this.getEARNotificationText(signals, modules, "rejected");
-            const body = `Please review the messages to find about the causes of this rejection.\n Reason for rejection:\n ${message}`;
-            this.sendNotifications(message, body, [], recipients);
+            const notificationText = this.getEARNotificationText(signals, modules, "rejected");
+            const body = `${notificationText} with the following message:\n${message}`;
+
+            this.sendNotifications(notificationText, body, [], recipients);
 
             return await this.globalStorageClient.saveObject<EARDataSubmissionItem[]>(namespace, newSubmissionValues);
         }
