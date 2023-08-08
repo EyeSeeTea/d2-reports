@@ -64,7 +64,6 @@ export interface GLASSDataSubmissionModule {
     id: Id;
     name: string;
     dataSets: ApprovalIds[];
-    questionnaires: ApprovalIds[];
     programs: ApprovalIds[];
     questionnaires: ApprovalIds[];
     dashboards: {
