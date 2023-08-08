@@ -293,27 +293,6 @@ msgstr ""
 msgid "Waiting for WHO to approve your update request"
 msgstr ""
 
-msgid "January-March"
-msgstr ""
-
-msgid "April-June"
-msgstr ""
-
-msgid "July-September"
-msgstr ""
-
-msgid "October-December"
-msgstr ""
-
-msgid "AMR"
-msgstr ""
-
-msgid "AMR - Individual"
-msgstr ""
-
-msgid "EGASP"
-msgstr ""
-
 msgid "Completed"
 msgstr ""
 
@@ -428,6 +407,30 @@ msgstr ""
 msgid "Data sets"
 msgstr ""
 
+msgid "Malaria Data Subscription Report"
+msgstr ""
+
+msgid "Subscription status"
+msgstr ""
+
+msgid "Sections"
+msgstr ""
+
+msgid "Last Date of Subscription"
+msgstr ""
+
+msgid "Subscribe"
+msgstr ""
+
+msgid "Unsubscribe"
+msgstr ""
+
+msgid "Element Type"
+msgstr ""
+
+msgid "Subscription Status"
+msgstr ""
+
 msgid "Periods"
 msgstr ""
 
@@ -452,9 +455,6 @@ msgstr ""
 msgid "NHWA Comments Report"
 msgstr ""
 
-msgid "Section"
-msgstr ""
-
 msgid "Category option combo"
 msgstr ""
 
@@ -465,9 +465,6 @@ msgid "Last updated"
 msgstr ""
 
 msgid "Stored by"
-msgstr ""
-
-msgid "Sections"
 msgstr ""
 
 msgid "Toggle filters"

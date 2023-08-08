@@ -8,7 +8,7 @@ const CSYAuditTraumaReport: React.FC = () => {
     return (
         <div className={classes.wrapper}>
             <Typography variant="h5" gutterBottom>
-                {i18n.t("CSY Audit Report - Trauma Care")}
+                {i18n.t("CSY Audit Filters - Trauma Care")}
             </Typography>
 
             <CSYAuditTraumaList />
