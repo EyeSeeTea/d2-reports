@@ -8,7 +8,8 @@ import { Instance } from "../../common/entities/Instance";
 import { getSqlViewId } from "../../../domain/common/entities/Config";
 import { SQL_VIEW_MAL_DATAELEMENTS_NAME } from "../../common/Dhis2ConfigRepository";
 import {
-    MalDataSubscriptionItem,
+    DashboardSubscriptionItem,
+    DataElementsSubscriptionItem,
     SubscriptionStatus,
 } from "../../../domain/reports/mal-data-subscription/entities/MalDataSubscriptionItem";
 import {
@@ -61,7 +62,7 @@ type SqlField =
     | "lastdateofsubscription"
     | "subscription";
 
-const fieldMapping: Record<keyof MalDataSubscriptionItem, SqlField> = {
+const fieldMapping: Record<keyof DataElementsSubscriptionItem, SqlField> = {
     dataElementName: "dataelementname",
     dataElementId: "dataelementuid",
     subscription: "subscription",
@@ -80,118 +81,125 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
         this.globalStorageClient = new DataStoreStorageClient("global", instance);
     }
 
-    async get(options: MalDataSubscriptionOptions): Promise<PaginatedObjects<MalDataSubscriptionItem>> {
+    async get(options: MalDataSubscriptionOptions): Promise<PaginatedObjects<DataElementsSubscriptionItem>> {
         const { config, elementType, dataElementIds, sections, sorting, paging } = options;
+        if (!sorting) return { pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 }, objects: [] };
 
-        if (elementType === "dataElements") {
-            const sqlViews = new Dhis2SqlViews(this.api);
-            const allDataSetIds = _.values(config.dataSets).map(ds => ds.id); // ?
+        const sqlViews = new Dhis2SqlViews(this.api);
+        const allDataSetIds = _.values(config.dataSets).map(ds => ds.id); // ?
 
-            const { pager, rows } = await sqlViews
-                .query<Variables, SqlField>(
-                    getSqlViewId(config, SQL_VIEW_MAL_DATAELEMENTS_NAME),
-                    {
-                        dataSets: sqlViewJoinIds(allDataSetIds),
-                        elementType,
-                        sectionId: sqlViewJoinIds(sections),
-                        dataElementId: sqlViewJoinIds(dataElementIds),
-                        orderByColumn: fieldMapping[sorting.field],
-                        orderByDirection: sorting.direction,
-                    },
-                    paging
+        const { pager, rows } = await sqlViews
+            .query<Variables, SqlField>(
+                getSqlViewId(config, SQL_VIEW_MAL_DATAELEMENTS_NAME),
+                {
+                    dataSets: sqlViewJoinIds(allDataSetIds),
+                    elementType,
+                    sectionId: sqlViewJoinIds(sections),
+                    dataElementId: sqlViewJoinIds(dataElementIds),
+                    orderByColumn: fieldMapping[sorting.field],
+                    orderByDirection: sorting.direction,
+                },
+                paging
+            )
+            .getData();
+
+        const items: Array<DataElementsSubscriptionItem> = rows.map(
+            (item): DataElementsSubscriptionItem => ({
+                dataElementName: item.dataelementname,
+                subscription: Boolean(item.subscription),
+                sectionName: item.sectionname,
+                sectionId: item.sectionuid,
+                dataElementId: item.dataelementuid,
+                lastDateOfSubscription: item.lastdateofsubscription,
+            })
+        );
+
+        return { pager, objects: items };
+    }
+
+    async getDashboardDataElements(options: MalDataSubscriptionOptions) {
+        const { dashboardSorting, paging } = options;
+        if (!dashboardSorting) return { pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 }, objects: [] };
+
+        const { dashboards } = await this.api
+            .get<{ dashboards: NamedRef[]; pager: Pager }>("/dashboards?fields=id,name")
+            .getData();
+
+        const objects = dashboards.map(dashboard => ({
+            id: dashboard.id,
+            name: dashboard.name,
+            subscription: false,
+            subscribedElements: 1,
+            lastDateOfSubscription: "",
+            children: [],
+        }));
+
+        const pageRows = _(objects)
+            .orderBy([row => row[dashboardSorting.field]], [dashboardSorting.direction])
+            .drop((paging.page - 1) * paging.pageSize)
+            .take(paging.pageSize)
+            .value();
+
+        const dataElementsInDashboard: Record<string, NamedRef[]>[] = await promiseMap(pageRows, async row => {
+            const { dashboardItems } = await this.api
+                .get<{
+                    dashboardItems: {
+                        visualization: {
+                            dataDimensionItems:
+                                | {
+                                      indicator: { numerator: string; denominator: string } | undefined;
+                                  }[]
+                                | undefined;
+                        };
+                    }[];
+                }>(
+                    `/dashboards/${row.id}?fields=dashboardItems[visualization[dataDimensionItems[indicator[id,name,numerator,denominator]]]]`
                 )
                 .getData();
 
-            const items: Array<MalDataSubscriptionItem> = rows.map(
-                (item): MalDataSubscriptionItem => ({
-                    dataElementName: item.dataelementname,
-                    subscription: Boolean(item.subscription),
-                    sectionName: item.sectionname,
-                    sectionId: item.sectionuid,
-                    dataElementId: item.dataelementuid,
-                    lastDateOfSubscription: item.lastdateofsubscription,
-                })
+            const indicatorVariables = _(dashboardItems)
+                .map(item =>
+                    item.visualization?.dataDimensionItems?.map(dimensionItem => [
+                        dimensionItem.indicator?.numerator,
+                        dimensionItem.indicator?.denominator,
+                    ])
+                )
+                .flattenDeep()
+                .compact()
+                .value();
+            const dataElementVariables = _.uniq(
+                _.compact(_.flatMap(indicatorVariables, str => str.match(/#{([a-zA-Z0-9]+)}/g)))
             );
 
-            return { pager, objects: items };
-        } else {
-            const { dashboards } = await this.api
-                .get<{ dashboards: NamedRef[]; pager: Pager }>("/dashboards?fields=id,name")
-                .getData();
-
-            const objects: Array<MalDataSubscriptionItem> = dashboards.map(dashboard => ({
-                dataElementName: dashboard.name,
-                subscription: false,
-                sectionName: "",
-                sectionId: dashboard.id,
-                dataElementId: dashboard.id,
-                lastDateOfSubscription: "",
-            }));
-
-            const rowsInPage = _(objects)
-                .orderBy([row => row[sorting.field]], [sorting.direction])
-                .drop((paging.page - 1) * paging.pageSize)
-                .take(paging.pageSize)
-                .value();
-
-            const visualizationIds = await promiseMap(rowsInPage, async row => {
-                const { dashboardItems } = await this.api
-                    .get<{
-                        dashboardItems: {
-                            visualization: {
-                                dataDimensionItems:
-                                    | {
-                                          indicator: { numerator: string; denominator: string } | undefined;
-                                      }[]
-                                    | undefined;
-                            };
-                        }[];
-                    }>(
-                        `/dashboards/${row.sectionId}?fields=dashboardItems[visualization[dataDimensionItems[indicator[id,name,numerator,denominator]]]]`
-                    )
-                    .getData();
-
-                const indicatorVariables = _(dashboardItems)
-                    .map(item =>
-                        item.visualization?.dataDimensionItems?.map(dimensionItem => [
-                            dimensionItem.indicator?.numerator,
-                            dimensionItem.indicator?.denominator,
-                        ])
-                    )
-                    .flattenDeep()
-                    .compact()
-                    .value();
-                const dataElementVariables = _.uniq(
-                    _.compact(_.flatMap(indicatorVariables, str => str.match(/#{([a-zA-Z0-9]+)}/g)))
-                );
-
-                const dataElementIds = dataElementVariables
-                    .map(token => token.slice(2, -1))
-                    .filter(id => /^[a-zA-Z0-9]+$/.test(id));
-                const dataElements = await promiseMap(dataElementIds, async id => {
-                    return await this.api.get<NamedRef>(`/dataElements/${id}?fields=id,name`).getData();
-                });
-
-                console.log({ indicatorVariables, dataElementVariables, dataElementIds, dataElements });
-
-                return _({
-                    dataElements,
-                })
-                    .keyBy(_item => row.sectionId)
-                    .value();
+            const dataElementIds = dataElementVariables
+                .map(token => token.slice(2, -1))
+                .filter(id => /^[a-zA-Z0-9]+$/.test(id));
+            const dataElements = await promiseMap(dataElementIds, async dataElementId => {
+                return await this.api.get<NamedRef>(`/dataElements/${dataElementId}?fields=id,name`).getData();
             });
 
-            const pager: Pager = {
-                page: paging.page,
-                pageSize: paging.pageSize,
-                pageCount: Math.ceil(objects.length / paging.pageSize),
-                total: objects.length,
+            return _({
+                dataElements,
+            })
+                .keyBy(_item => row.id)
+                .value();
+        });
+
+        const rows: Array<DashboardSubscriptionItem> = pageRows.map(row => {
+            return {
+                ...row,
+                children: findArrayValueById(row.id, dataElementsInDashboard) ?? [],
             };
+        });
 
-            console.log({ elementType, dashboards, visualizationIds });
+        const pager: Pager = {
+            page: paging.page,
+            pageSize: paging.pageSize,
+            pageCount: Math.ceil(rows.length / paging.pageSize),
+            total: rows.length,
+        };
 
-            return { pager, objects: rowsInPage };
-        }
+        return { pager, objects: rows };
     }
 
     async getColumns(namespace: string): Promise<string[]> {
@@ -266,4 +274,9 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
 */
 function sqlViewJoinIds(ids: Id[]): string {
     return ids.join("-") || "-";
+}
+
+function findArrayValueById(id: string, record: Record<string, NamedRef[]>[]) {
+    const entry = _.find(record, obj => id in obj);
+    return entry ? entry[id] : [];
 }

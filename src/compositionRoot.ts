@@ -29,7 +29,7 @@ import { GenerateSortOrderUseCase } from "./domain/reports/mal-data-approval/use
 import { GetMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/GetMonitoringUseCase";
 import { SaveMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/SaveMonitoringUseCase";
 import { DuplicateDataValuesUseCase } from "./domain/reports/mal-data-approval/usecases/DuplicateDataValuesUseCase";
-import { GetMalSubscriptionDataSetsUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalSubscriptionDataSetsUseCase";
+import { GetMalDataElementsSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalDataElementsSubscriptionUseCase";
 import { SaveMalDataSubscriptionColumnsUseCase } from "./domain/reports/mal-data-subscription/usecases/SaveMalDataSubscriptionColumnsUseCase";
 import { GetMalDataSubscriptionColumnsUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalDataSubscriptionColumnsUseCase";
 import { GetSubscriptionSortOrderUseCase } from "./domain/reports/mal-data-subscription/usecases/GetSubscriptionSortOrderUseCase";
@@ -54,6 +54,7 @@ import { CSYSummaryMortalityDefaultRepository } from "./data/reports/csy-summary
 import { GetSummaryMortalityUseCase } from "./domain/reports/csy-summary-mortality/usecases/GetSummaryUseCase";
 import { SaveSummaryMortalityUseCase } from "./domain/reports/csy-summary-mortality/usecases/SaveSummaryUseCase";
 import { CSYAuditTraumaDefaultRepository } from "./data/reports/csy-audit-trauma/CSYAuditTraumaDefaultRepository";
+import { GetMalDashboardsSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalDashboardsSubscriptionUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -99,7 +100,8 @@ export function getCompositionRoot(api: D2Api) {
             generateSortOrder: new GenerateSortOrderUseCase(dataDuplicationRepository),
         }),
         malDataSubscription: getExecute({
-            get: new GetMalSubscriptionDataSetsUseCase(dataSubscriptionRepository),
+            get: new GetMalDataElementsSubscriptionUseCase(dataSubscriptionRepository),
+            getDashboardDataElements: new GetMalDashboardsSubscriptionUseCase(dataSubscriptionRepository),
             getColumns: new GetMalDataSubscriptionColumnsUseCase(dataSubscriptionRepository),
             saveColumns: new SaveMalDataSubscriptionColumnsUseCase(dataSubscriptionRepository),
             getSortOrder: new GetSubscriptionSortOrderUseCase(dataSubscriptionRepository),

@@ -12,16 +12,22 @@ import DoneIcon from "@material-ui/icons/Done";
 import { Config } from "../../../../domain/common/entities/Config";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import {
-    MalDataSubscriptionItem,
+    DashboardSubscriptionItem,
+    DataElementsSubscriptionItem,
     SubscriptionStatus,
     parseDataSubscriptionItemId,
 } from "../../../../domain/reports/mal-data-subscription/entities/MalDataSubscriptionItem";
 import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
 import { useReload } from "../../../utils/use-reload";
-import { DataSubscriptionViewModel, getDataSubscriptionViews } from "../DataSubscriptionViewModel";
+import {
+    DashboardSubscriptionViewModel,
+    DataElementSubscriptionViewModel,
+    getDashboardSubscriptionViews,
+    getDataElementSubscriptionViews,
+} from "../DataSubscriptionViewModel";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
-import { DataElementsFilter, Filters } from "./Filters";
+import { DataSubscriptionFilter, Filters } from "./Filters";
 import { NamedRef } from "../../../../domain/common/entities/Base";
 
 export const DataSubscriptionList: React.FC = React.memo(() => {
@@ -29,6 +35,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
 
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
+    const [visibleDashboardColumns, setVisibleDashboardColumns] = useState<string[]>();
     const [sections, setSections] = useState<NamedRef[]>([]);
     const [subscription, setSubscription] = useState<SubscriptionStatus[]>([]);
     const [reloadKey, reload] = useReload();
@@ -51,9 +58,15 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
             .then(columns => {
                 setVisibleColumns(columns);
             });
-    }, [compositionRoot]);
 
-    const baseConfig: TableConfig<DataSubscriptionViewModel> = useMemo(
+        compositionRoot.malDataSubscription
+            .getColumns(Namespaces.MAL_DASHBOARD_SUBSCRIPTION_USER_COLUMNS)
+            .then(columns => {
+                setVisibleDashboardColumns(columns);
+            });
+    }, [compositionRoot.malDataSubscription]);
+
+    const baseConfig: TableConfig<DataElementSubscriptionViewModel> = useMemo(
         () => ({
             columns: [
                 { name: "dataElementName", text: i18n.t("Data Element"), sortable: true },
@@ -135,29 +148,133 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
         [compositionRoot.malDataSubscription, reload, subscription]
     );
 
-    const getRows = useMemo(
-        () => async (_search: string, paging: TablePagination, sorting: TableSorting<DataSubscriptionViewModel>) => {
-            const { pager, objects } = await compositionRoot.malDataSubscription.get({
-                config,
-                paging: { page: paging.page, pageSize: paging.pageSize },
-                sorting: getSortingFromTableSorting(sorting),
-                ...getUseCaseOptions(filters),
-            });
+    const dashboardBaseConfig: TableConfig<DashboardSubscriptionViewModel> = useMemo(
+        () => ({
+            columns: [
+                { name: "name", text: i18n.t("Dashboard"), sortable: true },
+                {
+                    name: "subscription",
+                    text: i18n.t("Subscription status"),
+                    getValue: row => (row.subscription ? "Subscribed" : "Not subscribed"),
+                },
+                {
+                    name: "subscribedElements",
+                    text: i18n.t("Subscribed raw elements"),
+                },
+                {
+                    name: "lastDateOfSubscription",
+                    text: i18n.t("Last Date of Subscription"),
+                    hidden: true,
+                },
+            ],
+            actions: [
+                {
+                    name: "subscribe",
+                    text: i18n.t("Subscribe"),
+                    icon: <DoneIcon />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseDataSubscriptionItemId(item)));
+                        if (items.length === 0) return;
 
-            console.debug("Reloading", reloadKey);
-            return { pager, objects: getDataSubscriptionViews(config, objects, subscription) };
-        },
+                        const subscriptionValues = items.map(item => {
+                            return {
+                                dataElementId: item.dataElementId,
+                                subscribed: true,
+                            };
+                        });
+
+                        await compositionRoot.malDataSubscription.saveSubscription(
+                            Namespaces.MAL_SUBSCRIPTION_STATUS,
+                            combineSubscriptionValues(subscription, subscriptionValues)
+                        );
+
+                        reload();
+                    },
+                    isActive: rows => _.every(rows, row => !row.subscription),
+                },
+                {
+                    name: "unsubscribe",
+                    text: i18n.t("Unsubscribe"),
+                    icon: <DoneIcon />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseDataSubscriptionItemId(item)));
+                        if (items.length === 0) return;
+
+                        const subscriptionValues = items.map(item => {
+                            return {
+                                dataElementId: item.dataElementId,
+                                subscribed: false,
+                            };
+                        });
+
+                        await compositionRoot.malDataSubscription.saveSubscription(
+                            Namespaces.MAL_SUBSCRIPTION_STATUS,
+                            combineSubscriptionValues(subscription, subscriptionValues)
+                        );
+
+                        reload();
+                    },
+                    isActive: rows => _.every(rows, row => row.subscription),
+                },
+            ],
+            initialSorting: {
+                field: "name" as const,
+                order: "asc" as const,
+            },
+            paginationOptions: {
+                pageSizeOptions: [10, 20, 50],
+                pageSizeInitialValue: 10,
+            },
+        }),
+        [compositionRoot.malDataSubscription, reload, subscription]
+    );
+
+    const getRows = useMemo(
+        () =>
+            async (
+                _search: string,
+                paging: TablePagination,
+                sorting: TableSorting<DataElementSubscriptionViewModel>
+            ) => {
+                const { pager, objects } = await compositionRoot.malDataSubscription.get({
+                    config,
+                    paging: { page: paging.page, pageSize: paging.pageSize },
+                    sorting: getSortingFromTableSorting(sorting),
+                    ...getUseCaseOptions(filters),
+                });
+
+                console.debug("Reloading", reloadKey);
+                return { pager, objects: getDataElementSubscriptionViews(config, objects, subscription) };
+            },
         [compositionRoot.malDataSubscription, config, filters, reloadKey, subscription]
     );
 
-    function getUseCaseOptions(filter: DataElementsFilter) {
+    const getDashboardRows = useMemo(
+        () =>
+            async (_search: string, paging: TablePagination, sorting: TableSorting<DashboardSubscriptionViewModel>) => {
+                const { pager, objects } = await compositionRoot.malDataSubscription.getDashboardDataElements({
+                    config,
+                    paging: { page: paging.page, pageSize: paging.pageSize },
+                    dashboardSorting: getSortingFromDashboardTableSorting(sorting),
+                    ...getUseCaseOptions(filters),
+                });
+
+                console.debug("Reloading", reloadKey);
+                return { pager, objects: getDashboardSubscriptionViews(config, objects) };
+            },
+        [compositionRoot.malDataSubscription, config, filters, reloadKey]
+    );
+
+    function getUseCaseOptions(filter: DataSubscriptionFilter) {
         return {
             ...filter,
         };
     }
 
     const saveReorderedColumns = useCallback(
-        async (columnKeys: Array<keyof DataSubscriptionViewModel>) => {
+        async (columnKeys: Array<keyof DataElementSubscriptionViewModel>) => {
             if (!visibleColumns) return;
 
             await compositionRoot.malDataSubscription.saveColumns(
@@ -165,12 +282,25 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                 columnKeys
             );
         },
-        [compositionRoot, visibleColumns]
+        [compositionRoot.malDataSubscription, visibleColumns]
+    );
+
+    const saveReorderedDashboardColumns = useCallback(
+        async (columnKeys: Array<keyof DashboardSubscriptionViewModel>) => {
+            if (!visibleDashboardColumns) return;
+
+            await compositionRoot.malDataSubscription.saveColumns(
+                Namespaces.MAL_DASHBOARD_SUBSCRIPTION_USER_COLUMNS,
+                columnKeys
+            );
+        },
+        [compositionRoot.malDataSubscription, visibleDashboardColumns]
     );
 
     const tableProps = useObjectsTable(baseConfig, getRows);
+    const dashboardTableProps = useObjectsTable(dashboardBaseConfig, getDashboardRows);
 
-    const columnsToShow = useMemo<TableColumn<DataSubscriptionViewModel>[]>(() => {
+    const columnsToShow = useMemo<TableColumn<DataElementSubscriptionViewModel>[]>(() => {
         if (!visibleColumns || _.isEmpty(visibleColumns)) return tableProps.columns;
 
         const indexes = _(visibleColumns)
@@ -183,6 +313,20 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
             .sortBy(column => indexes[column.name] || 0)
             .value();
     }, [tableProps.columns, visibleColumns]);
+
+    const dashboardColumnsToShow = useMemo<TableColumn<DashboardSubscriptionViewModel>[]>(() => {
+        if (!visibleDashboardColumns || _.isEmpty(visibleDashboardColumns)) return dashboardTableProps.columns;
+
+        const indexes = _(visibleDashboardColumns)
+            .map((columnName, idx) => [columnName, idx] as [string, number])
+            .fromPairs()
+            .value();
+
+        return _(dashboardTableProps.columns)
+            .map(column => ({ ...column, hidden: !visibleDashboardColumns.includes(column.name) }))
+            .sortBy(column => indexes[column.name] || 0)
+            .value();
+    }, [dashboardTableProps.columns, visibleDashboardColumns]);
 
     useEffect(() => {
         async function getDatasetSections() {
@@ -220,27 +364,50 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
     }
 
     return (
-        <ObjectsList<DataSubscriptionViewModel>
-            {...tableProps}
-            columns={columnsToShow}
-            onChangeSearch={undefined}
-            onReorderColumns={saveReorderedColumns}
-        >
-            <Filters values={filters} options={filterOptions} onChange={setFilters} />
-        </ObjectsList>
+        <>
+            {filters.elementType === "dataElements" ? (
+                <ObjectsList<DataElementSubscriptionViewModel>
+                    {...tableProps}
+                    columns={columnsToShow}
+                    onChangeSearch={undefined}
+                    onReorderColumns={saveReorderedColumns}
+                >
+                    <Filters values={filters} options={filterOptions} onChange={setFilters} />
+                </ObjectsList>
+            ) : (
+                <ObjectsList<DashboardSubscriptionViewModel>
+                    {...dashboardTableProps}
+                    columns={dashboardColumnsToShow}
+                    onChangeSearch={undefined}
+                    onReorderColumns={saveReorderedDashboardColumns}
+                    childrenKeys={["children"]}
+                >
+                    <Filters values={filters} options={filterOptions} onChange={setFilters} />
+                </ObjectsList>
+            )}
+        </>
     );
 });
 
 function getSortingFromTableSorting(
-    sorting: TableSorting<DataSubscriptionViewModel>
-): Sorting<MalDataSubscriptionItem> {
+    sorting: TableSorting<DataElementSubscriptionViewModel>
+): Sorting<DataElementsSubscriptionItem> {
     return {
         field: sorting.field === "id" ? "dataElementName" : sorting.field,
         direction: sorting.order,
     };
 }
 
-function getEmptyDataValuesFilter(_config: Config): DataElementsFilter {
+function getSortingFromDashboardTableSorting(
+    sorting: TableSorting<DashboardSubscriptionViewModel>
+): Sorting<DashboardSubscriptionItem> {
+    return {
+        field: sorting.field === "id" ? "name" : sorting.field,
+        direction: sorting.order,
+    };
+}
+
+function getEmptyDataValuesFilter(_config: Config): DataSubscriptionFilter {
     return {
         sections: [],
         dataElementIds: [],

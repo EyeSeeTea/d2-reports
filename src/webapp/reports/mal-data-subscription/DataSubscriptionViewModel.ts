@@ -1,12 +1,14 @@
+import { NamedRef } from "../../../domain/common/entities/Base";
 import { Config } from "../../../domain/common/entities/Config";
 import {
-    MalDataSubscriptionItem,
+    DashboardSubscriptionItem,
+    DataElementsSubscriptionItem,
     SubscriptionStatus,
     getDataSubscriptionItemId,
     getSubscriptionValue,
 } from "../../../domain/reports/mal-data-subscription/entities/MalDataSubscriptionItem";
 
-export interface DataSubscriptionViewModel {
+export interface DataElementSubscriptionViewModel {
     id: string;
     dataElementName: string;
     dataElementId: string;
@@ -15,11 +17,20 @@ export interface DataSubscriptionViewModel {
     lastDateOfSubscription: string;
 }
 
-export function getDataSubscriptionViews(
+export interface DashboardSubscriptionViewModel {
+    id: string;
+    name: string;
+    subscribedElements: number;
+    subscription: boolean;
+    lastDateOfSubscription: string;
+    children: NamedRef[];
+}
+
+export function getDataElementSubscriptionViews(
     _config: Config,
-    items: MalDataSubscriptionItem[],
+    items: DataElementsSubscriptionItem[],
     subscription: SubscriptionStatus[]
-): DataSubscriptionViewModel[] {
+): DataElementSubscriptionViewModel[] {
     return items.map(item => {
         return {
             id: getDataSubscriptionItemId(item),
@@ -28,6 +39,22 @@ export function getDataSubscriptionViews(
             dataElementId: item.dataElementId,
             sectionName: item.sectionName,
             lastDateOfSubscription: item.lastDateOfSubscription,
+        };
+    });
+}
+
+export function getDashboardSubscriptionViews(
+    _config: Config,
+    items: DashboardSubscriptionItem[]
+): DashboardSubscriptionViewModel[] {
+    return items.map(item => {
+        return {
+            id: item.id,
+            name: item.name,
+            subscription: item.subscription,
+            subscribedElements: item.subscribedElements,
+            lastDateOfSubscription: item.lastDateOfSubscription,
+            children: item.children,
         };
     });
 }

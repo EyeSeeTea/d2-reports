@@ -4,15 +4,16 @@ import styled from "styled-components";
 import i18n from "../../../../locales";
 import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
 import { NamedRef } from "../../../../domain/common/entities/Base";
+import { ElementType } from "../../../../domain/reports/mal-data-subscription/entities/MalDataSubscriptionItem";
 
-export interface DataElementsFiltersProps {
-    values: DataElementsFilter;
+export interface DataSubscriptionFiltersProps {
+    values: DataSubscriptionFilter;
     options: FilterOptions;
-    onChange: React.Dispatch<React.SetStateAction<DataElementsFilter>>;
+    onChange: React.Dispatch<React.SetStateAction<DataSubscriptionFilter>>;
 }
 
-export interface DataElementsFilter {
-    elementType: string;
+export interface DataSubscriptionFilter {
+    elementType: ElementType;
     dataElementIds: string[];
     sections: string[];
 }
@@ -22,7 +23,7 @@ interface FilterOptions {
     subscription: string[];
 }
 
-export const Filters: React.FC<DataElementsFiltersProps> = React.memo(props => {
+export const Filters: React.FC<DataSubscriptionFiltersProps> = React.memo(props => {
     const { values: filter, options: filterOptions, onChange } = props;
 
     const sectionItems = useMemoOptionsFromNamedRef(filterOptions.sections);
@@ -41,7 +42,7 @@ export const Filters: React.FC<DataElementsFiltersProps> = React.memo(props => {
     );
 
     const setElementType = React.useCallback<SingleDropdownHandler>(
-        elementType => onChange(prev => ({ ...prev, elementType: elementType ?? "dataElements" })),
+        elementType => onChange(prev => ({ ...prev, elementType: (elementType as ElementType) ?? "dataElements" })),
         [onChange]
     );
 

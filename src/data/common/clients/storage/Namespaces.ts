@@ -11,6 +11,7 @@ export const Namespaces = {
     MAL_DIFF_NAMES_SORT_ORDER: "mal-diff-names-sort-order",
     MONITORING: "monitoring",
     MAL_SUBSCRIPTION_STATUS_USER_COLUMNS: "mal-subscription-status-user-columns",
+    MAL_DASHBOARD_SUBSCRIPTION_USER_COLUMNS: "mal-dashboard-subscription-user-columns",
     MAL_SUBSCRIPTION_STATUS: "mal-subscription-status",
     DATA_SUBMISSSIONS: "data-submissions",
     DATA_SUBMISSSIONS_USER_COLUMNS: "data-submissions-user-columns",

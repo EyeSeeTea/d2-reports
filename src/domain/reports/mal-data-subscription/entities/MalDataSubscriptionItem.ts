@@ -1,10 +1,21 @@
-export interface MalDataSubscriptionItem {
+import { NamedRef } from "../../../common/entities/Base";
+
+export interface DataElementsSubscriptionItem {
     dataElementName: string;
     dataElementId: string;
     subscription: boolean;
     sectionName: string;
     sectionId: string;
     lastDateOfSubscription: string;
+}
+
+export interface DashboardSubscriptionItem {
+    id: string;
+    name: string;
+    subscribedElements: number;
+    subscription: boolean;
+    lastDateOfSubscription: string;
+    children: NamedRef[];
 }
 
 export interface MalDataSubscriptionItemIdentifier {
@@ -17,14 +28,19 @@ export interface SubscriptionStatus {
     subscribed: boolean;
 }
 
-export function getDataSubscriptionItemId(dataSet: MalDataSubscriptionItem): string {
-    return [dataSet.dataElementId, dataSet.sectionId].join("-");
+export type ElementType = "dataElements" | "dashboards";
+
+export function getDataSubscriptionItemId(dataElement: DataElementsSubscriptionItem): string {
+    return [dataElement.dataElementId, dataElement.sectionId].join("-");
 }
 
-export function getSubscriptionValue(dataSet: MalDataSubscriptionItem, subscription: SubscriptionStatus[]): boolean {
+export function getSubscriptionValue(
+    dataElement: DataElementsSubscriptionItem,
+    subscription: SubscriptionStatus[]
+): boolean {
     const subscriptionValue =
-        subscription.find(subscriptionValue => subscriptionValue.dataElementId === dataSet.dataElementId)?.subscribed ??
-        false;
+        subscription.find(subscriptionValue => subscriptionValue.dataElementId === dataElement.dataElementId)
+            ?.subscribed ?? false;
 
     return subscriptionValue;
 }

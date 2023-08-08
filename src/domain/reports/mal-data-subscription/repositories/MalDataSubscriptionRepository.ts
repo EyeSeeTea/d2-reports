@@ -1,9 +1,15 @@
 import { Config } from "../../../common/entities/Config";
 import { PaginatedObjects, Paging, Sorting } from "../../../common/entities/PaginatedObjects";
-import { MalDataSubscriptionItem, SubscriptionStatus } from "../entities/MalDataSubscriptionItem";
+import {
+    DashboardSubscriptionItem,
+    ElementType,
+    DataElementsSubscriptionItem,
+    SubscriptionStatus,
+} from "../entities/MalDataSubscriptionItem";
 
 export interface MalDataSubscriptionRepository {
-    get(options: MalDataSubscriptionOptions): Promise<PaginatedObjects<MalDataSubscriptionItem>>;
+    get(options: MalDataSubscriptionOptions): Promise<PaginatedObjects<DataElementsSubscriptionItem>>;
+    getDashboardDataElements(options: MalDataSubscriptionOptions): Promise<PaginatedObjects<DashboardSubscriptionItem>>;
     getColumns(namespace: string): Promise<string[]>;
     saveColumns(namespace: string, columns: string[]): Promise<void>;
     getSortOrder(): Promise<string[]>;
@@ -15,8 +21,9 @@ export interface MalDataSubscriptionRepository {
 export interface MalDataSubscriptionOptions {
     config: Config;
     paging: Paging;
-    sorting: Sorting<MalDataSubscriptionItem>;
-    elementType: string;
+    sorting?: Sorting<DataElementsSubscriptionItem>;
+    dashboardSorting?: Sorting<DashboardSubscriptionItem>;
+    elementType: ElementType;
     dataElementIds: string[];
     sections: string[];
 }
