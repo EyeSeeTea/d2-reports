@@ -1,0 +1,251 @@
+import {
+    ObjectsList,
+    TableColumn,
+    TableConfig,
+    TablePagination,
+    TableSorting,
+    useObjectsTable,
+} from "@eyeseetea/d2-ui-components";
+import _ from "lodash";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import DoneIcon from "@material-ui/icons/Done";
+import { Config } from "../../../../domain/common/entities/Config";
+import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
+import {
+    MalDataSubscriptionItem,
+    SubscriptionStatus,
+    parseDataSubscriptionItemId,
+} from "../../../../domain/reports/mal-data-subscription/entities/MalDataSubscriptionItem";
+import i18n from "../../../../locales";
+import { useAppContext } from "../../../contexts/app-context";
+import { useReload } from "../../../utils/use-reload";
+import { DataSubscriptionViewModel, getDataSubscriptionViews } from "../DataSubscriptionViewModel";
+import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
+import { DataElementsFilter, Filters } from "./Filters";
+import { NamedRef } from "../../../../domain/common/entities/Base";
+
+export const DataSubscriptionList: React.FC = React.memo(() => {
+    const { compositionRoot, config, api } = useAppContext();
+
+    const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
+    const [visibleColumns, setVisibleColumns] = useState<string[]>();
+    const [sections, setSections] = useState<NamedRef[]>([]);
+    const [subscription, setSubscription] = useState<SubscriptionStatus[]>([]);
+    const [reloadKey, reload] = useReload();
+
+    useEffect(() => {
+        async function getSubscriptionValues() {
+            compositionRoot.malDataSubscription
+                .getSubscription(Namespaces.MAL_SUBSCRIPTION_STATUS)
+                .then(subscriptionValue => {
+                    subscriptionValue = subscriptionValue.length ? subscriptionValue : [];
+                    setSubscription(subscriptionValue);
+                });
+        }
+        getSubscriptionValues();
+    }, [compositionRoot.malDataApproval, compositionRoot.malDataSubscription]);
+
+    useEffect(() => {
+        compositionRoot.malDataSubscription
+            .getColumns(Namespaces.MAL_SUBSCRIPTION_STATUS_USER_COLUMNS)
+            .then(columns => {
+                setVisibleColumns(columns);
+            });
+    }, [compositionRoot]);
+
+    const baseConfig: TableConfig<DataSubscriptionViewModel> = useMemo(
+        () => ({
+            columns: [
+                { name: "dataElementName", text: i18n.t("Data Element"), sortable: true },
+                {
+                    name: "subscription",
+                    text: i18n.t("Subscription status"),
+                    sortable: true,
+                    getValue: row =>
+                        row.subscription ? "Subscribed" : "Not subscribed",
+                },
+                { name: "sectionName", text: i18n.t("Sections"), sortable: true },
+                {
+                    name: "lastDateOfSubscription",
+                    text: i18n.t("Last Date of Subscription"),
+                    sortable: true,
+                    hidden: true,
+                },
+            ],
+            actions: [
+                {
+                    name: "subscribe",
+                    text: i18n.t("Subscribe"),
+                    icon: <DoneIcon />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseDataSubscriptionItemId(item)));
+                        if (items.length === 0) return;
+
+                        const subscriptionValues = items.map(item => {
+                            return {
+                                dataElementId: item.dataElementId,
+                                subscribed: true,
+                            };
+                        });
+
+                        await compositionRoot.malDataSubscription.saveSubscription(
+                            Namespaces.MAL_SUBSCRIPTION_STATUS,
+                            combineSubscriptionValues(subscription, subscriptionValues)
+                        );
+
+                        reload();
+                    },
+                    isActive: rows => _.every(rows, row => !row.subscription),
+                },
+                {
+                    name: "unsubscribe",
+                    text: i18n.t("Unsubscribe"),
+                    icon: <DoneIcon />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseDataSubscriptionItemId(item)));
+                        if (items.length === 0) return;
+
+                        const subscriptionValues = items.map(item => {
+                            return {
+                                dataElementId: item.dataElementId,
+                                subscribed: false,
+                            };
+                        });
+
+                        await compositionRoot.malDataSubscription.saveSubscription(
+                            Namespaces.MAL_SUBSCRIPTION_STATUS,
+                            combineSubscriptionValues(subscription, subscriptionValues)
+                        );
+
+                        reload();
+                    },
+                    isActive: rows => _.every(rows, row => row.subscription),
+                },
+            ],
+            initialSorting: {
+                field: "dataElementName" as const,
+                order: "asc" as const,
+            },
+            paginationOptions: {
+                pageSizeOptions: [10, 20, 50],
+                pageSizeInitialValue: 10,
+            },
+        }),
+        [compositionRoot.malDataSubscription, reload, subscription]
+    );
+
+    const getRows = useMemo(
+        () => async (_search: string, paging: TablePagination, sorting: TableSorting<DataSubscriptionViewModel>) => {
+            const { pager, objects } = await compositionRoot.malDataSubscription.get({
+                config,
+                paging: { page: paging.page, pageSize: paging.pageSize },
+                sorting: getSortingFromTableSorting(sorting),
+                ...getUseCaseOptions(filters),
+            });
+
+            console.debug("Reloading", reloadKey);
+            return { pager, objects: getDataSubscriptionViews(config, objects, subscription) };
+        },
+        [compositionRoot.malDataSubscription, config, filters, reloadKey, subscription]
+    );
+
+    function getUseCaseOptions(filter: DataElementsFilter) {
+        return {
+            ...filter,
+        };
+    }
+
+    const saveReorderedColumns = useCallback(
+        async (columnKeys: Array<keyof DataSubscriptionViewModel>) => {
+            if (!visibleColumns) return;
+
+            await compositionRoot.malDataSubscription.saveColumns(
+                Namespaces.MAL_SUBSCRIPTION_STATUS_USER_COLUMNS,
+                columnKeys
+            );
+        },
+        [compositionRoot, visibleColumns]
+    );
+
+    const tableProps = useObjectsTable(baseConfig, getRows);
+
+    const columnsToShow = useMemo<TableColumn<DataSubscriptionViewModel>[]>(() => {
+        if (!visibleColumns || _.isEmpty(visibleColumns)) return tableProps.columns;
+
+        const indexes = _(visibleColumns)
+            .map((columnName, idx) => [columnName, idx] as [string, number])
+            .fromPairs()
+            .value();
+
+        return _(tableProps.columns)
+            .map(column => ({ ...column, hidden: !visibleColumns.includes(column.name) }))
+            .sortBy(column => indexes[column.name] || 0)
+            .value();
+    }, [tableProps.columns, visibleColumns]);
+
+    useEffect(() => {
+        async function getDatasetSections() {
+            const { sections } = await api
+                .get<any>(`/dataSets/PWCUb3Se1Ie`, { fields: "sections[name, id]" })
+                .getData();
+            return sections;
+        }
+        getDatasetSections().then(sections => setSections(sections));
+    });
+
+    const getFilterOptions = useCallback(
+        (_config: Config) => {
+            return {
+                sections: sections,
+                elementType: ["Data Elements"],
+                subscription: ["Subscribed", "Not Subscribed"],
+            };
+        },
+        [sections]
+    );
+
+    const filterOptions = React.useMemo(() => getFilterOptions(config), [config, getFilterOptions]);
+
+    function combineSubscriptionValues(
+        initialSubscriptionValues: SubscriptionStatus[],
+        addedSubscriptionValues: SubscriptionStatus[]
+    ): SubscriptionStatus[] {
+        const combinedSubscriptionValues = addedSubscriptionValues.map(added => {
+            return initialSubscriptionValues.filter(initial => initial.dataElementId !== added.dataElementId);
+        });
+        const combinedSubscription = _.union(_.intersection(...combinedSubscriptionValues), addedSubscriptionValues);
+        setSubscription(combinedSubscription);
+
+        return _.union(combinedSubscription);
+    }
+
+    return (
+        <ObjectsList<DataSubscriptionViewModel>
+            {...tableProps}
+            columns={columnsToShow}
+            onChangeSearch={undefined}
+            onReorderColumns={saveReorderedColumns}
+        >
+            <Filters values={filters} options={filterOptions} onChange={setFilters} />
+        </ObjectsList>
+    );
+});
+
+function getSortingFromTableSorting(
+    sorting: TableSorting<DataSubscriptionViewModel>
+): Sorting<MalDataSubscriptionItem> {
+    return {
+        field: sorting.field === "id" ? "dataElementName" : sorting.field,
+        direction: sorting.order,
+    };
+}
+
+function getEmptyDataValuesFilter(_config: Config): DataElementsFilter {
+    return {
+        sections: [],
+        dataElementIds: [],
+        elementTypes: [],
+    };
+}

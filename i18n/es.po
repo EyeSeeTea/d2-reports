@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2023-07-17T06:16:24.711Z\n"
+"POT-Creation-Date: 2023-08-08T16:35:43.953Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -77,40 +77,25 @@ msgstr ""
 msgid "created"
 msgstr ""
 
-msgid "CSY Audit Report - Emergency Care"
+msgid "CSY Audit Filters - Emergency Care"
 msgstr ""
 
 msgid "Register ID"
 msgstr ""
 
-msgid "Mortality with low injury severity score"
+msgid "Overall Mortality in EU"
 msgstr ""
 
-msgid "Oxygen not administered for patients with hypoxia"
+msgid "Low acuity triage with EU disposition ICU"
 msgstr ""
 
-msgid "Oxygen not administered for patients with tachypnea"
+msgid "Highest triage category and time to first provider >30min​"
 msgstr ""
 
-msgid "Mental status-dependent airway maneuver"
+msgid "Initial RBG low and Glucose not given"
 msgstr ""
 
-msgid "All mortality"
-msgstr ""
-
-msgid "Emergency Unit"
-msgstr ""
-
-msgid "Hospital Mortality"
-msgstr ""
-
-msgid "Severe injuries by any scoring system"
-msgstr ""
-
-msgid "Moderate or severe injuries by any scoring system"
-msgstr ""
-
-msgid "Moderate injuries by any scoring system"
+msgid "Shock and IVF including Blood"
 msgstr ""
 
 msgid "Yearly"
@@ -143,19 +128,100 @@ msgstr ""
 msgid "Quarter"
 msgstr ""
 
-msgid "CSY Audit Report - Trauma Care"
+msgid "CSY Audit Filters - Trauma Care"
 msgstr ""
 
-msgid "Overall Mortality in EU"
+msgid "Mortality with low injury severity score"
 msgstr ""
 
-msgid "Low acuity triage with EU disposition ICU"
+msgid "Oxygen not administered for patients with hypoxia"
 msgstr ""
 
-msgid "Highest triage category and time to first provider >30min ​"
+msgid "Oxygen not administered for patients with tachypnea"
 msgstr ""
 
-msgid "Initial RBG low and Glucose not given"
+msgid "Mental status-dependent airway maneuver"
+msgstr ""
+
+msgid "All mortality"
+msgstr ""
+
+msgid "Emergency Unit"
+msgstr ""
+
+msgid "Hospital Mortality"
+msgstr ""
+
+msgid "Severe injuries by any scoring system"
+msgstr ""
+
+msgid "Moderate or severe injuries by any scoring system"
+msgstr ""
+
+msgid "Moderate injuries by any scoring system"
+msgstr ""
+
+msgid "CSY Summary Report - Mortality by Injury Severity"
+msgstr ""
+
+msgid "Scoring System"
+msgstr ""
+
+msgid "Severity"
+msgstr ""
+
+msgid "Mortality"
+msgstr ""
+
+msgid "Total"
+msgstr ""
+
+msgid "Mortality Injury Severity"
+msgstr ""
+
+msgid "Summary Type"
+msgstr ""
+
+msgid "CSY Summary Table Report - Patient Characteristics"
+msgstr ""
+
+msgid "Group"
+msgstr ""
+
+msgid "Sub-Group"
+msgstr ""
+
+msgid "< 1 yr"
+msgstr ""
+
+msgid "1 - 4 yr"
+msgstr ""
+
+msgid "5 - 9 yr"
+msgstr ""
+
+msgid "10 - 14 yr"
+msgstr ""
+
+msgid "15 - 19 yr"
+msgstr ""
+
+msgid "20 - 40 yr"
+msgstr ""
+
+msgid "40 - 60 yr"
+msgstr ""
+
+msgid "60 - 80 yr"
+msgstr ""
+
+msgid "80+ yr"
+msgstr ""
+
+msgid "Unknown"
+msgstr ""
+
+msgid "Patient Characteristics"
 msgstr ""
 
 msgid "GLASS Data Submission Report"
@@ -368,6 +434,33 @@ msgstr ""
 msgid "Periods"
 msgstr ""
 
+msgid "Malaria Data Subscription Report"
+msgstr ""
+
+msgid "Subscription status"
+msgstr ""
+
+msgid "Sections"
+msgstr ""
+
+msgid "Last Date of Subscription"
+msgstr ""
+
+msgid "Subscribe"
+msgstr ""
+
+msgid "Unsubscribe"
+msgstr ""
+
+msgid "Element Type"
+msgstr ""
+
+msgid "Subscription Status"
+msgstr ""
+
+msgid "Section"
+msgstr ""
+
 msgid "NHWA Data Approval Status Report"
 msgstr ""
 
@@ -389,9 +482,6 @@ msgstr ""
 msgid "NHWA Comments Report"
 msgstr ""
 
-msgid "Section"
-msgstr ""
-
 msgid "Category option combo"
 msgstr ""
 
@@ -402,9 +492,6 @@ msgid "Last updated"
 msgstr ""
 
 msgid "Stored by"
-msgstr ""
-
-msgid "Sections"
 msgstr ""
 
 msgid "Toggle filters"

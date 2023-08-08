@@ -23,11 +23,19 @@ import { GetMalDataDiffUseCase } from "./domain/reports/mal-data-approval/usecas
 import { getReportType } from "./webapp/utils/reportType";
 import { GetMalDataApprovalColumnsUseCase } from "./domain/reports/mal-data-approval/usecases/GetMalDataApprovalColumnsUseCase";
 import { MalDataApprovalDefaultRepository } from "./data/reports/mal-data-approval/MalDataApprovalDefaultRepository";
+import { MalDataSubscriptionDefaultRepository } from "./data/reports/mal-data-subscription/MalDataSubscriptionDefaultRepository";
 import { GetSortOrderUseCase } from "./domain/reports/mal-data-approval/usecases/GetSortOrderUseCase";
 import { GenerateSortOrderUseCase } from "./domain/reports/mal-data-approval/usecases/GenerateSortOrderUseCase";
 import { GetMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/GetMonitoringUseCase";
 import { SaveMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/SaveMonitoringUseCase";
 import { DuplicateDataValuesUseCase } from "./domain/reports/mal-data-approval/usecases/DuplicateDataValuesUseCase";
+import { GetMalSubscriptionDataSetsUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalSubscriptionDataSetsUseCase";
+import { SaveMalDataSubscriptionColumnsUseCase } from "./domain/reports/mal-data-subscription/usecases/SaveMalDataSubscriptionColumnsUseCase";
+import { GetMalDataSubscriptionColumnsUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalDataSubscriptionColumnsUseCase";
+import { GetSubscriptionSortOrderUseCase } from "./domain/reports/mal-data-subscription/usecases/GetSubscriptionSortOrderUseCase";
+import { GenerateSubscriptionSortOrderUseCase } from "./domain/reports/mal-data-subscription/usecases/GenerateSubscriptionSortOrderUseCase";
+import { SaveSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/SaveSubscriptionUseCase";
+import { GetSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/GetSubscriptionUseCase";
 import { CSYAuditEmergencyDefaultRepository } from "./data/reports/csy-audit-emergency/CSYAuditEmergencyDefaultRepository";
 import { GetAuditEmergencyUseCase } from "./domain/reports/csy-audit-emergency/usecases/GetAuditEmergencyUseCase";
 import { SaveAuditEmergencyUseCase } from "./domain/reports/csy-audit-emergency/usecases/SaveAuditEmergencyUseCase";
@@ -40,6 +48,12 @@ import { SaveGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-da
 import { UpdateGLASSSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/UpdateGLASSSubmissionUseCase";
 import { DHIS2MessageCountUseCase } from "./domain/reports/glass-data-submission/usecases/DHIS2MessageCountUseCase";
 import { GetGLASSUserPermissionsUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSUserPermissionsUseCase";
+import { CSYSummaryDefaultRepository } from "./data/reports/csy-summary-patient/CSYSummaryDefaultRepository";
+import { GetSummaryUseCase } from "./domain/reports/csy-summary-patient/usecases/GetSummaryUseCase";
+import { SaveSummaryUseCase } from "./domain/reports/csy-summary-patient/usecases/SaveSummaryUseCase";
+import { CSYSummaryMortalityDefaultRepository } from "./data/reports/csy-summary-mortality/CSYSummaryDefaultRepository";
+import { GetSummaryMortalityUseCase } from "./domain/reports/csy-summary-mortality/usecases/GetSummaryUseCase";
+import { SaveSummaryMortalityUseCase } from "./domain/reports/csy-summary-mortality/usecases/SaveSummaryUseCase";
 import { CSYAuditTraumaDefaultRepository } from "./data/reports/csy-audit-trauma/CSYAuditTraumaDefaultRepository";
 
 export function getCompositionRoot(api: D2Api) {
@@ -49,8 +63,11 @@ export function getCompositionRoot(api: D2Api) {
     const dataCommentsRepository = new NHWADataCommentsDefaultRepository(api);
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
     const dataDuplicationRepository = new MalDataApprovalDefaultRepository(api);
+    const dataSubscriptionRepository = new MalDataSubscriptionDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
     const glassDataRepository = new GLASSDataSubmissionDefaultRepository(api);
+    const csySummaryRepository = new CSYSummaryDefaultRepository(api);
+    const csySummaryMortalityRepository = new CSYSummaryMortalityDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
 
     return {
@@ -82,6 +99,15 @@ export function getCompositionRoot(api: D2Api) {
             getSortOrder: new GetSortOrderUseCase(dataDuplicationRepository),
             generateSortOrder: new GenerateSortOrderUseCase(dataDuplicationRepository),
         }),
+        malDataSubscription: getExecute({
+            get: new GetMalSubscriptionDataSetsUseCase(dataSubscriptionRepository),
+            getColumns: new GetMalDataSubscriptionColumnsUseCase(dataSubscriptionRepository),
+            saveColumns: new SaveMalDataSubscriptionColumnsUseCase(dataSubscriptionRepository),
+            getSortOrder: new GetSubscriptionSortOrderUseCase(dataSubscriptionRepository),
+            generateSortOrder: new GenerateSubscriptionSortOrderUseCase(dataSubscriptionRepository),
+            getSubscription: new GetSubscriptionUseCase(dataSubscriptionRepository),
+            saveSubscription: new SaveSubscriptionUseCase(dataSubscriptionRepository),
+        }),
         auditEmergency: getExecute({
             get: new GetAuditEmergencyUseCase(csyAuditEmergencyRepository),
             save: new SaveAuditEmergencyUseCase(csyAuditEmergencyRepository),
@@ -97,6 +123,14 @@ export function getCompositionRoot(api: D2Api) {
             saveColumns: new SaveGLASSDataSubmissionColumnsUseCase(glassDataRepository),
             dhis2MessageCount: new DHIS2MessageCountUseCase(glassDataRepository),
             updateStatus: new UpdateGLASSSubmissionUseCase(glassDataRepository),
+        }),
+        summary: getExecute({
+            get: new GetSummaryUseCase(csySummaryRepository),
+            save: new SaveSummaryUseCase(csySummaryRepository),
+        }),
+        summaryMortality: getExecute({
+            get: new GetSummaryMortalityUseCase(csySummaryMortalityRepository),
+            save: new SaveSummaryMortalityUseCase(csySummaryMortalityRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),
