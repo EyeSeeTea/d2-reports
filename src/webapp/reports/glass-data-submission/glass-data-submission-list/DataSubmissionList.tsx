@@ -307,9 +307,9 @@ export const DataSubmissionList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    // isActive: (rows: EARDataSubmissionViewModel[]) => {
-                    //     return _.every(rows, row => row.status === "PENDING_APPROVAL");
-                    // },
+                    isActive: (rows: EARDataSubmissionViewModel[]) => {
+                        return _.every(rows, row => row.status === "PENDING_APPROVAL");
+                    },
                 },
                 {
                     name: "reject",
@@ -323,9 +323,9 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                         setRejectedSignals(items);
                         openDialog();
                     },
-                    // isActive: (rows: EARDataSubmissionViewModel[]) => {
-                    //     return _.every(rows, row => row.status === "PENDING_APPROVAL" || row.status === "PENDING_UPDATE_APPROVAL");
-                    // },
+                    isActive: (rows: EARDataSubmissionViewModel[]) => {
+                        return _.every(rows, row => row.status === "PENDING_APPROVAL");
+                    },
                 },
             ],
             initialSorting: {
@@ -453,7 +453,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
 
     if (_.isEmpty(modules)) {
         return <Spinner isVisible />;
-    } else if (isEARModule) {
+    } else if (isEARModule !== undefined) {
         return (
             <ObjectsList<EARDataSubmissionViewModel>
                 {...earTableProps}
