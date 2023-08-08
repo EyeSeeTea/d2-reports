@@ -15,9 +15,7 @@ export interface GLASSDataSubmissionRepository {
     getEAR(options: EARDataSubmissionOptions, namespace: string): Promise<PaginatedObjects<EARDataSubmissionItem>>;
     getUserGroupPermissions(): Promise<GLASSUserPermission>;
     getColumns(namespace: string): Promise<string[]>;
-    getEARColumns(namespace: string): Promise<string[]>;
     saveColumns(namespace: string, columns: string[]): Promise<void>;
-    saveEARColumns(namespace: string, columns: string[]): Promise<void>;
     dhis2MessageCount(): Promise<number>;
     approve(
         namespace: string,

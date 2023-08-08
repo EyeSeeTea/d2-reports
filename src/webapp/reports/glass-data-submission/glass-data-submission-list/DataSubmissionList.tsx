@@ -87,7 +87,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
             setModules(modules as Module[]);
 
             if (isEARModule) {
-                compositionRoot.glassDataSubmission.getEARColumns(Namespaces.SIGNALS_USER_COLUMNS).then(columns => {
+                compositionRoot.glassDataSubmission.getColumns(Namespaces.SIGNALS_USER_COLUMNS).then(columns => {
                     setVisibleEARColumns(columns);
                 });
             } else {
@@ -403,7 +403,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
         async (columnKeys: Array<keyof EARDataSubmissionViewModel>) => {
             if (!visibleEARColumns) return;
 
-            await compositionRoot.glassDataSubmission.saveEARColumns(Namespaces.SIGNALS_USER_COLUMNS, columnKeys);
+            await compositionRoot.glassDataSubmission.saveColumns(Namespaces.SIGNALS_USER_COLUMNS, columnKeys);
         },
         [compositionRoot, visibleEARColumns]
     );
