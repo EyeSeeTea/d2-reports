@@ -329,9 +329,9 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                         setRejectedSignals(items);
                         openDialog();
                     },
-                    // isActive: (rows: EARDataSubmissionViewModel[]) => {
-                    //     return _.every(rows, row => row.status === "PENDING_APPROVAL");
-                    // },
+                    isActive: (rows: EARDataSubmissionViewModel[]) => {
+                        return _.every(rows, row => row.status === "PENDING_APPROVAL");
+                    },
                 },
             ],
             initialSorting: {
