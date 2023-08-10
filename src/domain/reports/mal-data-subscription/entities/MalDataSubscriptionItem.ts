@@ -15,7 +15,11 @@ export interface DashboardSubscriptionItem {
     subscribedElements: number;
     subscription: boolean;
     lastDateOfSubscription: string;
-    children: NamedRef[];
+    children: ChildrenDataElements[];
+}
+
+export interface ChildrenDataElements extends NamedRef {
+    dataElementGroups: NamedRef[];
 }
 
 export interface MalDataSubscriptionItemIdentifier {

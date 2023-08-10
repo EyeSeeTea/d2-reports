@@ -36,6 +36,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [visibleDashboardColumns, setVisibleDashboardColumns] = useState<string[]>();
+    const [dataElementGroups, setDataElementGroups] = useState<NamedRef[]>([]);
     const [sections, setSections] = useState<NamedRef[]>([]);
     const [subscription, setSubscription] = useState<SubscriptionStatus[]>([]);
     const [reloadKey, reload] = useReload();
@@ -242,7 +243,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                     config,
                     paging: { page: paging.page, pageSize: paging.pageSize },
                     sorting: getSortingFromTableSorting(sorting),
-                    ...getUseCaseOptions(filters),
+                    ...filters,
                 });
 
                 console.debug("Reloading", reloadKey);
@@ -258,20 +259,24 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                     config,
                     paging: { page: paging.page, pageSize: paging.pageSize },
                     dashboardSorting: getSortingFromDashboardTableSorting(sorting),
-                    ...getUseCaseOptions(filters),
+                    ...filters,
                 });
+
+                const dataElementGroups = _(objects)
+                    .map(object => object.children.map(child => child.dataElementGroups))
+                    .flattenDeep()
+                    .uniqWith(_.isEqual)
+                    .value();
+
+                setDataElementGroups(dataElementGroups);
+
+                console.log({ objects, dataElementGroups });
 
                 console.debug("Reloading", reloadKey);
                 return { pager, objects: getDashboardSubscriptionViews(config, objects) };
             },
         [compositionRoot.malDataSubscription, config, filters, reloadKey]
     );
-
-    function getUseCaseOptions(filter: DataSubscriptionFilter) {
-        return {
-            ...filter,
-        };
-    }
 
     const saveReorderedColumns = useCallback(
         async (columnKeys: Array<keyof DataElementSubscriptionViewModel>) => {
@@ -342,10 +347,11 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
         (_config: Config) => {
             return {
                 sections: sections,
+                dataElementGroups: dataElementGroups,
                 subscription: ["Subscribed", "Not Subscribed"],
             };
         },
-        [sections]
+        [sections, dataElementGroups]
     );
 
     const filterOptions = React.useMemo(() => getFilterOptions(config), [config, getFilterOptions]);
@@ -412,5 +418,7 @@ function getEmptyDataValuesFilter(_config: Config): DataSubscriptionFilter {
         sections: [],
         dataElementIds: [],
         elementType: "dataElements",
+        dataElementGroups: [],
+        subscriptionStatus: undefined,
     };
 }

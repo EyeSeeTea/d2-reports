@@ -16,9 +16,12 @@ export interface DataSubscriptionFilter {
     elementType: ElementType;
     dataElementIds: string[];
     sections: string[];
+    subscriptionStatus: string | undefined;
+    dataElementGroups: string[];
 }
 
 interface FilterOptions {
+    dataElementGroups: NamedRef[];
     sections: NamedRef[];
     subscription: string[];
 }
@@ -27,6 +30,7 @@ export const Filters: React.FC<DataSubscriptionFiltersProps> = React.memo(props 
     const { values: filter, options: filterOptions, onChange } = props;
 
     const sectionItems = useMemoOptionsFromNamedRef(filterOptions.sections);
+    const dataElementGroupItems = useMemoOptionsFromNamedRef(filterOptions.dataElementGroups);
     const elementTypeItems = React.useMemo(() => {
         return [
             { value: "dataElements", text: i18n.t("Data Elements") },
@@ -41,12 +45,17 @@ export const Filters: React.FC<DataSubscriptionFiltersProps> = React.memo(props 
         [onChange]
     );
 
+    const setDataElementGroups = React.useCallback<DropdownHandler>(
+        dataElementGroups => onChange(prev => ({ ...prev, dataElementGroups })),
+        [onChange]
+    );
+
     const setElementType = React.useCallback<SingleDropdownHandler>(
         elementType => onChange(prev => ({ ...prev, elementType: (elementType as ElementType) ?? "dataElements" })),
         [onChange]
     );
 
-    const setSubscriptionStatus = React.useCallback<DropdownHandler>(
+    const setSubscriptionStatus = React.useCallback<SingleDropdownHandler>(
         subscriptionStatus => onChange(prev => ({ ...prev, subscriptionStatus })),
         [onChange]
     );
@@ -61,9 +70,9 @@ export const Filters: React.FC<DataSubscriptionFiltersProps> = React.memo(props 
                 hideEmpty
             />
 
-            <DropdownStyled
+            <SingleDropdownStyled
                 items={subscriptionTypeItems}
-                values={filter.sections}
+                value={filter.subscriptionStatus}
                 onChange={setSubscriptionStatus}
                 label={i18n.t("Subscription Status")}
             />
@@ -74,6 +83,15 @@ export const Filters: React.FC<DataSubscriptionFiltersProps> = React.memo(props 
                     values={filter.sections}
                     onChange={setSections}
                     label={i18n.t("Section")}
+                />
+            )}
+
+            {filter.elementType === "dashboards" && (
+                <DropdownStyled
+                    items={dataElementGroupItems}
+                    values={filter.dataElementGroups}
+                    onChange={setDataElementGroups}
+                    label={i18n.t("Data Element Groups")}
                 />
             )}
         </Container>

@@ -26,4 +26,6 @@ export interface MalDataSubscriptionOptions {
     elementType: ElementType;
     dataElementIds: string[];
     sections: string[];
+    subscriptionStatus?: string;
+    dataElementGroups: string[];
 }
