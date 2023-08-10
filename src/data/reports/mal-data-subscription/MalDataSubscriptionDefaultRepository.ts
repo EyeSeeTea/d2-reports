@@ -18,7 +18,6 @@ import {
     MalDataSubscriptionRepository,
 } from "../../../domain/reports/mal-data-subscription/repositories/MalDataSubscriptionRepository";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
-import { NamedRef } from "../../../domain/common/entities/Base";
 
 export interface Pagination {
     page: number;
@@ -125,81 +124,70 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
         if (!dashboardSorting) return { pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 }, objects: [] };
 
         const { dashboards } = await this.api
-            .get<{ dashboards: NamedRef[]; pager: Pager }>("/dashboards?fields=id,name")
+            .get<{
+                dashboards: {
+                    id: string;
+                    name: string;
+                    dashboardItems: {
+                        visualization: {
+                            dataDimensionItems:
+                                | {
+                                      indicator: { numerator: string; denominator: string } | undefined;
+                                  }[]
+                                | undefined;
+                        };
+                    }[];
+                }[];
+                pager: Pager;
+            }>(
+                "/dashboards?fields=id,name,dashboardItems[visualization[dataDimensionItems[indicator[id,name,numerator,denominator]]]]"
+            )
             .getData();
 
-        const objects = dashboards.map(dashboard => ({
-            id: dashboard.id,
-            name: dashboard.name,
-            subscription: false,
-            subscribedElements: 1,
-            lastDateOfSubscription: "",
-            children: [],
-        }));
+        const { dataElements } = await this.api
+            .get<{ dataElements: ChildrenDataElements[] }>(
+                "/dataElements?fields=id,name,dataElementGroups[id,name]&paging=false"
+            )
+            .getData();
 
-        const pageRows = _(objects)
-            .orderBy([row => row[dashboardSorting.field]], [dashboardSorting.direction])
-            .drop((paging.page - 1) * paging.pageSize)
-            .take(paging.pageSize)
-            .value();
+        const dataElementsInDashboard: Record<string, ChildrenDataElements[]>[] = dashboards.map(dashboard => {
+            const indicatorVariables = _(dashboard.dashboardItems)
+                .map(item =>
+                    item.visualization?.dataDimensionItems?.map(dimensionItem => [
+                        dimensionItem.indicator?.numerator,
+                        dimensionItem.indicator?.denominator,
+                    ])
+                )
+                .flattenDeep()
+                .compact()
+                .value();
+            const dataElementVariables = _.uniq(
+                _.compact(_.flatMap(indicatorVariables, str => str.match(/#{([a-zA-Z0-9]+)}/g)))
+            );
 
-        const dataElementsInDashboard: Record<string, ChildrenDataElements[]>[] = await promiseMap(
-            pageRows,
-            async row => {
-                const { dashboardItems } = await this.api
-                    .get<{
-                        dashboardItems: {
-                            visualization: {
-                                dataDimensionItems:
-                                    | {
-                                          indicator: { numerator: string; denominator: string } | undefined;
-                                      }[]
-                                    | undefined;
-                            };
-                        }[];
-                    }>(
-                        `/dashboards/${row.id}?fields=dashboardItems[visualization[dataDimensionItems[indicator[id,name,numerator,denominator]]]]`
-                    )
-                    .getData();
+            const dataElementIds = dataElementVariables
+                .map(token => token.slice(2, -1))
+                .filter(id => /^[a-zA-Z0-9]+$/.test(id));
 
-                const indicatorVariables = _(dashboardItems)
-                    .map(item =>
-                        item.visualization?.dataDimensionItems?.map(dimensionItem => [
-                            dimensionItem.indicator?.numerator,
-                            dimensionItem.indicator?.denominator,
-                        ])
-                    )
-                    .flattenDeep()
-                    .compact()
-                    .value();
-                const dataElementVariables = _.uniq(
-                    _.compact(_.flatMap(indicatorVariables, str => str.match(/#{([a-zA-Z0-9]+)}/g)))
-                );
+            const dataElementsWithGroups = _.filter(dataElements, dataElement =>
+                dataElementIds.includes(dataElement.id)
+            );
 
-                const dataElementIds = dataElementVariables
-                    .map(token => token.slice(2, -1))
-                    .filter(id => /^[a-zA-Z0-9]+$/.test(id));
-                const dataElements = await promiseMap(dataElementIds, async dataElementId => {
-                    return await this.api
-                        .get<ChildrenDataElements>(
-                            `/dataElements/${dataElementId}?fields=id,name,dataElementGroups[id,name]`
-                        )
-                        .getData();
-                });
+            return _({
+                dataElementsWithGroups,
+            })
+                .keyBy(_item => dashboard.id)
+                .value();
+        });
 
-                return _({
-                    dataElements,
-                })
-                    .keyBy(_item => row.id)
-                    .value();
-            }
-        );
-
-        const rows: Array<DashboardSubscriptionItem> = pageRows
-            .map(row => {
+        const rows: Array<DashboardSubscriptionItem> = dashboards
+            .map(dashboard => {
                 return {
-                    ...row,
-                    children: findArrayValueById(row.id, dataElementsInDashboard) ?? [],
+                    ...dashboard,
+                    subscription: false,
+                    subscribedElements: 1,
+                    lastDateOfSubscription: "",
+                    children: findArrayValueById(dashboard.id, dataElementsInDashboard) ?? [],
                 };
             })
             .filter(row =>
@@ -211,16 +199,20 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                       ).length > 0
             );
 
-        console.log({ rows, subscriptionStatus, dataElementGroups });
+        const objects = _(rows)
+            .orderBy([row => row[dashboardSorting.field]], [dashboardSorting.direction])
+            .drop((paging.page - 1) * paging.pageSize)
+            .take(paging.pageSize)
+            .value();
 
         const pager: Pager = {
             page: paging.page,
             pageSize: paging.pageSize,
             pageCount: Math.ceil(rows.length / paging.pageSize),
-            total: pageRows.length,
+            total: rows.length,
         };
 
-        return { pager, objects: rows };
+        return { pager, objects };
     }
 
     async getColumns(namespace: string): Promise<string[]> {

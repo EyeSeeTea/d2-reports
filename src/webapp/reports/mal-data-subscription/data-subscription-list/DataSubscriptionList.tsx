@@ -270,8 +270,6 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
 
                 setDataElementGroups(dataElementGroups);
 
-                console.log({ objects, dataElementGroups });
-
                 console.debug("Reloading", reloadKey);
                 return { pager, objects: getDashboardSubscriptionViews(config, objects) };
             },
