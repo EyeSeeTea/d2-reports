@@ -60,6 +60,13 @@ import { DataValuesD2Repository } from "./data/common/DataValuesD2Repository";
 import { FixAutoCompleteComputeValuesUseCase } from "./domain/reports/nhwa-auto-complete-compute/usecases/FixAutoCompleteComputeValuesUseCase";
 import { GetOrgUnitsByLevelUseCase } from "./domain/common/usecases/GetOrgUnitsByLevelUseCase";
 import { AutoCompleteComputeSettingsD2Repository } from "./data/reports/nhwa-auto-complete-compute/AutoCompleteComputeSettingsD2Repository";
+import { GetTotalsByActivityLevelUseCase } from "./domain/reports/nhwa-fix-totals/GetTotalsByActivityLevelUseCase";
+import { FixTotalsValuesUseCase } from "./domain/reports/nhwa-fix-totals/usecases/FixTotalsValuesUseCase";
+import { FixTotalsSettingsD2Repository } from "./data/reports/nhwa-fix-totals/FixTotalsSettingsD2Repository";
+import { SubnationalCorrectD2Repository } from "./data/reports/nhwa-subnational-correct-orgunit/SubnationalCorrectD2Repository";
+import { GetSubnationalCorrectUseCase } from "./domain/reports/nhwa-subnational-correct-orgunit/usecases/GetSubnationalCorrectUseCase";
+import { DismissSubnationalCorrectValuesUseCase } from "./domain/reports/nhwa-subnational-correct-orgunit/usecases/DismissSubnationalCorrectValuesUseCase";
+import { SubnationalCorrectD2SettingsRepository } from "./data/reports/nhwa-subnational-correct-orgunit/SubnationalCorrectD2SettingsRepository";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -77,6 +84,9 @@ export function getCompositionRoot(api: D2Api) {
     const dataSetRepository = new DataSetD2Repository(api);
     const dataValuesRepository = new DataValuesD2Repository(api);
     const autoCompleteComputeSettingsRepository = new AutoCompleteComputeSettingsD2Repository(api);
+    const fixTotalSettingsRepository = new FixTotalsSettingsD2Repository(api);
+    const subnationalCorrectRepository = new SubnationalCorrectD2Repository(api);
+    const subnationalCorrectSettingsRepository = new SubnationalCorrectD2SettingsRepository(api);
 
     return {
         admin: getExecute({
@@ -153,6 +163,17 @@ export function getCompositionRoot(api: D2Api) {
                 autoCompleteComputeSettingsRepository
             ),
             fixAutoCompleteComputeValues: new FixAutoCompleteComputeValuesUseCase(dataValuesRepository),
+            getTotalsByActivityLevel: new GetTotalsByActivityLevelUseCase(
+                dataSetRepository,
+                dataValuesRepository,
+                fixTotalSettingsRepository
+            ),
+            fixTotalValues: new FixTotalsValuesUseCase(dataValuesRepository),
+            getSubnationalCorrectValues: new GetSubnationalCorrectUseCase(subnationalCorrectRepository),
+            dismissSubnationalCorrectValues: new DismissSubnationalCorrectValuesUseCase(
+                dataValuesRepository,
+                subnationalCorrectSettingsRepository
+            ),
         },
     };
 }

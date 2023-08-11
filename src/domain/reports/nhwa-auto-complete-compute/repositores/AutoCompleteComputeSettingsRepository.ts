@@ -1,5 +1,5 @@
-import { DataElementTotal } from "../entities/AutoCompleteComputeSettings";
+import { AutoCompleteComputeSettings } from "../entities/AutoCompleteComputeSettings";
 
 export interface AutoCompleteComputeSettingsRepository {
-    get(): Promise<DataElementTotal[]>;
+    get(): Promise<AutoCompleteComputeSettings>;
 }

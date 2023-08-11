@@ -9,6 +9,7 @@ export interface DataValue {
     value: string;
     followup: boolean;
     deleted?: boolean;
+    comment?: string;
 }
 
 export interface DataValuesSelector {
@@ -18,6 +19,6 @@ export interface DataValuesSelector {
 }
 
 export type DataValueToPost = Omit<
-    DataValue,
+    DataValue & { dataSet?: string },
     "storedBy" | "created" | "lastUpdated" | "followup" | "deleted" | "attributeOptionCombo"
 >;

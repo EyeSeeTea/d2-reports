@@ -3,8 +3,7 @@ import {
     AutoCompleteComputeViewModel,
     AutoCompleteComputeViewModelWithPaging,
 } from "../../../../webapp/reports/nhwa-auto-complete-compute/NHWAAutoCompleteCompute";
-import { defaultPeriods } from "../../../../webapp/reports/nhwa-auto-complete-compute/settings";
-import { Id } from "../../../common/entities/Base";
+import { defaultPeriods } from "../../../../webapp/reports/common/nhwa-settings";
 import { CategoryOptionCombo, DataElement } from "../../../common/entities/DataSet";
 import { DataSetRepository } from "../../../common/repositories/DataSetRepository";
 import { DataValuesRepository } from "../../../common/repositories/DataValuesRepository";
@@ -13,7 +12,6 @@ import { AutoCompleteComputeSettingsRepository } from "../repositores/AutoComple
 import { DataValue } from "./../../../common/entities/DataValue";
 
 export type AutoCompleteComputeValuesFilter = {
-    dataSetId: Id;
     cacheKey: string;
     page: number;
     pageSize: number;
@@ -52,10 +50,11 @@ export class GetAutoCompleteComputeValuesUseCase {
     private async getAllAutoCompleteValues(
         options: AutoCompleteComputeValuesFilter
     ): Promise<AutoCompleteComputeViewModel[]> {
-        const { cacheKey, dataSetId, filters } = options;
+        const settings = await this.settingsRepository.get();
+        const { cacheKey, filters } = options;
         if (this.dataCache && this.dataCache.key === cacheKey) return this.dataCache.value;
 
-        const dataSets = await this.dataSetRepository.getById(dataSetId);
+        const dataSets = await this.dataSetRepository.getById(settings.dataSet);
         const dataSet = dataSets[0];
         if (!dataSet) return [];
 
@@ -66,8 +65,6 @@ export class GetAutoCompleteComputeValuesUseCase {
         const dataElementsByKey = _(dataSet.dataElements)
             .keyBy(de => de.id)
             .value();
-
-        const dataElementsConfig = await this.settingsRepository.get();
 
         const dataValues = await this.dataValuesRepository.get({
             dataSetIds: [dataSet.id],
@@ -89,7 +86,7 @@ export class GetAutoCompleteComputeValuesUseCase {
                 }
 
                 if (dataValuesOrgPeriod) {
-                    const rows = _(dataElementsConfig)
+                    const rows = _(settings.dataElements)
                         .map(dataElement => {
                             const deDetails = this.getDataElementDetails(
                                 dataElementsByKey,

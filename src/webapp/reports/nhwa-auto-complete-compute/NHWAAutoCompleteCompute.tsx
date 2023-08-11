@@ -14,9 +14,9 @@ import i18n from "../../../locales";
 import { useAppContext } from "../../contexts/app-context";
 import { getOrgUnitIdsFromPaths, getRootIds, OrgUnit } from "../../../domain/common/entities/OrgUnit";
 import { CategoryOptionCombo, DataElement } from "../../../domain/common/entities/DataSet";
-import { countryLevel, nhwaModule1Id } from "./settings";
+import { countryLevel } from "../common/nhwa-settings";
 import { useReload } from "../../utils/use-reload";
-import { Filters } from "./Filters";
+import { Filters } from "../common/Filters";
 
 export type AutoCompleteComputeViewModelWithPaging = {
     page: number;
@@ -107,7 +107,6 @@ export const NHWAAutoCompleteCompute: React.FC = () => {
                         loading.show(true, i18n.t("Updating values..."));
                         const results = await compositionRoot.nhwa.getAutoCompleteComputeValues.execute({
                             cacheKey: reloadKey,
-                            dataSetId: nhwaModule1Id,
                             page: 1,
                             pageSize: 1e6,
                             sortingField: "dataElement",
@@ -123,7 +122,7 @@ export const NHWAAutoCompleteCompute: React.FC = () => {
                             .then(stats => {
                                 reload();
                                 snackbar.openSnackbar("success", JSON.stringify(stats, null, 4), {
-                                    autoHideDuration: 5000,
+                                    autoHideDuration: 20 * 10000,
                                 });
                                 loading.hide();
                             })
@@ -140,9 +139,9 @@ export const NHWAAutoCompleteCompute: React.FC = () => {
 
     const getRows = React.useMemo(
         () => async (_search: string, paging: TablePagination, sorting: TableSorting<AutoCompleteComputeViewModel>) => {
+            loading.show(true, i18n.t("Loading..."));
             const results = await compositionRoot.nhwa.getAutoCompleteComputeValues.execute({
                 cacheKey: reloadKey,
-                dataSetId: nhwaModule1Id,
                 page: paging.page,
                 pageSize: paging.pageSize,
                 sortingField: sorting.field,
@@ -152,18 +151,10 @@ export const NHWAAutoCompleteCompute: React.FC = () => {
                     periods: selectedPeriods,
                 },
             });
-
-            return {
-                pager: {
-                    page: results.page,
-                    pageCount: results.pageCount,
-                    total: results.total,
-                    pageSize: results.pageSize,
-                },
-                objects: results.rows,
-            };
+            loading.hide();
+            return { pager: { ...results }, objects: results.rows };
         },
-        [compositionRoot, reloadKey, selectedOrgUnits, selectedPeriods]
+        [compositionRoot, reloadKey, selectedOrgUnits, selectedPeriods, loading]
     );
 
     const tableProps = useObjectsTable(baseConfig, getRows);
