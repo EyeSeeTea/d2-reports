@@ -20,7 +20,7 @@ export interface DashboardSubscriptionItem {
 
 export interface ChildrenDataElements extends NamedRef {
     dataElementGroups: NamedRef[];
-    subscribed: boolean;
+    subscribed: string;
     lastDateOfSubscription: string;
 }
 
@@ -59,7 +59,7 @@ export function getSubscriptionValue(
 }
 
 export function getDashboardSubscriptionItemId(dashboard: DashboardSubscriptionItem): string {
-    return [dashboard.id, dashboard.children.map(child => child.id).join("-")].join("-");
+    return [["dashboard", dashboard.id].join("-"), dashboard.children.map(child => child.id).join("-")].join("-");
 }
 
 export function parseDataElementSubscriptionItemId(string: string): DataElementSubscriptionItemIdentifier | undefined {
@@ -71,10 +71,10 @@ export function parseDataElementSubscriptionItemId(string: string): DataElementS
 
 export function parseDashboardSubscriptionItemId(string: string): DashboardSubscriptionItemIdentifier | undefined {
     const ids = string.split("-");
-    const dashboardId = ids[0];
-    const dataElementIds = ids.slice(1, -1);
+    const dashboardId = ids[0] === "dashboard" ? ids[1] : "";
+    const dataElementIds = ids[0] === "dashboard" ? ids.slice(2, -1) : ids;
 
-    if (!dashboardId || !dataElementIds) return undefined;
+    if (dashboardId === undefined || !dataElementIds) return undefined;
 
     return { dashboardId, dataElementIds };
 }

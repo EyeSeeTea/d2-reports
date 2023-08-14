@@ -200,7 +200,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => !row.subscription),
+                    isActive: rows => _.every(rows, row => row.subscription === "Not Subscribed"),
                 },
                 {
                     name: "unsubscribe",
@@ -229,7 +229,12 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.subscription),
+                    isActive: rows =>
+                        _.every(
+                            rows,
+                            row =>
+                                row.subscription === "Subscribed" || row.subscription === "Subscribed to some elements"
+                        ),
                 },
             ],
             initialSorting: {

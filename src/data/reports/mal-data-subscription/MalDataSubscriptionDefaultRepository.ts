@@ -196,9 +196,11 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                     ).map(child => {
                         return {
                             ...child,
-                            subscription: !!subscriptionValues.find(
+                            subscription: subscriptionValues.find(
                                 subscription => subscription.dataElementId === child.id
-                            )?.subscribed,
+                            )?.subscribed
+                                ? "Subscribed"
+                                : "Not Subscribed",
                             lastDateOfSubscription:
                                 subscriptionValues.find(subscription => subscription.dataElementId === child.id)
                                     ?.lastDateOfSubscription ?? "",
@@ -317,9 +319,11 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                     ).map(child => {
                         return {
                             ...child,
-                            subscription: !!subscriptionValues.find(
+                            subscription: subscriptionValues.find(
                                 subscription => subscription.dataElementId === child.id
-                            )?.subscribed,
+                            )?.subscribed
+                                ? "Subscribed"
+                                : "Not Subscribed",
                             lastDateOfSubscription:
                                 subscriptionValues.find(subscription => subscription.dataElementId === child.id)
                                     ?.lastDateOfSubscription ?? "",
