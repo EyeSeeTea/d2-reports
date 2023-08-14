@@ -200,7 +200,15 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.subscription === "Not Subscribed"),
+                    isActive: rows =>
+                        _.every(
+                            rows,
+                            row =>
+                                ((row.subscription === "Not Subscribed" ||
+                                    row.subscription === "Subscribed to some elements") &&
+                                    !_.isEmpty(row.children)) ||
+                                (row.subscription === "Not Subscribed" && row.id.split("-")[0] !== "dashboard")
+                        ),
                 },
                 {
                     name: "unsubscribe",
@@ -233,7 +241,10 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                         _.every(
                             rows,
                             row =>
-                                row.subscription === "Subscribed" || row.subscription === "Subscribed to some elements"
+                                ((row.subscription === "Subscribed" ||
+                                    row.subscription === "Subscribed to some elements") &&
+                                    !_.isEmpty(row.children)) ||
+                                (row.subscription === "Subscribed" && row.id.split("-")[0] !== "dashboard")
                         ),
                 },
             ],
