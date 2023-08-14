@@ -211,11 +211,11 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                     ).length;
 
                     const subscription =
-                        subscribedElements !== children.length
+                        subscribedElements !== 0 && subscribedElements !== children.length
                             ? "Subscribed to some elements"
                             : subscribedElements === children.length && subscriptionValue
                             ? "Subscribed"
-                            : "Not subscribed";
+                            : "Not Subscribed";
 
                     return {
                         ...dashboard,
@@ -230,7 +230,11 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                     };
                 })
                 .filter(row =>
-                    (subscriptionStatus ? subscriptionStatus === row.subscription : row) && _.isEmpty(dataElementGroups)
+                    (!subscriptionStatus
+                        ? row
+                        : subscriptionStatus === "Subscribed"
+                        ? row.subscription === "Subscribed" || row.subscription === "Subscribed to some elements"
+                        : row.subscription === "Not Subscribed") && _.isEmpty(dataElementGroups)
                         ? row
                         : _.intersection(
                               dataElementGroups,
@@ -328,7 +332,7 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                     ).length;
 
                     const subscription =
-                        subscribedElements !== children.length
+                        subscribedElements !== 0 && subscribedElements !== children.length
                             ? "Subscribed to some elements"
                             : subscribedElements === children.length && subscriptionValue
                             ? "Subscribed"
@@ -347,7 +351,11 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                     };
                 })
                 .filter(row =>
-                    (subscriptionStatus ? subscriptionStatus === row.subscription : row) && _.isEmpty(dataElementGroups)
+                    (!subscriptionStatus
+                        ? row
+                        : subscriptionStatus === "Subscribed"
+                        ? row.subscription === "Subscribed" || row.subscription === "Subscribed to some elements"
+                        : row.subscription === "Not Subscribed") && _.isEmpty(dataElementGroups)
                         ? row
                         : _.intersection(
                               dataElementGroups,
