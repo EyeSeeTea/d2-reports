@@ -4,7 +4,8 @@ import {
     DashboardSubscriptionItem,
     DataElementsSubscriptionItem,
     SubscriptionStatus,
-    getDataSubscriptionItemId,
+    getDashboardSubscriptionItemId,
+    getDataElementSubscriptionItemId,
     getSubscriptionValue,
 } from "../../../domain/reports/mal-data-subscription/entities/MalDataSubscriptionItem";
 
@@ -21,7 +22,7 @@ export interface DashboardSubscriptionViewModel {
     id: string;
     name: string;
     subscribedElements: number;
-    subscription: boolean;
+    subscription: string;
     lastDateOfSubscription: string;
     children: NamedRef[];
 }
@@ -33,7 +34,7 @@ export function getDataElementSubscriptionViews(
 ): DataElementSubscriptionViewModel[] {
     return items.map(item => {
         return {
-            id: getDataSubscriptionItemId(item),
+            id: getDataElementSubscriptionItemId(item),
             subscription: getSubscriptionValue(item, subscription),
             dataElementName: item.dataElementName,
             dataElementId: item.dataElementId,
@@ -49,7 +50,7 @@ export function getDashboardSubscriptionViews(
 ): DashboardSubscriptionViewModel[] {
     return items.map(item => {
         return {
-            id: item.id,
+            id: getDashboardSubscriptionItemId(item),
             name: item.name,
             subscription: item.subscription,
             subscribedElements: item.subscribedElements,

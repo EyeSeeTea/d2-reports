@@ -15,7 +15,8 @@ import {
     DashboardSubscriptionItem,
     DataElementsSubscriptionItem,
     SubscriptionStatus,
-    parseDataSubscriptionItemId,
+    parseDashboardSubscriptionItemId,
+    parseDataElementSubscriptionItemId,
 } from "../../../../domain/reports/mal-data-subscription/entities/MalDataSubscriptionItem";
 import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
@@ -45,9 +46,9 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
         async function getSubscriptionValues() {
             compositionRoot.malDataSubscription
                 .getSubscription(Namespaces.MAL_SUBSCRIPTION_STATUS)
-                .then(subscriptionValue => {
-                    subscriptionValue = subscriptionValue.length ? subscriptionValue : [];
-                    setSubscription(subscriptionValue);
+                .then(subscriptionValues => {
+                    subscriptionValues = subscriptionValues.length ? subscriptionValues : [];
+                    setSubscription(subscriptionValues);
                 });
         }
         getSubscriptionValues();
@@ -92,7 +93,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                     icon: <DoneIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataSubscriptionItemId(item)));
+                        const items = _.compact(selectedIds.map(item => parseDataElementSubscriptionItemId(item)));
                         if (items.length === 0) return;
 
                         const subscriptionValues = items.map(item => {
@@ -117,7 +118,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                     icon: <DoneIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataSubscriptionItemId(item)));
+                        const items = _.compact(selectedIds.map(item => parseDataElementSubscriptionItemId(item)));
                         if (items.length === 0) return;
 
                         const subscriptionValues = items.map(item => {
@@ -152,11 +153,14 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
     const dashboardBaseConfig: TableConfig<DashboardSubscriptionViewModel> = useMemo(
         () => ({
             columns: [
-                { name: "name", text: i18n.t("Dashboard"), sortable: true },
+                {
+                    name: "name",
+                    text: i18n.t(filters.elementType === "dashboards" ? "Dashboard" : "Visualization"),
+                    sortable: true,
+                },
                 {
                     name: "subscription",
                     text: i18n.t("Subscription status"),
-                    getValue: row => (row.subscription ? "Subscribed" : "Not subscribed"),
                 },
                 {
                     name: "subscribedElements",
@@ -175,15 +179,19 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                     icon: <DoneIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataSubscriptionItemId(item)));
+                        const items = _.compact(selectedIds.map(item => parseDashboardSubscriptionItemId(item)));
                         if (items.length === 0) return;
 
-                        const subscriptionValues = items.map(item => {
-                            return {
-                                dataElementId: item.dataElementId,
-                                subscribed: true,
-                            };
-                        });
+                        const subscriptionValues = items.flatMap(item =>
+                            item.dataElementIds.map(dataElementId => {
+                                return {
+                                    dashboardId: item.dashboardId,
+                                    dataElementId,
+                                    lastDateOfSubscription: new Date().toISOString(),
+                                    subscribed: true,
+                                };
+                            })
+                        );
 
                         await compositionRoot.malDataSubscription.saveSubscription(
                             Namespaces.MAL_SUBSCRIPTION_STATUS,
@@ -200,15 +208,19 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                     icon: <DoneIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataSubscriptionItemId(item)));
+                        const items = _.compact(selectedIds.map(item => parseDashboardSubscriptionItemId(item)));
                         if (items.length === 0) return;
 
-                        const subscriptionValues = items.map(item => {
-                            return {
-                                dataElementId: item.dataElementId,
-                                subscribed: false,
-                            };
-                        });
+                        const subscriptionValues = items.flatMap(item =>
+                            item.dataElementIds.map(dataElementId => {
+                                return {
+                                    dashboardId: item.dashboardId,
+                                    dataElementId,
+                                    lastDateOfSubscription: new Date().toISOString(),
+                                    subscribed: false,
+                                };
+                            })
+                        );
 
                         await compositionRoot.malDataSubscription.saveSubscription(
                             Namespaces.MAL_SUBSCRIPTION_STATUS,
@@ -229,7 +241,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot.malDataSubscription, reload, subscription]
+        [compositionRoot.malDataSubscription, filters.elementType, reload, subscription]
     );
 
     const getRows = useMemo(

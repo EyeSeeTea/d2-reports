@@ -9,7 +9,7 @@ import {
 
 export interface MalDataSubscriptionRepository {
     get(options: MalDataSubscriptionOptions): Promise<PaginatedObjects<DataElementsSubscriptionItem>>;
-    getDashboardDataElements(options: MalDataSubscriptionOptions): Promise<PaginatedObjects<DashboardSubscriptionItem>>;
+    getChildrenDataElements(options: MalDataSubscriptionOptions): Promise<PaginatedObjects<DashboardSubscriptionItem>>;
     getColumns(namespace: string): Promise<string[]>;
     saveColumns(namespace: string, columns: string[]): Promise<void>;
     getSortOrder(): Promise<string[]>;

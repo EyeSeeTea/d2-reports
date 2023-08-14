@@ -11,6 +11,6 @@ export class GetMalDashboardsSubscriptionUseCase implements UseCase {
 
     execute(options: MalDataSubscriptionOptions): Promise<PaginatedObjects<DashboardSubscriptionItem>> {
         // FUTURE: Return a Future-like instead, to allow better error handling and cancellation.
-        return this.subscriptionRepository.getDashboardDataElements(options);
+        return this.subscriptionRepository.getChildrenDataElements(options);
     }
 }

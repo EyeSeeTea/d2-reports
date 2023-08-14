@@ -35,6 +35,7 @@ export const Filters: React.FC<DataSubscriptionFiltersProps> = React.memo(props 
         return [
             { value: "dataElements", text: i18n.t("Data Elements") },
             { value: "dashboards", text: i18n.t("Dashboards") },
+            { value: "visualizations", text: i18n.t("Visualizations") },
         ];
     }, []);
 
@@ -86,7 +87,7 @@ export const Filters: React.FC<DataSubscriptionFiltersProps> = React.memo(props 
                 />
             )}
 
-            {filter.elementType === "dashboards" && (
+            {filter.elementType !== "dataElements" && (
                 <DropdownStyled
                     items={dataElementGroupItems}
                     values={filter.dataElementGroups}
