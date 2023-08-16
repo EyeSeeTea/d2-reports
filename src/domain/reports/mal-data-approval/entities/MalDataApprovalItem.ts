@@ -51,15 +51,32 @@ export function getDataDuplicationItemId(dataSet: MalDataApprovalItem): string {
     ].join("-");
 }
 
+// export function getDataDuplicationItemMonitoringValue(dataSet: MalDataApprovalItem, monitoring: Monitoring[]): boolean {
+//     const monitoringValue =
+//         monitoring.find(
+//             monitoringValue =>
+//                 monitoringValue.orgUnit === dataSet.orgUnitUid && monitoringValue.period === dataSet.period
+//         )?.monitoring ?? false;
+
+//     return monitoringValue;
+// }
+
 export function getDataDuplicationItemMonitoringValue(
     dataSet: MalDataApprovalItem,
     dataSetName: string,
-    monitoring: MonitoringValue
+    monitoring: MonitoringValue | Monitoring[]
 ): boolean {
-    const monitoringArray = monitoring["dataSets"]?.[dataSetName]?.monitoring;
-    const monitoringValue = !!_.find(monitoringArray, { orgUnit: dataSet.orgUnitCode, period: dataSet.period });
-
-    return monitoringValue;
+    if (_.isArray(monitoring)) {
+        return (
+            monitoring.find(
+                monitoringValue =>
+                    monitoringValue.orgUnit === dataSet.orgUnitUid && monitoringValue.period === dataSet.period
+            )?.monitoring ?? false
+        );
+    } else {
+        const monitoringArray = monitoring["dataSets"]?.[dataSetName]?.monitoring;
+        return !!_.find(monitoringArray, { orgUnit: dataSet.orgUnitCode, period: dataSet.period });
+    }
 }
 
 export function parseDataDuplicationItemId(string: string): MalDataApprovalItemIdentifier | undefined {
