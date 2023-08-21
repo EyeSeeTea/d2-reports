@@ -348,6 +348,19 @@ export const DataSubmissionList: React.FC = React.memo(() => {
         [api.baseUrl, compositionRoot.glassDataSubmission, openDialog, reload, snackbar]
     );
 
+    const getUseCaseOptions = useMemo(
+        () => (filter: Filter, selectablePeriods: string[]) => {
+            return {
+                ...filter,
+                dataSubmissionPeriod,
+                periods: _.isEmpty(filter.periods) ? selectablePeriods : filter.periods,
+                quarters: _.isEmpty(filter.quarters) ? ["Q1", "Q2", "Q3", "Q4"] : filter.quarters,
+                orgUnitIds: getOrgUnitIdsFromPaths(filter.orgUnitPaths),
+            };
+        },
+        [dataSubmissionPeriod]
+    );
+
     const getRows = useMemo(
         () => async (_search: string, paging: TablePagination, sorting: TableSorting<DataSubmissionViewModel>) => {
             const { pager, objects } = await compositionRoot.glassDataSubmission.get(
@@ -366,7 +379,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
 
             return { pager, objects: getDataSubmissionViews(config, objects) };
         },
-        [compositionRoot, config, filters, reloadKey, selectablePeriods]
+        [compositionRoot.glassDataSubmission, config, filters, getUseCaseOptions, reloadKey, selectablePeriods]
     );
 
     const getEARRows = useMemo(
@@ -384,17 +397,8 @@ export const DataSubmissionList: React.FC = React.memo(() => {
 
             return { pager, objects: getEARDataSubmissionViews(config, objects) };
         },
-        [compositionRoot.glassDataSubmission, config, filters, reloadKey, selectablePeriods]
+        [compositionRoot.glassDataSubmission, config, filters, getUseCaseOptions, reloadKey, selectablePeriods]
     );
-
-    function getUseCaseOptions(filter: Filter, selectablePeriods: string[]) {
-        return {
-            ...filter,
-            periods: _.isEmpty(filter.periods) ? selectablePeriods : filter.periods,
-            quarters: _.isEmpty(filter.quarters) ? ["Q1", "Q2", "Q3", "Q4"] : filter.quarters,
-            orgUnitIds: getOrgUnitIdsFromPaths(filter.orgUnitPaths),
-        };
-    }
 
     const saveReorderedColumns = useCallback(
         async (columnKeys: Array<keyof DataSubmissionViewModel>) => {

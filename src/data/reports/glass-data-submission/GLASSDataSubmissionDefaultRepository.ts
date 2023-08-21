@@ -83,7 +83,17 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         options: GLASSDataSubmissionOptions,
         namespace: string
     ): Promise<PaginatedObjects<GLASSDataSubmissionItem>> {
-        const { paging, sorting, module, orgUnitIds, periods, quarters, completionStatus, submissionStatus } = options;
+        const {
+            paging,
+            sorting,
+            module,
+            orgUnitIds,
+            periods,
+            quarters,
+            completionStatus,
+            submissionStatus,
+            dataSubmissionPeriod,
+        } = options;
 
         const modules =
             (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
@@ -168,6 +178,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 submissionStatus,
                 dataSetsUploaded,
                 dataSubmissionPeriod,
+                period: object.period.slice(0, 4),
             };
         });
 
@@ -175,7 +186,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         const filteredRows = rows.filter(row => {
             return (_.isEmpty(orgUnitIds) || !row.orgUnit ? row : orgUnitIds.includes(row.orgUnit)) &&
-                module !== "EGASP"
+                dataSubmissionPeriod === "YEARLY"
                 ? periods.includes(String(row.period))
                 : quarterPeriods.includes(String(row.period)) &&
                       (completionStatus !== undefined ? row.questionnaireCompleted === completionStatus : row) &&
