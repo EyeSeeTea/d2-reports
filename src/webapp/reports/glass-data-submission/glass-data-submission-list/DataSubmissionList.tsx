@@ -24,6 +24,7 @@ import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
 import { useReload } from "../../../utils/use-reload";
 import {
+    DataSubmissionPeriod,
     EARDataSubmissionItem,
     EARSubmissionItemIdentifier,
     GLASSDataSubmissionItem,
@@ -55,6 +56,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
     const [rejectedSignals, setRejectedSignals] = useState<EARSubmissionItemIdentifier[]>([]);
     const [rejectedState, setRejectedState] = useState<"loading" | "idle">("idle");
     const [isDatasetUpdate, setDatasetUpdate] = useState<boolean>(false);
+    const [dataSubmissionPeriod, setDataSubmissionPeriod] = useState<DataSubmissionPeriod>("YEARLY");
     const [isDialogOpen, { enable: openDialog, disable: closeDialog }] = useBooleanState(false);
 
     const userGroupIds = useMemo(() => config.currentUser.userGroups.map(ug => ug.id), [config.currentUser]);
@@ -360,6 +362,8 @@ export const DataSubmissionList: React.FC = React.memo(() => {
 
             console.debug("Reloading", reloadKey);
 
+            setDataSubmissionPeriod(_.first(objects)?.dataSubmissionPeriod ?? "YEARLY");
+
             return { pager, objects: getDataSubmissionViews(config, objects) };
         },
         [compositionRoot, config, filters, reloadKey, selectablePeriods]
@@ -525,7 +529,13 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                 onChangeSearch={undefined}
                 onReorderColumns={saveReorderedColumns}
             >
-                <Filters values={filters} options={filterOptions} onChange={setFilters} userPermissions={modules} />
+                <Filters
+                    dataSubmissionPeriod={dataSubmissionPeriod}
+                    values={filters}
+                    options={filterOptions}
+                    onChange={setFilters}
+                    userPermissions={modules}
+                />
 
                 <ConfirmationDialog
                     isOpen={isDialogOpen}

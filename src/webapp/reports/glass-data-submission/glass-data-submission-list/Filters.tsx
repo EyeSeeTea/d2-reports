@@ -19,12 +19,14 @@ import {
     DatePickerProps,
 } from "@eyeseetea/d2-ui-components";
 import { Module, Status } from "../DataSubmissionViewModel";
+import { DataSubmissionPeriod } from "../../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 
 export interface DataSetsFiltersProps {
     values: Filter;
     options: FilterOptions;
     onChange: React.Dispatch<React.SetStateAction<Filter>>;
     userPermissions: Module[];
+    dataSubmissionPeriod?: DataSubmissionPeriod;
     isEARModule?: boolean;
 }
 
@@ -70,7 +72,14 @@ export const earStatusItems = [
 
 export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { config, api } = useAppContext();
-    const { values: filter, options: filterOptions, onChange, userPermissions, isEARModule } = props;
+    const {
+        values: filter,
+        options: filterOptions,
+        onChange,
+        userPermissions,
+        isEARModule,
+        dataSubmissionPeriod,
+    } = props;
 
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
 
@@ -260,7 +269,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 </>
             )}
 
-            {filter.module === "EGASP" && (
+            {dataSubmissionPeriod === "QUARTERLY" && (
                 <DropdownStyled
                     items={quarterItems}
                     values={filter.quarters}

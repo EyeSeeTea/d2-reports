@@ -131,6 +131,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             const key = getRegistrationKey({ orgUnitId: object.orgUnit, period: object.period });
             const match = registrations[key];
             const submissionStatus = statusItems.find(item => item.value === object.status)?.text ?? "";
+            const dataSubmissionPeriod =
+                modules.find(module => object.module === module.id)?.dataSubmissionPeriod ?? "YEARLY";
 
             const uploadStatus = uploads.filter(upload => upload.dataSubmission === object.id).map(item => item.status);
             const completedDatasets = uploadStatus.filter(item => item === "COMPLETED").length;
@@ -165,6 +167,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 ...match,
                 submissionStatus,
                 dataSetsUploaded,
+                dataSubmissionPeriod,
             };
         });
 
