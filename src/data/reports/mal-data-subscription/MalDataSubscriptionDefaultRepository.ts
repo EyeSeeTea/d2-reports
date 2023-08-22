@@ -186,11 +186,6 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
 
             const rows: Array<DashboardSubscriptionItem> = dashboards
                 .map(dashboard => {
-                    const subscriptionValue = subscriptionValues.find(
-                        subscriptionValue =>
-                            dashboard.id === subscriptionValue.dashboardId && subscriptionValue.subscribed
-                    );
-
                     const children: ChildrenDataElements[] = (
                         findArrayValueById(dashboard.id, dataElementsInDashboard) ?? []
                     ).map(child => {
@@ -208,14 +203,16 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                     });
 
                     const subscribedElements = _.intersection(
-                        subscriptionValues.map(subscription => subscription.dataElementId),
+                        subscriptionValues
+                            .filter(subscription => subscription.subscribed)
+                            .map(subscription => subscription.dataElementId),
                         children.map(child => child.id)
                     ).length;
 
                     const subscription =
                         subscribedElements !== 0 && subscribedElements !== children.length
                             ? "Subscribed to some elements"
-                            : subscribedElements === children.length && subscriptionValue
+                            : subscribedElements === children.length
                             ? "Subscribed"
                             : "Not Subscribed";
 

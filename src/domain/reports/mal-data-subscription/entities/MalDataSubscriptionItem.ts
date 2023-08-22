@@ -72,7 +72,7 @@ export function parseDataElementSubscriptionItemId(string: string): DataElementS
 export function parseDashboardSubscriptionItemId(string: string): DashboardSubscriptionItemIdentifier | undefined {
     const ids = string.split("-");
     const dashboardId = ids[0] === "dashboard" ? ids[1] : "";
-    const dataElementIds = ids[0] === "dashboard" ? ids.slice(2, -1) : ids;
+    const dataElementIds = ids[0] === "dashboard" ? ids.slice(2) : ids;
 
     if (dashboardId === undefined || !dataElementIds) return undefined;
 
