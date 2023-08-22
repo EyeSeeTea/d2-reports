@@ -56,6 +56,7 @@ import { GetSummaryMortalityUseCase } from "./domain/reports/csy-summary-mortali
 import { SaveSummaryMortalityUseCase } from "./domain/reports/csy-summary-mortality/usecases/SaveSummaryUseCase";
 import { CSYAuditTraumaDefaultRepository } from "./data/reports/csy-audit-trauma/CSYAuditTraumaDefaultRepository";
 import { GetEARDataSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/GetEARDataSubmissionUseCase";
+import { GetMalCountryCodesUseCase } from "./domain/reports/mal-data-approval/usecases/GetMalCountryCodesUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -90,6 +91,7 @@ export function getCompositionRoot(api: D2Api) {
         malDataApproval: getExecute({
             get: new GetMalDataSetsUseCase(dataDuplicationRepository),
             getDiff: new GetMalDataDiffUseCase(dataDuplicationRepository),
+            getCountryCodes: new GetMalCountryCodesUseCase(dataDuplicationRepository),
             save: new SaveMalDataSetsUseCase(dataDuplicationRepository),
             getColumns: new GetMalDataApprovalColumnsUseCase(dataDuplicationRepository),
             saveColumns: new SaveMalDataApprovalColumnsUseCase(dataDuplicationRepository),
