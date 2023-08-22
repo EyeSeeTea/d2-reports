@@ -185,12 +185,14 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const quarterPeriods = _.flatMap(periods, year => quarters.map(quarter => `${year}${quarter}`));
 
         const filteredRows = rows.filter(row => {
-            return (_.isEmpty(orgUnitIds) || !row.orgUnit ? row : orgUnitIds.includes(row.orgUnit)) &&
-                dataSubmissionPeriod === "YEARLY"
-                ? periods.includes(String(row.period))
-                : quarterPeriods.includes(String(row.period)) &&
-                      (completionStatus !== undefined ? row.questionnaireCompleted === completionStatus : row) &&
-                      (!submissionStatus ? row : row.status === submissionStatus);
+            return (
+                (_.isEmpty(orgUnitIds) || !row.orgUnit ? row : orgUnitIds.includes(row.orgUnit)) &&
+                (dataSubmissionPeriod === "YEARLY"
+                    ? periods.includes(String(row.period))
+                    : quarterPeriods.includes(String(row.period))) &&
+                (completionStatus !== undefined ? row.questionnaireCompleted === completionStatus : row) &&
+                (!submissionStatus ? row : row.status === submissionStatus)
+            );
         });
 
         const rowsInPage = _(filteredRows)
