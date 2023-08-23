@@ -8,6 +8,7 @@ msgstr ""
 "POT-Creation-Date: 2023-08-22T09:50:02.952Z\n"
 "PO-Revision-Date: 2023-08-22T09:50:02.952Z\n"
 
+
 msgid "<No value>"
 msgstr ""
 
@@ -296,13 +297,40 @@ msgstr ""
 msgid "Waiting for WHO to approve your update request"
 msgstr ""
 
+msgid "January-March"
+msgstr ""
+
+msgid "April-June"
+msgstr ""
+
+msgid "July-September"
+msgstr ""
+
+msgid "October-December"
+msgstr ""
+
+msgid "AMR"
+msgstr ""
+
+msgid "AMR - Individual"
+msgstr ""
+
+msgid "EGASP"
+msgstr ""
+
 msgid "Completed"
 msgstr ""
 
 msgid "Not completed"
 msgstr ""
 
-msgid "Periods"
+msgid "Module"
+msgstr ""
+
+msgid "Years"
+msgstr ""
+
+msgid "Quarters"
 msgstr ""
 
 msgid "Data Element"
@@ -444,6 +472,9 @@ msgid "Section"
 msgstr ""
 
 msgid "Data Element Groups"
+msgstr ""
+
+msgid "Periods"
 msgstr ""
 
 msgid "NHWA Data Approval Status Report"

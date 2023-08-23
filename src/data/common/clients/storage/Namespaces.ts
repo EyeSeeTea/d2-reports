@@ -15,6 +15,8 @@ export const Namespaces = {
     MAL_SUBSCRIPTION_STATUS: "mal-subscription-status",
     DATA_SUBMISSSIONS: "data-submissions",
     DATA_SUBMISSSIONS_USER_COLUMNS: "data-submissions-user-columns",
+    SIGNALS: "signals",
+    SIGNALS_USER_COLUMNS: "signals-user-columns",
     DATA_SUBMISSSIONS_MODULES: "modules",
     DATA_SUBMISSSIONS_UPLOADS: "uploads",
 };
@@ -28,6 +30,8 @@ export const NamespaceProperties: Record<Namespace, string[]> = {
     [Namespaces.MAL_SUBSCRIPTION_STATUS]: [],
     [Namespaces.DATA_SUBMISSSIONS]: [],
     [Namespaces.DATA_SUBMISSSIONS_USER_COLUMNS]: [],
+    [Namespaces.SIGNALS]: [],
+    [Namespaces.SIGNALS_USER_COLUMNS]: [],
     [Namespaces.DATA_SUBMISSSIONS_MODULES]: [],
     [Namespaces.DATA_SUBMISSSIONS_UPLOADS]: [],
 };

@@ -302,7 +302,13 @@ msgstr ""
 msgid "Not completed"
 msgstr ""
 
-msgid "Periods"
+msgid "Module"
+msgstr ""
+
+msgid "Years"
+msgstr ""
+
+msgid "Quarters"
 msgstr ""
 
 msgid "Data Element"
@@ -444,6 +450,9 @@ msgid "Section"
 msgstr ""
 
 msgid "Data Element Groups"
+msgstr ""
+
+msgid "Periods"
 msgstr ""
 
 msgid "NHWA Data Approval Status Report"
