@@ -39,7 +39,11 @@ export const Filters: React.FC<DataSubscriptionFiltersProps> = React.memo(props 
         ];
     }, []);
 
-    const subscriptionTypeItems = useMemoOptionsFromStrings(filterOptions.subscription);
+    const subscriptionItems = useMemoOptionsFromStrings(filterOptions.subscription);
+    const subscriptionTypeItems =
+        filter.elementType !== "dataElements"
+            ? subscriptionItems
+            : subscriptionItems.filter(subscriptionItem => subscriptionItem.value !== "Subscribed to some elements");
 
     const setSections = React.useCallback<DropdownHandler>(
         sections => onChange(prev => ({ ...prev, sections })),

@@ -223,7 +223,7 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                     const subscription =
                         subscribedElements !== 0 && subscribedElements !== children.length
                             ? "Subscribed to some elements"
-                            : subscribedElements === children.length
+                            : subscribedElements !== 0 && subscribedElements === children.length
                             ? "Subscribed"
                             : "Not Subscribed";
 
@@ -240,11 +240,9 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                     };
                 })
                 .filter(row =>
-                    (!subscriptionStatus
+                    !subscriptionStatus
                         ? row
-                        : subscriptionStatus === "Subscribed"
-                        ? row.subscription === "Subscribed" || row.subscription === "Subscribed to some elements"
-                        : row.subscription === "Not Subscribed") && _.isEmpty(dataElementGroups)
+                        : subscriptionStatus === row.subscription && _.isEmpty(dataElementGroups)
                         ? row
                         : _.intersection(
                               dataElementGroups,
@@ -343,7 +341,7 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                     const subscription =
                         subscribedElements !== 0 && subscribedElements !== children.length
                             ? "Subscribed to some elements"
-                            : subscribedElements === children.length
+                            : subscribedElements !== 0 && subscribedElements === children.length
                             ? "Subscribed"
                             : "Not subscribed";
 
@@ -360,11 +358,9 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                     };
                 })
                 .filter(row =>
-                    (!subscriptionStatus
+                    !subscriptionStatus
                         ? row
-                        : subscriptionStatus === "Subscribed"
-                        ? row.subscription === "Subscribed" || row.subscription === "Subscribed to some elements"
-                        : row.subscription === "Not Subscribed") && _.isEmpty(dataElementGroups)
+                        : subscriptionStatus === row.subscription && _.isEmpty(dataElementGroups)
                         ? row
                         : _.intersection(
                               dataElementGroups,

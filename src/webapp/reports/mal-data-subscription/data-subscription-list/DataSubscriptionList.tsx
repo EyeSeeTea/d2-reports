@@ -373,7 +373,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
             return {
                 sections,
                 dataElementGroups,
-                subscription: ["Subscribed", "Not Subscribed"],
+                subscription: ["Subscribed", "Not Subscribed", "Subscribed to some elements"],
             };
         },
         [sections, dataElementGroups]
