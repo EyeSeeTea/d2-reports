@@ -32,7 +32,7 @@ import { DataSubscriptionFilter, Filters } from "./Filters";
 import { NamedRef } from "../../../../domain/common/entities/Base";
 
 export const DataSubscriptionList: React.FC = React.memo(() => {
-    const { compositionRoot, config, api } = useAppContext();
+    const { compositionRoot, config } = useAppContext();
 
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
@@ -100,6 +100,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                             return {
                                 dataElementId: item.dataElementId,
                                 subscribed: true,
+                                lastDateOfSubscription: new Date().toISOString(),
                             };
                         });
 
@@ -125,6 +126,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                             return {
                                 dataElementId: item.dataElementId,
                                 subscribed: false,
+                                lastDateOfSubscription: new Date().toISOString(),
                             };
                         });
 
@@ -185,7 +187,6 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                         const subscriptionValues = items.flatMap(item =>
                             item.dataElementIds.map(dataElementId => {
                                 return {
-                                    dashboardId: item.dashboardId,
                                     dataElementId,
                                     lastDateOfSubscription: new Date().toISOString(),
                                     subscribed: true,
@@ -222,7 +223,6 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                         const subscriptionValues = items.flatMap(item =>
                             item.dataElementIds.map(dataElementId => {
                                 return {
-                                    dashboardId: item.dashboardId,
                                     dataElementId,
                                     lastDateOfSubscription: new Date().toISOString(),
                                     subscribed: false,
@@ -274,10 +274,19 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                     ...filters,
                 });
 
+                const sections = _.uniqBy(
+                    objects.map(object => {
+                        return { id: object.sectionId, name: object.sectionName };
+                    }),
+                    "id"
+                );
+
+                setSections(sections);
+
                 console.debug("Reloading", reloadKey);
-                return { pager, objects: getDataElementSubscriptionViews(config, objects, subscription) };
+                return { pager, objects: getDataElementSubscriptionViews(config, objects) };
             },
-        [compositionRoot.malDataSubscription, config, filters, reloadKey, subscription]
+        [compositionRoot.malDataSubscription, config, filters, reloadKey]
     );
 
     const getDashboardRows = useMemo(
@@ -359,21 +368,11 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
             .value();
     }, [dashboardTableProps.columns, visibleDashboardColumns]);
 
-    useEffect(() => {
-        async function getDatasetSections() {
-            const { sections } = await api
-                .get<any>(`/dataSets/PWCUb3Se1Ie`, { fields: "sections[name, id]" })
-                .getData();
-            return sections;
-        }
-        getDatasetSections().then(sections => setSections(sections));
-    }, [api]);
-
     const getFilterOptions = useCallback(
         (_config: Config) => {
             return {
-                sections: sections,
-                dataElementGroups: dataElementGroups,
+                sections,
+                dataElementGroups,
                 subscription: ["Subscribed", "Not Subscribed"],
             };
         },

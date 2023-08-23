@@ -86,7 +86,9 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
         if (!sorting) return { pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 }, objects: [] };
 
         const sqlViews = new Dhis2SqlViews(this.api);
-        const allDataSetIds = _.values(config.dataSets).map(ds => ds.id); // ?
+        const allDataSetIds = _.values(config.dataSets).map(ds => ds.id);
+        const subscriptionValues =
+            (await this.globalStorageClient.getObject<SubscriptionStatus[]>(Namespaces.MAL_SUBSCRIPTION_STATUS)) ?? [];
 
         const { pager, rows } = await sqlViews
             .query<Variables, SqlField>(
@@ -103,20 +105,29 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
             )
             .getData();
 
-        const items: Array<DataElementsSubscriptionItem> = rows
-            .map(
-                (item): DataElementsSubscriptionItem => ({
+        const objects: Array<DataElementsSubscriptionItem> = rows
+            .map((item): DataElementsSubscriptionItem => {
+                const subscriptionValue = subscriptionValues.find(
+                    subscription => subscription.dataElementId === item.dataelementuid
+                );
+
+                return {
                     dataElementName: item.dataelementname,
-                    subscription: Boolean(item.subscription),
+                    subscription: !!subscriptionValue?.subscribed,
                     sectionName: item.sectionname,
                     sectionId: item.sectionuid,
                     dataElementId: item.dataelementuid,
-                    lastDateOfSubscription: item.lastdateofsubscription,
-                })
-            )
-            .filter(row => (subscriptionStatus === "Subscribed") === row.subscription);
+                    lastDateOfSubscription: subscriptionValue?.lastDateOfSubscription ?? "",
+                };
+            })
+            .filter(row =>
+                (!subscriptionStatus ? row : (subscriptionStatus === "Subscribed") === row.subscription) &&
+                _.isEmpty(sections)
+                    ? row
+                    : _.includes(sections, row.sectionId)
+            );
 
-        return { pager, objects: items };
+        return { pager, objects };
     }
 
     async getChildrenDataElements(options: MalDataSubscriptionOptions) {
@@ -306,11 +317,6 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
 
             const rows: Array<DashboardSubscriptionItem> = visualizations
                 .map(visualization => {
-                    const subscriptionValue = subscriptionValues.find(
-                        subscriptionValue =>
-                            visualization.id === subscriptionValue.dashboardId && subscriptionValue.subscribed
-                    );
-
                     const children: ChildrenDataElements[] = (
                         findArrayValueById(visualization.id, dataElementsInVisualization) ?? []
                     ).map(child => {
@@ -328,14 +334,16 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                     });
 
                     const subscribedElements = _.intersection(
-                        subscriptionValues.map(subscription => subscription.dataElementId),
+                        subscriptionValues
+                            .filter(subscription => subscription.subscribed)
+                            .map(subscription => subscription.dataElementId),
                         children.map(child => child.id)
                     ).length;
 
                     const subscription =
                         subscribedElements !== 0 && subscribedElements !== children.length
                             ? "Subscribed to some elements"
-                            : subscribedElements === children.length && subscriptionValue
+                            : subscribedElements === children.length
                             ? "Subscribed"
                             : "Not subscribed";
 

@@ -25,16 +25,20 @@ const base = {
     },
     mal: {
         dataSets: { namePrefix: "MAL - WMR Form", nameExcluded: /-APVD$/ },
-
         sqlViewNames: [
             SQL_VIEW_DATA_DUPLICATION_NAME,
             SQL_VIEW_MAL_METADATA_NAME,
             SQL_VIEW_MAL_DIFF_NAME,
-            SQL_VIEW_MAL_DATAELEMENTS_NAME,
             SQL_VIEW_OLD_DATA_DUPLICATION_NAME,
         ],
         constantCode: "",
         approvalWorkflows: { namePrefix: "MAL" },
+    },
+    "mal-subscription": {
+        dataSets: { namePrefix: "MAL - WMR Form-APVD", nameExcluded: "NONE" },
+        sqlViewNames: [SQL_VIEW_MAL_DATAELEMENTS_NAME],
+        constantCode: "",
+        approvalWorkflows: { namePrefix: "" },
     },
     glass: {
         dataSets: { namePrefix: "AMR", nameExcluded: /-APVD$/ },

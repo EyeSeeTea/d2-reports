@@ -47,17 +47,6 @@ export function getDataElementSubscriptionItemId(dataElement: DataElementsSubscr
     return [dataElement.dataElementId, dataElement.sectionId].join("-");
 }
 
-export function getSubscriptionValue(
-    dataElement: DataElementsSubscriptionItem,
-    subscription: SubscriptionStatus[]
-): boolean {
-    const subscriptionValue =
-        subscription.find(subscriptionValue => subscriptionValue.dataElementId === dataElement.dataElementId)
-            ?.subscribed ?? false;
-
-    return subscriptionValue;
-}
-
 export function getDashboardSubscriptionItemId(dashboard: DashboardSubscriptionItem): string {
     return [["dashboard", dashboard.id].join("-"), dashboard.children.map(child => child.id).join("-")].join("-");
 }

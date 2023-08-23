@@ -1,6 +1,7 @@
 export type ReportType =
     | "nhwa"
     | "mal"
+    | "mal-subscription"
     | "glass"
     | "auditEmergency"
     | "auditTrauma"

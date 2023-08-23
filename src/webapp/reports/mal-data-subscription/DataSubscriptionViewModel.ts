@@ -3,10 +3,8 @@ import { Config } from "../../../domain/common/entities/Config";
 import {
     DashboardSubscriptionItem,
     DataElementsSubscriptionItem,
-    SubscriptionStatus,
     getDashboardSubscriptionItemId,
     getDataElementSubscriptionItemId,
-    getSubscriptionValue,
 } from "../../../domain/reports/mal-data-subscription/entities/MalDataSubscriptionItem";
 
 export interface DataElementSubscriptionViewModel {
@@ -29,13 +27,12 @@ export interface DashboardSubscriptionViewModel {
 
 export function getDataElementSubscriptionViews(
     _config: Config,
-    items: DataElementsSubscriptionItem[],
-    subscription: SubscriptionStatus[]
+    items: DataElementsSubscriptionItem[]
 ): DataElementSubscriptionViewModel[] {
     return items.map(item => {
         return {
             id: getDataElementSubscriptionItemId(item),
-            subscription: getSubscriptionValue(item, subscription),
+            subscription: item.subscription,
             dataElementName: item.dataElementName,
             dataElementId: item.dataElementId,
             sectionName: item.sectionName,
