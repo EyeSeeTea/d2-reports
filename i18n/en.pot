@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2023-07-05T10:23:56.793Z\n"
-"PO-Revision-Date: 2023-07-05T10:23:56.793Z\n"
+"POT-Creation-Date: 2023-08-23T15:02:41.593Z\n"
+"PO-Revision-Date: 2023-08-23T15:02:41.593Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -97,10 +97,58 @@ msgstr ""
 msgid "created"
 msgstr ""
 
-msgid "CSY Audit Report"
+msgid "CSY Audit Filters - Emergency Care"
 msgstr ""
 
 msgid "Register ID"
+msgstr ""
+
+msgid "Overall Mortality in EU"
+msgstr ""
+
+msgid "Low acuity triage with EU disposition ICU"
+msgstr ""
+
+msgid "Highest triage category and time to first provider >30min​"
+msgstr ""
+
+msgid "Initial RBG low and Glucose not given"
+msgstr ""
+
+msgid "Shock and IVF including Blood"
+msgstr ""
+
+msgid "Yearly"
+msgstr ""
+
+msgid "Quarterly"
+msgstr ""
+
+msgid "Jan - March"
+msgstr ""
+
+msgid "April - June"
+msgstr ""
+
+msgid "July - September"
+msgstr ""
+
+msgid "October - December"
+msgstr ""
+
+msgid "Audit Type"
+msgstr ""
+
+msgid "Period Type"
+msgstr ""
+
+msgid "Year"
+msgstr ""
+
+msgid "Quarter"
+msgstr ""
+
+msgid "CSY Audit Filters - Trauma Care"
 msgstr ""
 
 msgid "Mortality with low injury severity score"
@@ -133,34 +181,67 @@ msgstr ""
 msgid "Moderate injuries by any scoring system"
 msgstr ""
 
-msgid "Yearly"
+msgid "CSY Summary Report - Mortality by Injury Severity"
 msgstr ""
 
-msgid "Quarterly"
+msgid "Scoring System"
 msgstr ""
 
-msgid "Jan - March"
+msgid "Severity"
 msgstr ""
 
-msgid "April - June"
+msgid "Mortality"
 msgstr ""
 
-msgid "July - September"
+msgid "Total"
 msgstr ""
 
-msgid "October - December"
+msgid "Mortality Injury Severity"
 msgstr ""
 
-msgid "Audit Type"
+msgid "Summary Type"
 msgstr ""
 
-msgid "Period Type"
+msgid "CSY Summary Table Report - Patient Characteristics"
 msgstr ""
 
-msgid "Year"
+msgid "Group"
 msgstr ""
 
-msgid "Quarter"
+msgid "Sub-Group"
+msgstr ""
+
+msgid "< 1 yr"
+msgstr ""
+
+msgid "1 - 4 yr"
+msgstr ""
+
+msgid "5 - 9 yr"
+msgstr ""
+
+msgid "10 - 14 yr"
+msgstr ""
+
+msgid "15 - 19 yr"
+msgstr ""
+
+msgid "20 - 40 yr"
+msgstr ""
+
+msgid "40 - 60 yr"
+msgstr ""
+
+msgid "60 - 80 yr"
+msgstr ""
+
+msgid "80+ yr"
+msgstr ""
+
+msgid "Unknown"
+msgstr ""
+
+msgid "Patient Characteristics"
 msgstr ""
 
 msgid "Name"
@@ -253,6 +334,27 @@ msgstr ""
 msgid "Error when trying to reopen submission"
 msgstr ""
 
+msgid "Creation Date"
+msgstr ""
+
+msgid "Level of Confidentiality"
+msgstr ""
+
+msgid "Go to Signal"
+msgstr ""
+
+msgid "Error when trying to approve signal"
+msgstr ""
+
+msgid "Reject Signal"
+msgstr ""
+
+msgid "Signals have been successfully rejected"
+msgstr ""
+
+msgid "Error when trying to reject signal"
+msgstr ""
+
 msgid "Reject Data Submission"
 msgstr ""
 
@@ -283,13 +385,46 @@ msgstr ""
 msgid "Waiting for WHO to approve your update request"
 msgstr ""
 
+msgid "Draft"
+msgstr ""
+
+msgid "January-March"
+msgstr ""
+
+msgid "April-June"
+msgstr ""
+
+msgid "July-September"
+msgstr ""
+
+msgid "October-December"
+msgstr ""
+
+msgid "AMR"
+msgstr ""
+
+msgid "AMR - Individual"
+msgstr ""
+
+msgid "EAR"
+msgstr ""
+
+msgid "EGASP"
+msgstr ""
+
 msgid "Completed"
 msgstr ""
 
 msgid "Not completed"
 msgstr ""
 
-msgid "Periods"
+msgid "Module"
+msgstr ""
+
+msgid "Years"
+msgstr ""
+
+msgid "Quarters"
 msgstr ""
 
 msgid "Data Element"
@@ -391,6 +526,36 @@ msgstr ""
 msgid "Data sets"
 msgstr ""
 
+msgid "Periods"
+msgstr ""
+
+msgid "Malaria Data Subscription Report"
+msgstr ""
+
+msgid "Subscription status"
+msgstr ""
+
+msgid "Sections"
+msgstr ""
+
+msgid "Last Date of Subscription"
+msgstr ""
+
+msgid "Subscribe"
+msgstr ""
+
+msgid "Unsubscribe"
+msgstr ""
+
+msgid "Element Type"
+msgstr ""
+
+msgid "Subscription Status"
+msgstr ""
+
+msgid "Section"
+msgstr ""
+
 msgid "NHWA Data Approval Status Report"
 msgstr ""
 
@@ -412,9 +577,6 @@ msgstr ""
 msgid "NHWA Comments Report"
 msgstr ""
 
-msgid "Section"
-msgstr ""
-
 msgid "Category option combo"
 msgstr ""
 
@@ -425,9 +587,6 @@ msgid "Last updated"
 msgstr ""
 
 msgid "Stored by"
-msgstr ""
-
-msgid "Sections"
 msgstr ""
 
 msgid "Toggle filters"
