@@ -12,7 +12,7 @@ export interface DataElementsSubscriptionItem {
 export interface DashboardSubscriptionItem {
     id: string;
     name: string;
-    subscribedElements: number;
+    subscribedElements: string;
     subscription: string;
     lastDateOfSubscription: string;
     children: ChildrenDataElements[];

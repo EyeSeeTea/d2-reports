@@ -230,7 +230,9 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                     return {
                         ...dashboard,
                         children,
-                        subscribedElements,
+                        subscribedElements: !_.isEmpty(children)
+                            ? `${subscribedElements} / ${children.length}`
+                            : String(subscribedElements),
                         subscription,
                         lastDateOfSubscription:
                             _.maxBy(
@@ -348,7 +350,9 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                     return {
                         ...visualization,
                         children,
-                        subscribedElements,
+                        subscribedElements: !_.isEmpty(children)
+                            ? `${subscribedElements} / ${children.length}`
+                            : String(subscribedElements),
                         subscription,
                         lastDateOfSubscription:
                             _.maxBy(

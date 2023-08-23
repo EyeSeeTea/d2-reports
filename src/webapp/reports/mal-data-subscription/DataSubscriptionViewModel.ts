@@ -19,7 +19,7 @@ export interface DataElementSubscriptionViewModel {
 export interface DashboardSubscriptionViewModel {
     id: string;
     name: string;
-    subscribedElements: number;
+    subscribedElements: string;
     subscription: string;
     lastDateOfSubscription: string;
     children: NamedRef[];
