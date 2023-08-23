@@ -3,6 +3,7 @@ import { Id } from "../../../common/entities/Base";
 import { Config } from "../../../common/entities/Config";
 import { PaginatedObjects, Paging, Sorting } from "../../../common/entities/PaginatedObjects";
 import {
+    DataSubmissionPeriod,
     EARDataSubmissionItem,
     EARSubmissionItemIdentifier,
     GLASSDataSubmissionItem,
@@ -42,6 +43,7 @@ export interface GLASSDataSubmissionOptions {
     quarters: string[];
     module: Module;
     orgUnitIds: Id[];
+    dataSubmissionPeriod: DataSubmissionPeriod;
     completionStatus?: boolean;
     submissionStatus?: Status;
 }

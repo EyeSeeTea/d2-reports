@@ -54,6 +54,7 @@ export function getDataSubmissionViews(_config: Config, items: GLASSDataSubmissi
             questionnaireCompleted: item.questionnaireCompleted,
             dataSetsUploaded: item.dataSetsUploaded,
             submissionStatus: item.submissionStatus,
+            dataSubmissionPeriod: item.dataSubmissionPeriod,
         };
     });
 }
