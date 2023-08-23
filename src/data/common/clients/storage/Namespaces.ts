@@ -18,6 +18,9 @@ export const Namespaces = {
     SIGNALS_USER_COLUMNS: "signals-user-columns",
     DATA_SUBMISSSIONS_MODULES: "modules",
     DATA_SUBMISSSIONS_UPLOADS: "uploads",
+    DATA_QUALITY: "data-quality",
+    INDICATOR_STATUS_USER_COLUMNS: "indicator-status-user-columns",
+    PROGRAM_INDICATOR_STATUS_USER_COLUMNS: "program-indicator-status-user-columns",
 };
 
 export const NamespaceProperties: Record<Namespace, string[]> = {
@@ -33,4 +36,7 @@ export const NamespaceProperties: Record<Namespace, string[]> = {
     [Namespaces.SIGNALS_USER_COLUMNS]: [],
     [Namespaces.DATA_SUBMISSSIONS_MODULES]: [],
     [Namespaces.DATA_SUBMISSSIONS_UPLOADS]: [],
+    [Namespaces.DATA_QUALITY]: [],
+    [Namespaces.INDICATOR_STATUS_USER_COLUMNS]: [],
+    [Namespaces.PROGRAM_INDICATOR_STATUS_USER_COLUMNS]: [],
 };

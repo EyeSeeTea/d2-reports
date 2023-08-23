@@ -1,5 +1,6 @@
 import React from "react";
 import { AdminReport } from "./admin/AdminReport";
+import DataQualityReport from "./data-quality/DataQualityReport";
 import MalDataApprovalStatusReport from "./mal-data-approval/MalDataApprovalReport";
 import MalDataSubscriptionStatusReport from "./mal-data-subscription/MalDataSubscriptionReport";
 import { NHWADataApprovalStatusReport } from "./nhwa-approval-status/NHWADataApprovalStatusReport";
@@ -47,6 +48,9 @@ const Component: React.FC = () => {
         }
         case "glass-submission": {
             return <GLASSDataSubmissionReport />;
+        }
+        case "data-quality": {
+            return <DataQualityReport />;
         }
         default: {
             return <p>{`Please provide a valid REACT_APP_REPORT_VARIANT`}</p>;

@@ -56,6 +56,15 @@ import { GetSummaryMortalityUseCase } from "./domain/reports/csy-summary-mortali
 import { SaveSummaryMortalityUseCase } from "./domain/reports/csy-summary-mortality/usecases/SaveSummaryUseCase";
 import { CSYAuditTraumaDefaultRepository } from "./data/reports/csy-audit-trauma/CSYAuditTraumaDefaultRepository";
 import { GetEARDataSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/GetEARDataSubmissionUseCase";
+import { GetMalCountryCodesUseCase } from "./domain/reports/mal-data-approval/usecases/GetMalCountryCodesUseCase";
+import { DataQualityDefaultRepository } from "./data/reports/data-quality/DataQualityDefaultRepository";
+import { GetIndicatorsUseCase } from "./domain/reports/data-quality/usecases/GetIndicatorsUseCase";
+import { GetProgramIndicatorsUseCase } from "./domain/reports/data-quality/usecases/GetProgramIndicatorsUseCase";
+import { SaveDataQualityColumnsUseCase } from "./domain/reports/data-quality/usecases/SaveDataQualityColumnsUseCase";
+import { GetDataQualityColumnsUseCase } from "./domain/reports/data-quality/usecases/GetDataQualityColumnsUseCase";
+import { SaveDataQualityUseCase } from "./domain/reports/data-quality/usecases/SaveDataQualityUseCase";
+import { LoadDataQualityValidation } from "./domain/reports/data-quality/usecases/loadDataQualityValidation";
+import { ResetDataQualityValidation } from "./domain/reports/data-quality/usecases/ResetDataQualityValidation";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -65,6 +74,7 @@ export function getCompositionRoot(api: D2Api) {
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
     const dataDuplicationRepository = new MalDataApprovalDefaultRepository(api);
     const dataSubscriptionRepository = new MalDataSubscriptionDefaultRepository(api);
+    const dataQualityRepository = new DataQualityDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
     const glassDataRepository = new GLASSDataSubmissionDefaultRepository(api);
     const csySummaryRepository = new CSYSummaryDefaultRepository(api);
@@ -90,6 +100,7 @@ export function getCompositionRoot(api: D2Api) {
         malDataApproval: getExecute({
             get: new GetMalDataSetsUseCase(dataDuplicationRepository),
             getDiff: new GetMalDataDiffUseCase(dataDuplicationRepository),
+            getCountryCodes: new GetMalCountryCodesUseCase(dataDuplicationRepository),
             save: new SaveMalDataSetsUseCase(dataDuplicationRepository),
             getColumns: new GetMalDataApprovalColumnsUseCase(dataDuplicationRepository),
             saveColumns: new SaveMalDataApprovalColumnsUseCase(dataDuplicationRepository),
@@ -133,6 +144,15 @@ export function getCompositionRoot(api: D2Api) {
         summaryMortality: getExecute({
             get: new GetSummaryMortalityUseCase(csySummaryMortalityRepository),
             save: new SaveSummaryMortalityUseCase(csySummaryMortalityRepository),
+        }),
+        dataQuality: getExecute({
+            getIndicators: new GetIndicatorsUseCase(dataQualityRepository),
+            getProgramIndicators: new GetProgramIndicatorsUseCase(dataQualityRepository),
+            saveDataQuality: new SaveDataQualityUseCase(dataQualityRepository),
+            loadValidation: new LoadDataQualityValidation(dataQualityRepository),
+            resetValidation: new ResetDataQualityValidation(dataQualityRepository),
+            getColumns: new GetDataQualityColumnsUseCase(dataQualityRepository),
+            saveColumns: new SaveDataQualityColumnsUseCase(dataQualityRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),
