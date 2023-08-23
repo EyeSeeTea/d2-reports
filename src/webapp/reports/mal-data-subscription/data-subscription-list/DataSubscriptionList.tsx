@@ -8,7 +8,6 @@ import {
 } from "@eyeseetea/d2-ui-components";
 import _ from "lodash";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import DoneIcon from "@material-ui/icons/Done";
 import { Config } from "../../../../domain/common/entities/Config";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import {
@@ -30,6 +29,7 @@ import {
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
 import { DataSubscriptionFilter, Filters } from "./Filters";
 import { NamedRef } from "../../../../domain/common/entities/Base";
+import { Done, DoneAll, Remove } from "@material-ui/icons";
 
 export const DataSubscriptionList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
@@ -90,7 +90,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                 {
                     name: "subscribe",
                     text: i18n.t("Subscribe"),
-                    icon: <DoneIcon />,
+                    icon: <Done />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
                         const items = _.compact(selectedIds.map(item => parseDataElementSubscriptionItemId(item)));
@@ -116,7 +116,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                 {
                     name: "unsubscribe",
                     text: i18n.t("Unsubscribe"),
-                    icon: <DoneIcon />,
+                    icon: <Remove />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
                         const items = _.compact(selectedIds.map(item => parseDataElementSubscriptionItemId(item)));
@@ -176,9 +176,9 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
             ],
             actions: [
                 {
-                    name: "subscribe",
-                    text: i18n.t("Subscribe"),
-                    icon: <DoneIcon />,
+                    name: "subscribeToAll",
+                    text: i18n.t("Subscribe to all children"),
+                    icon: <DoneAll />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
                         const items = _.compact(selectedIds.map(item => parseDashboardSubscriptionItemId(item)));
@@ -205,16 +205,47 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                         _.every(
                             rows,
                             row =>
-                                ((row.subscription === "Not Subscribed" ||
+                                (row.subscription === "Not Subscribed" ||
                                     row.subscription === "Subscribed to some elements") &&
-                                    !_.isEmpty(row.children)) ||
-                                (row.subscription === "Not Subscribed" && row.id.split("-")[0] !== "dashboard")
+                                !_.isEmpty(row.children)
                         ),
                 },
                 {
-                    name: "unsubscribe",
-                    text: i18n.t("Unsubscribe"),
-                    icon: <DoneIcon />,
+                    name: "subscribe",
+                    text: i18n.t("Subscribe"),
+                    icon: <Done />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseDashboardSubscriptionItemId(item)));
+                        if (items.length === 0) return;
+
+                        const subscriptionValues = items.flatMap(item =>
+                            item.dataElementIds.map(dataElementId => {
+                                return {
+                                    dataElementId,
+                                    lastDateOfSubscription: new Date().toISOString(),
+                                    subscribed: true,
+                                };
+                            })
+                        );
+
+                        await compositionRoot.malDataSubscription.saveSubscription(
+                            Namespaces.MAL_SUBSCRIPTION_STATUS,
+                            combineSubscriptionValues(subscription, subscriptionValues)
+                        );
+
+                        reload();
+                    },
+                    isActive: rows =>
+                        _.every(
+                            rows,
+                            row => row.subscription === "Not Subscribed" && row.id.split("-")[0] !== "dashboard"
+                        ),
+                },
+                {
+                    name: "unsubscribeFromAll",
+                    text: i18n.t("Unsubscribe to all children"),
+                    icon: <Remove />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
                         const items = _.compact(selectedIds.map(item => parseDashboardSubscriptionItemId(item)));
@@ -241,11 +272,39 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                         _.every(
                             rows,
                             row =>
-                                ((row.subscription === "Subscribed" ||
+                                (row.subscription === "Subscribed" ||
                                     row.subscription === "Subscribed to some elements") &&
-                                    !_.isEmpty(row.children)) ||
-                                (row.subscription === "Subscribed" && row.id.split("-")[0] !== "dashboard")
+                                !_.isEmpty(row.children)
                         ),
+                },
+                {
+                    name: "unsubscribe",
+                    text: i18n.t("Unsubscribe"),
+                    icon: <Remove />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        const items = _.compact(selectedIds.map(item => parseDashboardSubscriptionItemId(item)));
+                        if (items.length === 0) return;
+
+                        const subscriptionValues = items.flatMap(item =>
+                            item.dataElementIds.map(dataElementId => {
+                                return {
+                                    dataElementId,
+                                    lastDateOfSubscription: new Date().toISOString(),
+                                    subscribed: false,
+                                };
+                            })
+                        );
+
+                        await compositionRoot.malDataSubscription.saveSubscription(
+                            Namespaces.MAL_SUBSCRIPTION_STATUS,
+                            combineSubscriptionValues(subscription, subscriptionValues)
+                        );
+
+                        reload();
+                    },
+                    isActive: rows =>
+                        _.every(rows, row => row.subscription === "Subscribed" && row.id.split("-")[0] !== "dashboard"),
                 },
             ],
             initialSorting: {
