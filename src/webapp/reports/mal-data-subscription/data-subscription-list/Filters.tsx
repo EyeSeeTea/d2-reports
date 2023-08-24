@@ -91,7 +91,7 @@ export const Filters: React.FC<DataSubscriptionFiltersProps> = React.memo(props 
                 />
             )}
 
-            {filter.elementType !== "dataElements" && (
+            {filter.elementType === "dataElements" && (
                 <DropdownStyled
                     items={dataElementGroupItems}
                     values={filter.dataElementGroups}

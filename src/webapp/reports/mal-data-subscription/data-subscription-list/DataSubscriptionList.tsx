@@ -29,7 +29,7 @@ import {
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
 import { DataSubscriptionFilter, Filters } from "./Filters";
 import { NamedRef } from "../../../../domain/common/entities/Base";
-import { Done, DoneAll, Remove } from "@material-ui/icons";
+import { ClearAll, Done, DoneAll, Remove } from "@material-ui/icons";
 
 export const DataSubscriptionList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
@@ -78,7 +78,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                     sortable: true,
                     getValue: row => (row.subscription ? "Subscribed" : "Not subscribed"),
                 },
-                { name: "sectionName", text: i18n.t("Sections"), sortable: true },
+                { name: "section", text: i18n.t("Sections"), sortable: true, getValue: row => row.section?.name ?? "" },
                 {
                     name: "lastDateOfSubscription",
                     text: i18n.t("Last Date of Subscription"),
@@ -245,7 +245,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                 {
                     name: "unsubscribeFromAll",
                     text: i18n.t("Unsubscribe to all children"),
-                    icon: <Remove />,
+                    icon: <ClearAll />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
                         const items = _.compact(selectedIds.map(item => parseDashboardSubscriptionItemId(item)));
@@ -326,21 +326,15 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                 paging: TablePagination,
                 sorting: TableSorting<DataElementSubscriptionViewModel>
             ) => {
-                const { pager, objects } = await compositionRoot.malDataSubscription.get({
+                const { dataElementGroups, objects, pager, sections } = await compositionRoot.malDataSubscription.get({
                     config,
                     paging: { page: paging.page, pageSize: paging.pageSize },
                     sorting: getSortingFromTableSorting(sorting),
                     ...filters,
                 });
 
-                const sections = _.uniqBy(
-                    objects.map(object => {
-                        return { id: object.sectionId, name: object.sectionName };
-                    }),
-                    "id"
-                );
-
                 setSections(sections);
+                setDataElementGroups(dataElementGroups);
 
                 console.debug("Reloading", reloadKey);
                 return { pager, objects: getDataElementSubscriptionViews(config, objects) };
@@ -357,14 +351,6 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                     dashboardSorting: getSortingFromDashboardTableSorting(sorting),
                     ...filters,
                 });
-
-                const dataElementGroups = _(objects)
-                    .map(object => object.children.map(child => child.dataElementGroups))
-                    .flattenDeep()
-                    .uniqWith(_.isEqual)
-                    .value();
-
-                setDataElementGroups(dataElementGroups);
 
                 console.debug("Reloading", reloadKey);
                 return { pager, objects: getDashboardSubscriptionViews(config, objects) };

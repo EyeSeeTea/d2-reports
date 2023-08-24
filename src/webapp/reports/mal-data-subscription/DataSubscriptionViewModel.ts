@@ -11,7 +11,7 @@ export interface DataElementSubscriptionViewModel {
     id: string;
     dataElementName: string;
     dataElementId: string;
-    sectionName: string;
+    section: NamedRef | undefined;
     subscription: boolean;
     lastDateOfSubscription: string;
 }
@@ -35,7 +35,7 @@ export function getDataElementSubscriptionViews(
             subscription: item.subscription,
             dataElementName: item.dataElementName,
             dataElementId: item.dataElementId,
-            sectionName: item.sectionName,
+            section: item.section,
             lastDateOfSubscription: item.lastDateOfSubscription,
         };
     });

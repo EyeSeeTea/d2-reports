@@ -3,9 +3,9 @@ import { NamedRef } from "../../../common/entities/Base";
 export interface DataElementsSubscriptionItem {
     dataElementName: string;
     dataElementId: string;
+    section: NamedRef | undefined;
+    dataElementGroups: NamedRef[];
     subscription: boolean;
-    sectionName: string;
-    sectionId: string;
     lastDateOfSubscription: string;
 }
 
@@ -44,7 +44,7 @@ export interface SubscriptionStatus {
 export type ElementType = "dataElements" | "dashboards" | "visualizations";
 
 export function getDataElementSubscriptionItemId(dataElement: DataElementsSubscriptionItem): string {
-    return [dataElement.dataElementId, dataElement.sectionId].join("-");
+    return [dataElement.dataElementId, dataElement.section?.id].join("-");
 }
 
 export function getDashboardSubscriptionItemId(dashboard: DashboardSubscriptionItem): string {
