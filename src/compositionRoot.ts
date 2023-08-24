@@ -47,6 +47,7 @@ import { GetGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-dat
 import { SaveGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-data-submission/usecases/SaveGLASSDataSubmissionColumnsUseCase";
 import { UpdateGLASSSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/UpdateGLASSSubmissionUseCase";
 import { DHIS2MessageCountUseCase } from "./domain/reports/glass-data-submission/usecases/DHIS2MessageCountUseCase";
+import { GetGLASSUserPermissionsUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSUserPermissionsUseCase";
 import { CSYSummaryDefaultRepository } from "./data/reports/csy-summary-patient/CSYSummaryDefaultRepository";
 import { GetSummaryUseCase } from "./domain/reports/csy-summary-patient/usecases/GetSummaryUseCase";
 import { SaveSummaryUseCase } from "./domain/reports/csy-summary-patient/usecases/SaveSummaryUseCase";
@@ -67,6 +68,16 @@ import { SubnationalCorrectD2Repository } from "./data/reports/nhwa-subnational-
 import { GetSubnationalCorrectUseCase } from "./domain/reports/nhwa-subnational-correct-orgunit/usecases/GetSubnationalCorrectUseCase";
 import { DismissSubnationalCorrectValuesUseCase } from "./domain/reports/nhwa-subnational-correct-orgunit/usecases/DismissSubnationalCorrectValuesUseCase";
 import { SubnationalCorrectD2SettingsRepository } from "./data/reports/nhwa-subnational-correct-orgunit/SubnationalCorrectD2SettingsRepository";
+import { GetEARDataSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/GetEARDataSubmissionUseCase";
+import { GetMalCountryCodesUseCase } from "./domain/reports/mal-data-approval/usecases/GetMalCountryCodesUseCase";
+import { DataQualityDefaultRepository } from "./data/reports/data-quality/DataQualityDefaultRepository";
+import { GetIndicatorsUseCase } from "./domain/reports/data-quality/usecases/GetIndicatorsUseCase";
+import { GetProgramIndicatorsUseCase } from "./domain/reports/data-quality/usecases/GetProgramIndicatorsUseCase";
+import { SaveDataQualityColumnsUseCase } from "./domain/reports/data-quality/usecases/SaveDataQualityColumnsUseCase";
+import { GetDataQualityColumnsUseCase } from "./domain/reports/data-quality/usecases/GetDataQualityColumnsUseCase";
+import { SaveDataQualityUseCase } from "./domain/reports/data-quality/usecases/SaveDataQualityUseCase";
+import { LoadDataQualityValidation } from "./domain/reports/data-quality/usecases/loadDataQualityValidation";
+import { ResetDataQualityValidation } from "./domain/reports/data-quality/usecases/ResetDataQualityValidation";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -76,6 +87,7 @@ export function getCompositionRoot(api: D2Api) {
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
     const dataDuplicationRepository = new MalDataApprovalDefaultRepository(api);
     const dataSubscriptionRepository = new MalDataSubscriptionDefaultRepository(api);
+    const dataQualityRepository = new DataQualityDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
     const glassDataRepository = new GLASSDataSubmissionDefaultRepository(api);
     const csySummaryRepository = new CSYSummaryDefaultRepository(api);
@@ -107,6 +119,7 @@ export function getCompositionRoot(api: D2Api) {
         malDataApproval: getExecute({
             get: new GetMalDataSetsUseCase(dataDuplicationRepository),
             getDiff: new GetMalDataDiffUseCase(dataDuplicationRepository),
+            getCountryCodes: new GetMalCountryCodesUseCase(dataDuplicationRepository),
             save: new SaveMalDataSetsUseCase(dataDuplicationRepository),
             getColumns: new GetMalDataApprovalColumnsUseCase(dataDuplicationRepository),
             saveColumns: new SaveMalDataApprovalColumnsUseCase(dataDuplicationRepository),
@@ -136,6 +149,8 @@ export function getCompositionRoot(api: D2Api) {
         }),
         glassDataSubmission: getExecute({
             get: new GetGLASSDataSubmissionUseCase(glassDataRepository),
+            getEAR: new GetEARDataSubmissionUseCase(glassDataRepository),
+            getUserGroupPermissions: new GetGLASSUserPermissionsUseCase(glassDataRepository),
             getColumns: new GetGLASSDataSubmissionColumnsUseCase(glassDataRepository),
             saveColumns: new SaveGLASSDataSubmissionColumnsUseCase(glassDataRepository),
             dhis2MessageCount: new DHIS2MessageCountUseCase(glassDataRepository),
@@ -148,6 +163,15 @@ export function getCompositionRoot(api: D2Api) {
         summaryMortality: getExecute({
             get: new GetSummaryMortalityUseCase(csySummaryMortalityRepository),
             save: new SaveSummaryMortalityUseCase(csySummaryMortalityRepository),
+        }),
+        dataQuality: getExecute({
+            getIndicators: new GetIndicatorsUseCase(dataQualityRepository),
+            getProgramIndicators: new GetProgramIndicatorsUseCase(dataQualityRepository),
+            saveDataQuality: new SaveDataQualityUseCase(dataQualityRepository),
+            loadValidation: new LoadDataQualityValidation(dataQualityRepository),
+            resetValidation: new ResetDataQualityValidation(dataQualityRepository),
+            getColumns: new GetDataQualityColumnsUseCase(dataQualityRepository),
+            saveColumns: new SaveDataQualityColumnsUseCase(dataQualityRepository),
         }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),

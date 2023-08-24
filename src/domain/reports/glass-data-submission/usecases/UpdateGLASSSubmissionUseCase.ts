@@ -1,5 +1,5 @@
 import { UseCase } from "../../../../compositionRoot";
-import { GLASSDataSubmissionItemIdentifier } from "../entities/GLASSDataSubmissionItem";
+import { EARSubmissionItemIdentifier, GLASSDataSubmissionItemIdentifier } from "../entities/GLASSDataSubmissionItem";
 import { GLASSDataSubmissionRepository } from "../repositories/GLASSDataSubmissionRepository";
 
 export class UpdateGLASSSubmissionUseCase implements UseCase {
@@ -10,13 +10,14 @@ export class UpdateGLASSSubmissionUseCase implements UseCase {
         action: UpdateAction,
         items: GLASSDataSubmissionItemIdentifier[],
         message?: string,
-        isDatasetUpdate?: boolean
+        isDatasetUpdate?: boolean,
+        signals?: EARSubmissionItemIdentifier[]
     ): Promise<void> | Promise<string> | undefined {
         switch (action) {
             case "approve":
-                return this.submissionRepository.approve(namespace, items);
+                return this.submissionRepository.approve(namespace, items, signals);
             case "reject":
-                return this.submissionRepository.reject(namespace, items, message, isDatasetUpdate);
+                return this.submissionRepository.reject(namespace, items, message, isDatasetUpdate, signals);
             case "reopen":
                 return this.submissionRepository.reopen(namespace, items);
             case "accept":
