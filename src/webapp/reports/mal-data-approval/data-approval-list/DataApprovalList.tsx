@@ -106,7 +106,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
         });
     }, [compositionRoot.malDataApproval]);
 
-    const combiner = React.useMemo(
+    const getMonitoringJson = React.useMemo(
         () =>
             (
                 initialMonitoringValues: MonitoringValue | Monitoring[],
@@ -119,9 +119,25 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     const initialMonitoring = initialMonitoringValues[elementType]?.[dataSet]?.monitoring ?? [];
 
                     const newDataSets = _.merge({}, initialMonitoringValues[elementType], {
-                        [dataSet]: {
-                            monitoring: combineMonitoringValues(initialMonitoring, addedMonitoringValues),
-                        },
+                        [dataSet]: _.omit(
+                            {
+                                monitoring: combineMonitoringValues(initialMonitoring, addedMonitoringValues).map(
+                                    monitoring => {
+                                        return {
+                                            ...monitoring,
+                                            orgUnit:
+                                                monitoring.orgUnit.length > 3
+                                                    ? countryCodes.find(
+                                                          countryCode => countryCode.id === monitoring.orgUnit
+                                                      )?.code
+                                                    : monitoring.orgUnit,
+                                        };
+                                    }
+                                ),
+                                userGroups: userGroup,
+                            },
+                            "userGroup"
+                        ),
                     });
 
                     return {
@@ -143,7 +159,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         [elementType]: {
                             [dataSet]: {
                                 monitoring: combineMonitoringValues(initialMonitoring, addedMonitoringValues),
-                                userGroup,
+                                userGroups: userGroup,
                             },
                         },
                     };
@@ -293,7 +309,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         await compositionRoot.malDataApproval.saveMonitoring(
                             Namespaces.MONITORING,
-                            combiner(
+                            getMonitoringJson(
                                 monitoring,
                                 monitoringValues,
                                 "dataSets",
@@ -326,9 +342,19 @@ export const DataApprovalList: React.FC = React.memo(() => {
                             };
                         });
 
+                        console.log({
+                            git: getMonitoringJson(
+                                monitoring,
+                                monitoringValues,
+                                "dataSets",
+                                config.dataSets["PWCUb3Se1Ie"]?.name ?? "",
+                                dataNotificationsUserGroup
+                            ),
+                        });
+
                         await compositionRoot.malDataApproval.saveMonitoring(
                             Namespaces.MONITORING,
-                            combiner(
+                            getMonitoringJson(
                                 monitoring,
                                 monitoringValues,
                                 "dataSets",
@@ -352,7 +378,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         const monitoringValues = items.map(item => {
                             return {
-                                orgUnit: item.orgUnit,
+                                orgUnit: item.orgUnitCode ?? item.orgUnit,
                                 period: item.period,
                                 enable: false,
                             };
@@ -360,7 +386,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         await compositionRoot.malDataApproval.saveMonitoring(
                             Namespaces.MONITORING,
-                            combiner(
+                            getMonitoringJson(
                                 monitoring,
                                 monitoringValues,
                                 "dataSets",
@@ -415,7 +441,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
             reload,
             isMalApprover,
             isMalAdmin,
-            combiner,
+            getMonitoringJson,
             monitoring,
             config.dataSets,
             dataNotificationsUserGroup,
