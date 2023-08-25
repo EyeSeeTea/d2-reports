@@ -342,16 +342,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
                             };
                         });
 
-                        console.log({
-                            git: getMonitoringJson(
-                                monitoring,
-                                monitoringValues,
-                                "dataSets",
-                                config.dataSets["PWCUb3Se1Ie"]?.name ?? "",
-                                dataNotificationsUserGroup
-                            ),
-                        });
-
                         await compositionRoot.malDataApproval.saveMonitoring(
                             Namespaces.MONITORING,
                             getMonitoringJson(
