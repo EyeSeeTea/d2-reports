@@ -4,6 +4,6 @@
 
 ### :memo: Implementation
 
-### :art: Screenshots
+### 📹: Screenshots/Screen capture
 
 ### :fire: Notes to the tester
