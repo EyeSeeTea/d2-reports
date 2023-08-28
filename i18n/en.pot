@@ -38,6 +38,26 @@ msgstr ""
 msgid "Help"
 msgstr ""
 
+msgid "Confirm Validation Reload"
+msgstr ""
+
+msgid "Confirm"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid ""
+"This action will delete the stored data and process all the Indicators and "
+"Program Indicators from this DHIS2 instance."
+msgstr ""
+
+msgid "This will take a long time."
+msgstr ""
+
+msgid "Are you sure?"
+msgstr ""
+
 msgid "Metadata Admin Report"
 msgstr ""
 
@@ -224,6 +244,57 @@ msgstr ""
 msgid "Patient Characteristics"
 msgstr ""
 
+msgid "Name"
+msgstr ""
+
+msgid "Last Updated"
+msgstr ""
+
+msgid "Denominator"
+msgstr ""
+
+msgid "Valid denominator"
+msgstr ""
+
+msgid "Valid"
+msgstr ""
+
+msgid "Invalid"
+msgstr ""
+
+msgid "Numerator"
+msgstr ""
+
+msgid "Valid Numerator"
+msgstr ""
+
+msgid "Expression"
+msgstr ""
+
+msgid "Valid expression"
+msgstr ""
+
+msgid "Filter"
+msgstr ""
+
+msgid "Valid filter"
+msgstr ""
+
+msgid "Empty"
+msgstr ""
+
+msgid "Reload Validation"
+msgstr ""
+
+msgid "Indicators"
+msgstr ""
+
+msgid "Program Indicators"
+msgstr ""
+
+msgid "Data quality"
+msgstr ""
+
 msgid "GLASS Data Submission Report"
 msgstr ""
 
@@ -278,7 +349,25 @@ msgstr ""
 msgid "Reject Signal"
 msgstr ""
 
-msgid "Cancel"
+msgid "Level of Confidentiality"
+msgstr ""
+
+msgid "Go to Signal"
+msgstr ""
+
+msgid "Error when trying to approve signal"
+msgstr ""
+
+msgid "Reject Signal"
+msgstr ""
+
+msgid "Signals have been successfully rejected"
+msgstr ""
+
+msgid "Error when trying to reject signal"
+msgstr ""
+
+msgid "Reject Data Submission"
 msgstr ""
 
 msgid "Signals have been successfully rejected"
