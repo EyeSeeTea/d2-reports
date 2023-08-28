@@ -10,11 +10,13 @@ export interface DataElementsSubscriptionItem {
     lastDateOfSubscription: string;
 }
 
+export type SubscriptionValue = "Subscribed" | "Not Subscribed" | "Subscribed to some elements";
+
 export interface DashboardSubscriptionItem {
     id: string;
     name: string;
     subscribedElements: string;
-    subscription: string;
+    subscription: SubscriptionValue;
     lastDateOfSubscription: string;
     children: ChildrenDataElements[];
 }

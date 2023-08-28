@@ -9,6 +9,7 @@ import {
     DataElementsSubscriptionItem,
     MalSubscriptionPaginatedObjects,
     SubscriptionStatus,
+    SubscriptionValue,
 } from "../../../domain/reports/mal-data-subscription/entities/MalDataSubscriptionItem";
 import {
     MalDataSubscriptionOptions,
@@ -221,7 +222,7 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                         children.map(child => child.id)
                     ).length;
 
-                    const subscription =
+                    const subscription: SubscriptionValue =
                         subscribedElements !== 0 && subscribedElements !== children.length
                             ? "Subscribed to some elements"
                             : subscribedElements !== 0 && subscribedElements === children.length
@@ -330,12 +331,12 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                         children.map(child => child.id)
                     ).length;
 
-                    const subscription =
+                    const subscription: SubscriptionValue =
                         subscribedElements !== 0 && subscribedElements !== children.length
                             ? "Subscribed to some elements"
                             : subscribedElements !== 0 && subscribedElements === children.length
                             ? "Subscribed"
-                            : "Not subscribed";
+                            : "Not Subscribed";
 
                     return {
                         ...visualization,
