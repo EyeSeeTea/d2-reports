@@ -40,6 +40,8 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
     const [dataElementGroups, setDataElementGroups] = useState<NamedRef[]>([]);
     const [sections, setSections] = useState<NamedRef[]>([]);
     const [subscription, setSubscription] = useState<SubscriptionStatus[]>([]);
+    const [tableRowIds, setTableRowIds] = useState<string[]>([]);
+    const [dashboardTableRowIds, setDashboardTableRowIds] = useState<string[]>([]);
     const [reloadKey, reload] = useReload();
 
     useEffect(() => {
@@ -68,6 +70,50 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
             });
     }, [compositionRoot.malDataSubscription]);
 
+    const dataElementSubscriptionAction = useCallback(
+        async (selectedIds: string[], subscribed: boolean, subscriptionStatus: SubscriptionStatus[]) => {
+            const items = _.compact(selectedIds.map(item => parseDataElementSubscriptionItemId(item)));
+            if (items.length === 0) return;
+
+            const subscriptionValues = items.map(item => {
+                return {
+                    subscribed,
+                    dataElementId: item.dataElementId,
+                    lastDateOfSubscription: new Date().toISOString(),
+                };
+            });
+
+            await compositionRoot.malDataSubscription.saveSubscription(
+                Namespaces.MAL_SUBSCRIPTION_STATUS,
+                combineSubscriptionValues(subscriptionStatus, subscriptionValues)
+            );
+        },
+        [compositionRoot.malDataSubscription]
+    );
+
+    const dashboardSubscriptionAction = useCallback(
+        async (selectedIds: string[], subscribed: boolean, subscriptionStatus: SubscriptionStatus[]) => {
+            const items = _.compact(selectedIds.map(item => parseDashboardSubscriptionItemId(item)));
+            if (items.length === 0) return;
+
+            const subscriptionValues = items.flatMap(item =>
+                item.dataElementIds.map(dataElementId => {
+                    return {
+                        dataElementId,
+                        subscribed,
+                        lastDateOfSubscription: new Date().toISOString(),
+                    };
+                })
+            );
+
+            await compositionRoot.malDataSubscription.saveSubscription(
+                Namespaces.MAL_SUBSCRIPTION_STATUS,
+                combineSubscriptionValues(subscriptionStatus, subscriptionValues)
+            );
+        },
+        [compositionRoot.malDataSubscription]
+    );
+
     const baseConfig: TableConfig<DataElementSubscriptionViewModel> = useMemo(
         () => ({
             columns: [
@@ -93,25 +139,21 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                     icon: <Done />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataElementSubscriptionItemId(item)));
-                        if (items.length === 0) return;
-
-                        const subscriptionValues = items.map(item => {
-                            return {
-                                dataElementId: item.dataElementId,
-                                subscribed: true,
-                                lastDateOfSubscription: new Date().toISOString(),
-                            };
-                        });
-
-                        await compositionRoot.malDataSubscription.saveSubscription(
-                            Namespaces.MAL_SUBSCRIPTION_STATUS,
-                            combineSubscriptionValues(subscription, subscriptionValues)
-                        );
-
+                        await dataElementSubscriptionAction(selectedIds, true, subscription);
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => !row.subscription),
+                    isActive: rows => rows.length === 1 && _.every(rows, row => !row.subscription),
+                },
+                {
+                    name: "subscribeToAll",
+                    text: i18n.t("Subscribe to selected items"),
+                    icon: <Done />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        await dataElementSubscriptionAction(selectedIds, true, subscription);
+                        reload();
+                    },
+                    isActive: rows => rows.length > 1 && _.some(rows, row => !row.subscription),
                 },
                 {
                     name: "unsubscribe",
@@ -119,25 +161,21 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                     icon: <Remove />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataElementSubscriptionItemId(item)));
-                        if (items.length === 0) return;
-
-                        const subscriptionValues = items.map(item => {
-                            return {
-                                dataElementId: item.dataElementId,
-                                subscribed: false,
-                                lastDateOfSubscription: new Date().toISOString(),
-                            };
-                        });
-
-                        await compositionRoot.malDataSubscription.saveSubscription(
-                            Namespaces.MAL_SUBSCRIPTION_STATUS,
-                            combineSubscriptionValues(subscription, subscriptionValues)
-                        );
-
+                        await dataElementSubscriptionAction(selectedIds, false, subscription);
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.subscription),
+                    isActive: rows => rows.length === 1 && _.every(rows, row => row.subscription),
+                },
+                {
+                    name: "unsubscribeToAll",
+                    text: i18n.t("Unsubscribe to selected items"),
+                    icon: <Done />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        await dataElementSubscriptionAction(selectedIds, false, subscription);
+                        reload();
+                    },
+                    isActive: rows => rows.length > 1 && _.some(rows, row => row.subscription),
                 },
             ],
             initialSorting: {
@@ -149,7 +187,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot.malDataSubscription, reload, subscription]
+        [reload, subscription, dataElementSubscriptionAction]
     );
 
     const dashboardBaseConfig: TableConfig<DashboardSubscriptionViewModel> = useMemo(
@@ -181,24 +219,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                     icon: <DoneAll />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDashboardSubscriptionItemId(item)));
-                        if (items.length === 0) return;
-
-                        const subscriptionValues = items.flatMap(item =>
-                            item.dataElementIds.map(dataElementId => {
-                                return {
-                                    dataElementId,
-                                    lastDateOfSubscription: new Date().toISOString(),
-                                    subscribed: true,
-                                };
-                            })
-                        );
-
-                        await compositionRoot.malDataSubscription.saveSubscription(
-                            Namespaces.MAL_SUBSCRIPTION_STATUS,
-                            combineSubscriptionValues(subscription, subscriptionValues)
-                        );
-
+                        await dashboardSubscriptionAction(selectedIds, true, subscription);
                         reload();
                     },
                     isActive: rows =>
@@ -216,24 +237,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                     icon: <Done />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDashboardSubscriptionItemId(item)));
-                        if (items.length === 0) return;
-
-                        const subscriptionValues = items.flatMap(item =>
-                            item.dataElementIds.map(dataElementId => {
-                                return {
-                                    dataElementId,
-                                    lastDateOfSubscription: new Date().toISOString(),
-                                    subscribed: true,
-                                };
-                            })
-                        );
-
-                        await compositionRoot.malDataSubscription.saveSubscription(
-                            Namespaces.MAL_SUBSCRIPTION_STATUS,
-                            combineSubscriptionValues(subscription, subscriptionValues)
-                        );
-
+                        await dashboardSubscriptionAction(selectedIds, true, subscription);
                         reload();
                     },
                     isActive: rows =>
@@ -243,29 +247,12 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                         ),
                 },
                 {
-                    name: "unsubscribeFromAll",
+                    name: "unsubscribeToAll",
                     text: i18n.t("Unsubscribe to all children"),
                     icon: <ClearAll />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDashboardSubscriptionItemId(item)));
-                        if (items.length === 0) return;
-
-                        const subscriptionValues = items.flatMap(item =>
-                            item.dataElementIds.map(dataElementId => {
-                                return {
-                                    dataElementId,
-                                    lastDateOfSubscription: new Date().toISOString(),
-                                    subscribed: false,
-                                };
-                            })
-                        );
-
-                        await compositionRoot.malDataSubscription.saveSubscription(
-                            Namespaces.MAL_SUBSCRIPTION_STATUS,
-                            combineSubscriptionValues(subscription, subscriptionValues)
-                        );
-
+                        await dashboardSubscriptionAction(selectedIds, false, subscription);
                         reload();
                     },
                     isActive: rows =>
@@ -283,24 +270,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                     icon: <Remove />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDashboardSubscriptionItemId(item)));
-                        if (items.length === 0) return;
-
-                        const subscriptionValues = items.flatMap(item =>
-                            item.dataElementIds.map(dataElementId => {
-                                return {
-                                    dataElementId,
-                                    lastDateOfSubscription: new Date().toISOString(),
-                                    subscribed: false,
-                                };
-                            })
-                        );
-
-                        await compositionRoot.malDataSubscription.saveSubscription(
-                            Namespaces.MAL_SUBSCRIPTION_STATUS,
-                            combineSubscriptionValues(subscription, subscriptionValues)
-                        );
-
+                        await dashboardSubscriptionAction(selectedIds, false, subscription);
                         reload();
                     },
                     isActive: rows =>
@@ -316,7 +286,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot.malDataSubscription, filters.elementType, reload, subscription]
+        [filters.elementType, reload, subscription, dashboardSubscriptionAction]
     );
 
     const getRows = useMemo(
@@ -326,15 +296,17 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                 paging: TablePagination,
                 sorting: TableSorting<DataElementSubscriptionViewModel>
             ) => {
-                const { dataElementGroups, objects, pager, sections } = await compositionRoot.malDataSubscription.get({
-                    config,
-                    paging: { page: paging.page, pageSize: paging.pageSize },
-                    sorting: getSortingFromTableSorting(sorting),
-                    ...filters,
-                });
+                const { dataElementGroups, objects, pager, sections, totalRows } =
+                    await compositionRoot.malDataSubscription.get({
+                        config,
+                        paging: { page: paging.page, pageSize: paging.pageSize },
+                        sorting: getSortingFromTableSorting(sorting),
+                        ...filters,
+                    });
 
-                setSections(sections);
-                setDataElementGroups(dataElementGroups);
+                setSections(sections ?? []);
+                setDataElementGroups(dataElementGroups ?? []);
+                setTableRowIds(getDataElementSubscriptionViews(config, totalRows).map(dataElement => dataElement.id));
 
                 console.debug("Reloading", reloadKey);
                 return { pager, objects: getDataElementSubscriptionViews(config, objects) };
@@ -345,12 +317,17 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
     const getDashboardRows = useMemo(
         () =>
             async (_search: string, paging: TablePagination, sorting: TableSorting<DashboardSubscriptionViewModel>) => {
-                const { pager, objects } = await compositionRoot.malDataSubscription.getDashboardDataElements({
-                    config,
-                    paging: { page: paging.page, pageSize: paging.pageSize },
-                    dashboardSorting: getSortingFromDashboardTableSorting(sorting),
-                    ...filters,
-                });
+                const { pager, objects, totalRows } =
+                    await compositionRoot.malDataSubscription.getDashboardDataElements({
+                        config,
+                        paging: { page: paging.page, pageSize: paging.pageSize },
+                        dashboardSorting: getSortingFromDashboardTableSorting(sorting),
+                        ...filters,
+                    });
+
+                setDashboardTableRowIds(
+                    getDashboardSubscriptionViews(config, totalRows).map(dataElement => dataElement.id)
+                );
 
                 console.debug("Reloading", reloadKey);
                 return { pager, objects: getDashboardSubscriptionViews(config, objects) };
@@ -445,6 +422,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                 <ObjectsList<DataElementSubscriptionViewModel>
                     {...tableProps}
                     columns={columnsToShow}
+                    ids={tableRowIds}
                     onChangeSearch={undefined}
                     onReorderColumns={saveReorderedColumns}
                 >
@@ -454,6 +432,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                 <ObjectsList<DashboardSubscriptionViewModel>
                     {...dashboardTableProps}
                     columns={dashboardColumnsToShow}
+                    ids={dashboardTableRowIds}
                     onChangeSearch={undefined}
                     onReorderColumns={saveReorderedDashboardColumns}
                     childrenKeys={["children"]}

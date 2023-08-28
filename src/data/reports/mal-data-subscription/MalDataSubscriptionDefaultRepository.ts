@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { D2Api, Pager, PaginatedObjects } from "../../../types/d2-api";
+import { D2Api, Pager } from "../../../types/d2-api";
 import { promiseMap } from "../../../utils/promises";
 import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
 import { StorageClient } from "../../common/clients/storage/StorageClient";
@@ -8,6 +8,7 @@ import {
     ChildrenDataElements,
     DashboardSubscriptionItem,
     DataElementsSubscriptionItem,
+    MalSubscriptionPaginatedObjects,
     SubscriptionStatus,
 } from "../../../domain/reports/mal-data-subscription/entities/MalDataSubscriptionItem";
 import {
@@ -22,11 +23,6 @@ export interface Pagination {
     pageSize: number;
 }
 
-export interface PaginatedObjectives<T> extends PaginatedObjects<T> {
-    sections: NamedRef[];
-    dataElementGroups: NamedRef[];
-}
-
 type dataSetElementsType = { dataElement: NamedRef };
 
 export class MalDataSubscriptionDefaultRepository implements MalDataSubscriptionRepository {
@@ -39,7 +35,9 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
         this.globalStorageClient = new DataStoreStorageClient("global", instance);
     }
 
-    async get(options: MalDataSubscriptionOptions): Promise<PaginatedObjectives<DataElementsSubscriptionItem>> {
+    async get(
+        options: MalDataSubscriptionOptions
+    ): Promise<MalSubscriptionPaginatedObjects<DataElementsSubscriptionItem>> {
         const {
             dataElementGroups: dataElementGroupIds,
             subscriptionStatus,
@@ -51,8 +49,7 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
             return {
                 pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 },
                 objects: [],
-                sections: [],
-                dataElementGroups: [],
+                totalRows: [],
             };
 
         const subscriptionValues =
@@ -136,12 +133,15 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
             total: rows.length,
         };
 
-        return { pager, objects, sections, dataElementGroups };
+        return { pager, objects, sections, dataElementGroups, totalRows: rows };
     }
 
-    async getChildrenDataElements(options: MalDataSubscriptionOptions) {
+    async getChildrenDataElements(
+        options: MalDataSubscriptionOptions
+    ): Promise<MalSubscriptionPaginatedObjects<DashboardSubscriptionItem>> {
         const { dashboardSorting, subscriptionStatus, elementType, paging } = options;
-        if (!dashboardSorting) return { pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 }, objects: [] };
+        if (!dashboardSorting)
+            return { pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 }, objects: [], totalRows: [] };
 
         const subscriptionValues =
             (await this.globalStorageClient.getObject<SubscriptionStatus[]>(Namespaces.MAL_SUBSCRIPTION_STATUS)) ?? [];
@@ -265,7 +265,7 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                 total: rows.length,
             };
 
-            return { pager, objects };
+            return { pager, objects, totalRows: rows };
         } else if (elementType === "visualizations") {
             const { visualizations } = await this.api
                 .get<{
@@ -374,9 +374,9 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                 total: rows.length,
             };
 
-            return { pager, objects };
+            return { pager, objects, totalRows: rows };
         } else {
-            return { pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 }, objects: [] };
+            return { pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 }, objects: [], totalRows: [] };
         }
     }
 

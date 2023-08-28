@@ -1,6 +1,5 @@
 import { UseCase } from "../../../../compositionRoot";
-import { PaginatedObjects } from "../../../common/entities/PaginatedObjects";
-import { DashboardSubscriptionItem } from "../entities/MalDataSubscriptionItem";
+import { DashboardSubscriptionItem, MalSubscriptionPaginatedObjects } from "../entities/MalDataSubscriptionItem";
 import {
     MalDataSubscriptionRepository,
     MalDataSubscriptionOptions,
@@ -9,7 +8,7 @@ import {
 export class GetMalDashboardsSubscriptionUseCase implements UseCase {
     constructor(private subscriptionRepository: MalDataSubscriptionRepository) {}
 
-    execute(options: MalDataSubscriptionOptions): Promise<PaginatedObjects<DashboardSubscriptionItem>> {
+    execute(options: MalDataSubscriptionOptions): Promise<MalSubscriptionPaginatedObjects<DashboardSubscriptionItem>> {
         // FUTURE: Return a Future-like instead, to allow better error handling and cancellation.
         return this.subscriptionRepository.getChildrenDataElements(options);
     }

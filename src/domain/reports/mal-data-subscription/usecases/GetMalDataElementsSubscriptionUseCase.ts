@@ -1,6 +1,5 @@
 import { UseCase } from "../../../../compositionRoot";
-import { PaginatedObjectives } from "../../../../data/reports/mal-data-subscription/MalDataSubscriptionDefaultRepository";
-import { DataElementsSubscriptionItem } from "../entities/MalDataSubscriptionItem";
+import { DataElementsSubscriptionItem, MalSubscriptionPaginatedObjects } from "../entities/MalDataSubscriptionItem";
 import {
     MalDataSubscriptionRepository,
     MalDataSubscriptionOptions,
@@ -9,7 +8,9 @@ import {
 export class GetMalDataElementsSubscriptionUseCase implements UseCase {
     constructor(private subscriptionRepository: MalDataSubscriptionRepository) {}
 
-    execute(options: MalDataSubscriptionOptions): Promise<PaginatedObjectives<DataElementsSubscriptionItem>> {
+    execute(
+        options: MalDataSubscriptionOptions
+    ): Promise<MalSubscriptionPaginatedObjects<DataElementsSubscriptionItem>> {
         // FUTURE: Return a Future-like instead, to allow better error handling and cancellation.
         return this.subscriptionRepository.get(options);
     }

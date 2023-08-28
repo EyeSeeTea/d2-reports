@@ -1,3 +1,4 @@
+import { PaginatedObjects } from "../../../../types/d2-api";
 import { NamedRef } from "../../../common/entities/Base";
 
 export interface DataElementsSubscriptionItem {
@@ -26,7 +27,7 @@ export interface ChildrenDataElements extends NamedRef {
 
 export interface DataElementSubscriptionItemIdentifier {
     dataElementId: string;
-    sectionId: string;
+    sectionId: string | undefined;
 }
 
 export interface DashboardSubscriptionItemIdentifier {
@@ -43,6 +44,12 @@ export interface SubscriptionStatus {
 
 export type ElementType = "dataElements" | "dashboards" | "visualizations";
 
+export interface MalSubscriptionPaginatedObjects<T> extends PaginatedObjects<T> {
+    sections?: NamedRef[];
+    dataElementGroups?: NamedRef[];
+    totalRows: T[];
+}
+
 export function getDataElementSubscriptionItemId(dataElement: DataElementsSubscriptionItem): string {
     return [dataElement.dataElementId, dataElement.section?.id].join("-");
 }
@@ -53,7 +60,7 @@ export function getDashboardSubscriptionItemId(dashboard: DashboardSubscriptionI
 
 export function parseDataElementSubscriptionItemId(string: string): DataElementSubscriptionItemIdentifier | undefined {
     const [dataElementId, sectionId] = string.split("-");
-    if (!dataElementId || !sectionId) return undefined;
+    if (!dataElementId) return undefined;
 
     return { dataElementId, sectionId };
 }
