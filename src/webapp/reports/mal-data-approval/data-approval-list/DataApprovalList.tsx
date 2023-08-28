@@ -116,28 +116,31 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 userGroup: string
             ): MonitoringValue => {
                 if (!_.isArray(initialMonitoringValues) && initialMonitoringValues) {
-                    const initialMonitoring = initialMonitoringValues[elementType]?.[dataSet]?.monitoring ?? [];
+                    const initialMonitoring =
+                        _.first(initialMonitoringValues[elementType]?.[dataSet])?.monitoring ?? [];
 
                     const newDataSets = _.merge({}, initialMonitoringValues[elementType], {
-                        [dataSet]: _.omit(
-                            {
-                                monitoring: combineMonitoringValues(initialMonitoring, addedMonitoringValues).map(
-                                    monitoring => {
-                                        return {
-                                            ...monitoring,
-                                            orgUnit:
-                                                monitoring.orgUnit.length > 3
-                                                    ? countryCodes.find(
-                                                          countryCode => countryCode.id === monitoring.orgUnit
-                                                      )?.code
-                                                    : monitoring.orgUnit,
-                                        };
-                                    }
-                                ),
-                                userGroups: userGroup,
-                            },
-                            "userGroup"
-                        ),
+                        [dataSet]: [
+                            _.omit(
+                                {
+                                    monitoring: combineMonitoringValues(initialMonitoring, addedMonitoringValues).map(
+                                        monitoring => {
+                                            return {
+                                                ...monitoring,
+                                                orgUnit:
+                                                    monitoring.orgUnit.length > 3
+                                                        ? countryCodes.find(
+                                                              countryCode => countryCode.id === monitoring.orgUnit
+                                                          )?.code
+                                                        : monitoring.orgUnit,
+                                            };
+                                        }
+                                    ),
+                                    userGroups: userGroup,
+                                },
+                                "userGroup"
+                            ),
+                        ],
                     });
 
                     return {
@@ -157,10 +160,12 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                     return {
                         [elementType]: {
-                            [dataSet]: {
-                                monitoring: combineMonitoringValues(initialMonitoring, addedMonitoringValues),
-                                userGroups: userGroup,
-                            },
+                            [dataSet]: [
+                                {
+                                    monitoring: combineMonitoringValues(initialMonitoring, addedMonitoringValues),
+                                    userGroups: userGroup,
+                                },
+                            ],
                         },
                     };
                 }
