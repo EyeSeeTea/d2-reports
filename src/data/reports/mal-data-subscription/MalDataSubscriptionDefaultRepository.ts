@@ -1,6 +1,5 @@
 import _ from "lodash";
 import { D2Api, Pager } from "../../../types/d2-api";
-import { promiseMap } from "../../../utils/promises";
 import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
 import { StorageClient } from "../../common/clients/storage/StorageClient";
 import { Instance } from "../../common/entities/Instance";
@@ -17,13 +16,6 @@ import {
 } from "../../../domain/reports/mal-data-subscription/repositories/MalDataSubscriptionRepository";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 import { NamedRef } from "../../../domain/common/entities/Base";
-
-export interface Pagination {
-    page: number;
-    pageSize: number;
-}
-
-type dataSetElementsType = { dataElement: NamedRef };
 
 export class MalDataSubscriptionDefaultRepository implements MalDataSubscriptionRepository {
     private storageClient: StorageClient;
@@ -388,52 +380,6 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
 
     async saveColumns(namespace: string, columns: string[]): Promise<void> {
         return this.storageClient.saveObject<string[]>(namespace, columns);
-    }
-
-    async getSortOrder(): Promise<string[]> {
-        const sortOrderArray = await this.storageClient.getObject<string[]>(Namespaces.MAL_DIFF_NAMES_SORT_ORDER);
-
-        return sortOrderArray ?? [];
-    }
-
-    async generateSortOrder(): Promise<void> {
-        try {
-            const dataSetData: {
-                dataSetElements: dataSetElementsType[];
-                sections: { id: string }[];
-            } = await this.api
-                .get<any>(`/dataSets/PWCUb3Se1Ie`, { fields: "sections,dataSetElements[dataElement[id,name]]" })
-                .getData();
-
-            if (_.isEmpty(dataSetData.sections) || _.isEmpty(dataSetData.dataSetElements)) {
-                return this.storageClient.saveObject<string[]>(Namespaces.MAL_DIFF_NAMES_SORT_ORDER, []);
-            }
-
-            const dataSetElements: NamedRef[] = dataSetData.dataSetElements.map(item => item.dataElement);
-
-            const sectionsDEs = await promiseMap(dataSetData.sections, async sections => {
-                return this.api.get<any>(`/sections/${sections.id}`, { fields: "dataElements" }).getData();
-            });
-
-            const sectionsDEsIds: { id: string }[] = sectionsDEs.flatMap(item => {
-                return item.dataElements.map((dataElementId: { id: string }) => {
-                    return dataElementId;
-                });
-            });
-
-            const sortOrderArray: string[] = sectionsDEsIds
-                .map(obj =>
-                    Object.assign(
-                        obj,
-                        dataSetElements.find(obj2 => obj.id === obj2.id)
-                    )
-                )
-                .map(item => item.name);
-
-            return this.storageClient.saveObject<string[]>(Namespaces.MAL_DIFF_NAMES_SORT_ORDER, sortOrderArray);
-        } catch (error: any) {
-            console.debug(error);
-        }
     }
 
     async getSubscription(namespace: string): Promise<any[]> {

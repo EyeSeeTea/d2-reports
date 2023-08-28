@@ -32,8 +32,6 @@ import { DuplicateDataValuesUseCase } from "./domain/reports/mal-data-approval/u
 import { GetMalDataElementsSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalDataElementsSubscriptionUseCase";
 import { SaveMalDataSubscriptionColumnsUseCase } from "./domain/reports/mal-data-subscription/usecases/SaveMalDataSubscriptionColumnsUseCase";
 import { GetMalDataSubscriptionColumnsUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalDataSubscriptionColumnsUseCase";
-import { GetSubscriptionSortOrderUseCase } from "./domain/reports/mal-data-subscription/usecases/GetSubscriptionSortOrderUseCase";
-import { GenerateSubscriptionSortOrderUseCase } from "./domain/reports/mal-data-subscription/usecases/GenerateSubscriptionSortOrderUseCase";
 import { SaveSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/SaveSubscriptionUseCase";
 import { GetSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/GetSubscriptionUseCase";
 import { CSYAuditEmergencyDefaultRepository } from "./data/reports/csy-audit-emergency/CSYAuditEmergencyDefaultRepository";
@@ -108,8 +106,6 @@ export function getCompositionRoot(api: D2Api) {
             getDashboardDataElements: new GetMalDashboardsSubscriptionUseCase(dataSubscriptionRepository),
             getColumns: new GetMalDataSubscriptionColumnsUseCase(dataSubscriptionRepository),
             saveColumns: new SaveMalDataSubscriptionColumnsUseCase(dataSubscriptionRepository),
-            getSortOrder: new GetSubscriptionSortOrderUseCase(dataSubscriptionRepository),
-            generateSortOrder: new GenerateSubscriptionSortOrderUseCase(dataSubscriptionRepository),
             getSubscription: new GetSubscriptionUseCase(dataSubscriptionRepository),
             saveSubscription: new SaveSubscriptionUseCase(dataSubscriptionRepository),
         }),

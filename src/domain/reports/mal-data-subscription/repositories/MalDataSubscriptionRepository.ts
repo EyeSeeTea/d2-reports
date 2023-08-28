@@ -15,8 +15,6 @@ export interface MalDataSubscriptionRepository {
     ): Promise<MalSubscriptionPaginatedObjects<DashboardSubscriptionItem>>;
     getColumns(namespace: string): Promise<string[]>;
     saveColumns(namespace: string, columns: string[]): Promise<void>;
-    getSortOrder(): Promise<string[]>;
-    generateSortOrder(): Promise<void>;
     getSubscription(namespace: string): Promise<SubscriptionStatus[]>;
     saveSubscription(namespace: string, subscriptionStatus: SubscriptionStatus[]): Promise<void>;
 }
