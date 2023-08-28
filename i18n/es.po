@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2023-08-28T10:19:35.838Z\n"
+"POT-Creation-Date: 2023-08-28T11:13:31.544Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -95,6 +95,9 @@ msgid "lastUpdated"
 msgstr ""
 
 msgid "created"
+msgstr ""
+
+msgid "Period"
 msgstr ""
 
 msgid "CSY Audit Filters - Emergency Care"
@@ -349,27 +352,6 @@ msgstr ""
 msgid "Reject Signal"
 msgstr ""
 
-msgid "Level of Confidentiality"
-msgstr ""
-
-msgid "Go to Signal"
-msgstr ""
-
-msgid "Error when trying to approve signal"
-msgstr ""
-
-msgid "Reject Signal"
-msgstr ""
-
-msgid "Signals have been successfully rejected"
-msgstr ""
-
-msgid "Error when trying to reject signal"
-msgstr ""
-
-msgid "Reject Data Submission"
-msgstr ""
-
 msgid "Signals have been successfully rejected"
 msgstr ""
 
@@ -473,9 +455,6 @@ msgid "Error when trying to check difference in data values"
 msgstr ""
 
 msgid "Malaria Data Approval Report"
-msgstr ""
-
-msgid "Period"
 msgstr ""
 
 msgid "Data set"
@@ -622,6 +601,29 @@ msgstr ""
 msgid "Error when trying to unapprove data set"
 msgstr ""
 
+msgid "Category Option Combo"
+msgstr ""
+
+msgid "Organisation Unit"
+msgstr ""
+
+msgid "Correct Value"
+msgstr ""
+
+msgid "Current value"
+msgstr ""
+
+msgid "Fix all incorrect values"
+msgstr ""
+
+msgid "Updating values..."
+msgstr ""
+
+msgid ""
+"Module 1 totals with missing sum or sum that does not match the auto-"
+"calculated"
+msgstr ""
+
 msgid "NHWA Comments Report"
 msgstr ""
 
@@ -640,6 +642,51 @@ msgstr ""
 msgid "Toggle filters"
 msgstr ""
 
+msgid "No values to update"
+msgstr ""
+
+#, fuzzy
+msgid "Occupation"
+msgstr "Configuración"
+
+msgid "Practising"
+msgstr ""
+
+msgid "Professionally Active"
+msgstr ""
+
+msgid "Licensed To Practice"
+msgstr ""
+
+msgid "Correct total"
+msgstr ""
+
+msgid "Comment to Assign"
+msgstr ""
+
+msgid "Fix Total"
+msgstr ""
+
+msgid "Fix Incorrect Totals"
+msgstr ""
+
+msgid ""
+"Module 1 totals by Activity Label with missing value that does not match the "
+"auto-calculated"
+msgstr ""
+
+msgid "Organisation Unit Parent"
+msgstr ""
+
+msgid "Name To Fix"
+msgstr ""
+
+msgid "Dismiss"
+msgstr ""
+
+msgid "Module 1 (subnational) with fixes for organisation unit name"
+msgstr ""
+
 #~ msgid "Add"
 #~ msgstr "Añadir"
 
@@ -648,6 +695,3 @@ msgstr ""
 
 #~ msgid "Click to show feedback"
 #~ msgstr "Toca para ver feedback"
-
-#~ msgid "configuration"
-#~ msgstr "Configuración"
