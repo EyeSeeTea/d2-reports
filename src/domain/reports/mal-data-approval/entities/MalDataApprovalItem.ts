@@ -39,7 +39,13 @@ export interface CountryCode {
     code: string;
 }
 
-export type MonitoringValue = Record<string, Record<string, { monitoring: Monitoring[]; userGroups: string }>>;
+export type MonitoringValue = Record<
+    string,
+    Record<
+        string,
+        { monitoring: Monitoring[]; userGroups: string }[] | { monitoring: Monitoring[]; userGroups: string }[]
+    >
+>;
 
 export function getDataDuplicationItemId(dataSet: MalDataApprovalItem): string {
     return [
@@ -64,7 +70,8 @@ export function getDataDuplicationItemMonitoringValue(
             )?.monitoring ?? false
         );
     } else {
-        const monitoringArray = monitoring["dataSets"]?.[dataSetName]?.monitoring;
+        const monitoringArray = _.first(monitoring["dataSets"]?.[dataSetName])?.monitoring;
+
         return !!_.find(monitoringArray, { orgUnit: dataSet.orgUnitCode, period: dataSet.period });
     }
 }
