@@ -39,7 +39,7 @@ export interface CountryCode {
     code: string;
 }
 
-export type MonitoringValue = Record<string, Record<string, { monitoring: Monitoring[]; userGroup: string }>>;
+export type MonitoringValue = Record<string, Record<string, { monitoring: Monitoring[]; userGroups: string }>>;
 
 export function getDataDuplicationItemId(dataSet: MalDataApprovalItem): string {
     return [
@@ -50,16 +50,6 @@ export function getDataDuplicationItemId(dataSet: MalDataApprovalItem): string {
         dataSet.orgUnitCode,
     ].join("-");
 }
-
-// export function getDataDuplicationItemMonitoringValue(dataSet: MalDataApprovalItem, monitoring: Monitoring[]): boolean {
-//     const monitoringValue =
-//         monitoring.find(
-//             monitoringValue =>
-//                 monitoringValue.orgUnit === dataSet.orgUnitUid && monitoringValue.period === dataSet.period
-//         )?.monitoring ?? false;
-
-//     return monitoringValue;
-// }
 
 export function getDataDuplicationItemMonitoringValue(
     dataSet: MalDataApprovalItem,
