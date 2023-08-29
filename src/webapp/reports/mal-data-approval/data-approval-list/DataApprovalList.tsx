@@ -113,7 +113,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 addedMonitoringValues: Monitoring[],
                 elementType: string,
                 dataSet: string,
-                userGroup: string
+                userGroups: string[]
             ): MonitoringValue => {
                 if (!_.isArray(initialMonitoringValues) && initialMonitoringValues) {
                     const initialMonitoring =
@@ -136,7 +136,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                                             };
                                         }
                                     ),
-                                    userGroups: userGroup,
+                                    userGroups,
                                 },
                                 "userGroup"
                             ),
@@ -163,7 +163,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                             [dataSet]: [
                                 {
                                     monitoring: combineMonitoringValues(initialMonitoring, addedMonitoringValues),
-                                    userGroups: userGroup,
+                                    userGroups,
                                 },
                             ],
                         },
@@ -319,7 +319,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                                 monitoringValues,
                                 "dataSets",
                                 config.dataSets["PWCUb3Se1Ie"]?.name ?? "",
-                                dataNotificationsUserGroup
+                                [dataNotificationsUserGroup]
                             )
                         );
 
@@ -354,7 +354,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                                 monitoringValues,
                                 "dataSets",
                                 config.dataSets["PWCUb3Se1Ie"]?.name ?? "",
-                                dataNotificationsUserGroup
+                                [dataNotificationsUserGroup]
                             )
                         );
 
@@ -386,7 +386,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                                 monitoringValues,
                                 "dataSets",
                                 config.dataSets["PWCUb3Se1Ie"]?.name ?? "",
-                                dataNotificationsUserGroup
+                                [dataNotificationsUserGroup]
                             )
                         );
 
