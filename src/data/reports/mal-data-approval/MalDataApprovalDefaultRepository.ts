@@ -304,9 +304,11 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         }));
 
         try {
-            const response = await this.api
-                .post<any>("/completeDataSetRegistrations", {}, { completeDataSetRegistrations })
-                .getData();
+            const response = (
+                await this.api
+                    .post<any>("/completeDataSetRegistrations", {}, { completeDataSetRegistrations })
+                    .getData()
+            ).response;
 
             return response.status === "SUCCESS";
         } catch (error: any) {
@@ -354,8 +356,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                 _.isEqual(_.omit(value, ["workflow"]), othervalue)
             );
 
-            const completeResponse =
-                Object.keys(dataSetsToComplete).length !== 0 ? await this.complete(dataSetsToComplete) : true;
+            const completeResponse = dataSetsToComplete.length !== 0 ? await this.complete(dataSetsToComplete) : true;
 
             const response = await promiseMap(dataSets, async approval =>
                 this.api
@@ -605,7 +606,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         try {
             const response = await promiseMap(dataSets, async approval =>
                 this.api
-                    .delete<any>("/dataApprovals", { wf: approval.workflow, pe: approval.period, ou: approval.orgUnit })
+                    .delete<any>("/dataApprovals", { ds: approval.dataSet, pe: approval.period, ou: approval.orgUnit })
                     .getData()
             );
 
