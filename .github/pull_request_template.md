@@ -4,6 +4,6 @@
 
 ### :memo: Implementation
 
-### 📹: Screenshots/Screen capture
+### :video_camera: Screenshots/Screen capture
 
 ### :fire: Notes to the tester

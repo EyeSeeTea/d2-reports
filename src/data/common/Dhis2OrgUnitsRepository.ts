@@ -19,4 +19,17 @@ export class Dhis2OrgUnitsRepository implements OrgUnitsRepository {
 
         return organisationUnits;
     }
+
+    async getByLevel(level: string): Promise<OrgUnit[]> {
+        const { organisationUnits } = await this.api.metadata
+            .get({
+                organisationUnits: {
+                    filter: { level: { eq: level } },
+                    fields: { id: true, path: true, name: true, level: true },
+                },
+            })
+            .getData();
+
+        return organisationUnits;
+    }
 }

@@ -14,11 +14,13 @@ export const SQL_VIEW_DATA_DUPLICATION_NAME = "MAL Data Approval Status";
 export const SQL_VIEW_OLD_DATA_DUPLICATION_NAME = "MAL Data Approval Status Pre 2000";
 export const SQL_VIEW_MAL_METADATA_NAME = "MAL Data approval header";
 export const SQL_VIEW_MAL_DIFF_NAME = "MAL Data Approval Diff";
+export const SQL_VIEW_MAL_DATAELEMENTS_NAME = "MAL - Approval Dataelements";
+export const SQL_VIEW_NHWA_SUBNATIONAL_CORRECT = "NHWA Module 1 Subnational correct org unit name";
 
 const base = {
     nhwa: {
         dataSets: { namePrefix: "NHWA", nameExcluded: /old$/ },
-        sqlViewNames: [SQL_VIEW_DATA_COMMENTS_NAME, SQL_VIEW_DATA_APPROVAL_NAME],
+        sqlViewNames: [SQL_VIEW_DATA_COMMENTS_NAME, SQL_VIEW_DATA_APPROVAL_NAME, SQL_VIEW_NHWA_SUBNATIONAL_CORRECT],
         constantCode: "NHWA_COMMENTS",
         approvalWorkflows: { namePrefix: "NHWA" },
     },
@@ -29,6 +31,7 @@ const base = {
             SQL_VIEW_DATA_DUPLICATION_NAME,
             SQL_VIEW_MAL_METADATA_NAME,
             SQL_VIEW_MAL_DIFF_NAME,
+            SQL_VIEW_MAL_DATAELEMENTS_NAME,
             SQL_VIEW_OLD_DATA_DUPLICATION_NAME,
         ],
         constantCode: "",
@@ -40,6 +43,30 @@ const base = {
         constantCode: "",
         approvalWorkflows: { namePrefix: "AMR" },
     },
+    auditEmergency: {
+        dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
+        sqlViewNames: [],
+        constantCode: "",
+        approvalWorkflows: { namePrefix: "" },
+    },
+    auditTrauma: {
+        dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
+        sqlViewNames: [],
+        constantCode: "",
+        approvalWorkflows: { namePrefix: "" },
+    },
+    "summary-patient": {
+        dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
+        sqlViewNames: [],
+        constantCode: "",
+        approvalWorkflows: { namePrefix: "" },
+    },
+    "summary-mortality": {
+        dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
+        sqlViewNames: [],
+        constantCode: "",
+        approvalWorkflows: { namePrefix: "" },
+    },
 };
 
 export class Dhis2ConfigRepository implements ConfigRepository {
@@ -48,17 +75,6 @@ export class Dhis2ConfigRepository implements ConfigRepository {
     async get(): Promise<Config> {
         const { dataSets, constants, sqlViews: existedSqlViews, dataApprovalWorkflows } = await this.getMetadata();
         const filteredDataSets = getFilteredDataSets(dataSets);
-
-        const expectedSqlViews = base[this.type].sqlViewNames;
-
-        const existedSqlViewNames = existedSqlViews.map(({ name }) => name);
-        const missingSQLViews = expectedSqlViews.filter(
-            expectedSqlView => !existedSqlViewNames.includes(expectedSqlView)
-        );
-
-        if (missingSQLViews.length > 0) {
-            throw new Error(`Missing SQL views: ${missingSQLViews.join("\n")}`);
-        }
 
         const sqlViews = existedSqlViews.reduce((acc, sqlView) => {
             return { ...acc, [sqlView.name]: sqlView };
