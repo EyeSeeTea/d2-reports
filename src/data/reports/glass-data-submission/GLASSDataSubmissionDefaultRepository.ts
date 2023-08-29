@@ -1,10 +1,10 @@
 import _ from "lodash";
 import { PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
 import {
+    ApprovalIds,
     GLASSDataSubmissionItem,
     GLASSDataSubmissionItemIdentifier,
     GLASSDataSubmissionModule,
-    ApprovalIds,
     GLASSUserPermission,
     EARDataSubmissionItem,
     EARSubmissionItemIdentifier,
@@ -565,8 +565,12 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             const module = modules.find(module => module.id === _.first(items)?.module)?.name ?? "";
 
             if (module === "AMR") {
-                const amrDataSets = modules.find(module => module.name === "AMR")?.dataSets ?? [];
-                _.forEach(amrDataSets, async amrDataSet => await this.duplicateDataSet(amrDataSet, items));
+              const amrDataSets = modules.find(module => module.name === "AMR")?.dataSets ?? [];
+              const amrQuestionnaires = modules.find(module => module.name === "AMR")?.questionnaires ?? [];
+
+              _.forEach(amrDataSets, async amrDataSet => await this.duplicateDataSet(amrDataSet, items));
+              _.forEach(amrQuestionnaires, async amrQuestionnaire => await this.duplicateDataSet(amrQuestionnaire, items));
+              
             }
             if (module === "AMR - Individual") {
                 const amrIndividualPrograms =

@@ -11,6 +11,9 @@ import GLASSDataSubmissionReport from "./glass-data-submission/GLASSDataSubmissi
 import CSYSummaryReport from "./csy-summary-patient/CSYSummaryReport";
 import CSYSummaryReportMortality from "./csy-summary-mortality/CSYSummaryReport";
 import CSYAuditTraumaReport from "./csy-audit-trauma/CSYAuditTraumaReport";
+import { NHWAAutoCompleteCompute } from "./nhwa-auto-complete-compute/NHWAAutoCompleteCompute";
+import { NHWAFixTotals } from "./nhwa-fix-totals-activity-level/NHWAFixTotals";
+import { NHWASubnationalCorrectOrgUnit } from "./nhwa-subnational-correct-orgunit/NHWASubnationalCorrectOrgUnit";
 
 const widget = process.env.REACT_APP_REPORT_VARIANT || "";
 
@@ -51,6 +54,15 @@ const Component: React.FC = () => {
         }
         case "data-quality": {
             return <DataQualityReport />;
+        }
+        case "nhwa-auto-complete-compute": {
+            return <NHWAAutoCompleteCompute />;
+        }
+        case "nhwa-fix-totals-activity-level": {
+            return <NHWAFixTotals />;
+        }
+        case "nhwa-subnational-correct-orgunit": {
+            return <NHWASubnationalCorrectOrgUnit />;
         }
         default: {
             return <p>{`Please provide a valid REACT_APP_REPORT_VARIANT`}</p>;
