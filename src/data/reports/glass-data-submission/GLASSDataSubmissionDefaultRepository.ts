@@ -651,17 +651,19 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
     private async duplicateProgram(program: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
         await promiseMap(items, async item => {
             const programEvents = (await this.getProgramEvents(program.id, item.orgUnit ?? "")).events;
-            const events = programEvents.map(event => {
-                return {
-                    program: event.program,
-                    orgUnit: event.orgUnit,
-                    eventDate: event.eventDate,
-                    status: event.status,
-                    storedBy: event.storedBy,
-                    coordinate: event.coordinate,
-                    dataValues: event.dataValues,
-                };
-            });
+            const events = programEvents
+                .map(event => {
+                    return {
+                        program: event.program,
+                        orgUnit: event.orgUnit,
+                        eventDate: event.eventDate,
+                        status: event.status,
+                        storedBy: event.storedBy,
+                        coordinate: event.coordinate,
+                        dataValues: event.dataValues,
+                    };
+                })
+                .filter(event => String(new Date(event.eventDate).getFullYear()) === item.period);
 
             if (!_.isEmpty(events)) {
                 const eventsToPost = events.map(event => {
