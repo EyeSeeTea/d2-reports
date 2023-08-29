@@ -18,7 +18,7 @@ import {
 import {
     MalDataApprovalItem,
     MalDataApprovalItemIdentifier,
-    Monitoring,
+    MonitoringValue,
 } from "../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import {
     MalDataApprovalOptions,
@@ -125,6 +125,7 @@ type SqlField =
     | "dataset"
     | "orgunituid"
     | "orgunit"
+    | "orgunitcode"
     | "period"
     | "attribute"
     | "approvalworkflowuid"
@@ -143,6 +144,7 @@ const fieldMapping: Record<keyof MalDataApprovalItem, SqlField> = {
     dataSet: "dataset",
     orgUnitUid: "orgunit",
     orgUnit: "orgunit",
+    orgUnitCode: "orgunitcode",
     period: "period",
     attribute: "attribute",
     approvalWorkflowUid: "approvalworkflowuid",
@@ -253,7 +255,9 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             )
             .getData();
 
-        const { pager, objects } = mergeHeadersAndData(options, periods, headerRows, rows);
+        const countryCodes = await this.getCountryCodes();
+
+        const { pager, objects } = mergeHeadersAndData(options, periods, headerRows, rows, countryCodes);
         const objectsInPage = await promiseMap(objects, async item => {
             const approved = (
                 await this.api
@@ -268,6 +272,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         });
 
         return { pager, objects: objectsInPage };
+
         // A data value is not associated to a specific data set, but we can still map it
         // through the data element (1 data value -> 1 data element -> N data sets).
     }
@@ -559,6 +564,8 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                 dataSet: dataValues[0]?.dataSet ?? "",
                 period: dataValues[0]?.period ?? "",
                 orgUnit: dataValues[0]?.orgUnit ?? "",
+                orgUnitCode: "",
+
                 workflow: "",
             };
 
@@ -645,14 +652,24 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         return this.storageClient.saveObject<string[]>(namespace, columns);
     }
 
-    async getMonitoring(namespace: string): Promise<Monitoring[]> {
-        const monitoring = await this.globalStorageClient.getObject<Monitoring[]>(namespace);
+    async getCountryCodes() {
+        const { organisationUnits } = await this.api
+            .get<{ organisationUnits: { id: string; code: string }[] }>(
+                "/organisationUnits.json?fields=id,code&filter=level:eq:3&paging=false"
+            )
+            .getData();
 
-        return monitoring ?? [];
+        return organisationUnits;
     }
 
-    async saveMonitoring(namespace: string, monitoring: Monitoring[]): Promise<void> {
-        return await this.globalStorageClient.saveObject<Monitoring[]>(namespace, monitoring);
+    async getMonitoring(namespace: string): Promise<MonitoringValue> {
+        const monitoring = (await this.globalStorageClient.getObject<MonitoringValue>(namespace)) ?? {};
+
+        return monitoring;
+    }
+
+    async saveMonitoring(namespace: string, monitoring: MonitoringValue): Promise<void> {
+        return await this.globalStorageClient.saveObject<MonitoringValue>(namespace, monitoring);
     }
 
     async getSortOrder(): Promise<string[]> {
@@ -724,7 +741,8 @@ function mergeHeadersAndData(
     options: MalDataApprovalOptions,
     selectablePeriods: string[],
     headers: SqlViewGetData<SqlFieldHeaders>["rows"],
-    data: SqlViewGetData<SqlField>["rows"]
+    data: SqlViewGetData<SqlField>["rows"],
+    countryCodes: { id: string; code: string }[]
 ) {
     const { sorting, paging, orgUnitIds, periods, approvalStatus, completionStatus } = options; // ?
     const activePeriods = periods.length > 0 ? periods : selectablePeriods;
@@ -750,6 +768,7 @@ function mergeHeadersAndData(
                 dataSet: header.dataset,
                 orgUnitUid: header.orgunituid,
                 orgUnit: header.orgunit,
+                orgUnitCode: countryCodes.find(countryCode => header.orgunituid === countryCode.id)?.code ?? "",
                 period: period,
                 attribute: datavalue?.attribute,
                 approvalWorkflow: datavalue?.approvalworkflow,

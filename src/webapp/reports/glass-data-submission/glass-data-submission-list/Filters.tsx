@@ -11,18 +11,32 @@ import { getRootIds } from "../../../../domain/common/entities/OrgUnit";
 import { D2Api } from "../../../../types/d2-api";
 import i18n from "../../../../locales";
 import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
-import { Dropdown, DropdownProps, MultipleDropdownProps } from "@eyeseetea/d2-ui-components";
-import { Status } from "../DataSubmissionViewModel";
+import {
+    Dropdown,
+    DropdownProps,
+    MultipleDropdownProps,
+    DatePicker,
+    DatePickerProps,
+} from "@eyeseetea/d2-ui-components";
+import { Module, Status } from "../DataSubmissionViewModel";
+import { DataSubmissionPeriod } from "../../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 
 export interface DataSetsFiltersProps {
     values: Filter;
     options: FilterOptions;
     onChange: React.Dispatch<React.SetStateAction<Filter>>;
+    userPermissions: Module[];
+    dataSubmissionPeriod?: DataSubmissionPeriod;
+    isEARModule?: boolean;
 }
 
 export interface Filter {
+    module: Module;
     orgUnitPaths: Id[];
     periods: string[];
+    quarters: string[];
+    from: Date | undefined;
+    to: Date | undefined;
     completionStatus?: boolean;
     submissionStatus?: Status;
 }
@@ -49,14 +63,48 @@ export const statusItems = [
     { value: "PENDING_UPDATE_APPROVAL", text: i18n.t("Waiting for WHO to approve your update request") },
 ];
 
+export const earStatusItems = [
+    { value: "DRAFT", text: i18n.t("Draft") },
+    { value: "PENDING_APPROVAL", text: i18n.t("Waiting WHO Approval") },
+    { value: "REJECTED", text: i18n.t("Rejected By WHO") },
+    { value: "APPROVED", text: i18n.t("Approved") },
+];
+
 export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { config, api } = useAppContext();
-    const { values: filter, options: filterOptions, onChange } = props;
+    const {
+        values: filter,
+        options: filterOptions,
+        onChange,
+        userPermissions,
+        isEARModule,
+        dataSubmissionPeriod,
+    } = props;
 
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
 
+    const quarterItems = React.useMemo(() => {
+        return [
+            { value: "Q1", text: i18n.t("January-March") },
+            { value: "Q2", text: i18n.t("April-June") },
+            { value: "Q3", text: i18n.t("July-September") },
+            { value: "Q4", text: i18n.t("October-December") },
+        ];
+    }, []);
+
     const [orgUnits, setOrgUnits] = useState<OrgUnit[]>([]);
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
+
+    const moduleItems = React.useMemo(() => {
+        const modules = [
+            { value: "AMR", text: i18n.t("AMR") },
+            { value: "AMRIndividual", text: i18n.t("AMR - Individual") },
+            { value: "EAR", text: i18n.t("EAR") },
+            { value: "EGASP", text: i18n.t("EGASP") },
+        ];
+
+        return _.filter(modules, module => _.includes(userPermissions, module.value));
+    }, [userPermissions]);
 
     const completionStatusItems = React.useMemo(() => {
         return [
@@ -66,6 +114,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     }, []);
 
     const submissionStatusItems = React.useMemo(() => statusItems, []);
+    const earSubmissionStatusItems = React.useMemo(() => earStatusItems, []);
 
     useEffect(() => {
         async function getOrganisationUnits(api: D2Api): Promise<OrgUnit[]> {
@@ -102,6 +151,13 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
 
     const { orgUnitPaths } = filter;
     const orgUnitsByPath = React.useMemo(() => _.keyBy(orgUnits, ou => ou.path), [orgUnits]);
+
+    const setModule = React.useCallback<SingleDropdownHandler>(
+        module => {
+            onChange(filter => ({ ...filter, module: module as Module }));
+        },
+        [onChange]
+    );
 
     const setOrgUnitPaths = React.useCallback<OrgUnitsFilterButtonProps["setSelected"]>(
         newSelectedPaths => {
@@ -144,6 +200,18 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         [onChange]
     );
 
+    const setStartDate = React.useCallback<DatePickerHandler>(
+        from => onChange(prev => ({ ...prev, from })),
+        [onChange]
+    );
+
+    const setEndDate = React.useCallback<DatePickerHandler>(to => onChange(prev => ({ ...prev, to })), [onChange]);
+
+    const setQuarters = React.useCallback<DropdownHandler>(
+        quarters => onChange(prev => ({ ...prev, quarters })),
+        [onChange]
+    );
+
     const setCompletionStatus = React.useCallback<SingleDropdownHandler>(
         completionStatus => {
             onChange(filter => ({ ...filter, completionStatus: toBool(completionStatus) }));
@@ -160,6 +228,14 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
 
     return (
         <Container>
+            <SingleDropdownStyled
+                items={moduleItems}
+                value={isEARModule ? "EAR" : filter.module}
+                onChange={setModule}
+                label={i18n.t("Module")}
+                hideEmpty
+            />
+
             <OrgUnitsFilterButton
                 api={api}
                 rootIds={rootIds}
@@ -168,22 +244,51 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 selectableLevels={[1, 2, 3]}
             />
 
-            <DropdownStyled
-                items={periodItems}
-                values={filter.periods}
-                onChange={setPeriods}
-                label={i18n.t("Periods")}
-            />
+            {!isEARModule ? (
+                <DropdownStyled
+                    items={periodItems}
+                    values={filter.periods}
+                    onChange={setPeriods}
+                    label={i18n.t("Years")}
+                />
+            ) : (
+                <>
+                    <DatePickerStyled
+                        label="From"
+                        value={filter.from ?? null}
+                        maxDate={filter.to}
+                        onChange={setStartDate}
+                    />
+                    <DatePickerStyled
+                        label="To"
+                        value={filter.to ?? null}
+                        minDate={filter.from}
+                        maxDate={new Date()}
+                        onChange={setEndDate}
+                    />
+                </>
+            )}
+
+            {dataSubmissionPeriod === "QUARTERLY" && (
+                <DropdownStyled
+                    items={quarterItems}
+                    values={filter.quarters}
+                    onChange={setQuarters}
+                    label={i18n.t("Quarters")}
+                />
+            )}
+
+            {!isEARModule && (
+                <SingleDropdownStyled
+                    items={completionStatusItems}
+                    value={fromBool(filter.completionStatus)}
+                    onChange={setCompletionStatus}
+                    label={i18n.t("Questionnaire completed")}
+                />
+            )}
 
             <SingleDropdownStyled
-                items={completionStatusItems}
-                value={fromBool(filter.completionStatus)}
-                onChange={setCompletionStatus}
-                label={i18n.t("Questionnaire completed")}
-            />
-
-            <SingleDropdownStyled
-                items={submissionStatusItems}
+                items={isEARModule ? earSubmissionStatusItems : submissionStatusItems}
                 value={filter.submissionStatus}
                 onChange={setSubmissionStatus}
                 label={i18n.t("Status")}
@@ -213,6 +318,10 @@ const SingleDropdownStyled = styled(Dropdown)`
     width: 250px;
 `;
 
+const DatePickerStyled = styled(DatePicker)`
+    margin-top: -8px;
+`;
+
 function toBool(s: string | undefined): boolean | undefined {
     return s === undefined ? undefined : s === "true";
 }
@@ -223,5 +332,6 @@ function fromBool(value: boolean | undefined): string | undefined {
 
 type DropdownHandler = MultipleDropdownProps["onChange"];
 type SingleDropdownHandler = DropdownProps["onChange"];
+type DatePickerHandler = DatePickerProps["onChange"];
 
 const countryLevel = 3;

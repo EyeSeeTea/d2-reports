@@ -14,11 +14,13 @@ export const SQL_VIEW_DATA_DUPLICATION_NAME = "MAL Data Approval Status";
 export const SQL_VIEW_OLD_DATA_DUPLICATION_NAME = "MAL Data Approval Status Pre 2000";
 export const SQL_VIEW_MAL_METADATA_NAME = "MAL Data approval header";
 export const SQL_VIEW_MAL_DIFF_NAME = "MAL Data Approval Diff";
+export const SQL_VIEW_MAL_DATAELEMENTS_NAME = "MAL - Approval Dataelements";
+export const SQL_VIEW_NHWA_SUBNATIONAL_CORRECT = "NHWA Module 1 Subnational correct org unit name";
 
 const base = {
     nhwa: {
         dataSets: { namePrefix: "NHWA", nameExcluded: /old$/ },
-        sqlViewNames: [SQL_VIEW_DATA_COMMENTS_NAME, SQL_VIEW_DATA_APPROVAL_NAME],
+        sqlViewNames: [SQL_VIEW_DATA_COMMENTS_NAME, SQL_VIEW_DATA_APPROVAL_NAME, SQL_VIEW_NHWA_SUBNATIONAL_CORRECT],
         constantCode: "NHWA_COMMENTS",
         approvalWorkflows: { namePrefix: "NHWA" },
     },
@@ -29,6 +31,7 @@ const base = {
             SQL_VIEW_DATA_DUPLICATION_NAME,
             SQL_VIEW_MAL_METADATA_NAME,
             SQL_VIEW_MAL_DIFF_NAME,
+            SQL_VIEW_MAL_DATAELEMENTS_NAME,
             SQL_VIEW_OLD_DATA_DUPLICATION_NAME,
         ],
         constantCode: "",

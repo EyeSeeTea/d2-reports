@@ -10,10 +10,17 @@ export const Namespaces = {
     MAL_DIFF_STATUS_USER_COLUMNS: "mal-diff-status-user-columns",
     MAL_DIFF_NAMES_SORT_ORDER: "mal-diff-names-sort-order",
     MONITORING: "monitoring",
+    MAL_SUBSCRIPTION_STATUS_USER_COLUMNS: "mal-subscription-status-user-columns",
+    MAL_SUBSCRIPTION_STATUS: "mal-subscription-status",
     DATA_SUBMISSSIONS: "data-submissions",
     DATA_SUBMISSSIONS_USER_COLUMNS: "data-submissions-user-columns",
+    SIGNALS: "signals",
+    SIGNALS_USER_COLUMNS: "signals-user-columns",
     DATA_SUBMISSSIONS_MODULES: "modules",
     DATA_SUBMISSSIONS_UPLOADS: "uploads",
+    DATA_QUALITY: "data-quality",
+    INDICATOR_STATUS_USER_COLUMNS: "indicator-status-user-columns",
+    PROGRAM_INDICATOR_STATUS_USER_COLUMNS: "program-indicator-status-user-columns",
 };
 
 export const NamespaceProperties: Record<Namespace, string[]> = {
@@ -22,8 +29,14 @@ export const NamespaceProperties: Record<Namespace, string[]> = {
     [Namespaces.MAL_DIFF_STATUS_USER_COLUMNS]: [],
     [Namespaces.MAL_DIFF_NAMES_SORT_ORDER]: [],
     [Namespaces.MONITORING]: [],
+    [Namespaces.MAL_SUBSCRIPTION_STATUS]: [],
     [Namespaces.DATA_SUBMISSSIONS]: [],
     [Namespaces.DATA_SUBMISSSIONS_USER_COLUMNS]: [],
+    [Namespaces.SIGNALS]: [],
+    [Namespaces.SIGNALS_USER_COLUMNS]: [],
     [Namespaces.DATA_SUBMISSSIONS_MODULES]: [],
     [Namespaces.DATA_SUBMISSSIONS_UPLOADS]: [],
+    [Namespaces.DATA_QUALITY]: [],
+    [Namespaces.INDICATOR_STATUS_USER_COLUMNS]: [],
+    [Namespaces.PROGRAM_INDICATOR_STATUS_USER_COLUMNS]: [],
 };
