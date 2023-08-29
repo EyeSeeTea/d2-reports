@@ -5,7 +5,6 @@ import {
     GLASSDataSubmissionItem,
     GLASSDataSubmissionItemIdentifier,
     GLASSDataSubmissionModule,
-    ApprovalIds,
     GLASSUserPermission,
     EARDataSubmissionItem,
     EARSubmissionItemIdentifier,
@@ -718,51 +717,6 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                     );
                 }
             });
-        });
-    }
-
-    private async duplicateDataSet(dataSet: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
-        await promiseMap(items, async item => {
-            const dataValueSets = (await this.getDataSetsValue(dataSet.id, item.orgUnit ?? "", item.period)).dataValues;
-
-            if (!_.isEmpty(dataValueSets)) {
-                const DSDataElements: { dataSetElements: { dataElement: NamedRef }[] } = await this.getDSDataElements(
-                    dataSet.id
-                );
-                const ADSDataElements: { dataSetElements: { dataElement: NamedRef }[] } = await this.getDSDataElements(
-                    dataSet.approvedId
-                );
-
-                const uniqueDataElementsIds = _.uniq(_.map(dataValueSets, "dataElement"));
-                const dataElementsMatchedArray = DSDataElements.dataSetElements.map(element => {
-                    const dataElement = element.dataElement;
-                    if (uniqueDataElementsIds.includes(dataElement.id)) {
-                        const apvdName = dataElement.name + "-APVD";
-                        const ADSDataElement = ADSDataElements.dataSetElements.find(
-                            element => element.dataElement.name === apvdName
-                        );
-                        return {
-                            origId: dataElement.id,
-                            destId: ADSDataElement?.dataElement.id,
-                            name: dataElement.name,
-                        };
-                    } else {
-                        return [];
-                    }
-                });
-
-                const dataValuesToPost = this.makeDataValuesArray(
-                    dataSet.approvedId,
-                    dataValueSets,
-                    dataElementsMatchedArray
-                );
-
-                await promiseMap(_.chunk(dataValuesToPost, 1000), async dataValuesGroup => {
-                    return await this.api.dataValues
-                        .postSet({}, { dataValues: _.reject(dataValuesGroup, _.isEmpty) })
-                        .getData();
-                });
-            }
         });
     }
 
