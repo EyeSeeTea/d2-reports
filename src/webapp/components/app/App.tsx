@@ -1,7 +1,7 @@
 //@ts-ignore
 import { useConfig } from "@dhis2/app-runtime";
 import { MuiThemeProvider } from "@material-ui/core/styles";
-import { SnackbarProvider } from "@eyeseetea/d2-ui-components";
+import { SnackbarProvider, LoadingProvider } from "@eyeseetea/d2-ui-components";
 import _ from "lodash";
 //@ts-ignore
 import OldMuiThemeProvider from "material-ui/styles/MuiThemeProvider";
@@ -50,15 +50,17 @@ const App = ({ api, d2 }: { api: D2Api; d2: D2 }) => {
     return (
         <MuiThemeProvider theme={muiTheme}>
             <OldMuiThemeProvider muiTheme={muiThemeLegacy}>
-                <SnackbarProvider>
-                    <div id="app" className="content">
-                        <AppContext.Provider value={appContext}>
-                            <Report />
-                        </AppContext.Provider>
-                    </div>
+                <LoadingProvider>
+                    <SnackbarProvider>
+                        <div id="app" className="content">
+                            <AppContext.Provider value={appContext}>
+                                <Report />
+                            </AppContext.Provider>
+                        </div>
 
-                    <Share visible={showShareButton} />
-                </SnackbarProvider>
+                        <Share visible={showShareButton} />
+                    </SnackbarProvider>
+                </LoadingProvider>
             </OldMuiThemeProvider>
         </MuiThemeProvider>
     );

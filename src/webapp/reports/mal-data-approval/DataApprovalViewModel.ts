@@ -3,7 +3,7 @@ import {
     MalDataApprovalItem,
     getDataDuplicationItemId,
     getDataDuplicationItemMonitoringValue,
-    Monitoring,
+    MonitoringValue,
 } from "../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import { toDate } from "date-fns-tz";
 
@@ -27,9 +27,9 @@ export interface DataApprovalViewModel {
 }
 
 export function getDataApprovalViews(
-    _config: Config,
+    config: Config,
     items: MalDataApprovalItem[],
-    monitoring: Monitoring[]
+    monitoring: MonitoringValue
 ): DataApprovalViewModel[] {
     return items.map(item => {
         return {
@@ -52,7 +52,11 @@ export function getDataApprovalViews(
                 ? toDate(item.lastDateOfApproval, { timeZone: "UTC" })
                 : undefined,
             modificationCount: item.modificationCount,
-            monitoring: getDataDuplicationItemMonitoringValue(item, monitoring),
+            monitoring: getDataDuplicationItemMonitoringValue(
+                item,
+                config.dataSets["PWCUb3Se1Ie"]?.name ?? "",
+                monitoring
+            ),
         };
     });
 }

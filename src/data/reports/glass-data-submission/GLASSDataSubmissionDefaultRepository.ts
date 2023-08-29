@@ -84,7 +84,17 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         options: GLASSDataSubmissionOptions,
         namespace: string
     ): Promise<PaginatedObjects<GLASSDataSubmissionItem>> {
-        const { paging, sorting, module, orgUnitIds, periods, quarters, completionStatus, submissionStatus } = options;
+        const {
+            paging,
+            sorting,
+            module,
+            orgUnitIds,
+            periods,
+            quarters,
+            completionStatus,
+            submissionStatus,
+            dataSubmissionPeriod,
+        } = options;
 
         const modules =
             (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
@@ -132,6 +142,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             const key = getRegistrationKey({ orgUnitId: object.orgUnit, period: object.period });
             const match = registrations[key];
             const submissionStatus = statusItems.find(item => item.value === object.status)?.text ?? "";
+            const dataSubmissionPeriod =
+                modules.find(module => object.module === module.id)?.dataSubmissionPeriod ?? "YEARLY";
 
             const uploadStatus = uploads.filter(upload => upload.dataSubmission === object.id).map(item => item.status);
             const completedDatasets = uploadStatus.filter(item => item === "COMPLETED").length;
@@ -166,18 +178,22 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 ...match,
                 submissionStatus,
                 dataSetsUploaded,
+                dataSubmissionPeriod,
+                period: object.period.slice(0, 4),
             };
         });
 
         const quarterPeriods = _.flatMap(periods, year => quarters.map(quarter => `${year}${quarter}`));
 
         const filteredRows = rows.filter(row => {
-            return (_.isEmpty(orgUnitIds) || !row.orgUnit ? row : orgUnitIds.includes(row.orgUnit)) &&
-                module !== "EGASP"
-                ? periods.includes(String(row.period))
-                : quarterPeriods.includes(String(row.period)) &&
-                      (completionStatus !== undefined ? row.questionnaireCompleted === completionStatus : row) &&
-                      (!submissionStatus ? row : row.status === submissionStatus);
+            return (
+                (_.isEmpty(orgUnitIds) || !row.orgUnit ? row : orgUnitIds.includes(row.orgUnit)) &&
+                (dataSubmissionPeriod === "YEARLY"
+                    ? periods.includes(String(row.period))
+                    : quarterPeriods.includes(String(row.period))) &&
+                (completionStatus !== undefined ? row.questionnaireCompleted === completionStatus : row) &&
+                (!submissionStatus ? row : row.status === submissionStatus)
+            );
         });
 
         const rowsInPage = _(filteredRows)

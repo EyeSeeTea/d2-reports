@@ -1,12 +1,15 @@
 import { Module, Status } from "../../../../webapp/reports/glass-data-submission/DataSubmissionViewModel";
 import { Id, NamedRef } from "../../../common/entities/Base";
 
+export type DataSubmissionPeriod = "YEARLY" | "QUARTERLY";
+
 export interface GLASSDataSubmissionItem {
     id: Id;
     module: Module;
     orgUnit: string;
     orgUnitName: string;
     period: string;
+    dataSubmissionPeriod: DataSubmissionPeriod;
     status: Status;
     questionnaireCompleted: boolean;
     dataSetsUploaded: string;
@@ -70,6 +73,7 @@ export interface GLASSDataSubmissionModule {
         reportsMenu: string;
         validationReport: string;
     };
+    dataSubmissionPeriod: DataSubmissionPeriod;
     userGroups: {
         captureAccess: NamedRef[];
         readAccess: NamedRef[];

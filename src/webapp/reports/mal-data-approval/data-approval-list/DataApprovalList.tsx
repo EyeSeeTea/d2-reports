@@ -21,8 +21,10 @@ import { Config } from "../../../../domain/common/entities/Config";
 import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import {
+    CountryCode,
     MalDataApprovalItem,
     Monitoring,
+    MonitoringValue,
     parseDataDuplicationItemId,
 } from "../../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import i18n from "../../../../locales";
@@ -37,7 +39,7 @@ import { Notifications, NotificationsOff, PlaylistAddCheck, ThumbUp } from "@mat
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
 
 export const DataApprovalList: React.FC = React.memo(() => {
-    const { compositionRoot, config } = useAppContext();
+    const { compositionRoot, config, api } = useAppContext();
     const { currentUser } = config;
     const [isDialogOpen, { enable: openDialog, disable: closeDialog }] = useBooleanState(false);
     const snackbar = useSnackbar();
@@ -71,23 +73,105 @@ export const DataApprovalList: React.FC = React.memo(() => {
             : _.range(currentYear - 5, currentYear).map(n => n.toString());
     }, [oldPeriods]);
 
-    const [monitoring, setMonitoring] = useState<Monitoring[]>([]);
+    const [monitoring, setMonitoring] = useState<MonitoringValue>({});
+    const [countryCodes, setCountryCodes] = useState<CountryCode[]>([]);
+    const [dataNotificationsUserGroup, setDataNotificationsUserGroup] = useState<string>("");
 
     useEffect(() => {
-        async function getMonitoringValues() {
-            compositionRoot.malDataApproval.getMonitoring(Namespaces.MONITORING).then(monitoringValue => {
-                monitoringValue = monitoringValue.length ? monitoringValue : [];
-                setMonitoring(monitoringValue);
-            });
+        async function getMalNotificationsUserGroup() {
+            const { userGroups } = await api
+                .get<{ userGroups: { id: string }[] }>("/userGroups?fields=id&filter=name:eq:MAL_Data%20Notifications")
+                .getData();
+
+            return _.first(userGroups)?.id ?? "";
         }
-        getMonitoringValues();
-    }, [compositionRoot.malDataApproval]);
+        getMalNotificationsUserGroup().then(userGroup => {
+            setDataNotificationsUserGroup(userGroup);
+        });
+
+        compositionRoot.malDataApproval.getMonitoring(Namespaces.MONITORING).then(monitoringValue => {
+            setMonitoring(monitoringValue);
+        });
+    }, [api, compositionRoot.malDataApproval]);
 
     useEffect(() => {
         compositionRoot.malDataApproval.getColumns(Namespaces.MAL_APPROVAL_STATUS_USER_COLUMNS).then(columns => {
             setVisibleColumns(columns);
         });
     }, [compositionRoot]);
+
+    useEffect(() => {
+        compositionRoot.malDataApproval.getCountryCodes().then(countryCodes => {
+            setCountryCodes(countryCodes);
+        });
+    }, [compositionRoot.malDataApproval]);
+
+    const getMonitoringJson = React.useMemo(
+        () =>
+            (
+                initialMonitoringValues: MonitoringValue | Monitoring[],
+                addedMonitoringValues: Monitoring[],
+                elementType: string,
+                dataSet: string,
+                userGroup: string
+            ): MonitoringValue => {
+                if (!_.isArray(initialMonitoringValues) && initialMonitoringValues) {
+                    const initialMonitoring =
+                        _.first(initialMonitoringValues[elementType]?.[dataSet])?.monitoring ?? [];
+
+                    const newDataSets = _.merge({}, initialMonitoringValues[elementType], {
+                        [dataSet]: [
+                            _.omit(
+                                {
+                                    monitoring: combineMonitoringValues(initialMonitoring, addedMonitoringValues).map(
+                                        monitoring => {
+                                            return {
+                                                ...monitoring,
+                                                orgUnit:
+                                                    monitoring.orgUnit.length > 3
+                                                        ? countryCodes.find(
+                                                              countryCode => countryCode.id === monitoring.orgUnit
+                                                          )?.code
+                                                        : monitoring.orgUnit,
+                                            };
+                                        }
+                                    ),
+                                    userGroups: userGroup,
+                                },
+                                "userGroup"
+                            ),
+                        ],
+                    });
+
+                    return {
+                        ...initialMonitoringValues,
+                        dataSets: newDataSets,
+                    };
+                } else {
+                    const initialMonitoring: Monitoring[] = initialMonitoringValues.map(initialMonitoringValue => {
+                        return {
+                            orgUnit:
+                                countryCodes.find(countryCode => countryCode.id === initialMonitoringValue.orgUnit)
+                                    ?.code ?? initialMonitoringValue.orgUnit,
+                            period: initialMonitoringValue.period,
+                            enable: initialMonitoringValue.monitoring,
+                        };
+                    });
+
+                    return {
+                        [elementType]: {
+                            [dataSet]: [
+                                {
+                                    monitoring: combineMonitoringValues(initialMonitoring, addedMonitoringValues),
+                                    userGroups: userGroup,
+                                },
+                            ],
+                        },
+                    };
+                }
+            },
+        [countryCodes]
+    );
 
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
@@ -224,12 +308,19 @@ export const DataApprovalList: React.FC = React.memo(() => {
                             return {
                                 orgUnit: item.orgUnit,
                                 period: item.period,
-                                monitoring: true,
+                                enable: true,
                             };
                         });
+
                         await compositionRoot.malDataApproval.saveMonitoring(
                             Namespaces.MONITORING,
-                            combineMonitoringValues(monitoring, monitoringValues)
+                            getMonitoringJson(
+                                monitoring,
+                                monitoringValues,
+                                "dataSets",
+                                config.dataSets["PWCUb3Se1Ie"]?.name ?? "",
+                                dataNotificationsUserGroup
+                            )
                         );
 
                         const result = await compositionRoot.malDataApproval.updateStatus(items, "duplicate");
@@ -250,14 +341,21 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         const monitoringValues = items.map(item => {
                             return {
-                                orgUnit: item.orgUnit,
+                                orgUnit: item.orgUnitCode ?? item.orgUnit,
                                 period: item.period,
-                                monitoring: true,
+                                enable: true,
                             };
                         });
+
                         await compositionRoot.malDataApproval.saveMonitoring(
                             Namespaces.MONITORING,
-                            combineMonitoringValues(monitoring, monitoringValues)
+                            getMonitoringJson(
+                                monitoring,
+                                monitoringValues,
+                                "dataSets",
+                                config.dataSets["PWCUb3Se1Ie"]?.name ?? "",
+                                dataNotificationsUserGroup
+                            )
                         );
 
                         reload();
@@ -275,14 +373,21 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         const monitoringValues = items.map(item => {
                             return {
-                                orgUnit: item.orgUnit,
+                                orgUnit: item.orgUnitCode ?? item.orgUnit,
                                 period: item.period,
-                                monitoring: false,
+                                enable: false,
                             };
                         });
+
                         await compositionRoot.malDataApproval.saveMonitoring(
                             Namespaces.MONITORING,
-                            combineMonitoringValues(monitoring, monitoringValues)
+                            getMonitoringJson(
+                                monitoring,
+                                monitoringValues,
+                                "dataSets",
+                                config.dataSets["PWCUb3Se1Ie"]?.name ?? "",
+                                dataNotificationsUserGroup
+                            )
                         );
 
                         reload();
@@ -327,13 +432,16 @@ export const DataApprovalList: React.FC = React.memo(() => {
         }),
         [
             compositionRoot.malDataApproval,
-            isMalAdmin,
-            isMalApprover,
-            monitoring,
-            openDialog,
-            reload,
             snackbar,
+            reload,
+            isMalApprover,
+            isMalAdmin,
+            getMonitoringJson,
+            monitoring,
+            config.dataSets,
+            dataNotificationsUserGroup,
             disableRevoke,
+            openDialog,
             enableRevoke,
         ]
     );
@@ -411,7 +519,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
             );
         });
         const combinedMonitoring = _.union(_.intersection(...combinedMonitoringValues), addedMonitoringValues);
-        setMonitoring(combinedMonitoring);
 
         return _.union(combinedMonitoring);
     }
