@@ -39,13 +39,7 @@ export interface CountryCode {
     code: string;
 }
 
-export type MonitoringValue = Record<
-    string,
-    Record<
-        string,
-        { monitoring: Monitoring[]; userGroups: string }[] | { monitoring: Monitoring[]; userGroups: string }[]
-    >
->;
+export type MonitoringValue = Record<string, Record<string, { monitoring: Monitoring[]; userGroups: string[] }[]>>;
 
 export function getDataDuplicationItemId(dataSet: MalDataApprovalItem): string {
     return [
