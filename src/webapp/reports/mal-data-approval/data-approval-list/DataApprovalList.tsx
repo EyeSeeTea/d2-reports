@@ -189,10 +189,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         reload();
                     },
                     isActive: (rows: DataApprovalViewModel[]) => {
-                        return (
-                            _.every(rows, row => row.validated === false && row.lastUpdatedValue) &&
-                            (isMalApprover || isMalAdmin)
-                        );
+                        return _.every(rows, row => row.approved === false) && (isMalApprover || isMalAdmin);
                     },
                 },
                 {

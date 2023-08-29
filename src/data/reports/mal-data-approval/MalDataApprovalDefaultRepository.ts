@@ -321,7 +321,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             }));
 
             const dateResponse = await this.api.post<any>("/dataValueSets.json", {}, { dataValues }).getData();
-            if (dateResponse.status !== "SUCCESS") throw new Error("Error when posting Submission date");
+            if (dateResponse.response.status !== "SUCCESS") throw new Error("Error when posting Submission date");
 
             let completeCheckResponses: completeCheckresponseType = await promiseMap(dataSets, async approval =>
                 this.api
@@ -356,7 +356,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                 this.api
                     .post<any>(
                         "/dataApprovals",
-                        { wf: approval.workflow, pe: approval.period, ou: approval.orgUnit },
+                        { ds: approval.dataSet, pe: approval.period, ou: approval.orgUnit },
                         {}
                     )
                     .getData()

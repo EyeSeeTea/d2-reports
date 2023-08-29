@@ -21,7 +21,7 @@ export interface MalDataApprovalItemIdentifier {
     dataSet: string;
     orgUnit: string;
     period: string;
-    workflow: string;
+    workflow: string | undefined;
 }
 
 export interface Monitoring {
@@ -46,7 +46,7 @@ export function getDataDuplicationItemMonitoringValue(dataSet: MalDataApprovalIt
 
 export function parseDataDuplicationItemId(string: string): MalDataApprovalItemIdentifier | undefined {
     const [dataSet, workflow, period, orgUnit] = string.split("-");
-    if (!dataSet || !workflow || !period || !orgUnit) return undefined;
+    if (!dataSet || !period || !orgUnit) return undefined;
 
     return { dataSet, workflow, period, orgUnit };
 }
