@@ -80,6 +80,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                     subscribed,
                     dataElementId: item.dataElementId,
                     lastDateOfSubscription: new Date().toISOString(),
+                    user: config.currentUser.id,
                 };
             });
 
@@ -88,7 +89,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                 combineSubscriptionValues(subscriptionStatus, subscriptionValues)
             );
         },
-        [compositionRoot.malDataSubscription]
+        [compositionRoot.malDataSubscription, config.currentUser.id]
     );
 
     const dashboardSubscriptionAction = useCallback(
@@ -102,6 +103,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                         dataElementId,
                         subscribed,
                         lastDateOfSubscription: new Date().toISOString(),
+                        user: config.currentUser.id,
                     };
                 })
             );
@@ -111,7 +113,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                 combineSubscriptionValues(subscriptionStatus, subscriptionValues)
             );
         },
-        [compositionRoot.malDataSubscription]
+        [compositionRoot.malDataSubscription, config.currentUser.id]
     );
 
     const baseConfig: TableConfig<DataElementSubscriptionViewModel> = useMemo(

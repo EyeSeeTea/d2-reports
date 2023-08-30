@@ -42,6 +42,7 @@ export interface SubscriptionStatus {
     subscribed: boolean;
     dashboardId?: string;
     lastDateOfSubscription?: string;
+    user: string;
 }
 
 export type ElementType = "dataElements" | "dashboards" | "visualizations";
