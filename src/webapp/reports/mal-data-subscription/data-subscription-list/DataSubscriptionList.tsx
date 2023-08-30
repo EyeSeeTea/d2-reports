@@ -75,14 +75,16 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
             const items = _.compact(selectedIds.map(item => parseDataElementSubscriptionItemId(item)));
             if (items.length === 0) return;
 
-            const subscriptionValues = items.map(item => {
-                return {
-                    subscribed,
-                    dataElementId: item.dataElementId,
-                    lastDateOfSubscription: new Date().toISOString(),
-                    user: config.currentUser.id,
-                };
-            });
+            const subscriptionValues = items
+                .filter(item => item.subscription !== subscribed)
+                .map(item => {
+                    return {
+                        subscribed,
+                        dataElementId: item.dataElementId,
+                        lastDateOfSubscription: new Date().toISOString(),
+                        user: config.currentUser.id,
+                    };
+                });
 
             await compositionRoot.malDataSubscription.saveSubscription(
                 Namespaces.MAL_SUBSCRIPTION_STATUS,
@@ -97,16 +99,18 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
             const items = _.compact(selectedIds.map(item => parseDashboardSubscriptionItemId(item)));
             if (items.length === 0) return;
 
-            const subscriptionValues = items.flatMap(item =>
-                item.dataElementIds.map(dataElementId => {
-                    return {
-                        dataElementId,
-                        subscribed,
-                        lastDateOfSubscription: new Date().toISOString(),
-                        user: config.currentUser.id,
-                    };
-                })
-            );
+            const subscriptionValues = items
+                .filter(item => item.subscription !== subscribed)
+                .flatMap(item =>
+                    item.dataElementIds.map(dataElementId => {
+                        return {
+                            dataElementId,
+                            subscribed,
+                            lastDateOfSubscription: new Date().toISOString(),
+                            user: config.currentUser.id,
+                        };
+                    })
+                );
 
             await compositionRoot.malDataSubscription.saveSubscription(
                 Namespaces.MAL_SUBSCRIPTION_STATUS,
@@ -243,7 +247,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                         reload();
                     },
                     isActive: rows =>
-                        _.every(
+                        _.some(
                             rows,
                             row => row.subscription === "Not Subscribed" && row.id.split("-")[0] !== "dashboard"
                         ),
@@ -276,7 +280,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                         reload();
                     },
                     isActive: rows =>
-                        _.every(rows, row => row.subscription === "Subscribed" && row.id.split("-")[0] !== "dashboard"),
+                        _.some(rows, row => row.subscription === "Subscribed" && row.id.split("-")[0] !== "dashboard"),
                 },
             ],
             initialSorting: {

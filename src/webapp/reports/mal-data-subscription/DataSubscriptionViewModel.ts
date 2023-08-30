@@ -3,6 +3,8 @@ import { Config } from "../../../domain/common/entities/Config";
 import {
     DashboardSubscriptionItem,
     DataElementsSubscriptionItem,
+    SubscriptionValue,
+    getChildrenDataElementSubscriptionItemId,
     getDashboardSubscriptionItemId,
     getDataElementSubscriptionItemId,
 } from "../../../domain/reports/mal-data-subscription/entities/MalDataSubscriptionItem";
@@ -20,7 +22,7 @@ export interface DashboardSubscriptionViewModel {
     id: string;
     name: string;
     subscribedElements: string;
-    subscription: string;
+    subscription: SubscriptionValue;
     lastDateOfSubscription: string;
     children: NamedRef[];
 }
@@ -52,7 +54,12 @@ export function getDashboardSubscriptionViews(
             subscription: item.subscription,
             subscribedElements: item.subscribedElements,
             lastDateOfSubscription: item.lastDateOfSubscription,
-            children: item.children,
+            children: item.children.map(child => {
+                return {
+                    ...child,
+                    id: getChildrenDataElementSubscriptionItemId(child),
+                };
+            }),
         };
     });
 }
