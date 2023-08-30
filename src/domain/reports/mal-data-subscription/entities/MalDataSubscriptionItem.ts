@@ -19,10 +19,10 @@ export interface DashboardSubscriptionItem {
     subscribedElements: string;
     subscription: SubscriptionValue;
     lastDateOfSubscription: string;
-    children: ChildrenDataElements[];
+    children: ChildrenDataElement[];
 }
 
-export interface ChildrenDataElements extends NamedRef {
+export interface ChildrenDataElement extends NamedRef {
     dataElementGroups: NamedRef[];
     subscription: SubscriptionValue;
     lastDateOfSubscription: string;
@@ -60,7 +60,7 @@ export function getDataElementSubscriptionItemId(dataElement: DataElementsSubscr
     return [dataElement.dataElementId, dataElement.section?.id, dataElement.subscription].join("-");
 }
 
-export function getChildrenDataElementSubscriptionItemId(dataElement: ChildrenDataElements): string {
+export function getChildrenDataElementSubscriptionItemId(dataElement: ChildrenDataElement): string {
     return [dataElement.id, dataElement.subscription].join("-");
 }
 
