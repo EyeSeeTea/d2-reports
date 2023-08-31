@@ -4,7 +4,6 @@ import {
     DashboardSubscriptionItem,
     DataElementsSubscriptionItem,
     SubscriptionValue,
-    getChildrenDataElementSubscriptionItemId,
     getDashboardSubscriptionItemId,
     getDataElementSubscriptionItemId,
 } from "../../../domain/reports/mal-data-subscription/entities/MalDataSubscriptionItem";
@@ -54,12 +53,7 @@ export function getDashboardSubscriptionViews(
             subscription: item.subscription,
             subscribedElements: item.subscribedElements,
             lastDateOfSubscription: item.lastDateOfSubscription,
-            children: item.children.map(child => {
-                return {
-                    ...child,
-                    id: getChildrenDataElementSubscriptionItemId(child),
-                };
-            }),
+            children: item.children,
         };
     });
 }

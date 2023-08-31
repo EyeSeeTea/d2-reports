@@ -76,7 +76,12 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
             if (items.length === 0) return;
 
             const subscriptionValues = items
-                .filter(item => item.subscription !== subscribed)
+                .filter(
+                    item =>
+                        subscribed !==
+                        subscriptionStatus.find(subscription => subscription.dataElementId === item.dataElementId)
+                            ?.subscribed
+                )
                 .map(item => {
                     return {
                         subscribed,
@@ -99,10 +104,14 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
             const items = _.compact(selectedIds.map(item => parseDashboardSubscriptionItemId(item)));
             if (items.length === 0) return;
 
-            const subscriptionValues = items
-                .filter(item => item.subscription !== subscribed)
-                .flatMap(item =>
-                    item.dataElementIds.map(dataElementId => {
+            const subscriptionValues = items.flatMap(item =>
+                item.dataElementIds
+                    .filter(
+                        item =>
+                            subscribed !==
+                            subscriptionStatus.find(subscription => subscription.dataElementId === item)?.subscribed
+                    )
+                    .map(dataElementId => {
                         return {
                             dataElementId,
                             subscribed,
@@ -110,7 +119,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                             user: config.currentUser.id,
                         };
                     })
-                );
+            );
 
             await compositionRoot.malDataSubscription.saveSubscription(
                 Namespaces.MAL_SUBSCRIPTION_STATUS,

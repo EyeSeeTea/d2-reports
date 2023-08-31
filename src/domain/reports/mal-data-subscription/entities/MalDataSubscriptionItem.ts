@@ -31,13 +31,11 @@ export interface ChildrenDataElement extends NamedRef {
 export interface DataElementSubscriptionItemIdentifier {
     dataElementId: string;
     sectionId: string | undefined;
-    subscription: boolean;
 }
 
 export interface DashboardSubscriptionItemIdentifier {
     dashboardId: string;
     dataElementIds: string[];
-    subscription: boolean;
 }
 
 export interface SubscriptionStatus {
@@ -57,35 +55,26 @@ export interface MalSubscriptionPaginatedObjects<T> extends PaginatedObjects<T> 
 }
 
 export function getDataElementSubscriptionItemId(dataElement: DataElementsSubscriptionItem): string {
-    return [dataElement.dataElementId, dataElement.section?.id, dataElement.subscription].join("-");
-}
-
-export function getChildrenDataElementSubscriptionItemId(dataElement: ChildrenDataElement): string {
-    return [dataElement.id, dataElement.subscription].join("-");
+    return [dataElement.dataElementId, dataElement.section?.id].join("-");
 }
 
 export function getDashboardSubscriptionItemId(dashboard: DashboardSubscriptionItem): string {
-    return [
-        ["dashboard", dashboard.id].join("-"),
-        dashboard.children.map(child => child.id).join("-"),
-        dashboard.subscription,
-    ].join("-");
+    return [["dashboard", dashboard.id].join("-"), dashboard.children.map(child => child.id).join("-")].join("-");
 }
 
 export function parseDataElementSubscriptionItemId(string: string): DataElementSubscriptionItemIdentifier | undefined {
-    const [dataElementId, sectionId, subscription] = string.split("-");
+    const [dataElementId, sectionId] = string.split("-");
     if (!dataElementId) return undefined;
 
-    return { dataElementId, sectionId, subscription: subscription === "true" };
+    return { dataElementId, sectionId };
 }
 
 export function parseDashboardSubscriptionItemId(string: string): DashboardSubscriptionItemIdentifier | undefined {
     const ids = string.split("-");
     const dashboardId = _.first(ids) === "dashboard" ? ids[1] : "";
-    const dataElementIds = _.first(ids) === "dashboard" ? _.slice(ids, 2, ids.length - 1) : _.slice(ids, 0, -1);
-    const subscription = _.last(ids) === "true" || _.last(ids) === "Subscribed";
+    const dataElementIds = _.first(ids) === "dashboard" ? ids.slice(2) : ids;
 
     if (dashboardId === undefined || !dataElementIds) return undefined;
 
-    return { dashboardId, dataElementIds, subscription };
+    return { dashboardId, dataElementIds };
 }
