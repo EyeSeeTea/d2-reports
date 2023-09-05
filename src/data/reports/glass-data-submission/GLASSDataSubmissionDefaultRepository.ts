@@ -1,10 +1,10 @@
 import _ from "lodash";
 import { PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
 import {
+    ApprovalIds,
     GLASSDataSubmissionItem,
     GLASSDataSubmissionItemIdentifier,
     GLASSDataSubmissionModule,
-    ApprovalIds,
     GLASSUserPermission,
     EARDataSubmissionItem,
     EARSubmissionItemIdentifier,
@@ -83,7 +83,17 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         options: GLASSDataSubmissionOptions,
         namespace: string
     ): Promise<PaginatedObjects<GLASSDataSubmissionItem>> {
-        const { paging, sorting, module, orgUnitIds, periods, quarters, completionStatus, submissionStatus } = options;
+        const {
+            paging,
+            sorting,
+            module,
+            orgUnitIds,
+            periods,
+            quarters,
+            completionStatus,
+            submissionStatus,
+            dataSubmissionPeriod,
+        } = options;
 
         const modules =
             (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
@@ -132,6 +142,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             const key = getRegistrationKey({ orgUnitId: object.orgUnit, period: object.period });
             const match = registrations[key];
             const submissionStatus = statusItems.find(item => item.value === object.status)?.text ?? "";
+            const dataSubmissionPeriod =
+                modules.find(module => object.module === module.id)?.dataSubmissionPeriod ?? "YEARLY";
 
             const uploadStatus = uploads.filter(upload => upload.dataSubmission === object.id).map(item => item.status);
             const completedDatasets = uploadStatus.filter(item => item === "COMPLETED").length;
@@ -166,6 +178,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 ...match,
                 submissionStatus,
                 dataSetsUploaded,
+                dataSubmissionPeriod,
+                period: object.period.slice(0, 4),
             };
         });
 
@@ -181,7 +195,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
             return (
                 isInFilteredOUs &&
-                (module !== "EGASP" ? isInFilteredPeriods : isInFilteredQuarterPeriods) &&
+                ((dataSubmissionPeriod === "YEARLY" ? isInFilteredPeriods : isInFilteredQuarterPeriods) &&
                 isFilteredCompletionStatus &&
                 isFilteredSubmissionStatus
             );
@@ -559,8 +573,12 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             const module = modules.find(module => module.id === _.first(items)?.module)?.name ?? "";
 
             if (module === "AMR") {
-                const amrDataSets = modules.find(module => module.name === "AMR")?.dataSets ?? [];
-                _.forEach(amrDataSets, async amrDataSet => await this.duplicateDataSet(amrDataSet, items));
+              const amrDataSets = modules.find(module => module.name === "AMR")?.dataSets ?? [];
+              const amrQuestionnaires = modules.find(module => module.name === "AMR")?.questionnaires ?? [];
+
+              _.forEach(amrDataSets, async amrDataSet => await this.duplicateDataSet(amrDataSet, items));
+              _.forEach(amrQuestionnaires, async amrQuestionnaire => await this.duplicateDataSet(amrQuestionnaire, items));
+              
             }
             if (module === "AMR - Individual") {
                 const amrIndividualPrograms =
@@ -641,17 +659,19 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
     private async duplicateProgram(program: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
         await promiseMap(items, async item => {
             const programEvents = (await this.getProgramEvents(program.id, item.orgUnit ?? "")).events;
-            const events = programEvents.map(event => {
-                return {
-                    program: event.program,
-                    orgUnit: event.orgUnit,
-                    eventDate: event.eventDate,
-                    status: event.status,
-                    storedBy: event.storedBy,
-                    coordinate: event.coordinate,
-                    dataValues: event.dataValues,
-                };
-            });
+            const events = programEvents
+                .map(event => {
+                    return {
+                        program: event.program,
+                        orgUnit: event.orgUnit,
+                        eventDate: event.eventDate,
+                        status: event.status,
+                        storedBy: event.storedBy,
+                        coordinate: event.coordinate,
+                        dataValues: event.dataValues,
+                    };
+                })
+                .filter(event => String(new Date(event.eventDate).getFullYear()) === item.period);
 
             if (!_.isEmpty(events)) {
                 const eventsToPost = events.map(event => {

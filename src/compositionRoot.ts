@@ -55,7 +55,29 @@ import { CSYSummaryMortalityDefaultRepository } from "./data/reports/csy-summary
 import { GetSummaryMortalityUseCase } from "./domain/reports/csy-summary-mortality/usecases/GetSummaryUseCase";
 import { SaveSummaryMortalityUseCase } from "./domain/reports/csy-summary-mortality/usecases/SaveSummaryUseCase";
 import { CSYAuditTraumaDefaultRepository } from "./data/reports/csy-audit-trauma/CSYAuditTraumaDefaultRepository";
+import { GetAutoCompleteComputeValuesUseCase } from "./domain/reports/nhwa-auto-complete-compute/usecases/GetAutoCompleteComputeValuesUseCase";
+import { DataSetD2Repository } from "./data/common/DataSetD2Repository";
+import { DataValuesD2Repository } from "./data/common/DataValuesD2Repository";
+import { FixAutoCompleteComputeValuesUseCase } from "./domain/reports/nhwa-auto-complete-compute/usecases/FixAutoCompleteComputeValuesUseCase";
+import { GetOrgUnitsByLevelUseCase } from "./domain/common/usecases/GetOrgUnitsByLevelUseCase";
+import { AutoCompleteComputeSettingsD2Repository } from "./data/reports/nhwa-auto-complete-compute/AutoCompleteComputeSettingsD2Repository";
+import { GetTotalsByActivityLevelUseCase } from "./domain/reports/nhwa-fix-totals/GetTotalsByActivityLevelUseCase";
+import { FixTotalsValuesUseCase } from "./domain/reports/nhwa-fix-totals/usecases/FixTotalsValuesUseCase";
+import { FixTotalsSettingsD2Repository } from "./data/reports/nhwa-fix-totals/FixTotalsSettingsD2Repository";
+import { SubnationalCorrectD2Repository } from "./data/reports/nhwa-subnational-correct-orgunit/SubnationalCorrectD2Repository";
+import { GetSubnationalCorrectUseCase } from "./domain/reports/nhwa-subnational-correct-orgunit/usecases/GetSubnationalCorrectUseCase";
+import { DismissSubnationalCorrectValuesUseCase } from "./domain/reports/nhwa-subnational-correct-orgunit/usecases/DismissSubnationalCorrectValuesUseCase";
+import { SubnationalCorrectD2SettingsRepository } from "./data/reports/nhwa-subnational-correct-orgunit/SubnationalCorrectD2SettingsRepository";
 import { GetEARDataSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/GetEARDataSubmissionUseCase";
+import { GetMalCountryCodesUseCase } from "./domain/reports/mal-data-approval/usecases/GetMalCountryCodesUseCase";
+import { DataQualityDefaultRepository } from "./data/reports/data-quality/DataQualityDefaultRepository";
+import { GetIndicatorsUseCase } from "./domain/reports/data-quality/usecases/GetIndicatorsUseCase";
+import { GetProgramIndicatorsUseCase } from "./domain/reports/data-quality/usecases/GetProgramIndicatorsUseCase";
+import { SaveDataQualityColumnsUseCase } from "./domain/reports/data-quality/usecases/SaveDataQualityColumnsUseCase";
+import { GetDataQualityColumnsUseCase } from "./domain/reports/data-quality/usecases/GetDataQualityColumnsUseCase";
+import { SaveDataQualityUseCase } from "./domain/reports/data-quality/usecases/SaveDataQualityUseCase";
+import { LoadDataQualityValidation } from "./domain/reports/data-quality/usecases/loadDataQualityValidation";
+import { ResetDataQualityValidation } from "./domain/reports/data-quality/usecases/ResetDataQualityValidation";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -65,11 +87,18 @@ export function getCompositionRoot(api: D2Api) {
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
     const dataDuplicationRepository = new MalDataApprovalDefaultRepository(api);
     const dataSubscriptionRepository = new MalDataSubscriptionDefaultRepository(api);
+    const dataQualityRepository = new DataQualityDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
     const glassDataRepository = new GLASSDataSubmissionDefaultRepository(api);
     const csySummaryRepository = new CSYSummaryDefaultRepository(api);
     const csySummaryMortalityRepository = new CSYSummaryMortalityDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
+    const dataSetRepository = new DataSetD2Repository(api);
+    const dataValuesRepository = new DataValuesD2Repository(api);
+    const autoCompleteComputeSettingsRepository = new AutoCompleteComputeSettingsD2Repository(api);
+    const fixTotalSettingsRepository = new FixTotalsSettingsD2Repository(api);
+    const subnationalCorrectRepository = new SubnationalCorrectD2Repository(api);
+    const subnationalCorrectSettingsRepository = new SubnationalCorrectD2SettingsRepository(api);
 
     return {
         admin: getExecute({
@@ -90,6 +119,7 @@ export function getCompositionRoot(api: D2Api) {
         malDataApproval: getExecute({
             get: new GetMalDataSetsUseCase(dataDuplicationRepository),
             getDiff: new GetMalDataDiffUseCase(dataDuplicationRepository),
+            getCountryCodes: new GetMalCountryCodesUseCase(dataDuplicationRepository),
             save: new SaveMalDataSetsUseCase(dataDuplicationRepository),
             getColumns: new GetMalDataApprovalColumnsUseCase(dataDuplicationRepository),
             saveColumns: new SaveMalDataApprovalColumnsUseCase(dataDuplicationRepository),
@@ -134,12 +164,41 @@ export function getCompositionRoot(api: D2Api) {
             get: new GetSummaryMortalityUseCase(csySummaryMortalityRepository),
             save: new SaveSummaryMortalityUseCase(csySummaryMortalityRepository),
         }),
+        dataQuality: getExecute({
+            getIndicators: new GetIndicatorsUseCase(dataQualityRepository),
+            getProgramIndicators: new GetProgramIndicatorsUseCase(dataQualityRepository),
+            saveDataQuality: new SaveDataQualityUseCase(dataQualityRepository),
+            loadValidation: new LoadDataQualityValidation(dataQualityRepository),
+            resetValidation: new ResetDataQualityValidation(dataQualityRepository),
+            getColumns: new GetDataQualityColumnsUseCase(dataQualityRepository),
+            saveColumns: new SaveDataQualityColumnsUseCase(dataQualityRepository),
+        }),
         orgUnits: getExecute({
             get: new GetOrgUnitsUseCase(orgUnitsRepository),
+            getByLevel: new GetOrgUnitsByLevelUseCase(orgUnitsRepository),
         }),
         config: getExecute({
             get: new GetConfig(configRepository),
         }),
+        nhwa: {
+            getAutoCompleteComputeValues: new GetAutoCompleteComputeValuesUseCase(
+                dataSetRepository,
+                dataValuesRepository,
+                autoCompleteComputeSettingsRepository
+            ),
+            fixAutoCompleteComputeValues: new FixAutoCompleteComputeValuesUseCase(dataValuesRepository),
+            getTotalsByActivityLevel: new GetTotalsByActivityLevelUseCase(
+                dataSetRepository,
+                dataValuesRepository,
+                fixTotalSettingsRepository
+            ),
+            fixTotalValues: new FixTotalsValuesUseCase(dataValuesRepository),
+            getSubnationalCorrectValues: new GetSubnationalCorrectUseCase(subnationalCorrectRepository),
+            dismissSubnationalCorrectValues: new DismissSubnationalCorrectValuesUseCase(
+                dataValuesRepository,
+                subnationalCorrectSettingsRepository
+            ),
+        },
     };
 }
 

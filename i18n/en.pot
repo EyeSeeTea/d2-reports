@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2023-07-17T06:16:24.711Z\n"
-"PO-Revision-Date: 2023-07-17T06:16:24.711Z\n"
+"POT-Creation-Date: 2023-08-23T15:02:41.593Z\n"
+"PO-Revision-Date: 2023-08-23T15:02:41.593Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -36,6 +36,26 @@ msgid "Back"
 msgstr ""
 
 msgid "Help"
+msgstr ""
+
+msgid "Confirm Validation Reload"
+msgstr ""
+
+msgid "Confirm"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid ""
+"This action will delete the stored data and process all the Indicators and "
+"Program Indicators from this DHIS2 instance."
+msgstr ""
+
+msgid "This will take a long time."
+msgstr ""
+
+msgid "Are you sure?"
 msgstr ""
 
 msgid "Metadata Admin Report"
@@ -77,7 +97,7 @@ msgstr ""
 msgid "created"
 msgstr ""
 
-msgid "CSY Audit Report - Emergency Care"
+msgid "CSY Audit Filters - Emergency Care"
 msgstr ""
 
 msgid "Register ID"
@@ -93,6 +113,9 @@ msgid "Highest triage category and time to first provider >30min​"
 msgstr ""
 
 msgid "Initial RBG low and Glucose not given"
+msgstr ""
+
+msgid "Shock and IVF including Blood"
 msgstr ""
 
 msgid "Yearly"
@@ -125,7 +148,7 @@ msgstr ""
 msgid "Quarter"
 msgstr ""
 
-msgid "CSY Audit Report - Trauma Care"
+msgid "CSY Audit Filters - Trauma Care"
 msgstr ""
 
 msgid "Mortality with low injury severity score"
@@ -179,7 +202,7 @@ msgstr ""
 msgid "Summary Type"
 msgstr ""
 
-msgid "CSY Summary Table Report"
+msgid "CSY Summary Table Report - Patient Characteristics"
 msgstr ""
 
 msgid "Group"
@@ -221,6 +244,57 @@ msgstr ""
 msgid "Patient Characteristics"
 msgstr ""
 
+msgid "Name"
+msgstr ""
+
+msgid "Last Updated"
+msgstr ""
+
+msgid "Denominator"
+msgstr ""
+
+msgid "Valid denominator"
+msgstr ""
+
+msgid "Valid"
+msgstr ""
+
+msgid "Invalid"
+msgstr ""
+
+msgid "Numerator"
+msgstr ""
+
+msgid "Valid Numerator"
+msgstr ""
+
+msgid "Expression"
+msgstr ""
+
+msgid "Valid expression"
+msgstr ""
+
+msgid "Filter"
+msgstr ""
+
+msgid "Valid filter"
+msgstr ""
+
+msgid "Empty"
+msgstr ""
+
+msgid "Reload Validation"
+msgstr ""
+
+msgid "Indicators"
+msgstr ""
+
+msgid "Program Indicators"
+msgstr ""
+
+msgid "Data quality"
+msgstr ""
+
 msgid "GLASS Data Submission Report"
 msgstr ""
 
@@ -260,10 +334,28 @@ msgstr ""
 msgid "Error when trying to reopen submission"
 msgstr ""
 
-msgid "Reject Data Submission"
+msgid "Creation Date"
 msgstr ""
 
-msgid "Cancel"
+msgid "Level of Confidentiality"
+msgstr ""
+
+msgid "Go to Signal"
+msgstr ""
+
+msgid "Error when trying to approve signal"
+msgstr ""
+
+msgid "Reject Signal"
+msgstr ""
+
+msgid "Signals have been successfully rejected"
+msgstr ""
+
+msgid "Error when trying to reject signal"
+msgstr ""
+
+msgid "Reject Data Submission"
 msgstr ""
 
 msgid "Data submissions have been successfully rejected"
@@ -293,6 +385,9 @@ msgstr ""
 msgid "Waiting for WHO to approve your update request"
 msgstr ""
 
+msgid "Draft"
+msgstr ""
+
 msgid "January-March"
 msgstr ""
 
@@ -309,6 +404,9 @@ msgid "AMR"
 msgstr ""
 
 msgid "AMR - Individual"
+msgstr ""
+
+msgid "EAR"
 msgstr ""
 
 msgid "EGASP"
@@ -428,6 +526,9 @@ msgstr ""
 msgid "Data sets"
 msgstr ""
 
+msgid "Periods"
+msgstr ""
+
 msgid "Malaria Data Subscription Report"
 msgstr ""
 
@@ -452,7 +553,7 @@ msgstr ""
 msgid "Subscription Status"
 msgstr ""
 
-msgid "Periods"
+msgid "Section"
 msgstr ""
 
 msgid "NHWA Data Approval Status Report"
