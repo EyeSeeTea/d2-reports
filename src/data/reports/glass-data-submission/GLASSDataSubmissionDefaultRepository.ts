@@ -95,10 +95,11 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 const amrIndividualModule = modules.find(module => module.name === "AMR - Individual")?.id;
                 const egaspModule = modules.find(module => module.name === "EGASP")?.id;
 
-                if (module === "AMR") return object.module === amrModule;
-                else if (module === "AMRIndividual") return object.module === amrIndividualModule;
-                else if (module === "EGASP") return object.module === egaspModule;
-                else return [];
+                return (
+                    (module === "AMR" && object.module === amrModule) ||
+                    (module === "AMRIndividual" && object.module === amrIndividualModule) ||
+                    (module === "EGASP" && object.module === egaspModule)
+                );
             }) ?? [];
 
         const uploads =
@@ -171,12 +172,19 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const quarterPeriods = _.flatMap(periods, year => quarters.map(quarter => `${year}${quarter}`));
 
         const filteredRows = rows.filter(row => {
-            return (_.isEmpty(orgUnitIds) || !row.orgUnit ? row : orgUnitIds.includes(row.orgUnit)) &&
-                module !== "EGASP"
-                ? periods.includes(String(row.period))
-                : quarterPeriods.includes(String(row.period)) &&
-                      (completionStatus !== undefined ? row.questionnaireCompleted === completionStatus : row) &&
-                      (!submissionStatus ? row : row.status === submissionStatus);
+            const isInFilteredOUs = _.isEmpty(orgUnitIds) || !row.orgUnit ? true : orgUnitIds.includes(row.orgUnit);
+            const isInFilteredPeriods = periods.includes(String(row.period));
+            const isInFilteredQuarterPeriods = quarterPeriods.includes(String(row.period));
+            const isFilteredCompletionStatus =
+                completionStatus !== undefined ? row.questionnaireCompleted === completionStatus : true;
+            const isFilteredSubmissionStatus = !submissionStatus ? true : row.status === submissionStatus;
+
+            return (
+                isInFilteredOUs &&
+                (module !== "EGASP" ? isInFilteredPeriods : isInFilteredQuarterPeriods) &&
+                isFilteredCompletionStatus &&
+                isFilteredSubmissionStatus
+            );
         });
 
         const rowsInPage = _(filteredRows)
@@ -227,13 +235,15 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         const filteredRows = rows
             .filter(row => {
-                return (
-                    (_.isEmpty(orgUnitIds) || !row.orgUnit ? row : orgUnitIds.includes(row.orgUnit.id)) &&
-                    !!(!from && !to
-                        ? row
-                        : (from && new Date(row.creationDate) >= from) || (to && new Date(row.creationDate) <= to)) &&
-                    (!submissionStatus ? row : row.status === submissionStatus)
-                );
+                const isInFilteredOUs =
+                    _.isEmpty(orgUnitIds) || !row.orgUnit ? true : orgUnitIds.includes(row.orgUnit.id);
+                const isFilteredSubmissionStatus = !submissionStatus ? true : row.status === submissionStatus;
+                const isBetweenFilteredDuration =
+                    !from && !to
+                        ? true
+                        : (from && new Date(row.creationDate) >= from) || (to && new Date(row.creationDate) <= to);
+
+                return isInFilteredOUs && isBetweenFilteredDuration && isFilteredSubmissionStatus;
             })
             .map(row => {
                 const submissionStatus = earStatusItems.find(item => item.value === row.status)?.text ?? "";
