@@ -73,7 +73,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
             : _.range(currentYear - 5, currentYear).map(n => n.toString());
     }, [oldPeriods]);
 
-    const [monitoring, setMonitoring] = useState<MonitoringValue>({});
     const [countryCodes, setCountryCodes] = useState<CountryCode[]>([]);
     const [dataNotificationsUserGroup, setDataNotificationsUserGroup] = useState<string>("");
 
@@ -88,11 +87,14 @@ export const DataApprovalList: React.FC = React.memo(() => {
         getMalNotificationsUserGroup().then(userGroup => {
             setDataNotificationsUserGroup(userGroup);
         });
-
-        compositionRoot.malDataApproval.getMonitoring(Namespaces.MONITORING).then(monitoringValue => {
-            setMonitoring(monitoringValue);
-        });
     }, [api, compositionRoot.malDataApproval]);
+
+    const getMonitoringValue = useMemo(
+        () => async () => {
+            return await compositionRoot.malDataApproval.getMonitoring(Namespaces.MONITORING);
+        },
+        [compositionRoot.malDataApproval]
+    );
 
     useEffect(() => {
         compositionRoot.malDataApproval.getColumns(Namespaces.MAL_APPROVAL_STATUS_USER_COLUMNS).then(columns => {
@@ -311,6 +313,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                                 enable: true,
                             };
                         });
+                        const monitoring = await getMonitoringValue();
 
                         await compositionRoot.malDataApproval.saveMonitoring(
                             Namespaces.MONITORING,
@@ -346,6 +349,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                                 enable: true,
                             };
                         });
+                        const monitoring = await getMonitoringValue();
 
                         await compositionRoot.malDataApproval.saveMonitoring(
                             Namespaces.MONITORING,
@@ -378,6 +382,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                                 enable: false,
                             };
                         });
+                        const monitoring = await getMonitoringValue();
 
                         await compositionRoot.malDataApproval.saveMonitoring(
                             Namespaces.MONITORING,
@@ -437,9 +442,9 @@ export const DataApprovalList: React.FC = React.memo(() => {
             isMalApprover,
             isMalAdmin,
             getMonitoringJson,
-            monitoring,
             config.dataSets,
             dataNotificationsUserGroup,
+            getMonitoringValue,
             disableRevoke,
             openDialog,
             enableRevoke,
@@ -455,11 +460,12 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 useOldPeriods: oldPeriods,
                 ...getUseCaseOptions(filters, selectablePeriods),
             });
+            const monitoring = await getMonitoringValue();
 
             console.debug("Reloading", reloadKey);
             return { pager, objects: getDataApprovalViews(config, objects, monitoring) };
         },
-        [compositionRoot.malDataApproval, config, monitoring, oldPeriods, filters, selectablePeriods, reloadKey]
+        [compositionRoot.malDataApproval, config, oldPeriods, filters, selectablePeriods, reloadKey, getMonitoringValue]
     );
 
     function getUseCaseOptions(filter: DataSetsFilter, selectablePeriods: string[]) {
