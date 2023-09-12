@@ -66,7 +66,7 @@ export function getDataDuplicationItemMonitoringValue(
     } else {
         const monitoringArray = _.first(monitoring["dataSets"]?.[dataSetName])?.monitoring;
 
-        return !!_.find(monitoringArray, { orgUnit: dataSet.orgUnitCode, period: dataSet.period });
+        return !!_.find(monitoringArray, { orgUnit: dataSet.orgUnitCode, period: dataSet.period })?.enable;
     }
 }
 
