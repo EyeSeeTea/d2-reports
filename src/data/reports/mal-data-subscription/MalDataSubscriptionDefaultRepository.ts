@@ -8,6 +8,7 @@ import {
     DashboardSubscriptionItem,
     DataElementsSubscriptionItem,
     MalSubscriptionPaginatedObjects,
+    MonitoringValue,
     SubscriptionStatus,
     SubscriptionValue,
 } from "../../../domain/reports/mal-data-subscription/entities/MalDataSubscriptionItem";
@@ -90,7 +91,7 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                     }[];
                 }[];
             }>(
-                `/dataElements?filter=name:ilike:apvd&fields=id,name,dataElementGroups[id,name],dataSetElements[dataSet[id,name,sections[id,name,dataElements]]]&paging=false`
+                `/dataElements?filter=name:ilike:apvd&fields=id,name,code,dataElementGroups[id,name],dataSetElements[dataSet[id,name,sections[id,name,dataElements]]]&paging=false`
             )
             .getData();
 
@@ -100,6 +101,11 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                     subscription => subscription.dataElementId === dataElement.id
                 );
 
+                const dataSetName =
+                    dataElement.dataSetElements.find(({ dataSet }) => dataSet.name.includes("APVD"))?.dataSet.name ??
+                    dataElement.dataSetElements[0]?.dataSet.name ??
+                    "";
+
                 const section: NamedRef | undefined = _.chain(dataElement.dataSetElements)
                     .flatMap("dataSet.sections")
                     .find(section => _.some(section.dataElements, { id: dataElement.id }))
@@ -108,6 +114,7 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                 return {
                     dataElementId: dataElement.id,
                     dataElementName: dataElement.name,
+                    dataSetName,
                     subscription: !!subscriptionValue?.subscribed,
                     lastDateOfSubscription: subscriptionValue?.lastDateOfSubscription ?? "",
                     section,
@@ -230,6 +237,16 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
 
     async saveSubscription(namespace: string, subscription: SubscriptionStatus[]): Promise<void> {
         return await this.globalStorageClient.saveObject<SubscriptionStatus[]>(namespace, subscription);
+    }
+
+    async getMonitoring(namespace: string): Promise<MonitoringValue> {
+        const monitoring = (await this.globalStorageClient.getObject<MonitoringValue>(namespace)) ?? {};
+
+        return monitoring;
+    }
+
+    async saveMonitoring(namespace: string, monitoring: MonitoringValue): Promise<void> {
+        return await this.globalStorageClient.saveObject<MonitoringValue>(namespace, monitoring);
     }
 }
 

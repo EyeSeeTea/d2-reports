@@ -34,6 +34,8 @@ import { SaveMalDataSubscriptionColumnsUseCase } from "./domain/reports/mal-data
 import { GetMalDataSubscriptionColumnsUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalDataSubscriptionColumnsUseCase";
 import { SaveSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/SaveSubscriptionUseCase";
 import { GetSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/GetSubscriptionUseCase";
+import { GetMonitoringUseCase as GetSubscriptionMonitoringUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMonitoringUseCase";
+import { SaveMonitoringUseCase as SaveSubscriptionMonitoringUseCase } from "./domain/reports/mal-data-subscription/usecases/SaveMonitoringUseCase";
 import { CSYAuditEmergencyDefaultRepository } from "./data/reports/csy-audit-emergency/CSYAuditEmergencyDefaultRepository";
 import { GetAuditEmergencyUseCase } from "./domain/reports/csy-audit-emergency/usecases/GetAuditEmergencyUseCase";
 import { SaveAuditEmergencyUseCase } from "./domain/reports/csy-audit-emergency/usecases/SaveAuditEmergencyUseCase";
@@ -136,6 +138,8 @@ export function getCompositionRoot(api: D2Api) {
             saveColumns: new SaveMalDataSubscriptionColumnsUseCase(dataSubscriptionRepository),
             getSubscription: new GetSubscriptionUseCase(dataSubscriptionRepository),
             saveSubscription: new SaveSubscriptionUseCase(dataSubscriptionRepository),
+            getMonitoring: new GetSubscriptionMonitoringUseCase(dataSubscriptionRepository),
+            saveMonitoring: new SaveSubscriptionMonitoringUseCase(dataSubscriptionRepository),
         }),
         auditEmergency: getExecute({
             get: new GetAuditEmergencyUseCase(csyAuditEmergencyRepository),

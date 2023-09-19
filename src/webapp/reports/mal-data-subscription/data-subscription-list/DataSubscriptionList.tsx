@@ -70,6 +70,77 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
             });
     }, [compositionRoot.malDataSubscription]);
 
+    const getMonitoringValue = useMemo(
+        () => async () => {
+            return await compositionRoot.malDataSubscription.getMonitoring(Namespaces.MONITORING);
+        },
+        [compositionRoot.malDataSubscription]
+    );
+
+    const getMonitoringJson = useMemo(
+        () =>
+            (
+                initialMonitoringValue: any,
+                newValues: { dataSet: string; dataElements: string[] }[],
+                enabled: boolean,
+                users: string[]
+            ) => {
+                const { dataElements: initialDataElements } = initialMonitoringValue;
+                const dataElements = _.chain(newValues)
+                    .groupBy("dataSet")
+                    .map((groupedData, dataSet) => ({
+                        dataElements: _.flatMap(groupedData, "dataElements"),
+                        dataSet,
+                        enabled,
+                        users,
+                    }))
+                    .value();
+
+                if (!initialDataElements && !enabled) {
+                    return {
+                        ...initialMonitoringValue,
+                        dataElements: [],
+                    };
+                } else if (!initialDataElements && enabled) {
+                    return {
+                        ...initialMonitoringValue,
+                        dataElements,
+                    };
+                } else if (initialDataElements && enabled) {
+                    return {
+                        ...initialMonitoringValue,
+                        dataElements: _.chain(initialDataElements)
+                            .concat(dataElements)
+                            .groupBy("dataSet")
+                            .map(groupedData => ({
+                                ...groupedData[0],
+                                dataElements: _.union(...groupedData.map(element => element.dataElements)),
+                            }))
+                            .value(),
+                    };
+                } else {
+                    return {
+                        ...initialMonitoringValue,
+                        dataElements: _.map(initialDataElements, initialDataElement => {
+                            const matchingElement = _.find(dataElements, { dataSet: initialDataElement.dataSet });
+
+                            if (matchingElement) {
+                                return {
+                                    ...initialDataElement,
+                                    dataElements: _.difference(
+                                        initialDataElement.dataElements,
+                                        matchingElement.dataElements
+                                    ),
+                                };
+                            }
+                            return initialDataElement;
+                        }),
+                    };
+                }
+            },
+        []
+    );
+
     const dataElementSubscriptionAction = useCallback(
         async (selectedIds: string[], subscribed: boolean, subscriptionStatus: SubscriptionStatus[]) => {
             const items = _.compact(selectedIds.map(item => parseDataElementSubscriptionItemId(item)));
@@ -91,12 +162,27 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                     };
                 });
 
+            const monitoringValues = items.map(item => {
+                return {
+                    dataSet: item.dataSetName,
+                    dataElements: [item.dataElementId],
+                    enabled: subscribed,
+                    users: [config.currentUser.id],
+                };
+            });
+
+            const monitoring = await getMonitoringValue();
+
+            await compositionRoot.malDataSubscription.saveMonitoring(
+                Namespaces.MONITORING,
+                getMonitoringJson(monitoring, monitoringValues, subscribed, [config.currentUser.id])
+            );
             await compositionRoot.malDataSubscription.saveSubscription(
                 Namespaces.MAL_SUBSCRIPTION_STATUS,
                 combineSubscriptionValues(subscriptionStatus, subscriptionValues)
             );
         },
-        [compositionRoot.malDataSubscription, config.currentUser.id]
+        [compositionRoot.malDataSubscription, config.currentUser.id, getMonitoringJson, getMonitoringValue]
     );
 
     const dashboardSubscriptionAction = useCallback(
@@ -324,6 +410,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                 setTableRowIds(getDataElementSubscriptionViews(config, totalRows).map(dataElement => dataElement.id));
 
                 console.debug("Reloading", reloadKey);
+
                 return { pager, objects: getDataElementSubscriptionViews(config, objects) };
             },
         [compositionRoot.malDataSubscription, config, filters, reloadKey]

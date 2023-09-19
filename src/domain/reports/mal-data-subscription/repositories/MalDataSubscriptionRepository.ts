@@ -6,6 +6,7 @@ import {
     DataElementsSubscriptionItem,
     SubscriptionStatus,
     MalSubscriptionPaginatedObjects,
+    MonitoringValue,
 } from "../entities/MalDataSubscriptionItem";
 
 export interface MalDataSubscriptionRepository {
@@ -17,6 +18,8 @@ export interface MalDataSubscriptionRepository {
     saveColumns(namespace: string, columns: string[]): Promise<void>;
     getSubscription(namespace: string): Promise<SubscriptionStatus[]>;
     saveSubscription(namespace: string, subscriptionStatus: SubscriptionStatus[]): Promise<void>;
+    getMonitoring(namespace: string): Promise<MonitoringValue>;
+    saveMonitoring(namespace: string, monitoring: MonitoringValue): Promise<void>;
 }
 
 export interface MalDataSubscriptionOptions {
