@@ -8,6 +8,7 @@ import {
     DashboardSubscriptionItem,
     DataElementsSubscriptionItem,
     MalSubscriptionPaginatedObjects,
+    MonitoringDetail,
     MonitoringValue,
     SubscriptionStatus,
     SubscriptionValue,
@@ -66,12 +67,7 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
             sorting,
             paging,
         } = options;
-        if (!sorting || elementType !== "dataElements")
-            return {
-                pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 },
-                objects: [],
-                totalRows: [],
-            };
+        if (!sorting || elementType !== "dataElements") return emptyPage;
 
         const subscriptionValues =
             (await this.globalStorageClient.getObject<SubscriptionStatus[]>(Namespaces.MAL_SUBSCRIPTION_STATUS)) ?? [];
@@ -81,6 +77,7 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                 dataElements: {
                     id: string;
                     name: string;
+                    code: string;
                     dataElementGroups: NamedRef[];
                     dataSetElements: {
                         dataSet: {
@@ -95,16 +92,24 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
             )
             .getData();
 
+        const dataElementsMonitoringDetails: MonitoringDetail[] = dataElements.map(dataElement => {
+            const dataSetName =
+                dataElement.dataSetElements.find(({ dataSet }) => dataSet.name.includes("APVD"))?.dataSet.name ??
+                dataElement.dataSetElements[0]?.dataSet.name ??
+                "";
+
+            return {
+                dataElementId: dataElement.id,
+                dataElementCode: dataElement.code,
+                dataSet: dataSetName,
+            };
+        });
+
         const rows = dataElements
             .map(dataElement => {
                 const subscriptionValue = subscriptionValues.find(
                     subscription => subscription.dataElementId === dataElement.id
                 );
-
-                const dataSetName =
-                    dataElement.dataSetElements.find(({ dataSet }) => dataSet.name.includes("APVD"))?.dataSet.name ??
-                    dataElement.dataSetElements[0]?.dataSet.name ??
-                    "";
 
                 const section: NamedRef | undefined = _.chain(dataElement.dataSetElements)
                     .flatMap("dataSet.sections")
@@ -114,7 +119,6 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                 return {
                     dataElementId: dataElement.id,
                     dataElementName: dataElement.name,
-                    dataSetName,
                     subscription: !!subscriptionValue?.subscribed,
                     lastDateOfSubscription: subscriptionValue?.lastDateOfSubscription ?? "",
                     section,
@@ -149,24 +153,38 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
 
         const { objects, pager } = paginate(rows, paging, sorting);
 
-        return { pager, objects, sections, dataElementGroups, totalRows: rows };
+        return { pager, objects, sections, dataElementGroups, dataElementsMonitoringDetails, totalRows: rows };
     }
 
     async getChildrenDataElements(
         options: MalDataSubscriptionOptions
     ): Promise<MalSubscriptionPaginatedObjects<DashboardSubscriptionItem>> {
         const { dashboardSorting, subscriptionStatus, elementType, paging } = options;
-        if (!dashboardSorting || elementType === "dataElements")
-            return { pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 }, objects: [], totalRows: [] };
+        if (!dashboardSorting || elementType === "dataElements") return emptyPage;
 
         const subscriptionValues =
             (await this.globalStorageClient.getObject<SubscriptionStatus[]>(Namespaces.MAL_SUBSCRIPTION_STATUS)) ?? [];
 
         const { dataElements } = await this.api
             .get<{ dataElements: ChildrenDataElement[] }>(
-                "/dataElements?fields=id,name,dataElementGroups[id,name]&paging=false"
+                "/dataElements?fields=id,name,code,dataElementGroups[id,name],dataSetElements[dataSet[id,name]]&paging=false"
             )
             .getData();
+
+        const dataElementsMonitoringDetails: MonitoringDetail[] = dataElements
+            .filter(dataElement => dataElement.code)
+            .map(dataElement => {
+                const dataSetName =
+                    dataElement.dataSetElements.find(({ dataSet }) => dataSet.name.includes("APVD"))?.dataSet.name ??
+                    dataElement.dataSetElements[0]?.dataSet.name ??
+                    "";
+
+                return {
+                    dataElementId: dataElement.id,
+                    dataElementCode: dataElement.code,
+                    dataSet: dataSetName,
+                };
+            });
 
         if (elementType === "dashboards") {
             const { dashboards } = await this.api
@@ -195,7 +213,7 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
 
             const { objects, pager } = paginate(rows, paging, dashboardSorting);
 
-            return { pager, objects, totalRows: rows };
+            return { pager, objects, totalRows: rows, dataElementsMonitoringDetails };
         } else if (elementType === "visualizations") {
             const { visualizations } = await this.api
                 .get<{
@@ -213,9 +231,9 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
 
             const { objects, pager } = paginate(rows, paging, dashboardSorting);
 
-            return { pager, objects, totalRows: rows };
+            return { pager, objects, totalRows: rows, dataElementsMonitoringDetails };
         } else {
-            return { pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 }, objects: [], totalRows: [] };
+            return emptyPage;
         }
     }
 
@@ -284,8 +302,14 @@ function getRows(
     subscriptionValues: SubscriptionStatus[]
 ) {
     const children: ChildrenDataElement[] = (findArrayValueById(parent.id, dataElementsInParent) ?? []).map(child => {
+        const dataSetName =
+            child.dataSetElements.find((item: any) => item.dataSet.name.includes("APVD"))?.dataSet.name ??
+            child.dataSetElements[0]?.dataSet.name ??
+            "";
+
         return {
             ...child,
+            dataSetName,
             subscription: subscriptionValues.find(subscription => subscription.dataElementId === child.id)?.subscribed
                 ? "Subscribed"
                 : "Not Subscribed",
@@ -324,6 +348,13 @@ function getRows(
     };
 }
 
+const emptyPage = {
+    pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 },
+    objects: [],
+    totalRows: [],
+    dataElementsMonitoringDetails: [],
+};
+
 function paginate<Obj>(objects: Obj[], paging: Paging, sorting: Sorting<Obj>) {
     const pager: Pager = {
         page: paging.page,
@@ -341,7 +372,7 @@ function paginate<Obj>(objects: Obj[], paging: Paging, sorting: Sorting<Obj>) {
     return { pager, objects: paginatedObjects };
 }
 
-function findArrayValueById(id: string, record: Record<string, ChildrenDataElement[]>[]) {
+function findArrayValueById(id: string, record: Record<string, any[]>[]) {
     const entry = _.find(record, obj => id in obj);
     return entry ? entry[id] : [];
 }

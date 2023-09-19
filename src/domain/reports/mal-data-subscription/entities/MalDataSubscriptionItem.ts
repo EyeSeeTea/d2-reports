@@ -5,7 +5,6 @@ import { NamedRef } from "../../../common/entities/Base";
 export interface DataElementsSubscriptionItem {
     dataElementName: string;
     dataElementId: string;
-    dataSetName: string;
     section: NamedRef | undefined;
     dataElementGroups: NamedRef[];
     subscription: boolean;
@@ -27,12 +26,18 @@ export interface ChildrenDataElement extends NamedRef {
     dataElementGroups: NamedRef[];
     subscription: SubscriptionValue;
     lastDateOfSubscription: string;
+    code: string;
+    dataSetElements: {
+        dataSet: {
+            id: string;
+            name: string;
+        };
+    }[];
 }
 
 export interface DataElementSubscriptionItemIdentifier {
     dataElementId: string;
     sectionId: string | undefined;
-    dataSetName: string;
 }
 
 export interface DashboardSubscriptionItemIdentifier {
@@ -50,10 +55,17 @@ export interface SubscriptionStatus {
 
 export type ElementType = "dataElements" | "dashboards" | "visualizations";
 
+export interface MonitoringDetail {
+    dataElementId: string;
+    dataElementCode: string;
+    dataSet: string;
+}
+
 export interface MalSubscriptionPaginatedObjects<T> extends PaginatedObjects<T> {
     sections?: NamedRef[];
     dataElementGroups?: NamedRef[];
     totalRows: T[];
+    dataElementsMonitoringDetails: MonitoringDetail[];
 }
 
 export interface Monitoring {
@@ -66,7 +78,7 @@ export interface Monitoring {
 export type MonitoringValue = Record<string, Record<string, { monitoring: Monitoring[]; userGroups: string }>>;
 
 export function getDataElementSubscriptionItemId(dataElement: DataElementsSubscriptionItem): string {
-    return [dataElement.dataElementId, dataElement.section?.id, dataElement.dataSetName].join("-");
+    return [dataElement.dataElementId, dataElement.section?.id].join("-");
 }
 
 export function getDashboardSubscriptionItemId(dashboard: DashboardSubscriptionItem): string {
@@ -74,10 +86,10 @@ export function getDashboardSubscriptionItemId(dashboard: DashboardSubscriptionI
 }
 
 export function parseDataElementSubscriptionItemId(string: string): DataElementSubscriptionItemIdentifier | undefined {
-    const [dataElementId, sectionId, dataSetName] = string.split("-");
-    if (!dataElementId || !dataSetName) return undefined;
+    const [dataElementId, sectionId] = string.split("-");
+    if (!dataElementId) return undefined;
 
-    return { dataElementId, sectionId, dataSetName };
+    return { dataElementId, sectionId };
 }
 
 export function parseDashboardSubscriptionItemId(string: string): DashboardSubscriptionItemIdentifier | undefined {
