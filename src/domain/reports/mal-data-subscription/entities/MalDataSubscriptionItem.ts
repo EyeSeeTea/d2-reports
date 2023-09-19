@@ -66,7 +66,6 @@ export interface MonitoringDetail {
     dataElementId: string;
     dataElementCode: string;
     dataSet: string;
-    users: string[];
 }
 
 export type MonitoringValue = { dataElements: MonitoringDetail[] };
