@@ -55,12 +55,6 @@ export interface SubscriptionStatus {
 
 export type ElementType = "dataElements" | "dashboards" | "visualizations";
 
-export interface MonitoringDetail {
-    dataElementId: string;
-    dataElementCode: string;
-    dataSet: string;
-}
-
 export interface MalSubscriptionPaginatedObjects<T> extends PaginatedObjects<T> {
     sections?: NamedRef[];
     dataElementGroups?: NamedRef[];
@@ -68,14 +62,14 @@ export interface MalSubscriptionPaginatedObjects<T> extends PaginatedObjects<T> 
     dataElementsMonitoringDetails: MonitoringDetail[];
 }
 
-export interface Monitoring {
-    orgUnit: string;
-    period: string;
-    monitoring?: boolean;
-    enable?: boolean;
+export interface MonitoringDetail {
+    dataElementId: string;
+    dataElementCode: string;
+    dataSet: string;
+    users: string[];
 }
 
-export type MonitoringValue = Record<string, Record<string, { monitoring: Monitoring[]; userGroups: string }>>;
+export type MonitoringValue = { dataElements: MonitoringDetail[] };
 
 export function getDataElementSubscriptionItemId(dataElement: DataElementsSubscriptionItem): string {
     return [dataElement.dataElementId, dataElement.section?.id].join("-");

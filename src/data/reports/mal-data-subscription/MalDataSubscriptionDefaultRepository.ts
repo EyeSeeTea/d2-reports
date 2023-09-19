@@ -258,7 +258,9 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
     }
 
     async getMonitoring(namespace: string): Promise<MonitoringValue> {
-        const monitoring = (await this.globalStorageClient.getObject<MonitoringValue>(namespace)) ?? {};
+        const monitoring = (await this.globalStorageClient.getObject<MonitoringValue>(namespace)) ?? {
+            dataElements: [],
+        };
 
         return monitoring;
     }
