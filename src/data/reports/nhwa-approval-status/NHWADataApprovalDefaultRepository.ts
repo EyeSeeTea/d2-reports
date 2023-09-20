@@ -92,19 +92,37 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
             )
             .getData();
 
+        const dataApprovals = await this.api
+            .get<{ ou: string; pe: string; wf: string; permissions: { mayUnapprove: boolean } }[]>(
+                "/dataApprovals/approvals",
+                {
+                    wf: _(rows)
+                        .map(row => row.approvalworkflowuid)
+                        .uniq()
+                        .join(","),
+                    pe: _(rows)
+                        .map(row => row.period)
+                        .uniq()
+                        .join(","),
+                    ou: _(rows)
+                        .map(row => row.orgunituid)
+                        .uniq()
+                        .join(","),
+                }
+            )
+            .getData();
+
         // A data value is not associated to a specific data set, but we can still map it
         // through the data element (1 data value -> 1 data element -> N data sets).
-        const items: Array<DataApprovalItem> = await promiseMap(rows, async item => {
-            const { mayUnapprove } = await this.api
-                .get<{ mayUnapprove: boolean }>("/dataApprovals", {
-                    wf: item.approvalworkflowuid,
-                    pe: item.period,
-                    ou: item.orgunituid,
-                })
-                .getData();
+        const items: Array<DataApprovalItem> = rows.map(item => {
+            const mayUnapprove = !!dataApprovals.find(
+                dataApproval =>
+                    dataApproval.ou === item.orgunituid &&
+                    dataApproval.pe === item.period &&
+                    dataApproval.wf === item.approvalworkflowuid
+            )?.permissions.mayUnapprove;
 
             return {
-                ...item,
                 dataSetUid: item.datasetuid,
                 dataSet: item.dataset,
                 orgUnitUid: item.orgunituid,
