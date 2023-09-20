@@ -42,7 +42,8 @@ type SqlField =
     | "approvalworkflow"
     | "completed"
     | "validated"
-    | "lastupdatedvalue";
+    | "lastupdatedvalue"
+    | "approved";
 
 const fieldMapping: Record<keyof DataApprovalItem, SqlField> = {
     dataSetUid: "datasetuid",
@@ -56,6 +57,7 @@ const fieldMapping: Record<keyof DataApprovalItem, SqlField> = {
     completed: "completed",
     validated: "validated",
     lastUpdatedValue: "lastupdatedvalue",
+    approved: "approved",
 };
 
 export class NHWADataApprovalDefaultRepository implements NHWADataApprovalRepository {
@@ -92,9 +94,17 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
 
         // A data value is not associated to a specific data set, but we can still map it
         // through the data element (1 data value -> 1 data element -> N data sets).
+        const items: Array<DataApprovalItem> = await promiseMap(rows, async item => {
+            const { mayUnapprove } = await this.api
+                .get<{ mayUnapprove: boolean }>("/dataApprovals", {
+                    wf: item.approvalworkflowuid,
+                    pe: item.period,
+                    ou: item.orgunituid,
+                })
+                .getData();
 
-        const items: Array<DataApprovalItem> = rows.map(
-            (item): DataApprovalItem => ({
+            return {
+                ...item,
                 dataSetUid: item.datasetuid,
                 dataSet: item.dataset,
                 orgUnitUid: item.orgunituid,
@@ -106,8 +116,9 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
                 completed: Boolean(item.completed),
                 validated: Boolean(item.validated),
                 lastUpdatedValue: item.lastupdatedvalue,
-            })
-        );
+                approved: mayUnapprove,
+            };
+        });
 
         return { pager, objects: items };
     }

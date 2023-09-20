@@ -17,6 +17,7 @@ export interface DataApprovalViewModel {
     completed: boolean;
     validated: boolean;
     lastUpdatedValue: Date;
+    approved: boolean;
 }
 
 export function getDataApprovalViews(_config: Config, items: DataApprovalItem[]): DataApprovalViewModel[] {
@@ -34,6 +35,7 @@ export function getDataApprovalViews(_config: Config, items: DataApprovalItem[])
             completed: item.completed,
             validated: item.validated,
             lastUpdatedValue: new Date(item.lastUpdatedValue),
+            approved: item.approved,
         };
     });
 }
