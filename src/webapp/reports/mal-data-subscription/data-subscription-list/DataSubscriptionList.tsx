@@ -40,7 +40,6 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
     const [visibleDashboardColumns, setVisibleDashboardColumns] = useState<string[]>();
     const [dataElementGroups, setDataElementGroups] = useState<NamedRef[]>([]);
     const [monitoringDetails, setMonitoringDetails] = useState<MonitoringDetail[]>([]);
-    const [dashboardMonitoringDetails, setDashboardMonitoringDetails] = useState<MonitoringDetail[]>([]);
     const [sections, setSections] = useState<NamedRef[]>([]);
     const [subscription, setSubscription] = useState<SubscriptionStatus[]>([]);
     const [tableRowIds, setTableRowIds] = useState<string[]>([]);
@@ -71,6 +70,12 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
             .then(columns => {
                 setVisibleDashboardColumns(columns);
             });
+    }, [compositionRoot.malDataSubscription]);
+
+    useEffect(() => {
+        compositionRoot.malDataSubscription
+            .getMonitoringDetails()
+            .then(monitoringDetails => setMonitoringDetails(monitoringDetails));
     }, [compositionRoot.malDataSubscription]);
 
     const getMonitoringValue = useMemo(
@@ -222,7 +227,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
 
             const monitoringValues = items.flatMap(item =>
                 item.dataElementIds.map(item => {
-                    const monitoringDetail = dashboardMonitoringDetails.find(
+                    const monitoringDetail = monitoringDetails.find(
                         monitoringDetail => monitoringDetail.dataElementId === item
                     );
 
@@ -249,7 +254,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
         [
             compositionRoot.malDataSubscription,
             config.currentUser.id,
-            dashboardMonitoringDetails,
+            monitoringDetails,
             getMonitoringJson,
             getMonitoringValue,
         ]
@@ -437,7 +442,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                 paging: TablePagination,
                 sorting: TableSorting<DataElementSubscriptionViewModel>
             ) => {
-                const { dataElementGroups, dataElementsMonitoringDetails, objects, pager, sections, totalRows } =
+                const { dataElementGroups, objects, pager, sections, totalRows } =
                     await compositionRoot.malDataSubscription.get({
                         config,
                         paging: { page: paging.page, pageSize: paging.pageSize },
@@ -447,7 +452,6 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
 
                 setSections(sections ?? []);
                 setDataElementGroups(dataElementGroups ?? []);
-                setMonitoringDetails(dataElementsMonitoringDetails);
                 setTableRowIds(getDataElementSubscriptionViews(config, totalRows).map(dataElement => dataElement.id));
 
                 console.debug("Reloading", reloadKey);
@@ -460,7 +464,7 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
     const getDashboardRows = useMemo(
         () =>
             async (_search: string, paging: TablePagination, sorting: TableSorting<DashboardSubscriptionViewModel>) => {
-                const { pager, objects, dataElementsMonitoringDetails, totalRows } =
+                const { pager, objects, totalRows } =
                     await compositionRoot.malDataSubscription.getDashboardDataElements({
                         config,
                         paging: { page: paging.page, pageSize: paging.pageSize },
@@ -468,7 +472,6 @@ export const DataSubscriptionList: React.FC = React.memo(() => {
                         ...filters,
                     });
 
-                setDashboardMonitoringDetails(dataElementsMonitoringDetails);
                 setDashboardTableRowIds(
                     getDashboardSubscriptionViews(config, totalRows).map(dataElement => dataElement.id)
                 );

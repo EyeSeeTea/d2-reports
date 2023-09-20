@@ -79,6 +79,7 @@ import { GetDataQualityColumnsUseCase } from "./domain/reports/data-quality/usec
 import { SaveDataQualityUseCase } from "./domain/reports/data-quality/usecases/SaveDataQualityUseCase";
 import { LoadDataQualityValidation } from "./domain/reports/data-quality/usecases/loadDataQualityValidation";
 import { ResetDataQualityValidation } from "./domain/reports/data-quality/usecases/ResetDataQualityValidation";
+import { GetMonitoringDetailsUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMonitoringDetailsUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -134,6 +135,7 @@ export function getCompositionRoot(api: D2Api) {
         malDataSubscription: getExecute({
             get: new GetMalDataElementsSubscriptionUseCase(dataSubscriptionRepository),
             getDashboardDataElements: new GetMalDashboardsSubscriptionUseCase(dataSubscriptionRepository),
+            getMonitoringDetails: new GetMonitoringDetailsUseCase(dataSubscriptionRepository),
             getColumns: new GetMalDataSubscriptionColumnsUseCase(dataSubscriptionRepository),
             saveColumns: new SaveMalDataSubscriptionColumnsUseCase(dataSubscriptionRepository),
             getSubscription: new GetSubscriptionUseCase(dataSubscriptionRepository),

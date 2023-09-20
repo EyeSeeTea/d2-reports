@@ -59,7 +59,6 @@ export interface MalSubscriptionPaginatedObjects<T> extends PaginatedObjects<T> 
     sections?: NamedRef[];
     dataElementGroups?: NamedRef[];
     totalRows: T[];
-    dataElementsMonitoringDetails: MonitoringDetail[];
 }
 
 export interface MonitoringDetail {

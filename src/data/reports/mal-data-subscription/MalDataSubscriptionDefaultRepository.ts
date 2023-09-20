@@ -92,19 +92,6 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
             )
             .getData();
 
-        const dataElementsMonitoringDetails: MonitoringDetail[] = dataElements.map(dataElement => {
-            const dataSetName =
-                dataElement.dataSetElements.find(({ dataSet }) => dataSet.name.includes("APVD"))?.dataSet.name ??
-                dataElement.dataSetElements[0]?.dataSet.name ??
-                "";
-
-            return {
-                dataElementId: dataElement.id,
-                dataElementCode: dataElement.code,
-                dataSet: dataSetName,
-            };
-        });
-
         const rows = dataElements
             .map(dataElement => {
                 const subscriptionValue = subscriptionValues.find(
@@ -153,7 +140,7 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
 
         const { objects, pager } = paginate(rows, paging, sorting);
 
-        return { pager, objects, sections, dataElementGroups, dataElementsMonitoringDetails, totalRows: rows };
+        return { pager, objects, sections, dataElementGroups, totalRows: rows };
     }
 
     async getChildrenDataElements(
@@ -170,21 +157,6 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                 "/dataElements?fields=id,name,code,dataElementGroups[id,name],dataSetElements[dataSet[id,name]]&paging=false"
             )
             .getData();
-
-        const dataElementsMonitoringDetails: MonitoringDetail[] = dataElements
-            .filter(dataElement => dataElement.code)
-            .map(dataElement => {
-                const dataSetName =
-                    dataElement.dataSetElements.find(({ dataSet }) => dataSet.name.includes("APVD"))?.dataSet.name ??
-                    dataElement.dataSetElements[0]?.dataSet.name ??
-                    "";
-
-                return {
-                    dataElementId: dataElement.id,
-                    dataElementCode: dataElement.code,
-                    dataSet: dataSetName,
-                };
-            });
 
         if (elementType === "dashboards") {
             const { dashboards } = await this.api
@@ -213,7 +185,7 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
 
             const { objects, pager } = paginate(rows, paging, dashboardSorting);
 
-            return { pager, objects, totalRows: rows, dataElementsMonitoringDetails };
+            return { pager, objects, totalRows: rows };
         } else if (elementType === "visualizations") {
             const { visualizations } = await this.api
                 .get<{
@@ -231,10 +203,41 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
 
             const { objects, pager } = paginate(rows, paging, dashboardSorting);
 
-            return { pager, objects, totalRows: rows, dataElementsMonitoringDetails };
+            return { pager, objects, totalRows: rows };
         } else {
             return emptyPage;
         }
+    }
+
+    async getMonitoringDetails(): Promise<MonitoringDetail[]> {
+        const { dataElements } = await this.api
+            .get<{
+                dataElements: {
+                    id: string;
+                    code: string;
+                    dataSetElements: {
+                        dataSet: NamedRef;
+                    }[];
+                }[];
+            }>(`/dataElements?fields=id,code,dataSetElements[dataSet[id,name]]&paging=false`)
+            .getData();
+
+        const dataElementsMonitoringDetails: MonitoringDetail[] = dataElements
+            .filter(dataElement => dataElement.code)
+            .map(dataElement => {
+                const dataSetName =
+                    dataElement.dataSetElements.find(({ dataSet }) => dataSet.name.includes("APVD"))?.dataSet.name ??
+                    dataElement.dataSetElements[0]?.dataSet.name ??
+                    "";
+
+                return {
+                    dataElementId: dataElement.id,
+                    dataElementCode: dataElement.code,
+                    dataSet: dataSetName,
+                };
+            });
+
+        return dataElementsMonitoringDetails;
     }
 
     async getColumns(namespace: string): Promise<string[]> {
@@ -354,7 +357,6 @@ const emptyPage = {
     pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 },
     objects: [],
     totalRows: [],
-    dataElementsMonitoringDetails: [],
 };
 
 function paginate<Obj>(objects: Obj[], paging: Paging, sorting: Sorting<Obj>) {
