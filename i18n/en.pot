@@ -358,30 +358,6 @@ msgstr ""
 msgid "Error when trying to reject signal"
 msgstr ""
 
-msgid "Creation Date"
-msgstr ""
-
-msgid "Level of Confidentiality"
-msgstr ""
-
-msgid "Go to Signal"
-msgstr ""
-
-msgid "Error when trying to approve signal"
-msgstr ""
-
-msgid "Reject Signal"
-msgstr ""
-
-msgid "Cancel"
-msgstr ""
-
-msgid "Signals have been successfully rejected"
-msgstr ""
-
-msgid "Error when trying to reject signal"
-msgstr ""
-
 msgid "Reject Data Submission"
 msgstr ""
 
