@@ -29,13 +29,13 @@ import { GenerateSortOrderUseCase } from "./domain/reports/mal-data-approval/use
 import { GetMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/GetMonitoringUseCase";
 import { SaveMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/SaveMonitoringUseCase";
 import { DuplicateDataValuesUseCase } from "./domain/reports/mal-data-approval/usecases/DuplicateDataValuesUseCase";
-import { GetMalSubscriptionDataSetsUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalSubscriptionDataSetsUseCase";
+import { GetMalDataElementsSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalDataElementsSubscriptionUseCase";
 import { SaveMalDataSubscriptionColumnsUseCase } from "./domain/reports/mal-data-subscription/usecases/SaveMalDataSubscriptionColumnsUseCase";
 import { GetMalDataSubscriptionColumnsUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalDataSubscriptionColumnsUseCase";
-import { GetSubscriptionSortOrderUseCase } from "./domain/reports/mal-data-subscription/usecases/GetSubscriptionSortOrderUseCase";
-import { GenerateSubscriptionSortOrderUseCase } from "./domain/reports/mal-data-subscription/usecases/GenerateSubscriptionSortOrderUseCase";
 import { SaveSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/SaveSubscriptionUseCase";
 import { GetSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/GetSubscriptionUseCase";
+import { GetMonitoringUseCase as GetSubscriptionMonitoringUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMonitoringUseCase";
+import { SaveMonitoringUseCase as SaveSubscriptionMonitoringUseCase } from "./domain/reports/mal-data-subscription/usecases/SaveMonitoringUseCase";
 import { CSYAuditEmergencyDefaultRepository } from "./data/reports/csy-audit-emergency/CSYAuditEmergencyDefaultRepository";
 import { GetAuditEmergencyUseCase } from "./domain/reports/csy-audit-emergency/usecases/GetAuditEmergencyUseCase";
 import { SaveAuditEmergencyUseCase } from "./domain/reports/csy-audit-emergency/usecases/SaveAuditEmergencyUseCase";
@@ -55,6 +55,7 @@ import { CSYSummaryMortalityDefaultRepository } from "./data/reports/csy-summary
 import { GetSummaryMortalityUseCase } from "./domain/reports/csy-summary-mortality/usecases/GetSummaryUseCase";
 import { SaveSummaryMortalityUseCase } from "./domain/reports/csy-summary-mortality/usecases/SaveSummaryUseCase";
 import { CSYAuditTraumaDefaultRepository } from "./data/reports/csy-audit-trauma/CSYAuditTraumaDefaultRepository";
+import { GetMalDashboardsSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalDashboardsSubscriptionUseCase";
 import { GetAutoCompleteComputeValuesUseCase } from "./domain/reports/nhwa-auto-complete-compute/usecases/GetAutoCompleteComputeValuesUseCase";
 import { DataSetD2Repository } from "./data/common/DataSetD2Repository";
 import { DataValuesD2Repository } from "./data/common/DataValuesD2Repository";
@@ -78,6 +79,7 @@ import { GetDataQualityColumnsUseCase } from "./domain/reports/data-quality/usec
 import { SaveDataQualityUseCase } from "./domain/reports/data-quality/usecases/SaveDataQualityUseCase";
 import { LoadDataQualityValidation } from "./domain/reports/data-quality/usecases/loadDataQualityValidation";
 import { ResetDataQualityValidation } from "./domain/reports/data-quality/usecases/ResetDataQualityValidation";
+import { GetMonitoringDetailsUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMonitoringDetailsUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -131,13 +133,15 @@ export function getCompositionRoot(api: D2Api) {
             generateSortOrder: new GenerateSortOrderUseCase(dataDuplicationRepository),
         }),
         malDataSubscription: getExecute({
-            get: new GetMalSubscriptionDataSetsUseCase(dataSubscriptionRepository),
+            get: new GetMalDataElementsSubscriptionUseCase(dataSubscriptionRepository),
+            getDashboardDataElements: new GetMalDashboardsSubscriptionUseCase(dataSubscriptionRepository),
+            getMonitoringDetails: new GetMonitoringDetailsUseCase(dataSubscriptionRepository),
             getColumns: new GetMalDataSubscriptionColumnsUseCase(dataSubscriptionRepository),
             saveColumns: new SaveMalDataSubscriptionColumnsUseCase(dataSubscriptionRepository),
-            getSortOrder: new GetSubscriptionSortOrderUseCase(dataSubscriptionRepository),
-            generateSortOrder: new GenerateSubscriptionSortOrderUseCase(dataSubscriptionRepository),
             getSubscription: new GetSubscriptionUseCase(dataSubscriptionRepository),
             saveSubscription: new SaveSubscriptionUseCase(dataSubscriptionRepository),
+            getMonitoring: new GetSubscriptionMonitoringUseCase(dataSubscriptionRepository),
+            saveMonitoring: new SaveSubscriptionMonitoringUseCase(dataSubscriptionRepository),
         }),
         auditEmergency: getExecute({
             get: new GetAuditEmergencyUseCase(csyAuditEmergencyRepository),

@@ -1,33 +1,59 @@
+import { NamedRef } from "../../../domain/common/entities/Base";
 import { Config } from "../../../domain/common/entities/Config";
 import {
-    MalDataSubscriptionItem,
-    SubscriptionStatus,
-    getDataSubscriptionItemId,
-    getSubscriptionValue,
+    DashboardSubscriptionItem,
+    DataElementsSubscriptionItem,
+    SubscriptionValue,
+    getDashboardSubscriptionItemId,
+    getDataElementSubscriptionItemId,
 } from "../../../domain/reports/mal-data-subscription/entities/MalDataSubscriptionItem";
 
-export interface DataSubscriptionViewModel {
+export interface DataElementSubscriptionViewModel {
     id: string;
     dataElementName: string;
     dataElementId: string;
-    sectionName: string;
+    section: NamedRef | undefined;
     subscription: boolean;
     lastDateOfSubscription: string;
 }
 
-export function getDataSubscriptionViews(
+export interface DashboardSubscriptionViewModel {
+    id: string;
+    name: string;
+    subscribedElements: string;
+    subscription: SubscriptionValue;
+    lastDateOfSubscription: string;
+    children: NamedRef[];
+}
+
+export function getDataElementSubscriptionViews(
     _config: Config,
-    items: MalDataSubscriptionItem[],
-    subscription: SubscriptionStatus[]
-): DataSubscriptionViewModel[] {
+    items: DataElementsSubscriptionItem[]
+): DataElementSubscriptionViewModel[] {
     return items.map(item => {
         return {
-            id: getDataSubscriptionItemId(item),
-            subscription: getSubscriptionValue(item, subscription),
+            id: getDataElementSubscriptionItemId(item),
+            subscription: item.subscription,
             dataElementName: item.dataElementName,
             dataElementId: item.dataElementId,
-            sectionName: item.sectionName,
+            section: item.section,
             lastDateOfSubscription: item.lastDateOfSubscription,
+        };
+    });
+}
+
+export function getDashboardSubscriptionViews(
+    _config: Config,
+    items: DashboardSubscriptionItem[]
+): DashboardSubscriptionViewModel[] {
+    return items.map(item => {
+        return {
+            id: getDashboardSubscriptionItemId(item),
+            name: item.name,
+            subscription: item.subscription,
+            subscribedElements: item.subscribedElements,
+            lastDateOfSubscription: item.lastDateOfSubscription,
+            children: item.children,
         };
     });
 }
