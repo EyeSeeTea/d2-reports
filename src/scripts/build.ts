@@ -11,7 +11,10 @@ export async function build(): Promise<void> {
     console.debug(`Report type: ${report}`);
     if (process.env.REACT_APP_REPORT_VARIANT === "mal-approval-status") {
         console.debug("Building DHIS2 MAL Approval Report");
-        run("yarn mal-build");
+        run("yarn mal-approval-build");
+    } else if (process.env.REACT_APP_REPORT_VARIANT === "mal-subscription-status") {
+        console.debug("Building DHIS2 MAL Subscription Report");
+        run("yarn mal-subscription-build");
     } else {
         console.debug("Building DHIS2 Reports");
         run("yarn build-default");
