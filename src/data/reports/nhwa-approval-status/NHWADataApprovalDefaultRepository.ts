@@ -42,8 +42,7 @@ type SqlField =
     | "approvalworkflow"
     | "completed"
     | "validated"
-    | "lastupdatedvalue"
-    | "approved";
+    | "lastupdatedvalue";
 
 const fieldMapping: Record<keyof DataApprovalItem, SqlField> = {
     dataSetUid: "datasetuid",
