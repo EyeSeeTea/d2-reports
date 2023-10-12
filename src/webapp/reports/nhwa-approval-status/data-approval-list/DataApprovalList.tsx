@@ -49,10 +49,10 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     getValue: row => (row.completed ? "Completed" : "Not completed"),
                 },
                 {
-                    name: "validated",
+                    name: "approved",
                     text: i18n.t("Approval status"),
                     sortable: true,
-                    getValue: row => (row.validated ? "Approved" : "Ready for approval"),
+                    getValue: row => (row.approved ? "Approved" : "Ready for approval"),
                 },
                 { name: "lastUpdatedValue", text: i18n.t("Last updated value"), sortable: true },
             ],
