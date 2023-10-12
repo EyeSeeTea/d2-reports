@@ -49,10 +49,10 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     getValue: row => (row.completed ? "Completed" : "Not completed"),
                 },
                 {
-                    name: "approved",
+                    name: "validated",
                     text: i18n.t("Approval status"),
                     sortable: true,
-                    getValue: row => (row.approved ? "Approved" : "Ready for approval"),
+                    getValue: row => (row.validated ? "Approved" : "Ready for approval"),
                 },
                 { name: "lastUpdatedValue", text: i18n.t("Last updated value"), sortable: true },
             ],
@@ -103,7 +103,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.approved === false),
+                    isActive: rows => _.every(rows, row => row.validated === false),
                 },
                 {
                     name: "unapprove",
@@ -119,7 +119,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.approved === true),
+                    isActive: rows => _.every(rows, row => row.validated === true),
                 },
             ],
             initialSorting: {

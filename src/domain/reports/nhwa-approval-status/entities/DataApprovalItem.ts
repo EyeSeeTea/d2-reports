@@ -9,7 +9,6 @@ export interface DataApprovalItem {
     approvalWorkflow: string;
     completed: boolean;
     validated: boolean;
-    approved: boolean;
     lastUpdatedValue: string;
 }
 
