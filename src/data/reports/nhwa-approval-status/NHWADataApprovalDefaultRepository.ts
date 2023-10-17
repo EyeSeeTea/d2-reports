@@ -92,9 +92,8 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
 
         // A data value is not associated to a specific data set, but we can still map it
         // through the data element (1 data value -> 1 data element -> N data sets).
-
-        const items: Array<DataApprovalItem> = rows.map(
-            (item): DataApprovalItem => ({
+        const items: Array<DataApprovalItem> = rows.map(item => {
+            return {
                 dataSetUid: item.datasetuid,
                 dataSet: item.dataset,
                 orgUnitUid: item.orgunituid,
@@ -103,11 +102,11 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
                 attribute: item.attribute,
                 approvalWorkflowUid: item.approvalworkflowuid,
                 approvalWorkflow: item.approvalworkflow,
-                completed: Boolean(item.completed),
-                validated: Boolean(item.validated),
+                completed: toBoolean(item.completed),
+                validated: toBoolean(item.validated),
                 lastUpdatedValue: item.lastupdatedvalue,
-            })
-        );
+            };
+        });
 
         return { pager, objects: items };
     }
@@ -221,4 +220,8 @@ type DataSetRow = Record<CsvField, string>;
 */
 function sqlViewJoinIds(ids: Id[]): string {
     return ids.join("-") || "-";
+}
+
+function toBoolean(str: string): boolean {
+    return str === "true";
 }
