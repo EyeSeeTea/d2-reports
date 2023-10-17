@@ -19,6 +19,7 @@ import { SQL_VIEW_DATA_APPROVAL_NAME } from "../../common/Dhis2ConfigRepository"
 import { Dhis2SqlViews } from "../../common/Dhis2SqlViews";
 import { Instance } from "../../common/entities/Instance";
 import { downloadFile } from "../../common/utils/download-file";
+import { Ref } from "../../../domain/common/entities/Base";
 
 interface Variables {
     orgUnitRoot: string;
@@ -160,6 +161,10 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
                     .getData()
             );
 
+            const message = await this.getNotificationText(dataSets);
+            const dataApprovalUserGroup = await this.getDataApprovalUserGroup();
+            this.sendNotifications("Data sets approved", message, dataApprovalUserGroup);
+
             return _.every(response, item => item === "");
         } catch (error: any) {
             return false;
@@ -206,6 +211,34 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
 
     async saveColumns(columns: string[]): Promise<void> {
         return this.storageClient.saveObject<string[]>(Namespaces.NHWA_APPROVAL_STATUS_USER_COLUMNS, columns);
+    }
+
+    private async getDataApprovalUserGroup() {
+        const dataApprovalUserGroupName = "NHWA Data Approval Notifications";
+
+        const { userGroups } = await this.api
+            .get<{ userGroups: Ref[] }>(`/userGroups?filter=name:eq:${dataApprovalUserGroupName}&fields=id`)
+            .getData();
+
+        return userGroups;
+    }
+
+    private async getNotificationText(items: DataApprovalItemIdentifier[]) {
+        const multipleItems = items.length > 1;
+
+        const text = `The data set ${multipleItems ? "submissions" : "submission"} for ${items
+            .map(item => `${item.dataSetName} for the country ${item.orgUnitName} in the year ${item.period}`)
+            .join(", ")} ${multipleItems ? "have" : "has"} been approved.`;
+
+        return text;
+    }
+
+    private async sendNotifications(subject: string, text: string, userGroups: Ref[]): Promise<void> {
+        this.api.messageConversations.post({
+            subject,
+            text,
+            userGroups,
+        });
     }
 }
 

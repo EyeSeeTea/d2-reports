@@ -15,17 +15,26 @@ export interface DataApprovalItem {
 export interface DataApprovalItemIdentifier {
     dataSet: string;
     orgUnit: string;
+    dataSetName: string;
+    orgUnitName: string;
     period: string;
     workflow: string;
 }
 
 export function getDataApprovalItemId(dataSet: DataApprovalItem): string {
-    return [dataSet.dataSetUid, dataSet.approvalWorkflowUid, dataSet.period, dataSet.orgUnitUid].join("-");
+    return [
+        dataSet.dataSetUid,
+        dataSet.approvalWorkflowUid,
+        dataSet.period,
+        dataSet.orgUnitUid,
+        dataSet.dataSet,
+        dataSet.orgUnit,
+    ].join("-");
 }
 
 export function parseDataApprovalItemId(string: string): DataApprovalItemIdentifier | undefined {
-    const [dataSet, workflow, period, orgUnit] = string.split("-");
-    if (!dataSet || !workflow || !period || !orgUnit) return undefined;
+    const [dataSet, workflow, period, orgUnit, dataSetName, orgUnitName] = string.split("-");
+    if (!dataSet || !workflow || !period || !orgUnit || !dataSetName || !orgUnitName) return undefined;
 
-    return { dataSet, workflow, period, orgUnit };
+    return { dataSet, workflow, period, orgUnit, dataSetName, orgUnitName };
 }
