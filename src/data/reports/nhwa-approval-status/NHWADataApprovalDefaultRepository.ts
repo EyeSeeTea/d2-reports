@@ -161,9 +161,14 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
                     .getData()
             );
 
-            const message = await this.getNotificationText(dataSets);
-            const dataApprovalUserGroup = await this.getDataApprovalUserGroup();
-            this.sendNotifications("Data sets approved", message, dataApprovalUserGroup);
+            const dataApprovalNotificationUsers = await this.getDataApprovalNotificationUsers();
+            const userOrgUnits = dataApprovalNotificationUsers.map(user => user.orgUnits);
+            const userIds = dataApprovalNotificationUsers.map(user => ({ id: user.userId }));
+
+            userOrgUnits.forEach(async ou => {
+                const message = await this.getNotificationText(dataSets, ou);
+                this.sendNotifications("Data sets approved", message, userIds);
+            });
 
             return _.every(response, item => item === "");
         } catch (error: any) {
@@ -213,31 +218,67 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
         return this.storageClient.saveObject<string[]>(Namespaces.NHWA_APPROVAL_STATUS_USER_COLUMNS, columns);
     }
 
-    private async getDataApprovalUserGroup() {
+    private async getOrgUnits() {
+        const { organisationUnits } = await this.api
+            .get<any>(
+                "/metadata?organisationUnits:fields=children[children[id,level],id,level],id,level&organisationUnits:filter=level:eq:1"
+            )
+            .getData();
+
+        return organisationUnits;
+    }
+
+    private async getDataApprovalNotificationUsers() {
         const dataApprovalUserGroupName = "NHWA Data Approval Notifications";
 
         const { userGroups } = await this.api
-            .get<{ userGroups: Ref[] }>(`/userGroups?filter=name:eq:${dataApprovalUserGroupName}&fields=id`)
+            .get<{ userGroups: { id: Id; users: Ref[] }[] }>(
+                `/userGroups?filter=name:eq:${dataApprovalUserGroupName}&fields=id,users`
+            )
             .getData();
+        const users = _(userGroups)
+            .map(userGroup => userGroup.users)
+            .flatten()
+            .uniqBy("id")
+            .value();
+        const orgUnits = await this.getOrgUnits();
 
-        return userGroups;
+        const userOrgUnits = (
+            await promiseMap(users, async user => {
+                const ou = await this.api
+                    .get<{ organisationUnits: Ref[] }>(`/users/${user.id}?fields=organisationUnits`)
+                    .getData();
+
+                return {
+                    userId: user.id,
+                    orgUnits: _(ou.organisationUnits)
+                        .map(orgUnit => getAllChildren(orgUnits, orgUnit.id))
+                        .flatten()
+                        .compact()
+                        .value(),
+                };
+            })
+        ).filter(userOu => !_.isEmpty(userOu.orgUnits));
+
+        return userOrgUnits;
     }
 
-    private async getNotificationText(items: DataApprovalItemIdentifier[]) {
+    private async getNotificationText(items: DataApprovalItemIdentifier[], userOrgUnits: string[]) {
         const multipleItems = items.length > 1;
+        const userDataSetItems = items.filter(item => userOrgUnits.includes(item.orgUnit));
 
-        const text = `The data set ${multipleItems ? "submissions" : "submission"} for ${items
+        const text = `The data set ${multipleItems ? "submissions" : "submission"} for \n${userDataSetItems
             .map(item => `${item.dataSetName} for the country ${item.orgUnitName} in the year ${item.period}`)
-            .join(", ")} ${multipleItems ? "have" : "has"} been approved.`;
+            .join(",\n")}\n${multipleItems ? "have" : "has"} been approved.`;
 
         return text;
     }
 
-    private async sendNotifications(subject: string, text: string, userGroups: Ref[]): Promise<void> {
+    private async sendNotifications(subject: string, text: string, users: Ref[]): Promise<void> {
         this.api.messageConversations.post({
             subject,
             text,
-            userGroups,
+            users,
         });
     }
 }
@@ -258,3 +299,35 @@ function sqlViewJoinIds(ids: Id[]): string {
 function toBoolean(str: string): boolean {
     return str === "true";
 }
+
+function getAllChildren(orgUnits: OrgUnitNode[], locator: string): string[] {
+    const result: string[] = [];
+
+    const findChildren = (unit: OrgUnitNode) => {
+        if (unit.id === locator) {
+            result.push(unit.id);
+            if (unit.children) {
+                unit.children.forEach(child => {
+                    result.push(child.id);
+                    if (child.children) {
+                        child.children.forEach(grandchild => {
+                            result.push(grandchild.id);
+                        });
+                    }
+                });
+            }
+        } else if (unit.children) {
+            unit.children.forEach(child => findChildren(child));
+        }
+    };
+
+    orgUnits.forEach(unit => findChildren(unit));
+
+    return result;
+}
+
+type OrgUnitNode = {
+    level: number;
+    id: string;
+    children?: OrgUnitNode[];
+};
