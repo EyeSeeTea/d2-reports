@@ -6,4 +6,5 @@ export type ReportType =
     | "auditEmergency"
     | "auditTrauma"
     | "summary-patient"
-    | "summary-mortality";
+    | "summary-mortality"
+    | "authMonitoring";

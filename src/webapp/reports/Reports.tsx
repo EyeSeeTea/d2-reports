@@ -14,6 +14,7 @@ import CSYAuditTraumaReport from "./csy-audit-trauma/CSYAuditTraumaReport";
 import { NHWAAutoCompleteCompute } from "./nhwa-auto-complete-compute/NHWAAutoCompleteCompute";
 import { NHWAFixTotals } from "./nhwa-fix-totals-activity-level/NHWAFixTotals";
 import { NHWASubnationalCorrectOrgUnit } from "./nhwa-subnational-correct-orgunit/NHWASubnationalCorrectOrgUnit";
+import AuthoritiesMonitoringReport from "./authorities-monitoring/AuthoritiesMonitoringReport";
 
 const widget = process.env.REACT_APP_REPORT_VARIANT || "";
 
@@ -63,6 +64,9 @@ const Component: React.FC = () => {
         }
         case "nhwa-subnational-correct-orgunit": {
             return <NHWASubnationalCorrectOrgUnit />;
+        }
+        case "authorities-monitoring": {
+            return <AuthoritiesMonitoringReport />;
         }
         default: {
             return <p>{`Please provide a valid REACT_APP_REPORT_VARIANT`}</p>;
