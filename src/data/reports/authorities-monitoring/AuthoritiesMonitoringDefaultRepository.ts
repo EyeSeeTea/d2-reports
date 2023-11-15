@@ -35,7 +35,7 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
         namespace: string,
         options: AuthoritiesMonitoringOptions
     ): Promise<AuthoritiesMonitoringPaginatedObjects<AuthoritiesMonitoringItem>> {
-        const { paging, sorting, templateGroups: templateGroupsOptions } = options;
+        const { paging, sorting, templateGroups: templateGroupsOptions, userRoles: userRolesOptions } = options;
         const { TEMPLATE_GROUPS: templateGroups } = (await this.globalStorageClient.getObject<{
             TEMPLATE_GROUPS: TemplateGroup[];
         }>(namespace)) ?? { TEMPLATE_GROUPS: [] };
@@ -82,8 +82,8 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
                         lastLogin: user.userCredentials.lastLogin ?? "-",
                         username: user.userCredentials.username,
                         templateGroup: templateGroup.groupname,
-                        role: excludedRoles.map(role => role.name),
-                        authority: excludedRoles.flatMap(role => role.authorities),
+                        roles: excludedRoles.map(role => role.name),
+                        authorities: excludedRoles.flatMap(role => role.authorities),
                     };
                 });
             })
@@ -91,10 +91,21 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
             .flatten()
             .value();
 
+        const userRoles = _(objects)
+            .flatMap(object => object.roles)
+            .uniq()
+            .value();
+
         const filteredRows = objects.filter(row => {
-            return _.isEmpty(templateGroupsOptions) || !row.templateGroup
+            const isInTemplateGroup = !!(_.isEmpty(templateGroupsOptions) || !row.templateGroup
                 ? row
-                : templateGroupsOptions.includes(row.templateGroup);
+                : templateGroupsOptions.includes(row.templateGroup));
+            const hasUserRole =
+                _.isEmpty(userRolesOptions) || !row.roles
+                    ? row
+                    : _.some(userRolesOptions.map(r => row.roles.includes(r)));
+
+            return isInTemplateGroup && hasUserRole;
         });
 
         const rowsInPage = _(filteredRows)
@@ -114,6 +125,7 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
             pager: pager,
             objects: rowsInPage,
             templateGroups: templateGroups.map(templateGroup => templateGroup.groupname),
+            userRoles: userRoles,
         };
     }
 

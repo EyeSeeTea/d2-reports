@@ -22,6 +22,7 @@ export const AuthoritiesMonitoringList: React.FC = React.memo(() => {
 
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter());
     const [templateGroups, setTemplateGroups] = useState<string[]>([]);
+    const [userRoles, setUserRoles] = useState<string[]>([]);
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [reloadKey, _reload] = useReload();
 
@@ -39,8 +40,8 @@ export const AuthoritiesMonitoringList: React.FC = React.memo(() => {
                 { name: "username", text: i18n.t("Username"), sortable: false },
                 { name: "templateGroup", text: i18n.t("Template Group"), sortable: false },
                 { name: "lastLogin", text: i18n.t("Last login"), sortable: false },
-                { name: "role", text: i18n.t("Role"), sortable: false },
-                { name: "authority", text: i18n.t("Admin authority"), sortable: false },
+                { name: "roles", text: i18n.t("Role"), sortable: false },
+                { name: "authorities", text: i18n.t("Unauthorized privileges"), sortable: false },
             ],
             actions: [],
             initialSorting: {
@@ -57,7 +58,7 @@ export const AuthoritiesMonitoringList: React.FC = React.memo(() => {
 
     const getRows = useMemo(
         () => async (_search: string, paging: TablePagination, sorting: TableSorting<DataMonitoringViewModel>) => {
-            const { pager, objects, templateGroups } = await compositionRoot.authMonitoring.get(
+            const { pager, objects, templateGroups, userRoles } = await compositionRoot.authMonitoring.get(
                 Namespaces.AUTH_MONITORING,
                 {
                     paging: { page: paging.page, pageSize: paging.pageSize },
@@ -66,6 +67,7 @@ export const AuthoritiesMonitoringList: React.FC = React.memo(() => {
                 }
             );
 
+            setUserRoles(userRoles);
             setTemplateGroups(templateGroups);
             console.debug("Reloading", reloadKey);
 
@@ -88,8 +90,9 @@ export const AuthoritiesMonitoringList: React.FC = React.memo(() => {
     const filterOptions = useMemo(() => {
         return {
             templateGroups: templateGroups,
+            userRoles: userRoles,
         };
-    }, [templateGroups]);
+    }, [templateGroups, userRoles]);
 
     const columnsToShow = useMemo<TableColumn<DataMonitoringViewModel>[]>(() => {
         if (!visibleColumns || _.isEmpty(visibleColumns)) return tableProps.columns;
@@ -129,5 +132,6 @@ export function getSortingFromTableSorting(
 function getEmptyDataValuesFilter(): Filter {
     return {
         templateGroups: [],
+        userRoles: [],
     };
 }

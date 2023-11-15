@@ -28,11 +28,12 @@ export interface AuthoritiesMonitoringItem {
     name: string;
     lastLogin: string;
     username: string;
-    role: string[];
-    authority: string[];
+    roles: string[];
+    authorities: string[];
     templateGroup: string;
 }
 
 export interface AuthoritiesMonitoringPaginatedObjects<T> extends PaginatedObjects<T> {
     templateGroups: string[];
+    userRoles: string[];
 }

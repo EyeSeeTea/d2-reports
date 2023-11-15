@@ -17,4 +17,5 @@ export interface AuthoritiesMonitoringOptions {
     paging: Paging;
     sorting: Sorting<AuthoritiesMonitoringItem>;
     templateGroups: string[];
+    userRoles: string[];
 }

@@ -6,8 +6,8 @@ export interface DataMonitoringViewModel {
     lastLogin: string;
     username: string;
     templateGroup: string;
-    role: string;
-    authority: string;
+    roles: string;
+    authorities: string;
 }
 
 export function getDataMonitoringViews(items: AuthoritiesMonitoringItem[]): DataMonitoringViewModel[] {
@@ -18,8 +18,8 @@ export function getDataMonitoringViews(items: AuthoritiesMonitoringItem[]): Data
             lastLogin: item.lastLogin,
             username: item.username,
             templateGroup: item.templateGroup,
-            role: item.role.join(",\n"),
-            authority: item.authority.join(",\n"),
+            roles: item.roles.join(", "),
+            authorities: item.authorities.join(", "),
         };
     });
 }

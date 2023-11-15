@@ -13,15 +13,22 @@ export interface DataSetsFiltersProps {
 
 export interface Filter {
     templateGroups: string[];
+    userRoles: string[];
 }
 
 export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { values: filter, options: filterOptions, onChange } = props;
 
     const templateGroupItems = useMemoOptionsFromStrings(filterOptions.templateGroups);
+    const userRoleItems = useMemoOptionsFromStrings(filterOptions.userRoles);
 
     const setTemplateGroups = React.useCallback<DropdownHandler>(
         templateGroups => onChange(prev => ({ ...prev, templateGroups })),
+        [onChange]
+    );
+
+    const setUserRoles = React.useCallback<DropdownHandler>(
+        userRoles => onChange(prev => ({ ...prev, userRoles })),
         [onChange]
     );
 
@@ -32,6 +39,13 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 values={filter.templateGroups}
                 onChange={setTemplateGroups}
                 label={i18n.t("Template group")}
+            />
+
+            <DropdownStyled
+                items={userRoleItems}
+                values={filter.userRoles}
+                onChange={setUserRoles}
+                label={i18n.t("User roles")}
             />
         </Container>
     );
