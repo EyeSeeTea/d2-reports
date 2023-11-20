@@ -39,7 +39,7 @@ export const AuthoritiesMonitoringList: React.FC = React.memo(() => {
     const baseConfig: TableConfig<DataMonitoringViewModel> = useMemo(
         () => ({
             columns: [
-                { name: "id", text: i18n.t("ID"), sortable: true },
+                { name: "uid", text: i18n.t("ID"), sortable: true },
                 { name: "name", text: i18n.t("Name"), sortable: true },
                 { name: "username", text: i18n.t("Username"), sortable: false },
                 { name: "templateGroup", text: i18n.t("Template Group"), sortable: false },
@@ -134,7 +134,7 @@ export function getSortingFromTableSorting(
     sorting: TableSorting<DataMonitoringViewModel>
 ): Sorting<AuthoritiesMonitoringItem> {
     return {
-        field: sorting.field === "id" ? "templateGroup" : sorting.field,
+        field: sorting.field === "uid" ? "name" : sorting.field,
         direction: sorting.order,
     };
 }

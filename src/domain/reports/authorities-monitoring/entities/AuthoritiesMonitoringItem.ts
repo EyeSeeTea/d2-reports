@@ -30,3 +30,7 @@ export interface AuthoritiesMonitoringPaginatedObjects<T> extends PaginatedObjec
     templateGroups: string[];
     userRoles: UserRole[];
 }
+
+export function getDataMonitoringItemId(item: AuthoritiesMonitoringItem): string {
+    return [item.id, item.templateGroup].join("-");
+}
