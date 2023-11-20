@@ -18,7 +18,7 @@ export function getDataMonitoringViews(items: AuthoritiesMonitoringItem[]): Data
             lastLogin: item.lastLogin,
             username: item.username,
             templateGroup: item.templateGroup,
-            roles: item.roles.join(", "),
+            roles: item.roles.map(role => role.id).join(", "),
             authorities: item.authorities.join(", "),
         };
     });

@@ -1,9 +1,14 @@
 import React, { useMemo } from "react";
 import styled from "styled-components";
-import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
-import { MultipleDropdownProps } from "@eyeseetea/d2-ui-components";
+import { ConfirmationDialog } from "@eyeseetea/d2-ui-components";
 import i18n from "../../../../locales";
 import _ from "lodash";
+import { IconButton } from "material-ui";
+import { FilterList } from "@material-ui/icons";
+import { useBooleanState } from "../../../utils/use-boolean";
+import { MultiSelectorFilterButton } from "../../../components/multi-selector/MultiSelectorFilterButton";
+import { UserRole } from "../../../../domain/reports/authorities-monitoring/entities/AuthoritiesMonitoringItem";
+import { NamedRef } from "../../../../domain/common/entities/Ref";
 
 export interface DataSetsFiltersProps {
     values: Filter;
@@ -12,41 +17,52 @@ export interface DataSetsFiltersProps {
 }
 
 export interface Filter {
+    usernameQuery: string;
     templateGroups: string[];
-    userRoles: string[];
+    userRoles: UserRole[];
 }
 
 export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { values: filter, options: filterOptions, onChange } = props;
+    const [isDialogOpen, { enable: openDialog, disable: closeDialog }] = useBooleanState(false);
 
     const templateGroupItems = useMemoOptionsFromStrings(filterOptions.templateGroups);
-    const userRoleItems = useMemoOptionsFromStrings(filterOptions.userRoles);
+    const userRoleItems = useMemoOptionsFromNamedRef(filterOptions.userRoles);
 
-    const setTemplateGroups = React.useCallback<DropdownHandler>(
+    const setTemplateGroups = React.useCallback(
         templateGroups => onChange(prev => ({ ...prev, templateGroups })),
         [onChange]
     );
-
-    const setUserRoles = React.useCallback<DropdownHandler>(
-        userRoles => onChange(prev => ({ ...prev, userRoles })),
-        [onChange]
-    );
+    const setUserRoles = React.useCallback(userRoles => onChange(prev => ({ ...prev, userRoles })), [onChange]);
 
     return (
         <Container>
-            <DropdownStyled
-                items={templateGroupItems}
-                values={filter.templateGroups}
-                onChange={setTemplateGroups}
-                label={i18n.t("Template group")}
-            />
+            <IconButton onClick={openDialog}>
+                <FilterList />
+            </IconButton>
 
-            <DropdownStyled
-                items={userRoleItems}
-                values={filter.userRoles}
-                onChange={setUserRoles}
-                label={i18n.t("User roles")}
-            />
+            <ConfirmationDialog
+                isOpen={isDialogOpen}
+                title={i18n.t("Advanced filters")}
+                onCancel={closeDialog}
+                cancelText={i18n.t("Close")}
+                maxWidth="md"
+                fullWidth
+            >
+                <MultiSelectorFilterButton
+                    title="Filter by template group"
+                    selectedItems={filter.templateGroups}
+                    options={templateGroupItems}
+                    onChange={setTemplateGroups}
+                />
+
+                <MultiSelectorFilterButton
+                    title="Filter by user role"
+                    selectedItems={filter.userRoles.map(role => role.name)}
+                    options={userRoleItems}
+                    onChange={setUserRoles}
+                />
+            </ConfirmationDialog>
         </Container>
     );
 });
@@ -59,14 +75,14 @@ function useMemoOptionsFromStrings(options: string[]) {
     }, [options]);
 }
 
+function useMemoOptionsFromNamedRef(options: NamedRef[]) {
+    return useMemo(() => {
+        return options.map(option => ({ value: option.id, text: option.name }));
+    }, [options]);
+}
+
 const Container = styled.div`
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
 `;
-
-const DropdownStyled = styled(MultipleDropdown)`
-    margin-left: -10px;
-`;
-
-type DropdownHandler = MultipleDropdownProps["onChange"];

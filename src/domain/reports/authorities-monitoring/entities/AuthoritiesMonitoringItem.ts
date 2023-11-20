@@ -1,13 +1,6 @@
 import { PaginatedObjects } from "../../../../types/d2-api";
 import { NamedRef } from "../../../common/entities/Ref";
 
-export interface TemplateGroupPermission {
-    group: string;
-    groupname: string;
-    template: string;
-    username: string;
-}
-
 export interface UserRole {
     id: string;
     name: string;
@@ -28,12 +21,12 @@ export interface AuthoritiesMonitoringItem {
     name: string;
     lastLogin: string;
     username: string;
-    roles: string[];
+    roles: UserRole[];
     authorities: string[];
     templateGroup: string;
 }
 
 export interface AuthoritiesMonitoringPaginatedObjects<T> extends PaginatedObjects<T> {
     templateGroups: string[];
-    userRoles: string[];
+    userRoles: UserRole[];
 }

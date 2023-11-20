@@ -35,7 +35,13 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
         namespace: string,
         options: AuthoritiesMonitoringOptions
     ): Promise<AuthoritiesMonitoringPaginatedObjects<AuthoritiesMonitoringItem>> {
-        const { paging, sorting, templateGroups: templateGroupsOptions, userRoles: userRolesOptions } = options;
+        const {
+            paging,
+            sorting,
+            templateGroups: templateGroupsOptions,
+            usernameQuery,
+            userRoles: userRolesOptions,
+        } = options;
         const { TEMPLATE_GROUPS: templateGroups } = (await this.globalStorageClient.getObject<{
             TEMPLATE_GROUPS: TemplateGroup[];
         }>(namespace)) ?? { TEMPLATE_GROUPS: [] };
@@ -82,7 +88,7 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
                         lastLogin: user.userCredentials.lastLogin ?? "-",
                         username: user.userCredentials.username,
                         templateGroup: templateGroup.groupname,
-                        roles: excludedRoles.map(role => role.name),
+                        roles: excludedRoles,
                         authorities: excludedRoles.flatMap(role => role.authorities),
                     };
                 });
@@ -100,12 +106,12 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
             const isInTemplateGroup = !!(_.isEmpty(templateGroupsOptions) || !row.templateGroup
                 ? row
                 : templateGroupsOptions.includes(row.templateGroup));
-            const hasUserRole =
-                _.isEmpty(userRolesOptions) || !row.roles
-                    ? row
-                    : _.some(userRolesOptions.map(r => row.roles.includes(r)));
+            const hasUserRole = !!(_.isEmpty(userRolesOptions) || !row.roles
+                ? row
+                : _.some(userRolesOptions.map(r => row.roles.includes(r))));
+            const isInSearchQuery = _.includes(row.username, usernameQuery);
 
-            return isInTemplateGroup && hasUserRole;
+            return isInTemplateGroup && hasUserRole && isInSearchQuery;
         });
 
         const rowsInPage = _(filteredRows)
@@ -142,7 +148,7 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
     private async getUserTemplate(userId: string): Promise<UserDetails> {
         return await this.api
             .get<UserDetails>(`/users/${userId}`, {
-                fields: "id,name,userCredentials[id,name,username,lastLogin,userRoles[id,name,authorities]]",
+                fields: "id,name,userCredentials[username,lastLogin,userRoles[id,name,authorities]]",
             })
             .getData();
     }
@@ -150,7 +156,7 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
     private async getTemplateGroupUsers(userGroupId: string): Promise<UserDetails[]> {
         const { users } = await this.api
             .get<{ users: UserDetails[] }>("/users", {
-                fields: "id,name,userCredentials[username,lastLogin,userRoles[name,authorities]",
+                fields: "id,name,userCredentials[username,lastLogin,userRoles[id,name,authorities]]",
                 filter: `userGroups.id:in:[${userGroupId}]`,
             })
             .getData();

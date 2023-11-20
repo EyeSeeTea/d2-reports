@@ -15,14 +15,18 @@ import { DataMonitoringViewModel, getDataMonitoringViews } from "../DataMonitori
 import { Filter, Filters } from "./Filters";
 import _ from "lodash";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
-import { AuthoritiesMonitoringItem } from "../../../../domain/reports/authorities-monitoring/entities/AuthoritiesMonitoringItem";
+import {
+    AuthoritiesMonitoringItem,
+    UserRole,
+} from "../../../../domain/reports/authorities-monitoring/entities/AuthoritiesMonitoringItem";
 
 export const AuthoritiesMonitoringList: React.FC = React.memo(() => {
     const { compositionRoot } = useAppContext();
 
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter());
     const [templateGroups, setTemplateGroups] = useState<string[]>([]);
-    const [userRoles, setUserRoles] = useState<string[]>([]);
+    const [usernameQuery, setUsernameQuery] = useState<string>("");
+    const [userRoles, setUserRoles] = useState<UserRole[]>([]);
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [reloadKey, _reload] = useReload();
 
@@ -52,6 +56,7 @@ export const AuthoritiesMonitoringList: React.FC = React.memo(() => {
                 pageSizeOptions: [10, 20, 50],
                 pageSizeInitialValue: 10,
             },
+            searchBoxLabel: i18n.t("Search by username..."),
         }),
         []
     );
@@ -69,6 +74,7 @@ export const AuthoritiesMonitoringList: React.FC = React.memo(() => {
 
             setUserRoles(userRoles);
             setTemplateGroups(templateGroups);
+
             console.debug("Reloading", reloadKey);
 
             return { pager, objects: getDataMonitoringViews(objects) };
@@ -89,10 +95,11 @@ export const AuthoritiesMonitoringList: React.FC = React.memo(() => {
 
     const filterOptions = useMemo(() => {
         return {
+            usernameQuery: usernameQuery,
             templateGroups: templateGroups,
             userRoles: userRoles,
         };
-    }, [templateGroups, userRoles]);
+    }, [templateGroups, userRoles, usernameQuery]);
 
     const columnsToShow = useMemo<TableColumn<DataMonitoringViewModel>[]>(() => {
         if (!visibleColumns || _.isEmpty(visibleColumns)) return tableProps.columns;
@@ -113,7 +120,10 @@ export const AuthoritiesMonitoringList: React.FC = React.memo(() => {
             {...tableProps}
             columns={columnsToShow}
             onReorderColumns={saveReorderedColumns}
-            onChangeSearch={undefined}
+            onChangeSearch={value => {
+                setUsernameQuery(value);
+                setFilters({ ...filters, usernameQuery: value });
+            }}
         >
             <Filters values={filters} options={filterOptions} onChange={setFilters} />
         </ObjectsList>
@@ -133,5 +143,6 @@ function getEmptyDataValuesFilter(): Filter {
     return {
         templateGroups: [],
         userRoles: [],
+        usernameQuery: "",
     };
 }
