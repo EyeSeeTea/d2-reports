@@ -99,7 +99,7 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
 
         const userRoles = _(objects)
             .flatMap(object => object.roles)
-            .uniq()
+            .uniqBy("id")
             .value();
 
         const filteredRows = objects.filter(row => {
@@ -108,7 +108,7 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
                 : templateGroupsOptions.includes(row.templateGroup));
             const hasUserRole = !!(_.isEmpty(userRolesOptions) || !row.roles
                 ? row
-                : _.some(userRolesOptions.map(r => row.roles.includes(r))));
+                : _.some(userRolesOptions.map(r => row.roles.map(role => role.id).includes(r))));
             const isInSearchQuery = _.includes(row.username, usernameQuery);
 
             return isInTemplateGroup && hasUserRole && isInSearchQuery;

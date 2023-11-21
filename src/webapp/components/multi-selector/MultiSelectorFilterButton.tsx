@@ -15,17 +15,23 @@ export interface MultiSelectorFilterButtonProps {
     options: Option[];
     selectedItems: string[];
     title: string;
+    value?: string;
 }
 
 export const MultiSelectorFilterButton: React.FC<MultiSelectorFilterButtonProps> = React.memo(props => {
     const { api } = useAppContext();
-    const { onChange, options, selectedItems, title } = props;
+    const { onChange, options, selectedItems, title, value } = props;
     const [isDialogOpen, { enable: openDialog, disable: closeDialog }] = useBooleanState(false);
 
     return (
         <React.Fragment>
             <span onClick={openDialog} style={styles.textField}>
-                <TextField title={title} value={selectedItems.join(", ")} floatingLabelText={i18n.t(title)} />
+                <TextField
+                    fullWidth
+                    title={title}
+                    value={value ?? selectedItems.join(", ")}
+                    floatingLabelText={i18n.t(title)}
+                />
             </span>
 
             {isDialogOpen && (

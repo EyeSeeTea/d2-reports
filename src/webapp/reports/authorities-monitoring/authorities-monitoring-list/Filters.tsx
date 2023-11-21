@@ -12,11 +12,17 @@ import { NamedRef } from "../../../../domain/common/entities/Ref";
 
 export interface DataSetsFiltersProps {
     values: Filter;
-    options: Filter;
+    options: FilterOptions;
     onChange: React.Dispatch<React.SetStateAction<Filter>>;
 }
 
 export interface Filter {
+    usernameQuery: string;
+    templateGroups: string[];
+    userRoles: string[];
+}
+
+interface FilterOptions {
     usernameQuery: string;
     templateGroups: string[];
     userRoles: UserRole[];
@@ -34,6 +40,11 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         [onChange]
     );
     const setUserRoles = React.useCallback(userRoles => onChange(prev => ({ ...prev, userRoles })), [onChange]);
+
+    const selectedUserRoles = filterOptions.userRoles
+        .filter(role => filter.userRoles.includes(role.id))
+        .map(role => role.name)
+        .join(", ");
 
     return (
         <Container>
@@ -58,7 +69,8 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
 
                 <MultiSelectorFilterButton
                     title="Filter by user role"
-                    selectedItems={filter.userRoles.map(role => role.name)}
+                    value={selectedUserRoles}
+                    selectedItems={filter.userRoles}
                     options={userRoleItems}
                     onChange={setUserRoles}
                 />

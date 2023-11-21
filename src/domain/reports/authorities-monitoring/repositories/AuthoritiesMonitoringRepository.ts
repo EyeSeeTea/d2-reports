@@ -2,7 +2,6 @@ import { Paging, Sorting } from "../../../common/entities/PaginatedObjects";
 import {
     AuthoritiesMonitoringItem,
     AuthoritiesMonitoringPaginatedObjects,
-    UserRole,
 } from "../entities/AuthoritiesMonitoringItem";
 
 export interface AuthoritiesMonitoringRepository {
@@ -19,5 +18,5 @@ export interface AuthoritiesMonitoringOptions {
     sorting: Sorting<AuthoritiesMonitoringItem>;
     templateGroups: string[];
     usernameQuery: string;
-    userRoles: UserRole[];
+    userRoles: string[];
 }
