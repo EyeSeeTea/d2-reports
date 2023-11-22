@@ -20,7 +20,7 @@ import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import {
     DataApprovalItem,
     parseDataApprovalItemId,
-} from "../../../../domain/nhwa-approval-status/entities/DataApprovalItem";
+} from "../../../../domain/reports/nhwa-approval-status/entities/DataApprovalItem";
 import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
 import { useReload } from "../../../utils/use-reload";

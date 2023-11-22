@@ -10,6 +10,17 @@ export interface OrgUnit {
     level: number;
 }
 
+export interface FilterOrgUnit {
+    id: Id;
+    path: string;
+    name: string;
+    level: number;
+    children: {
+        level: number;
+        path: string;
+    }[];
+}
+
 const pathSeparator = "/";
 
 export function getRoots(orgUnits: OrgUnit[]): OrgUnit[] {
@@ -37,4 +48,10 @@ export function getOrgUnitIdsFromPaths(orgUnitPathsSelected: OrgUnitPath[]): Id[
 
 export function getOrgUnitParentPath(path: OrgUnitPath) {
     return _(path).split(pathSeparator).initial().join(pathSeparator);
+}
+
+export function getOrgUnitsFromId(orgUnitIds: string[], orgUnits: OrgUnit[]): OrgUnit[] {
+    return orgUnitIds.flatMap(orgUnitId => {
+        return orgUnits.filter(ou => ou.id === orgUnitId);
+    });
 }

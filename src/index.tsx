@@ -23,9 +23,14 @@ async function getBaseUrl() {
     if (isDev) {
         return "/dhis2"; // See src/setupProxy.js
     } else {
-        const { data: manifest } = await axios.get("manifest.webapp");
-        const href = manifest.activities.dhis.href;
-        return href === "*" ? ".." : href;
+        try {
+            const { data: manifest } = await axios.get("manifest.webapp");
+            const href = manifest.activities.dhis.href;
+            return href === "*" ? ".." : href;
+        } catch (error) {
+            console.error(error);
+            return "..";
+        }
     }
 }
 
@@ -53,7 +58,7 @@ async function main() {
             schemas: [],
         });
 
-        const api = new D2Api({ baseUrl });
+        const api = new D2Api({ baseUrl, backend: "fetch" });
         if (isDev) window.api = api;
 
         const userSettings = await api.get<{ keyUiLocale: string }>("/userSettings").getData();

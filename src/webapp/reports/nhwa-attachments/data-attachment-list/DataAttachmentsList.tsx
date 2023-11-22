@@ -30,7 +30,7 @@ export const DataAttachmentsList: React.FC = React.memo(() => {
 
     const getRows = React.useMemo(
         () => async (paging: TablePagination, sorting: TableSorting<DataAttachmentsViewModel>) => {
-            const { pager, objects } = await compositionRoot.attachements.get({
+            const { pager, objects } = await compositionRoot.attachments.get({
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
@@ -53,13 +53,13 @@ export const DataAttachmentsList: React.FC = React.memo(() => {
         onClick: async () => {
             if (!sorting) return;
             // FUTURE: create a single use case that performs the get+saveCSV
-            const { objects: dataValues } = await compositionRoot.attachements.get({
+            const { objects: dataValues } = await compositionRoot.attachments.get({
                 config,
                 paging: { page: 1, pageSize: 100000 },
                 sorting: getSortingFromTableSorting(sorting),
                 ...getUseCaseOptions(filters),
             });
-            compositionRoot.attachements.save("data-values.csv", dataValues);
+            compositionRoot.attachments.save("data-values.csv", dataValues);
         },
     };
 

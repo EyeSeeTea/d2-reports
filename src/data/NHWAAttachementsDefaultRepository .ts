@@ -5,10 +5,12 @@ import {
     NHWADataAttachmentsRepositoryGetOptions,
 } from "../domain/nhwa-attachments/repositories/NHWADataAttachmentsRepository";
 import { D2Api, PaginatedObjects, Id } from "../types/d2-api";
-import { Dhis2SqlViews } from "./Dhis2SqlViews";
-import { CsvWriterDataSource } from "./CsvWriterCsvDataSource";
-import { downloadFile } from "./utils/download-file";
-import { CsvData } from "./CsvDataSource";
+import { Dhis2SqlViews } from "./common/Dhis2SqlViews";
+import { CsvWriterDataSource } from "./common/CsvWriterCsvDataSource";
+import { downloadFile } from "./common/utils/download-file";
+import { CsvData } from "./common/CsvDataSource";
+import { getSqlViewId } from "../domain/common/entities/Config";
+import { SQL_VIEW_ATTACHEMENT_NAME } from "./common/Dhis2ConfigRepository";
 
 interface Variables {
     orgUnitIds: string;
@@ -42,7 +44,7 @@ export class NHWAAttachementsDefaultRepository implements NHWADataAttachmentsRep
         const sqlViews = new Dhis2SqlViews(this.api);
         const { pager, rows } = await sqlViews
             .query<Variables, SqlField>(
-                config.dataAttachmentSqlView.id,
+                getSqlViewId(config, SQL_VIEW_ATTACHEMENT_NAME),
                 {
                     orgUnitIds: sqlViewJoinIds(orgUnitIds),
                     periods: sqlViewJoinIds(_.isEmpty(periods) ? config.years : periods),

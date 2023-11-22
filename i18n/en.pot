@@ -5,13 +5,16 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2022-08-03T07:20:50.359Z\n"
-"PO-Revision-Date: 2022-08-03T07:20:50.359Z\n"
+"POT-Creation-Date: 2023-08-28T11:13:31.544Z\n"
+"PO-Revision-Date: 2023-08-28T11:13:31.544Z\n"
 
 msgid "<No value>"
 msgstr ""
 
 msgid "- All -"
+msgstr ""
+
+msgid "LOG OUT"
 msgstr ""
 
 msgid "Loading..."
@@ -33,6 +36,26 @@ msgid "Back"
 msgstr ""
 
 msgid "Help"
+msgstr ""
+
+msgid "Confirm Validation Reload"
+msgstr ""
+
+msgid "Confirm"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid ""
+"This action will delete the stored data and process all the Indicators and "
+"Program Indicators from this DHIS2 instance."
+msgstr ""
+
+msgid "This will take a long time."
+msgstr ""
+
+msgid "Are you sure?"
 msgstr ""
 
 msgid "Metadata Admin Report"
@@ -74,10 +97,367 @@ msgstr ""
 msgid "created"
 msgstr ""
 
-msgid "NHWA Data Approval Status Report"
+msgid "Period"
 msgstr ""
 
 msgid "Period"
+msgstr ""
+
+msgid "CSY Audit Filters - Emergency Care"
+msgstr ""
+
+msgid "Register ID"
+msgstr ""
+
+msgid "Overall Mortality in EU"
+msgstr ""
+
+msgid "Low acuity triage with EU disposition ICU"
+msgstr ""
+
+msgid "Highest triage category and time to first provider >30min​"
+msgstr ""
+
+msgid "Initial RBG low and Glucose not given"
+msgstr ""
+
+msgid "Shock and IVF including Blood"
+msgstr ""
+
+msgid "Yearly"
+msgstr ""
+
+msgid "Quarterly"
+msgstr ""
+
+msgid "Jan - March"
+msgstr ""
+
+msgid "April - June"
+msgstr ""
+
+msgid "July - September"
+msgstr ""
+
+msgid "October - December"
+msgstr ""
+
+msgid "Audit Type"
+msgstr ""
+
+msgid "Period Type"
+msgstr ""
+
+msgid "Year"
+msgstr ""
+
+msgid "Quarter"
+msgstr ""
+
+msgid "CSY Audit Filters - Trauma Care"
+msgstr ""
+
+msgid "Mortality with low injury severity score"
+msgstr ""
+
+msgid "Oxygen not administered for patients with hypoxia"
+msgstr ""
+
+msgid "Oxygen not administered for patients with tachypnea"
+msgstr ""
+
+msgid "Mental status-dependent airway maneuver"
+msgstr ""
+
+msgid "All mortality"
+msgstr ""
+
+msgid "Emergency Unit"
+msgstr ""
+
+msgid "Hospital Mortality"
+msgstr ""
+
+msgid "Severe injuries by any scoring system"
+msgstr ""
+
+msgid "Moderate or severe injuries by any scoring system"
+msgstr ""
+
+msgid "Moderate injuries by any scoring system"
+msgstr ""
+
+msgid "CSY Summary Report - Mortality by Injury Severity"
+msgstr ""
+
+msgid "Scoring System"
+msgstr ""
+
+msgid "Severity"
+msgstr ""
+
+msgid "Mortality"
+msgstr ""
+
+msgid "Total"
+msgstr ""
+
+msgid "Mortality Injury Severity"
+msgstr ""
+
+msgid "Summary Type"
+msgstr ""
+
+msgid "CSY Summary Table Report - Patient Characteristics"
+msgstr ""
+
+msgid "Group"
+msgstr ""
+
+msgid "Sub-Group"
+msgstr ""
+
+msgid "< 1 yr"
+msgstr ""
+
+msgid "1 - 4 yr"
+msgstr ""
+
+msgid "5 - 9 yr"
+msgstr ""
+
+msgid "10 - 14 yr"
+msgstr ""
+
+msgid "15 - 19 yr"
+msgstr ""
+
+msgid "20 - 40 yr"
+msgstr ""
+
+msgid "40 - 60 yr"
+msgstr ""
+
+msgid "60 - 80 yr"
+msgstr ""
+
+msgid "80+ yr"
+msgstr ""
+
+msgid "Unknown"
+msgstr ""
+
+msgid "Patient Characteristics"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Last Updated"
+msgstr ""
+
+msgid "Denominator"
+msgstr ""
+
+msgid "Valid denominator"
+msgstr ""
+
+msgid "Valid"
+msgstr ""
+
+msgid "Invalid"
+msgstr ""
+
+msgid "Numerator"
+msgstr ""
+
+msgid "Valid Numerator"
+msgstr ""
+
+msgid "Expression"
+msgstr ""
+
+msgid "Valid expression"
+msgstr ""
+
+msgid "Filter"
+msgstr ""
+
+msgid "Valid filter"
+msgstr ""
+
+msgid "Empty"
+msgstr ""
+
+msgid "Reload Validation"
+msgstr ""
+
+msgid "Indicators"
+msgstr ""
+
+msgid "Program Indicators"
+msgstr ""
+
+msgid "Data quality"
+msgstr ""
+
+msgid "GLASS Data Submission Report"
+msgstr ""
+
+msgid "Country"
+msgstr ""
+
+msgid "Questionnaire completed"
+msgstr ""
+
+msgid "DataSets uploaded"
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+msgid "Go to GLASS Unapproved Dashboard"
+msgstr ""
+
+msgid "Approve"
+msgstr ""
+
+msgid "Error when trying to approve submission"
+msgstr ""
+
+msgid "Accept"
+msgstr ""
+
+msgid "Error when trying to accept submission"
+msgstr ""
+
+msgid "Reject"
+msgstr ""
+
+msgid "Reopen Submission"
+msgstr ""
+
+msgid "Error when trying to reopen submission"
+msgstr ""
+
+msgid "Creation Date"
+msgstr ""
+
+msgid "Level of Confidentiality"
+msgstr ""
+
+msgid "Go to Signal"
+msgstr ""
+
+msgid "Error when trying to approve signal"
+msgstr ""
+
+msgid "Reject Signal"
+msgstr ""
+
+msgid "Signals have been successfully rejected"
+msgstr ""
+
+msgid "Error when trying to reject signal"
+msgstr ""
+
+msgid "Reject Data Submission"
+msgstr ""
+
+msgid "Data submissions have been successfully rejected"
+msgstr ""
+
+msgid "Error when trying to reject submission"
+msgstr ""
+
+msgid "Not Completed"
+msgstr ""
+
+msgid "Data to be approved by country"
+msgstr ""
+
+msgid "Waiting WHO Approval"
+msgstr ""
+
+msgid "Rejected By WHO"
+msgstr ""
+
+msgid "Approved"
+msgstr ""
+
+msgid "Data update request accepted"
+msgstr ""
+
+msgid "Waiting for WHO to approve your update request"
+msgstr ""
+
+msgid "Draft"
+msgstr ""
+
+msgid "January-March"
+msgstr ""
+
+msgid "April-June"
+msgstr ""
+
+msgid "July-September"
+msgstr ""
+
+msgid "October-December"
+msgstr ""
+
+msgid "AMR"
+msgstr ""
+
+msgid "AMR - Individual"
+msgstr ""
+
+msgid "EAR"
+msgstr ""
+
+msgid "EGASP"
+msgstr ""
+
+msgid "Completed"
+msgstr ""
+
+msgid "Not completed"
+msgstr ""
+
+msgid "Module"
+msgstr ""
+
+msgid "Years"
+msgstr ""
+
+msgid "Quarters"
+msgstr ""
+
+msgid "Data Element"
+msgstr ""
+
+msgid "Value entered"
+msgstr ""
+
+msgid "Comment"
+msgstr ""
+
+msgid "Approved value"
+msgstr ""
+
+msgid "Approved value comment"
+msgstr ""
+
+msgid "Approve value"
+msgstr ""
+
+msgid "Error when trying to approve data values"
+msgstr ""
+
+msgid "Error when trying to check difference in data values"
+msgstr ""
+
+msgid "Malaria Data Approval Report"
 msgstr ""
 
 msgid "Data set"
@@ -89,10 +469,19 @@ msgstr ""
 msgid "Completion status"
 msgstr ""
 
-msgid "Approval status"
+msgid "Submission status"
 msgstr ""
 
-msgid "Last updated value"
+msgid "Modification Count"
+msgstr ""
+
+msgid "Last modification date"
+msgstr ""
+
+msgid "Last date of submission"
+msgstr ""
+
+msgid "Last date of approval"
 msgstr ""
 
 msgid "Complete"
@@ -107,16 +496,34 @@ msgstr ""
 msgid "Error when trying to incomplete data set"
 msgstr ""
 
-msgid "Approve"
+msgid "Submit"
 msgstr ""
 
-msgid "Error when trying to approve data set"
+msgid "Error when trying to submit data set"
 msgstr ""
 
-msgid "Unapprove"
+msgid "Revoke"
 msgstr ""
 
-msgid "Error when trying to unapprove data set"
+msgid "Error when trying to unsubmit data set"
+msgstr ""
+
+msgid "Activate monitoring"
+msgstr ""
+
+msgid "Deactivate monitoring"
+msgstr ""
+
+msgid "Check Difference"
+msgstr ""
+
+msgid "Check differences"
+msgstr ""
+
+msgid "Submitted"
+msgstr ""
+
+msgid "Ready for submission"
 msgstr ""
 
 msgid "Data sets"
@@ -141,12 +548,102 @@ msgid "Toggle filters"
 msgstr ""
 
 msgid "NHWA Comments Report"
+msgid "Malaria Data Subscription Report"
+msgstr ""
+
+msgid "Subscription status"
+msgstr ""
+
+msgid "Sections"
+msgstr ""
+
+msgid "Last Date of Subscription"
+msgstr ""
+
+msgid "Subscribe"
+msgstr ""
+
+msgid "Subscribe to selected items"
+msgstr ""
+
+msgid "Unsubscribe"
+msgstr ""
+
+msgid "Unsubscribe to selected items"
+msgstr ""
+
+msgid "Subscribed raw elements"
+msgstr ""
+
+msgid "Subscribe to all children"
+msgstr ""
+
+msgid "Unsubscribe to all children"
+msgstr ""
+
+msgid "Data Elements"
+msgstr ""
+
+msgid "Dashboards"
+msgstr ""
+
+msgid "Visualizations"
+msgstr ""
+
+msgid "Element Type"
+msgstr ""
+
+msgid "Subscription Status"
 msgstr ""
 
 msgid "Section"
 msgstr ""
 
-msgid "Data Element"
+msgid "Data Element Groups"
+msgstr ""
+
+msgid "NHWA Data Approval Status Report"
+msgstr ""
+
+msgid "Approval status"
+msgstr ""
+
+msgid "Last updated value"
+msgstr ""
+
+msgid "Error when trying to approve data set"
+msgstr ""
+
+msgid "Unapprove"
+msgstr ""
+
+msgid "Error when trying to unapprove data set"
+msgstr ""
+
+msgid "Category Option Combo"
+msgstr ""
+
+msgid "Organisation Unit"
+msgstr ""
+
+msgid "Correct Value"
+msgstr ""
+
+msgid "Current value"
+msgstr ""
+
+msgid "Fix all incorrect values"
+msgstr ""
+
+msgid "Updating values..."
+msgstr ""
+
+msgid ""
+"Module 1 totals with missing sum or sum that does not match the "
+"auto-calculated"
+msgstr ""
+
+msgid "NHWA Comments Report"
 msgstr ""
 
 msgid "Category option combo"
@@ -155,8 +652,57 @@ msgstr ""
 msgid "Value"
 msgstr ""
 
-msgid "Comment"
+msgid "Sections"
+msgstr ""
+msgid "Last updated"
 msgstr ""
 
-msgid "Sections"
+msgid "Stored by"
+msgstr ""
+
+msgid "Toggle filters"
+msgstr ""
+
+msgid "No values to update"
+msgstr ""
+
+msgid "Occupation"
+msgstr ""
+
+msgid "Practising"
+msgstr ""
+
+msgid "Professionally Active"
+msgstr ""
+
+msgid "Licensed To Practice"
+msgstr ""
+
+msgid "Correct total"
+msgstr ""
+
+msgid "Comment to Assign"
+msgstr ""
+
+msgid "Fix Total"
+msgstr ""
+
+msgid "Fix Incorrect Totals"
+msgstr ""
+
+msgid ""
+"Module 1 totals by Activity Label with missing value that does not match "
+"the auto-calculated"
+msgstr ""
+
+msgid "Organisation Unit Parent"
+msgstr ""
+
+msgid "Name To Fix"
+msgstr ""
+
+msgid "Dismiss"
+msgstr ""
+
+msgid "Module 1 (subnational) with fixes for organisation unit name"
 msgstr ""
