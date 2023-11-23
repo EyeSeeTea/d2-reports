@@ -18,9 +18,9 @@ import { TableConfig, useObjectsTable } from "../../../components/objects-list/o
 import { ObjectsList } from "../../../components/objects-list/ObjectsList";
 import { useAppContext } from "../../../contexts/app-context";
 import { useSnackbarOnError } from "../../../utils/snackbar";
+import { FiltersBox } from "../../nhwa-comments/data-comments-list/FiltersBox";
 import { DataAttachmentsViewModel, getDataAttachmentsViews } from "../DataAttachmentsViewModel";
-import { DataValuesFilter } from "./Filters";
-import { FiltersBox } from "./FiltersBox";
+import { DataValuesFilter } from "./../../nhwa-comments/data-comments-list/Filters";
 
 export const DataAttachmentsList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
@@ -133,5 +133,7 @@ function getEmptyDataValuesFilter(config: Config): DataValuesFilter {
         orgUnitPaths: getMainUserPaths(config),
         periods: [],
         dataSetIds: [],
+        sectionIds: [],
+        showSections: false,
     };
 }

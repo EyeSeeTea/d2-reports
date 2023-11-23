@@ -133,5 +133,6 @@ function getEmptyDataValuesFilter(config: Config): DataValuesFilter {
         periods: [],
         dataSetIds: [],
         sectionIds: [],
+        showSections: true,
     };
 }

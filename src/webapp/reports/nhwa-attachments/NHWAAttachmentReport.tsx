@@ -8,7 +8,7 @@ const NHWAAttachmentReport: React.FC = () => {
     return (
         <div className={classes.wrapper}>
             <Typography variant="h5" gutterBottom>
-                {i18n.t("NHWA Atachment Report")}
+                {i18n.t("NHWA Attachment Report")}
             </Typography>
 
             <DataAttachmentsList />
