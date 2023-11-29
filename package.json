@@ -70,10 +70,14 @@
         "update-po": "yarn extract-pot && for pofile in i18n/*.po; do msgmerge --backup=off -U $pofile i18n/en.pot; done",
         "prepare": "husky install",
         "manifest": "d2-manifest package.json build/manifest.webapp",
-        "mal-manifest": "d2-manifest package.json manifest.webapp --manifest.icons.48='mal-icon.png' --manifest.name='DHIS2 MAL Approval Report' --manifest.description='DHIS2 MAL Approval Report'",
-        "mal-build-manifest": "d2-manifest package.json build/manifest.webapp --manifest.icons.48 mal-icon.png --manifest.name='DHIS2 MAL Approval Report' --manifest.description='DHIS2 MAL Approval Report'",
-        "glass-manifest": "d2-manifest package.json manifest.webapp --manifest.icons.48='glass-icon.png' --manifest.name='DHIS2 GLASS Submission Report' --manifest.description='DHIS2 GLASS Submission Report'",
-        "glass-build-manifest": "d2-manifest package.json build/manifest.webapp --manifest.icons.48 glass-icon.png --manifest.name='DHIS2 GLASS Submission Report' --manifest.description='DHIS2 GLASS Submission Report'"
+        "mal-manifest": "d2-manifest package.json manifest.webapp --manifest.version=$npm_package_reportVersions_mal --manifest.icons.48='mal-icon.png' --manifest.name='DHIS2 MAL Approval Report' --manifest.description='DHIS2 MAL Approval Report'",
+        "mal-build-manifest": "d2-manifest package.json build/manifest.webapp --manifest.version=$npm_package_reportVersions_mal --manifest.icons.48 mal-icon.png --manifest.name='DHIS2 MAL Approval Report' --manifest.description='DHIS2 MAL Approval Report'",
+        "glass-manifest": "d2-manifest package.json manifest.webapp --manifest.version=$npm_package_reportVersions_glass --manifest.icons.48='glass-icon.png' --manifest.name='DHIS2 GLASS Submission Report' --manifest.description='DHIS2 GLASS Submission Report'",
+        "glass-build-manifest": "d2-manifest package.json build/manifest.webapp --manifest.version=$npm_package_reportVersions_glass --manifest.icons.48 glass-icon.png --manifest.name='DHIS2 GLASS Submission Report' --manifest.description='DHIS2 GLASS Submission Report'"
+    },
+    "reportVersions": {
+        "glass": "1.0.3",
+        "mal": "1.0.3"
     },
     "husky": {
         "hooks": {
