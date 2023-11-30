@@ -82,7 +82,7 @@ import { ResetDataQualityValidation } from "./domain/reports/data-quality/usecas
 import { GetMonitoringDetailsUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMonitoringDetailsUseCase";
 import { NHWAAttachementsDefaultRepository } from "./data/NHWAAttachementsDefaultRepository ";
 import { GetAttachementsUseCase } from "./domain/nhwa-attachments/usecases/GetAttachementsUseCase";
-import { SaveAttachementsUseCase } from "./domain/nhwa-attachments/usecases/SaveAttachementsUseCase";
+import { ExportAttachmentsUseCase } from "./domain/nhwa-attachments/usecases/ExportAttachmentsUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -190,7 +190,7 @@ export function getCompositionRoot(api: D2Api) {
         }),
         attachments: getExecute({
             get: new GetAttachementsUseCase(attachementRepository),
-            save: new SaveAttachementsUseCase(attachementRepository),
+            export: new ExportAttachmentsUseCase(attachementRepository),
         }),
         nhwa: {
             getAutoCompleteComputeValues: new GetAutoCompleteComputeValuesUseCase(

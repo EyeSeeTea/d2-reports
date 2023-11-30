@@ -19,17 +19,19 @@ import { ObjectsList } from "../../../components/objects-list/ObjectsList";
 import { useAppContext } from "../../../contexts/app-context";
 import { useSnackbarOnError } from "../../../utils/snackbar";
 import { FiltersBox } from "../../nhwa-comments/data-comments-list/FiltersBox";
-import { DataAttachmentsViewModel, getDataAttachmentsViews } from "../DataAttachmentsViewModel";
 import { DataValuesFilter } from "./../../nhwa-comments/data-comments-list/Filters";
 
 export const DataAttachmentsList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
     const [filters, setFilters] = React.useState(() => getEmptyDataValuesFilter(config));
     const baseConfig = React.useMemo(getBaseListConfig, []);
-    const [sorting, setSorting] = React.useState<TableSorting<DataAttachmentsViewModel>>();
+    const [sorting, setSorting] = React.useState<TableSorting<DataAttachmentItem>>({
+        field: "dataSet",
+        order: "asc",
+    });
 
     const getRows = React.useMemo(
-        () => async (paging: TablePagination, sorting: TableSorting<DataAttachmentsViewModel>) => {
+        () => async (paging: TablePagination, sorting: TableSorting<DataAttachmentItem>) => {
             const { pager, objects } = await compositionRoot.attachments.get({
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
@@ -37,7 +39,7 @@ export const DataAttachmentsList: React.FC = React.memo(() => {
                 ...getUseCaseOptions(filters),
             });
             setSorting(sorting);
-            return { pager, objects: getDataAttachmentsViews(config, objects) };
+            return { pager, objects };
         },
         [config, compositionRoot, filters]
     );
@@ -51,51 +53,36 @@ export const DataAttachmentsList: React.FC = React.memo(() => {
         text: "Download CSV",
         icon: <StorageIcon />,
         onClick: async () => {
-            if (!sorting) return;
-            // FUTURE: create a single use case that performs the get+saveCSV
-            const { objects: dataValues } = await compositionRoot.attachments.get({
+            await compositionRoot.attachments.export({
                 config,
                 paging: { page: 1, pageSize: 100000 },
                 sorting: getSortingFromTableSorting(sorting),
                 ...getUseCaseOptions(filters),
             });
-            compositionRoot.attachments.save("data-values.csv", dataValues);
         },
     };
 
     return (
-        <ObjectsList<DataAttachmentsViewModel> {...tableProps} globalActions={[downloadCsv]}>
+        <ObjectsList<DataAttachmentItem> {...tableProps} globalActions={[downloadCsv]}>
             <FiltersBox showToggleButton={false} values={filters} options={filterOptions} onChange={setFilters} />
         </ObjectsList>
     );
 });
 
 function getUseCaseOptions(filter: DataValuesFilter) {
-    return {
-        ...filter,
-        orgUnitIds: getOrgUnitIdsFromPaths(filter.orgUnitPaths),
-    };
+    return { ...filter, orgUnitIds: getOrgUnitIdsFromPaths(filter.orgUnitPaths) };
 }
 
-function getSortingFromTableSorting(sorting: TableSorting<DataAttachmentsViewModel>): Sorting<DataAttachmentItem> {
-    return {
-        field: sorting.field === "id" ? "period" : sorting.field,
-        direction: sorting.order,
-    };
+function getSortingFromTableSorting(sorting: TableSorting<DataAttachmentItem>): Sorting<DataAttachmentItem> {
+    return { field: sorting.field === "id" ? "period" : sorting.field, direction: sorting.order };
 }
 
-function getBaseListConfig(): TableConfig<DataAttachmentsViewModel> {
-    const paginationOptions: PaginationOptions = {
-        pageSizeOptions: [10, 20, 50],
-        pageSizeInitialValue: 10,
-    };
+function getBaseListConfig(): TableConfig<DataAttachmentItem> {
+    const paginationOptions: PaginationOptions = { pageSizeOptions: [10, 20, 50], pageSizeInitialValue: 10 };
 
-    const initialSorting: TableSorting<DataAttachmentsViewModel> = {
-        field: "dataSet" as const,
-        order: "asc" as const,
-    };
+    const initialSorting: TableSorting<DataAttachmentItem> = { field: "dataSet" as const, order: "asc" as const };
 
-    const columns: TableColumn<DataAttachmentsViewModel>[] = [
+    const columns: TableColumn<DataAttachmentItem>[] = [
         { name: "dataSet", text: i18n.t("Data set"), sortable: true },
         { name: "period", text: i18n.t("Period"), sortable: true },
         { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },

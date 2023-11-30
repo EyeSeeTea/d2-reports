@@ -20,9 +20,10 @@ interface Variables {
     orderByDirection: "asc" | "desc";
 }
 
-type SqlField = "datasetname" | "link" | "period" | "storedby" | "orgunit" | "lastupdated";
+type SqlField = "id" | "datasetname" | "link" | "period" | "storedby" | "orgunit" | "lastupdated";
 
 const fieldMapping: Record<keyof DataAttachmentItem, SqlField> = {
+    id: "id",
     period: "period",
     orgUnit: "orgunit",
     dataSet: "datasetname",
@@ -61,6 +62,7 @@ export class NHWAAttachementsDefaultRepository implements NHWADataAttachmentsRep
 
         const dataValues: Array<DataAttachmentItem> = rows.map(
             (dv): DataAttachmentItem => ({
+                id: [dv.datasetname, dv.period, dv.orgunit].join("-"),
                 period: dv.period.split("-")[0] ?? "",
                 orgUnit: { name: dv.orgunit },
                 dataSet: { name: dv.datasetname },
