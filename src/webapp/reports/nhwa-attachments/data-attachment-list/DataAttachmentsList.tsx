@@ -6,6 +6,7 @@ import {
     TableSorting,
 } from "@eyeseetea/d2-ui-components";
 import StorageIcon from "@material-ui/icons/Storage";
+import CloudDownload from "@material-ui/icons/CloudDownload";
 import _ from "lodash";
 import React from "react";
 import { sortByName } from "../../../../domain/common/entities/Base";
@@ -88,9 +89,13 @@ function getBaseListConfig(): TableConfig<DataAttachmentItem> {
         { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
         {
             name: "link",
-            text: i18n.t("link"),
+            text: i18n.t("File"),
             sortable: true,
-            getValue: model => <a href={model.link}>link</a>,
+            getValue: model => (
+                <a download href={model.link} title={i18n.t("Download")}>
+                    <CloudDownload />
+                </a>
+            ),
         },
         { name: "lastUpdated", text: i18n.t("Last updated"), sortable: true, hidden: true },
         { name: "storedBy", text: i18n.t("Stored by"), sortable: true, hidden: true },
