@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2023-08-28T11:13:31.544Z\n"
-"PO-Revision-Date: 2023-08-28T11:13:31.544Z\n"
+"POT-Creation-Date: 2023-12-01T16:20:03.972Z\n"
+"PO-Revision-Date: 2023-12-01T16:20:03.972Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -95,9 +95,6 @@ msgid "lastUpdated"
 msgstr ""
 
 msgid "created"
-msgstr ""
-
-msgid "Period"
 msgstr ""
 
 msgid "Period"
@@ -532,22 +529,6 @@ msgstr ""
 msgid "Periods"
 msgstr ""
 
-msgid "NHWA Atachment Report"
-msgstr ""
-
-msgid "link"
-msgstr ""
-
-msgid "Last updated"
-msgstr ""
-
-msgid "Stored by"
-msgstr ""
-
-msgid "Toggle filters"
-msgstr ""
-
-msgid "NHWA Comments Report"
 msgid "Malaria Data Subscription Report"
 msgstr ""
 
@@ -620,6 +601,21 @@ msgstr ""
 msgid "Error when trying to unapprove data set"
 msgstr ""
 
+msgid "NHWA Attachment Report"
+msgstr ""
+
+msgid "File"
+msgstr ""
+
+msgid "Download"
+msgstr ""
+
+msgid "Last updated"
+msgstr ""
+
+msgid "Stored by"
+msgstr ""
+
 msgid "Category Option Combo"
 msgstr ""
 
@@ -650,14 +646,6 @@ msgid "Category option combo"
 msgstr ""
 
 msgid "Value"
-msgstr ""
-
-msgid "Sections"
-msgstr ""
-msgid "Last updated"
-msgstr ""
-
-msgid "Stored by"
 msgstr ""
 
 msgid "Toggle filters"
