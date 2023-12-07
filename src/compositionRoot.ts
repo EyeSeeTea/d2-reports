@@ -80,6 +80,9 @@ import { SaveDataQualityUseCase } from "./domain/reports/data-quality/usecases/S
 import { LoadDataQualityValidation } from "./domain/reports/data-quality/usecases/loadDataQualityValidation";
 import { ResetDataQualityValidation } from "./domain/reports/data-quality/usecases/ResetDataQualityValidation";
 import { GetMonitoringDetailsUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMonitoringDetailsUseCase";
+import { NHWAAttachementsDefaultRepository } from "./data/NHWAAttachementsDefaultRepository ";
+import { GetAttachementsUseCase } from "./domain/nhwa-attachments/usecases/GetAttachementsUseCase";
+import { ExportAttachmentsUseCase } from "./domain/nhwa-attachments/usecases/ExportAttachmentsUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -95,6 +98,7 @@ export function getCompositionRoot(api: D2Api) {
     const csySummaryRepository = new CSYSummaryDefaultRepository(api);
     const csySummaryMortalityRepository = new CSYSummaryMortalityDefaultRepository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
+    const attachementRepository = new NHWAAttachementsDefaultRepository(api);
     const dataSetRepository = new DataSetD2Repository(api);
     const dataValuesRepository = new DataValuesD2Repository(api);
     const autoCompleteComputeSettingsRepository = new AutoCompleteComputeSettingsD2Repository(api);
@@ -183,6 +187,10 @@ export function getCompositionRoot(api: D2Api) {
         }),
         config: getExecute({
             get: new GetConfig(configRepository),
+        }),
+        attachments: getExecute({
+            get: new GetAttachementsUseCase(attachementRepository),
+            export: new ExportAttachmentsUseCase(attachementRepository),
         }),
         nhwa: {
             getAutoCompleteComputeValues: new GetAutoCompleteComputeValuesUseCase(

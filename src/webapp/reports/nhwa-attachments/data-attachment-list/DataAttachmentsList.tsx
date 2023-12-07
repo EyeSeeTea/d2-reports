@@ -6,38 +6,41 @@ import {
     TableSorting,
 } from "@eyeseetea/d2-ui-components";
 import StorageIcon from "@material-ui/icons/Storage";
+import CloudDownload from "@material-ui/icons/CloudDownload";
 import _ from "lodash";
 import React from "react";
 import { sortByName } from "../../../../domain/common/entities/Base";
 import { Config, getMainUserPaths } from "../../../../domain/common/entities/Config";
 import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
-import { DataCommentsItem } from "../../../../domain/reports/nhwa-comments/entities/DataCommentsItem";
+import { DataAttachmentItem } from "../../../../domain/nhwa-attachments/entities/DataAttachmentItem";
 import i18n from "../../../../locales";
 import { TableConfig, useObjectsTable } from "../../../components/objects-list/objects-list-hooks";
 import { ObjectsList } from "../../../components/objects-list/ObjectsList";
 import { useAppContext } from "../../../contexts/app-context";
 import { useSnackbarOnError } from "../../../utils/snackbar";
-import { DataCommentsViewModel, getDataCommentsViews } from "../DataCommentsViewModel";
-import { DataValuesFilter } from "./Filters";
-import { FiltersBox } from "./FiltersBox";
+import { FiltersBox } from "../../nhwa-comments/data-comments-list/FiltersBox";
+import { DataValuesFilter } from "./../../nhwa-comments/data-comments-list/Filters";
 
-export const DataCommentsList: React.FC = React.memo(() => {
+export const DataAttachmentsList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
     const [filters, setFilters] = React.useState(() => getEmptyDataValuesFilter(config));
     const baseConfig = React.useMemo(getBaseListConfig, []);
-    const [sorting, setSorting] = React.useState<TableSorting<DataCommentsViewModel>>();
+    const [sorting, setSorting] = React.useState<TableSorting<DataAttachmentItem>>({
+        field: "dataSet",
+        order: "asc",
+    });
 
     const getRows = React.useMemo(
-        () => async (paging: TablePagination, sorting: TableSorting<DataCommentsViewModel>) => {
-            const { pager, objects } = await compositionRoot.dataComments.get({
+        () => async (paging: TablePagination, sorting: TableSorting<DataAttachmentItem>) => {
+            const { pager, objects } = await compositionRoot.attachments.get({
                 config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
                 ...getUseCaseOptions(filters),
             });
             setSorting(sorting);
-            return { pager, objects: getDataCommentsViews(config, objects) };
+            return { pager, objects };
         },
         [config, compositionRoot, filters]
     );
@@ -51,59 +54,49 @@ export const DataCommentsList: React.FC = React.memo(() => {
         text: "Download CSV",
         icon: <StorageIcon />,
         onClick: async () => {
-            if (!sorting) return;
-            // FUTURE: create a single use case that performs the get+saveCSV
-            const { objects: dataValues } = await compositionRoot.dataComments.get({
+            await compositionRoot.attachments.export({
                 config,
                 paging: { page: 1, pageSize: 100000 },
                 sorting: getSortingFromTableSorting(sorting),
                 ...getUseCaseOptions(filters),
             });
-            compositionRoot.dataComments.save("data-values.csv", dataValues);
         },
     };
 
     return (
-        <ObjectsList<DataCommentsViewModel> {...tableProps} globalActions={[downloadCsv]}>
+        <ObjectsList<DataAttachmentItem> {...tableProps} globalActions={[downloadCsv]}>
             <FiltersBox showToggleButton={false} values={filters} options={filterOptions} onChange={setFilters} />
         </ObjectsList>
     );
 });
 
 function getUseCaseOptions(filter: DataValuesFilter) {
-    return {
-        ...filter,
-        orgUnitIds: getOrgUnitIdsFromPaths(filter.orgUnitPaths),
-    };
+    return { ...filter, orgUnitIds: getOrgUnitIdsFromPaths(filter.orgUnitPaths) };
 }
 
-function getSortingFromTableSorting(sorting: TableSorting<DataCommentsViewModel>): Sorting<DataCommentsItem> {
-    return {
-        field: sorting.field === "id" ? "period" : sorting.field,
-        direction: sorting.order,
-    };
+function getSortingFromTableSorting(sorting: TableSorting<DataAttachmentItem>): Sorting<DataAttachmentItem> {
+    return { field: sorting.field === "id" ? "period" : sorting.field, direction: sorting.order };
 }
 
-function getBaseListConfig(): TableConfig<DataCommentsViewModel> {
-    const paginationOptions: PaginationOptions = {
-        pageSizeOptions: [10, 20, 50],
-        pageSizeInitialValue: 10,
-    };
+function getBaseListConfig(): TableConfig<DataAttachmentItem> {
+    const paginationOptions: PaginationOptions = { pageSizeOptions: [10, 20, 50], pageSizeInitialValue: 10 };
 
-    const initialSorting: TableSorting<DataCommentsViewModel> = {
-        field: "dataSet" as const,
-        order: "asc" as const,
-    };
+    const initialSorting: TableSorting<DataAttachmentItem> = { field: "dataSet" as const, order: "asc" as const };
 
-    const columns: TableColumn<DataCommentsViewModel>[] = [
+    const columns: TableColumn<DataAttachmentItem>[] = [
         { name: "dataSet", text: i18n.t("Data set"), sortable: true },
         { name: "period", text: i18n.t("Period"), sortable: true },
         { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
-        { name: "section", text: i18n.t("Section"), sortable: true },
-        { name: "dataElement", text: i18n.t("Data Element"), sortable: true },
-        { name: "categoryOptionCombo", text: i18n.t("Category option combo"), sortable: true },
-        { name: "value", text: i18n.t("Value"), sortable: true },
-        { name: "comment", text: i18n.t("Comment"), sortable: true },
+        {
+            name: "link",
+            text: i18n.t("File"),
+            sortable: true,
+            getValue: model => (
+                <a download href={model.link} title={i18n.t("Download")}>
+                    <CloudDownload />
+                </a>
+            ),
+        },
         { name: "lastUpdated", text: i18n.t("Last updated"), sortable: true, hidden: true },
         { name: "storedBy", text: i18n.t("Stored by"), sortable: true, hidden: true },
     ];
@@ -133,6 +126,6 @@ function getEmptyDataValuesFilter(config: Config): DataValuesFilter {
         periods: [],
         dataSetIds: [],
         sectionIds: [],
-        showSections: true,
+        showSections: false,
     };
 }
