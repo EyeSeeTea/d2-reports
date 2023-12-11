@@ -8,6 +8,7 @@ import { useReload } from "../../../utils/use-reload";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
 import { GLASSDataMaintenanceItem } from "../../../../domain/reports/glass-admin/entities/GLASSDataMaintenanceItem";
 import { Filter } from "./Filter";
+import { useBooleanState } from "../../../utils/use-boolean";
 
 const pagination = {
     pageSizeOptions: [10, 20, 50],
@@ -25,6 +26,7 @@ export function useFiles(filters: Filter): FilesState {
 
     const [filesToDelete, setFilesToDelete] = useState<string[]>([]);
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
+    const [isDeleteModalOpen, { enable: openDeleteModal, disable: closeDeleteModal }] = useBooleanState(false);
 
     useEffect(() => {
         compositionRoot.glassAdmin.getColumns(Namespaces.FILE_UPLOADS_USER_COLUMNS).then(columns => {
@@ -61,7 +63,8 @@ export function useFiles(filters: Filter): FilesState {
     );
 
     async function deleteFiles(ids: string[]) {
-        compositionRoot.glassAdmin.updateStatus(Namespaces.FILE_UPLOADS, "delete", ids);
+        openDeleteModal();
+        compositionRoot.glassAdmin.updateStatus(Namespaces.FILE_UPLOADS, "delete", ids)?.then(() => closeDeleteModal());
         reload();
     }
 
@@ -69,6 +72,7 @@ export function useFiles(filters: Filter): FilesState {
         getFiles,
         pagination,
         initialSorting,
+        isDeleteModalOpen,
         filesToDelete,
         deleteFiles,
         visibleColumns,

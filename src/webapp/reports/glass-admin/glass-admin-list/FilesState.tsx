@@ -14,6 +14,7 @@ export interface FilesState {
         pageSizeInitialValue: number;
     };
     initialSorting: TableSorting<DataMaintenanceViewModel>;
+    isDeleteModalOpen: boolean;
     filesToDelete: string[];
     deleteFiles(ids: string[]): void;
     visibleColumns: string[] | undefined;
