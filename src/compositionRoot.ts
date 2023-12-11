@@ -80,6 +80,12 @@ import { SaveDataQualityUseCase } from "./domain/reports/data-quality/usecases/S
 import { LoadDataQualityValidation } from "./domain/reports/data-quality/usecases/loadDataQualityValidation";
 import { ResetDataQualityValidation } from "./domain/reports/data-quality/usecases/ResetDataQualityValidation";
 import { GetMonitoringDetailsUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMonitoringDetailsUseCase";
+import { GetGLASSDataMaintenanceUseCase } from "./domain/reports/glass-admin/usecases/GetGLASSDataMaintenanceUseCase";
+import { GLASSDataMaintenanceDefaultRepository } from "./data/reports/glass-admin/GLASSDataMaintenanceDefaultRepository";
+import { GetGLASSDataMaintenanceColumnsUseCase } from "./domain/reports/glass-admin/usecases/GetGLASSDataMaintenanceColumnsUseCase";
+import { SaveGLASSDataMaintenanceColumnsUseCase } from "./domain/reports/glass-admin/usecases/SaveGLASSDataMaintenanceColumnsUseCase";
+import { GetGLASSModulesUseCase } from "./domain/reports/glass-admin/usecases/GetGLASSModulesUseCase";
+import { UpdateGLASSDataMaintenanceUseCase } from "./domain/reports/glass-admin/usecases/UpdateGLASSDataMaintenanceUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -91,6 +97,7 @@ export function getCompositionRoot(api: D2Api) {
     const dataSubscriptionRepository = new MalDataSubscriptionDefaultRepository(api);
     const dataQualityRepository = new DataQualityDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
+    const glassAdminRepository = new GLASSDataMaintenanceDefaultRepository(api);
     const glassDataRepository = new GLASSDataSubmissionDefaultRepository(api);
     const csySummaryRepository = new CSYSummaryDefaultRepository(api);
     const csySummaryMortalityRepository = new CSYSummaryMortalityDefaultRepository(api);
@@ -150,6 +157,13 @@ export function getCompositionRoot(api: D2Api) {
         auditTrauma: getExecute({
             get: new GetAuditTraumaUseCase(csyAuditTraumaRepository),
             save: new SaveAuditTraumaUseCase(csyAuditTraumaRepository),
+        }),
+        glassAdmin: getExecute({
+            get: new GetGLASSDataMaintenanceUseCase(glassAdminRepository),
+            getModules: new GetGLASSModulesUseCase(glassAdminRepository),
+            updateStatus: new UpdateGLASSDataMaintenanceUseCase(glassAdminRepository),
+            getColumns: new GetGLASSDataMaintenanceColumnsUseCase(glassAdminRepository),
+            saveColumns: new SaveGLASSDataMaintenanceColumnsUseCase(glassAdminRepository),
         }),
         glassDataSubmission: getExecute({
             get: new GetGLASSDataSubmissionUseCase(glassDataRepository),

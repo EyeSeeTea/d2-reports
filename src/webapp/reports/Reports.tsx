@@ -14,6 +14,7 @@ import CSYAuditTraumaReport from "./csy-audit-trauma/CSYAuditTraumaReport";
 import { NHWAAutoCompleteCompute } from "./nhwa-auto-complete-compute/NHWAAutoCompleteCompute";
 import { NHWAFixTotals } from "./nhwa-fix-totals-activity-level/NHWAFixTotals";
 import { NHWASubnationalCorrectOrgUnit } from "./nhwa-subnational-correct-orgunit/NHWASubnationalCorrectOrgUnit";
+import GLASSAdminReport from "./glass-admin/GLASSAdminReport";
 
 const widget = process.env.REACT_APP_REPORT_VARIANT || "";
 
@@ -51,6 +52,9 @@ const Component: React.FC = () => {
         }
         case "glass-submission": {
             return <GLASSDataSubmissionReport />;
+        }
+        case "glass-admin": {
+            return <GLASSAdminReport />;
         }
         case "data-quality": {
             return <DataQualityReport />;
