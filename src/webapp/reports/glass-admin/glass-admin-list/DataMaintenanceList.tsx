@@ -10,13 +10,22 @@ import styled from "styled-components";
 import { TabPanel } from "../../../components/tabs/TabPanel";
 import { TabHeader } from "../../../components/tabs/TabHeader";
 import { useFiles } from "./useFiles";
+import LoadingScreen from "../../../components/loading-screen/LoadingScreen";
 
 export const DataMaintenanceList: React.FC = React.memo(() => {
     const [tabIndex, setTabIndex] = useState<number>(0);
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter());
 
-    const { getFiles, pagination, initialSorting, filesToDelete, deleteFiles, visibleColumns, saveReorderedColumns } =
-        useFiles(filters);
+    const {
+        getFiles,
+        pagination,
+        initialSorting,
+        isDeleteModalOpen,
+        filesToDelete,
+        deleteFiles,
+        visibleColumns,
+        saveReorderedColumns,
+    } = useFiles(filters);
 
     const baseConfig: TableConfig<DataMaintenanceViewModel> = useMemo(
         () => ({
@@ -88,6 +97,8 @@ export const DataMaintenanceList: React.FC = React.memo(() => {
                     onReorderColumns={saveReorderedColumns}
                 />
             </TabPanel>
+
+            <LoadingScreen isOpen={isDeleteModalOpen} />
         </React.Fragment>
     );
 });
