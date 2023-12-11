@@ -14,6 +14,7 @@ export class DataStoreStorageClient extends StorageClient {
         switch (type) {
             case "user":
                 switch (process.env.REACT_APP_REPORT_VARIANT) {
+                    case "glass-admin":
                     case "glass-submission":
                         this.dataStore = this.api.userDataStore(glassDataStoreNamespace);
                         break;
@@ -23,6 +24,7 @@ export class DataStoreStorageClient extends StorageClient {
                 break;
             case "global":
                 switch (process.env.REACT_APP_REPORT_VARIANT) {
+                    case "glass-admin":
                     case "glass-submission":
                         this.dataStore = this.api.dataStore(glassDataStoreNamespace);
                         break;

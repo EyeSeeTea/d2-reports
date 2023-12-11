@@ -14,6 +14,8 @@ export const Namespaces = {
     MAL_DASHBOARD_SUBSCRIPTION_USER_COLUMNS: "mal-dashboard-subscription-user-columns",
     MAL_SUBSCRIPTION_STATUS: "mal-subscription-status",
     DATA_SUBMISSSIONS: "data-submissions",
+    FILE_UPLOADS: "uploads",
+    FILE_UPLOADS_USER_COLUMNS: "uploads-user-columns",
     DATA_SUBMISSSIONS_USER_COLUMNS: "data-submissions-user-columns",
     SIGNALS: "signals",
     SIGNALS_USER_COLUMNS: "signals-user-columns",
