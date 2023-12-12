@@ -12,7 +12,7 @@ export interface DataSetsFiltersProps {
 }
 
 export interface Filter {
-    module: Module | "";
+    module: Module | undefined;
 }
 
 export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {

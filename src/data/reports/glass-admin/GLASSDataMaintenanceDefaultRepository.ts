@@ -14,11 +14,12 @@ import {
     GLASSModule,
     Module,
     Status,
+    getUserModules,
 } from "../../../domain/reports/glass-admin/entities/GLASSDataMaintenanceItem";
 import _ from "lodash";
 import { Config } from "../../../domain/common/entities/Config";
 import { Id } from "../../../domain/common/entities/Base";
-import { Paging, Sorting } from "../../../domain/common/entities/PaginatedObjects";
+import { Paging, Sorting, getPaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
 
 export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenanceRepository {
     private storageClient: StorageClient;
@@ -38,12 +39,12 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         if (!module) return emptyPage;
 
         const uploads = await this.getUploads(namespace);
-        const orgUnits = await this.getCountries();
+        const countries = await this.getCountries();
 
-        const rows = this.getFilteredFiles(uploads, orgUnits, module);
+        const filteredFiles = this.getFilteredFiles(uploads, countries, module);
 
-        const rowIds = this.getRowIds(rows);
-        const { objects, pager } = this.paginate(rows, sorting, paging);
+        const rowIds = this.getRowIds(filteredFiles);
+        const { objects, pager } = this.paginate(filteredFiles, sorting, paging);
 
         return { objects: objects, pager: pager, rowIds: rowIds };
     }
@@ -51,16 +52,7 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
     async getUserModules(config: Config): Promise<GLASSModule[]> {
         const modules = await this.getModules();
 
-        const userGroups = config.currentUser.userGroups;
-        const userGroupIds = userGroups.map(userGroup => userGroup.id);
-
-        const userModules = modules.filter(module => {
-            const moduleUserGroupIds = module.userGroups.approveAccess?.map(userGroup => userGroup.id) ?? [];
-
-            return _.some(moduleUserGroupIds, moduleUserGroupId => userGroupIds.includes(moduleUserGroupId));
-        });
-
-        return userModules;
+        return getUserModules(modules, config.currentUser);
     }
 
     async delete(namespace: string, items: Id[]): Promise<void> {
@@ -82,10 +74,15 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
     }
 
     private async getCountries(): Promise<NamedRef[]> {
-        const { organisationUnits } = await this.api
-            .get<{ organisationUnits: NamedRef[] }>("/organisationUnits", {
-                fields: "id, name",
-                filter: "level:eq:3",
+        const { objects: organisationUnits } = await this.api.models.organisationUnits
+            .get({
+                fields: {
+                    id: true,
+                    name: true,
+                },
+                filter: {
+                    level: { eq: "3" },
+                },
                 paging: false,
             })
             .getData();
@@ -97,13 +94,10 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         const modules =
             (await this.globalStorageClient.getObject<GLASSModule[]>(Namespaces.DATA_SUBMISSSIONS_MODULES)) ?? [];
 
-        return modules
-            .map(module => ({
-                id: module.id,
-                name: module.name,
-                userGroups: module.userGroups,
-            }))
-            .filter(module => module.name !== earModule);
+        return _(modules)
+            .map(module => ({ ...module, userGroups: { approveAccess: module.userGroups.approveAccess ?? [] } }))
+            .filter(module => module.name !== earModule)
+            .value();
     }
 
     private async getUploads(namespace: string): Promise<GLASSDataMaintenanceItem[]> {
@@ -126,10 +120,10 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         const lastDataSubmissionYear = new Date().getFullYear() - 1; // last submission year is the previous year
 
         return _(files)
-            .map(upload => ({
-                ...upload,
-                id: upload.fileId,
-                orgUnitName: orgUnits.find(ou => ou.id === upload.orgUnit)?.name ?? "",
+            .map(file => ({
+                ...file,
+                id: file.fileId,
+                orgUnitName: orgUnits.find(ou => ou.id === file.orgUnit)?.name ?? "",
             }))
             .filter(upload => {
                 const isIncomplete = upload.status !== "COMPLETED";
@@ -148,7 +142,7 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
     ): GLASSDataMaintenanceItem[] {
         return _.map(uploads, upload => {
             if (_.includes(ids, upload.fileId)) {
-                return _.assign({}, upload, { status: status });
+                return _.assign({ ...upload, status: status });
             }
             return upload;
         });
@@ -170,23 +164,15 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         };
     }
 
-    private getPaginatedObjects<T>(rows: T[], sorting: Sorting<T>, paging: Paging): T[] {
-        return _(rows)
-            .orderBy([row => row[sorting.field]], [sorting.direction])
-            .drop((paging.page - 1) * paging.pageSize)
-            .take(paging.pageSize)
-            .value();
-    }
-
     private paginate<T>(objects: T[], sorting: Sorting<T>, paging: Paging) {
         const pager = this.getPager(objects, paging);
-        const paginatedObjects = this.getPaginatedObjects(objects, sorting, paging);
+        const paginatedObjects = getPaginatedObjects(objects, sorting, paging);
 
         return { pager, objects: paginatedObjects };
     }
 }
 
-const emptyPage = {
+const emptyPage: GLASSMaintenancePaginatedObjects<GLASSDataMaintenanceItem> = {
     pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 },
     objects: [],
     rowIds: [],

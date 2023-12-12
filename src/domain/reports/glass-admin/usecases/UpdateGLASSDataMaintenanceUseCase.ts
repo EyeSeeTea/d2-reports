@@ -1,7 +1,6 @@
-import { UseCase } from "../../../../compositionRoot";
 import { GLASSDataMaintenanceRepository } from "../repositories/GLASSDataMaintenanceRepository";
 
-export class UpdateGLASSDataMaintenanceUseCase implements UseCase {
+export class UpdateGLASSDataMaintenanceUseCase {
     constructor(private maintenanceRepository: GLASSDataMaintenanceRepository) {}
 
     execute(namespace: string, action: UpdateAction, items: string[]): Promise<void> | undefined {
