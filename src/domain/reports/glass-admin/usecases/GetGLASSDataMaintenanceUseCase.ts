@@ -1,11 +1,10 @@
-import { UseCase } from "../../../../compositionRoot";
 import { GLASSDataMaintenanceItem, GLASSMaintenancePaginatedObjects } from "../entities/GLASSDataMaintenanceItem";
 import {
     GLASSDataMaintenanceOptions,
     GLASSDataMaintenanceRepository,
 } from "../repositories/GLASSDataMaintenanceRepository";
 
-export class GetGLASSDataMaintenanceUseCase implements UseCase {
+export class GetGLASSDataMaintenanceUseCase {
     constructor(private maintenanceRepository: GLASSDataMaintenanceRepository) {}
 
     execute(

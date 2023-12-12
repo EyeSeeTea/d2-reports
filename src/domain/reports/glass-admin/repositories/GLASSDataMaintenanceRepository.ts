@@ -11,7 +11,7 @@ import {
 export interface GLASSDataMaintenanceOptions {
     paging: Paging;
     sorting: Sorting<GLASSDataMaintenanceItem>;
-    module: Module | "";
+    module: Module | undefined;
 }
 
 export interface GLASSDataMaintenanceRepository {

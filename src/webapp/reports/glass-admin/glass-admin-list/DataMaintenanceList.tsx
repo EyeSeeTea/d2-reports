@@ -11,6 +11,7 @@ import { TabPanel } from "../../../components/tabs/TabPanel";
 import { TabHeader } from "../../../components/tabs/TabHeader";
 import { useFiles } from "./useFiles";
 import LoadingScreen from "../../../components/loading-screen/LoadingScreen";
+import { useListColumns } from "./useListColumns";
 
 export const DataMaintenanceList: React.FC = React.memo(() => {
     const [tabIndex, setTabIndex] = useState<number>(0);
@@ -85,7 +86,7 @@ export const DataMaintenanceList: React.FC = React.memo(() => {
 
             <TabPanel value={tabIndex} index={0}>
                 <StyledButtonContainer>
-                    <Button onClick={async () => deleteFiles(filesToDelete)} color="primary" variant="contained">
+                    <Button onClick={() => deleteFiles(filesToDelete)} color="primary" variant="contained">
                         {i18n.t("Delete all incomplete files")}
                     </Button>
                 </StyledButtonContainer>
@@ -112,6 +113,6 @@ const StyledButtonContainer = styled.div`
 
 function getEmptyDataValuesFilter(): Filter {
     return {
-        module: "",
+        module: undefined,
     };
 }
