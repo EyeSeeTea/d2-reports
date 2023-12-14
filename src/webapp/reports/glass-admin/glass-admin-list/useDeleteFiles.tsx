@@ -14,7 +14,7 @@ export function useDeleteFiles(compositionRoot: CompositionRoot, reload: () => v
     const deleteFiles = useCallback(
         async (ids: string[]) => {
             openDeleteModal();
-            compositionRoot.glassAdmin
+            await compositionRoot.glassAdmin
                 .updateStatus(Namespaces.FILE_UPLOADS, "delete", ids)
                 ?.then(() => closeDeleteModal());
             reload();
