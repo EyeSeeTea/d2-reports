@@ -29,7 +29,7 @@ export interface GLASSMaintenancePaginatedObjects<T> extends PaginatedObjects<T>
     rowIds: string[];
 }
 
-export function getUserModules(modules: GLASSModule[], user: User) {
+export function getUserModules(modules: GLASSModule[], user: User): GLASSModule[] {
     const userGroups = user.userGroups;
     const userGroupIds = userGroups.map(userGroup => userGroup.id);
 
