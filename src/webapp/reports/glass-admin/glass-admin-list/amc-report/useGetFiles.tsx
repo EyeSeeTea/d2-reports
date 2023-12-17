@@ -1,11 +1,11 @@
 import { useCallback, useState } from "react";
 import { TablePagination, TableSorting } from "@eyeseetea/d2-ui-components";
-import { PaginatedObjects, Sorting } from "../../../../domain/common/entities/PaginatedObjects";
-import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
+import { PaginatedObjects, Sorting } from "../../../../../domain/common/entities/PaginatedObjects";
+import { Namespaces } from "../../../../../data/common/clients/storage/Namespaces";
 import { Filter } from "./Filter";
-import { DataMaintenanceViewModel } from "../DataMaintenanceViewModel";
-import { GLASSDataMaintenanceItem } from "../../../../domain/reports/glass-admin/entities/GLASSDataMaintenanceItem";
-import { CompositionRoot } from "../../../../compositionRoot";
+import { DataMaintenanceViewModel } from "../../DataMaintenanceViewModel";
+import { GLASSDataMaintenanceItem } from "../../../../../domain/reports/glass-admin/entities/GLASSDataMaintenanceItem";
+import { CompositionRoot } from "../../../../../compositionRoot";
 
 interface GetFilesState {
     getFiles: (

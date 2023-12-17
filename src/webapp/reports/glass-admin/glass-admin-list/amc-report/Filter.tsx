@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { GLASSModule, Module } from "../../../../domain/reports/glass-admin/entities/GLASSDataMaintenanceItem";
+import { GLASSModule, Module } from "../../../../../domain/reports/glass-admin/entities/GLASSDataMaintenanceItem";
 import styled from "styled-components";
 import { Dropdown, DropdownProps } from "@eyeseetea/d2-ui-components";
-import i18n from "../../../../locales";
-import { NamedRef } from "../../../../domain/common/entities/Base";
-import { useAppContext } from "../../../contexts/app-context";
+import i18n from "../../../../../locales";
+import { NamedRef } from "../../../../../domain/common/entities/Base";
+import { useAppContext } from "../../../../contexts/app-context";
 
-export interface DataSetsFiltersProps {
+export interface FiltersProps {
     values: Filter;
     onChange: React.Dispatch<React.SetStateAction<Filter>>;
 }
@@ -15,7 +15,7 @@ export interface Filter {
     module: Module | undefined;
 }
 
-export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
+export const Filters: React.FC<FiltersProps> = React.memo(props => {
     const { compositionRoot, config } = useAppContext();
     const { values: filter, onChange } = props;
 

@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
-import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
-import { DataMaintenanceViewModel } from "../DataMaintenanceViewModel";
-import { CompositionRoot } from "../../../../compositionRoot";
+import { Namespaces } from "../../../../../data/common/clients/storage/Namespaces";
+import { DataMaintenanceViewModel } from "../../DataMaintenanceViewModel";
+import { CompositionRoot } from "../../../../../compositionRoot";
 
-interface UseColumnsState {
+interface UseAMCColumnsState {
     visibleColumns: string[] | undefined;
     saveReorderedColumns: (columnKeys: Array<keyof DataMaintenanceViewModel>) => Promise<void>;
 }
 
-export function useListColumns(compositionRoot: CompositionRoot): UseColumnsState {
+export function useAMCListColumns(compositionRoot: CompositionRoot): UseAMCColumnsState {
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
 
     useEffect(() => {

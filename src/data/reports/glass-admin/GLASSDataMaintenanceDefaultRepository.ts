@@ -1,4 +1,5 @@
 import {
+    ATCOptions,
     GLASSDataMaintenanceOptions,
     GLASSDataMaintenanceRepository,
 } from "../../../domain/reports/glass-admin/repositories/GLASSDataMaintenanceRepository";
@@ -9,6 +10,7 @@ import { Namespaces } from "../../common/clients/storage/Namespaces";
 import { NamedRef } from "../../../domain/common/entities/Ref";
 import { D2Api, Pager } from "../../../types/d2-api";
 import {
+    ATCItem,
     GLASSDataMaintenanceItem,
     GLASSMaintenancePaginatedObjects,
     GLASSModule,
@@ -19,7 +21,12 @@ import {
 import _ from "lodash";
 import { Config } from "../../../domain/common/entities/Config";
 import { Id } from "../../../domain/common/entities/Base";
-import { Paging, Sorting, getPaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
+import {
+    PaginatedObjects,
+    Paging,
+    Sorting,
+    getPaginatedObjects,
+} from "../../../domain/common/entities/PaginatedObjects";
 
 export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenanceRepository {
     private storageClient: StorageClient;
@@ -47,6 +54,15 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         const { objects, pager } = this.paginate(filteredFiles, sorting, paging);
 
         return { objects: objects, pager: pager, rowIds: rowIds };
+    }
+
+    async getATCs(options: ATCOptions, namespace: string): Promise<PaginatedObjects<ATCItem>> {
+        const { paging, sorting } = options;
+
+        const atcs = (await this.globalStorageClient.getObject<ATCItem[]>(namespace)) ?? [];
+        const { objects, pager } = this.paginate(atcs, sorting, paging);
+
+        return { objects: objects, pager: pager };
     }
 
     async getUserModules(config: Config): Promise<GLASSModule[]> {
