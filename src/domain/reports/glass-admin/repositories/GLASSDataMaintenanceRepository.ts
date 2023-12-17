@@ -1,7 +1,8 @@
 import { Id } from "../../../common/entities/Base";
 import { Config } from "../../../common/entities/Config";
-import { Paging, Sorting } from "../../../common/entities/PaginatedObjects";
+import { PaginatedObjects, Paging, Sorting } from "../../../common/entities/PaginatedObjects";
 import {
+    ATCItem,
     GLASSDataMaintenanceItem,
     GLASSMaintenancePaginatedObjects,
     GLASSModule,
@@ -14,11 +15,17 @@ export interface GLASSDataMaintenanceOptions {
     module: Module | undefined;
 }
 
+export interface ATCOptions {
+    paging: Paging;
+    sorting: Sorting<ATCItem>;
+}
+
 export interface GLASSDataMaintenanceRepository {
     get(
         options: GLASSDataMaintenanceOptions,
         namespace: string
     ): Promise<GLASSMaintenancePaginatedObjects<GLASSDataMaintenanceItem>>;
+    getATCs(options: ATCOptions, namespace: string): Promise<PaginatedObjects<ATCItem>>;
     getUserModules(config: Config): Promise<GLASSModule[]>;
     delete(namespace: string, items: Id[]): Promise<void>;
     getColumns(namespace: string): Promise<string[]>;

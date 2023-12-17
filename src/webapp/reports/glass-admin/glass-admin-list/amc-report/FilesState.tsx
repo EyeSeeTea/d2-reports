@@ -1,7 +1,7 @@
 import { TablePagination, TableSorting } from "@eyeseetea/d2-ui-components";
-import { GLASSDataMaintenanceItem } from "../../../../domain/reports/glass-admin/entities/GLASSDataMaintenanceItem";
-import { DataMaintenanceViewModel } from "../DataMaintenanceViewModel";
-import { PaginatedObjects } from "../../../../domain/common/entities/PaginatedObjects";
+import { GLASSDataMaintenanceItem } from "../../../../../domain/reports/glass-admin/entities/GLASSDataMaintenanceItem";
+import { DataMaintenanceViewModel } from "../../DataMaintenanceViewModel";
+import { PaginatedObjects } from "../../../../../domain/common/entities/PaginatedObjects";
 
 export interface FilesState {
     getFiles: (
