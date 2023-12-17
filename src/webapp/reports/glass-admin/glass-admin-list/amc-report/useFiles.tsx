@@ -1,10 +1,10 @@
 import { FilesState } from "./FilesState";
-import { useAppContext } from "../../../contexts/app-context";
-import { useReload } from "../../../utils/use-reload";
+import { useAppContext } from "../../../../contexts/app-context";
+import { useReload } from "../../../../utils/use-reload";
 import { Filter } from "./Filter";
 import { useGetFiles } from "./useGetFiles";
 import { useDeleteFiles } from "./useDeleteFiles";
-import { useListColumns } from "./useListColumns";
+import { useAMCListColumns } from "./useAMCListColumns";
 
 const pagination = {
     pageSizeOptions: [10, 20, 50],
@@ -22,7 +22,7 @@ export function useFiles(filters: Filter): FilesState {
 
     const { filesToDelete, getFiles } = useGetFiles(compositionRoot, filters, reloadKey);
     const { deleteFiles, isDeleteModalOpen } = useDeleteFiles(compositionRoot, reload);
-    const { visibleColumns, saveReorderedColumns } = useListColumns(compositionRoot);
+    const { visibleColumns, saveReorderedColumns } = useAMCListColumns(compositionRoot);
 
     return {
         getFiles,

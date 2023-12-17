@@ -29,6 +29,17 @@ export interface GLASSMaintenancePaginatedObjects<T> extends PaginatedObjects<T>
     rowIds: string[];
 }
 
+export interface ATCItem {
+    currentVersion: boolean;
+    uploadedDate: string;
+    version: string;
+    year: string;
+}
+
+export function getATCItemId(atc: ATCItem): string {
+    return [atc.year, atc.version].join("-");
+}
+
 export function getUserModules(modules: GLASSModule[], user: User): GLASSModule[] {
     const userGroups = user.userGroups;
     const userGroupIds = userGroups.map(userGroup => userGroup.id);

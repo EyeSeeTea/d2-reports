@@ -1,7 +1,7 @@
 import { useCallback } from "react";
-import { CompositionRoot } from "../../../../compositionRoot";
-import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
-import { useBooleanState } from "../../../utils/use-boolean";
+import { CompositionRoot } from "../../../../../compositionRoot";
+import { Namespaces } from "../../../../../data/common/clients/storage/Namespaces";
+import { useBooleanState } from "../../../../utils/use-boolean";
 
 interface DeleteFilesState {
     isDeleteModalOpen: boolean;
