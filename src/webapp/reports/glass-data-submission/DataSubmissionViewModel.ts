@@ -29,7 +29,7 @@ export interface EARDataSubmissionViewModel {
     status: Status;
 }
 
-export type Module = "AMR" | "EGASP" | "AMRIndividual" | "EAR";
+export type Module = "AMR" | "EGASP" | "AMRIndividual" | "EAR" | "AMC";
 
 export type Status =
     | "NOT_COMPLETED"

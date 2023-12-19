@@ -47,7 +47,6 @@ import { GetGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-dat
 import { SaveGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-data-submission/usecases/SaveGLASSDataSubmissionColumnsUseCase";
 import { UpdateGLASSSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/UpdateGLASSSubmissionUseCase";
 import { DHIS2MessageCountUseCase } from "./domain/reports/glass-data-submission/usecases/DHIS2MessageCountUseCase";
-import { GetGLASSUserPermissionsUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSUserPermissionsUseCase";
 import { CSYSummaryDefaultRepository } from "./data/reports/csy-summary-patient/CSYSummaryDefaultRepository";
 import { GetSummaryUseCase } from "./domain/reports/csy-summary-patient/usecases/GetSummaryUseCase";
 import { SaveSummaryUseCase } from "./domain/reports/csy-summary-patient/usecases/SaveSummaryUseCase";
@@ -88,6 +87,7 @@ import { GetGLASSModulesUseCase } from "./domain/reports/glass-admin/usecases/Ge
 import { UpdateGLASSDataMaintenanceUseCase } from "./domain/reports/glass-admin/usecases/UpdateGLASSDataMaintenanceUseCase";
 import { GetATCsUseCase } from "./domain/reports/glass-admin/usecases/GetATCsUseCase";
 import { UploadATCFileUseCase } from "./domain/reports/glass-admin/usecases/UploadATCFileUseCase";
+import { GetGLASSDataSubmissionModulesUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSDataSubmissionModulesUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -171,8 +171,8 @@ export function getCompositionRoot(api: D2Api) {
         }),
         glassDataSubmission: getExecute({
             get: new GetGLASSDataSubmissionUseCase(glassDataRepository),
+            getModules: new GetGLASSDataSubmissionModulesUseCase(glassDataRepository),
             getEAR: new GetEARDataSubmissionUseCase(glassDataRepository),
-            getUserGroupPermissions: new GetGLASSUserPermissionsUseCase(glassDataRepository),
             getColumns: new GetGLASSDataSubmissionColumnsUseCase(glassDataRepository),
             saveColumns: new SaveGLASSDataSubmissionColumnsUseCase(glassDataRepository),
             dhis2MessageCount: new DHIS2MessageCountUseCase(glassDataRepository),
