@@ -556,6 +556,11 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
             const module = modules.find(module => module.id === _.first(items)?.module)?.name ?? "";
 
+            if (module === "AMC") {
+                const amcPrograms = modules.find(module => module.name === "AMC")?.programs ?? [];
+
+                _.forEach(amcPrograms, async amcProgram => await this.duplicateProgram(amcProgram, items));
+            }
             if (module === "AMR") {
                 const amrDataSets = modules.find(module => module.name === "AMR")?.dataSets ?? [];
                 const amrQuestionnaires = modules.find(module => module.name === "AMR")?.questionnaires ?? [];
@@ -645,19 +650,9 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
     private async duplicateProgram(program: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
         await promiseMap(items, async item => {
             const programEvents = (await this.getProgramEvents(program.id, item.orgUnit ?? "")).events;
-            const events = programEvents
-                .map(event => {
-                    return {
-                        program: event.program,
-                        orgUnit: event.orgUnit,
-                        eventDate: event.eventDate,
-                        status: event.status,
-                        storedBy: event.storedBy,
-                        coordinate: event.coordinate,
-                        dataValues: event.dataValues,
-                    };
-                })
-                .filter(event => String(new Date(event.eventDate).getFullYear()) === item.period);
+            const events = programEvents.filter(
+                event => String(new Date(event.eventDate).getFullYear()) === item.period
+            );
 
             if (!_.isEmpty(events)) {
                 const eventsToPost = events.map(event => {
