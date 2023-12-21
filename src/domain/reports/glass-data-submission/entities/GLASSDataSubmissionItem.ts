@@ -1,5 +1,4 @@
 import _ from "lodash";
-import { Module, Status } from "../../../../webapp/reports/glass-data-submission/DataSubmissionViewModel";
 import { Id, NamedRef } from "../../../common/entities/Base";
 import { User } from "../../../common/entities/User";
 
@@ -65,9 +64,22 @@ export interface ApprovalIds {
     programStageApprovedId: Id;
 }
 
+export type Status =
+    | "NOT_COMPLETED"
+    | "COMPLETE"
+    | "UPDATE_REQUEST_ACCEPTED"
+    | "PENDING_APPROVAL"
+    | "REJECTED"
+    | "APPROVED"
+    | "ACCEPTED"
+    | "PENDING_UPDATE_APPROVAL"
+    | "DRAFT";
+
+export type Module = "AMR" | "AMR - Individual" | "AMR - Funghi" | "AMC" | "EGASP" | "EAR";
+
 export interface GLASSDataSubmissionModule {
     id: Id;
-    name: string;
+    name: Module;
     dataSets: ApprovalIds[];
     programs: ApprovalIds[];
     questionnaires: ApprovalIds[];

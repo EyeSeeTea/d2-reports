@@ -1,4 +1,3 @@
-import { Module, Status } from "../../../../webapp/reports/glass-data-submission/DataSubmissionViewModel";
 import { Id } from "../../../common/entities/Base";
 import { Config } from "../../../common/entities/Config";
 import { PaginatedObjects, Paging, Sorting } from "../../../common/entities/PaginatedObjects";
@@ -9,6 +8,8 @@ import {
     GLASSDataSubmissionItem,
     GLASSDataSubmissionItemIdentifier,
     GLASSDataSubmissionModule,
+    Module,
+    Status,
 } from "../entities/GLASSDataSubmissionItem";
 
 export interface GLASSDataSubmissionRepository {

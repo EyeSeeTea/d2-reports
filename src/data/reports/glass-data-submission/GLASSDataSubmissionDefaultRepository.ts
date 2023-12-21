@@ -8,6 +8,7 @@ import {
     EARDataSubmissionItem,
     EARSubmissionItemIdentifier,
     getUserModules,
+    Status,
 } from "../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 import {
     EARDataSubmissionOptions,
@@ -19,7 +20,6 @@ import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreSt
 import { StorageClient } from "../../common/clients/storage/StorageClient";
 import { Instance } from "../../common/entities/Instance";
 import { promiseMap } from "../../../utils/promises";
-import { Status } from "../../../webapp/reports/glass-data-submission/DataSubmissionViewModel";
 import { Id, NamedRef, Ref } from "../../../domain/common/entities/Base";
 import {
     earStatusItems,
@@ -723,7 +723,6 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
             if (module === "AMC") {
                 const amcPrograms = modules.find(module => module.name === "AMC")?.programs ?? [];
-
                 _.forEach(amcPrograms, async amcProgram => await this.duplicateProgram(amcProgram, items));
             }
             if (module === "AMR") {
@@ -734,6 +733,14 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 _.forEach(
                     amrQuestionnaires,
                     async amrQuestionnaire => await this.duplicateDataSet(amrQuestionnaire, items)
+                );
+            }
+            if (module === "AMR - Funghi") {
+                const amrFunghiQuestionnaires =
+                    modules.find(module => module.name === "AMR - Funghi")?.questionnaires ?? [];
+                _.forEach(
+                    amrFunghiQuestionnaires,
+                    async amrFunghiQuestionnaire => await this.duplicateDataSet(amrFunghiQuestionnaire, items)
                 );
             }
             if (module === "AMR - Individual") {
