@@ -36,8 +36,22 @@ export interface ATCItem {
     year: string;
 }
 
+export interface ATCItemIdentifier {
+    currentVersion: boolean;
+    version: string;
+    year: string;
+}
+
 export function getATCItemId(atc: ATCItem): string {
-    return [atc.year, atc.version].join("-");
+    return [atc.year, atc.version, atc.currentVersion].join("-");
+}
+
+export function parseATCItemId(string: string): ATCItemIdentifier | undefined {
+    const [year, version, currentVersion] = string.split("-");
+
+    if (!year || !version || !currentVersion) return undefined;
+
+    return { year, version, currentVersion: currentVersion === "true" };
 }
 
 export function getUserModules(modules: GLASSModule[], user: User): GLASSModule[] {

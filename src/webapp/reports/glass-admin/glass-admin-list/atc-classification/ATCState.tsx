@@ -13,6 +13,7 @@ export interface ATCState {
         pageSizeOptions: number[];
         pageSizeInitialValue: number;
     };
+    uploadedYears: string[];
     visibleColumns: string[] | undefined;
     reload(): void;
     saveReorderedColumns: (columnKeys: Array<keyof ATCViewModel>) => Promise<void>;

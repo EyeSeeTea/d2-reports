@@ -3,6 +3,7 @@ import { Config } from "../../../common/entities/Config";
 import { PaginatedObjects, Paging, Sorting } from "../../../common/entities/PaginatedObjects";
 import {
     ATCItem,
+    ATCItemIdentifier,
     GLASSDataMaintenanceItem,
     GLASSMaintenancePaginatedObjects,
     GLASSModule,
@@ -28,6 +29,7 @@ export interface GLASSDataMaintenanceRepository {
     getATCs(options: ATCOptions, namespace: string): Promise<PaginatedObjects<ATCItem>>;
     getUserModules(config: Config): Promise<GLASSModule[]>;
     delete(namespace: string, items: Id[]): Promise<void>;
+    uploadATC(namespace: string, file: File, year: string, items?: ATCItemIdentifier[]): Promise<void>;
     getColumns(namespace: string): Promise<string[]>;
     saveColumns(namespace: string, columns: string[]): Promise<void>;
 }

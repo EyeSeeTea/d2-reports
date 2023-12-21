@@ -1,15 +1,35 @@
 import { Button, Chip } from "@material-ui/core";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import i18n from "../../../../../locales";
 import { ObjectsList, TableColumn, TableConfig, useObjectsTable } from "@eyeseetea/d2-ui-components";
 import { ATCViewModel } from "../../DataMaintenanceViewModel";
-import { Update } from "@material-ui/icons";
+import { CloudUpload } from "@material-ui/icons";
 import { useATC } from "./useATC";
 import _ from "lodash";
 import styled from "styled-components";
+import { GLASSAdminDialog } from "./GLASSAdminDialog";
+import {
+    ATCItemIdentifier,
+    parseATCItemId,
+} from "../../../../../domain/reports/glass-admin/entities/GLASSDataMaintenanceItem";
+import { useATCUpload } from "./useATCUpload";
 
 export const ATCClassificationList: React.FC = React.memo(() => {
-    const { initialSorting, pagination, visibleColumns, getATCs, saveReorderedColumns } = useATC();
+    const { initialSorting, pagination, uploadedYears, visibleColumns, getATCs, reload, saveReorderedColumns } =
+        useATC();
+    const {
+        isPatchModalOpen,
+        isUploadATCModalOpen,
+        closePatchModal,
+        closeUploadATCModal,
+        openPatchModal,
+        openUploadATCModal,
+        patchVersion,
+        uploadATCFile,
+    } = useATCUpload(reload);
+
+    const [isCurrentVersion, setCurrentVersion] = useState<boolean>(false);
+    const [selectedItems, setSelectedItems] = useState<ATCItemIdentifier[]>([]);
 
     const baseConfig: TableConfig<ATCViewModel> = useMemo(
         () => ({
@@ -17,8 +37,19 @@ export const ATCClassificationList: React.FC = React.memo(() => {
                 {
                     name: "patch",
                     text: i18n.t("Patch"),
-                    icon: <Update />,
-                    multiple: true,
+                    icon: <CloudUpload />,
+                    onClick: async (selectedIds: string[]) => {
+                        openPatchModal();
+                        const items = _.compact(selectedIds.map(item => parseATCItemId(item)));
+                        if (items.length === 0) return;
+
+                        setSelectedItems(items);
+
+                        const isCurrentVersion = _(items)
+                            .map(item => item.currentVersion)
+                            .every();
+                        setCurrentVersion(isCurrentVersion);
+                    },
                 },
             ],
             columns: [
@@ -26,7 +57,7 @@ export const ATCClassificationList: React.FC = React.memo(() => {
                     name: "currentVersion",
                     text: i18n.t(" "),
                     sortable: false,
-                    getValue: row => row.currentVersion && <Chip color="primary" label={i18n.t("Current")} />,
+                    getValue: row => row.currentVersion && <Chip color="primary" label={i18n.t("Current Version")} />,
                 },
                 { name: "year", text: i18n.t("Year"), sortable: true },
                 { name: "uploadedDate", text: i18n.t("Uploaded date"), sortable: true },
@@ -34,7 +65,7 @@ export const ATCClassificationList: React.FC = React.memo(() => {
             initialSorting: initialSorting,
             paginationOptions: pagination,
         }),
-        [initialSorting, pagination]
+        [initialSorting, openPatchModal, pagination]
     );
 
     const tableProps = useObjectsTable<ATCViewModel>(baseConfig, getATCs);
@@ -56,7 +87,7 @@ export const ATCClassificationList: React.FC = React.memo(() => {
     return (
         <React.Fragment>
             <StyledButtonContainer>
-                <Button color="primary" variant="contained">
+                <Button onClick={openUploadATCModal} color="primary" variant="contained">
                     {i18n.t("Upload new ATC file")}
                 </Button>
                 <Button color="primary" variant="contained">
@@ -69,6 +100,28 @@ export const ATCClassificationList: React.FC = React.memo(() => {
                 columns={columnsToShow}
                 onChangeSearch={undefined}
                 onReorderColumns={saveReorderedColumns}
+            />
+
+            <GLASSAdminDialog
+                selectedItems={selectedItems}
+                isOpen={isPatchModalOpen}
+                closeModal={closePatchModal}
+                description={
+                    isCurrentVersion
+                        ? "You are replacing the latest ATC file. It will become the default version"
+                        : "You are replacing an old ATC file. It won't affect calculations"
+                }
+                title="Patch version"
+                saveFile={patchVersion}
+            />
+
+            <GLASSAdminDialog
+                isOpen={isUploadATCModalOpen}
+                closeModal={closeUploadATCModal}
+                description="All years will be overwritten with the data provided in this file."
+                title="Upload new ATC file"
+                uploadedYears={uploadedYears}
+                saveFile={uploadATCFile}
             />
         </React.Fragment>
     );
