@@ -11,6 +11,7 @@ import { NamedRef } from "../../../domain/common/entities/Ref";
 import { D2Api, Pager } from "../../../types/d2-api";
 import {
     ATCItem,
+    ATCItemIdentifier,
     GLASSDataMaintenanceItem,
     GLASSMaintenancePaginatedObjects,
     GLASSModule,
@@ -18,6 +19,7 @@ import {
     Status,
     getUserModules,
 } from "../../../domain/reports/glass-admin/entities/GLASSDataMaintenanceItem";
+import JSZip from "jszip";
 import _ from "lodash";
 import { Config } from "../../../domain/common/entities/Config";
 import { Id } from "../../../domain/common/entities/Base";
@@ -27,6 +29,10 @@ import {
     Sorting,
     getPaginatedObjects,
 } from "../../../domain/common/entities/PaginatedObjects";
+
+interface ATCJson {
+    [key: string]: any;
+}
 
 export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenanceRepository {
     private storageClient: StorageClient;
@@ -59,10 +65,14 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
     async getATCs(options: ATCOptions, namespace: string): Promise<PaginatedObjects<ATCItem>> {
         const { paging, sorting } = options;
 
-        const atcs = (await this.globalStorageClient.getObject<ATCItem[]>(namespace)) ?? [];
+        const atcs = await this.getATCItems(namespace);
         const { objects, pager } = this.paginate(atcs, sorting, paging);
 
         return { objects: objects, pager: pager };
+    }
+
+    private async getATCItems(namespace: string) {
+        return (await this.globalStorageClient.getObject<ATCItem[]>(namespace)) ?? [];
     }
 
     async getUserModules(config: Config): Promise<GLASSModule[]> {
@@ -87,6 +97,104 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
 
     async saveColumns(namespace: string, columns: string[]): Promise<void> {
         return this.storageClient.saveObject<string[]>(namespace, columns);
+    }
+
+    async uploadATC(namespace: string, file: File, year: string, items: ATCItemIdentifier[]): Promise<void> {
+        const atcItems = await this.getATCItems(namespace);
+        const jsons = await this.extractJsonFromZIP(file);
+
+        if (jsons.length === 4) {
+            if (items) {
+                const updatedVersion = this.updateVersion(items);
+                const updatedATCItems = this.patchATCVersion(atcItems, items);
+
+                await this.globalStorageClient.saveObject<ATCJson>(`ATC-${updatedVersion}`, jsons);
+                await this.globalStorageClient.saveObject<ATCJson>(Namespaces.ATCS, updatedATCItems);
+            } else {
+                const updatedATCItems = this.uploadNewATC(year, atcItems);
+
+                await this.globalStorageClient.saveObject<ATCJson>(`ATC-${year}-v1`, jsons);
+                await this.globalStorageClient.saveObject<ATCJson>(Namespaces.ATCS, updatedATCItems);
+            }
+        } else {
+            throw new Error("The zip file does not contain exactly 4 JSON files.");
+        }
+    }
+
+    private uploadNewATC(year: string, atcItems: ATCItem[]) {
+        const atcYears = atcItems.map(atcItem => _.parseInt(atcItem.year));
+        const currentVersionYear = Math.max(...atcYears);
+
+        const newItem = {
+            year: year,
+            version: 1,
+            uploadedDate: new Date().toISOString(),
+            currentVersion: _.parseInt(year) > currentVersionYear,
+        };
+
+        return [...atcItems, newItem];
+    }
+
+    private patchATCVersion(atcItems: ATCItem[], selectedItems: ATCItemIdentifier[]) {
+        return _.flatMap(atcItems, atcItem => {
+            const matchingItem = _.find(selectedItems, { year: atcItem.year, version: atcItem.version });
+
+            if (matchingItem) {
+                return [
+                    {
+                        ...atcItem,
+                        currentVersion: false,
+                    },
+                    {
+                        year: matchingItem.year,
+                        version: _.parseInt(matchingItem.version) + 1,
+                        uploadedDate: new Date().toISOString(),
+                        currentVersion: matchingItem.currentVersion === true,
+                    },
+                ];
+            }
+
+            return [atcItem];
+        });
+    }
+
+    private async extractJsonFromZIP(file: File): Promise<ATCJson[]> {
+        const zip = new JSZip();
+        const jsonPromises: Promise<ATCJson>[] = [];
+        const contents = await zip.loadAsync(file);
+
+        contents.forEach((relativePath, file) => {
+            if (file.dir) {
+                return;
+            }
+
+            // Check if the file has a .json extension
+            if (/\.(json)$/i.test(relativePath)) {
+                const jsonPromise = file.async("string").then(content => {
+                    try {
+                        return JSON.parse(content) as ATCJson;
+                    } catch (error) {
+                        console.error(`Error parsing JSON from ${relativePath}: ${error}`);
+                        throw error;
+                    }
+                });
+
+                jsonPromises.push(jsonPromise);
+            }
+        });
+        const jsons = await Promise.all(jsonPromises);
+
+        return jsons;
+    }
+
+    private updateVersion(items: ATCItemIdentifier[]): string {
+        const item = _.first(items);
+
+        if (item) {
+            return `${item.year}-v${item.version}`;
+        } else {
+            return "";
+        }
     }
 
     private async getCountries(): Promise<NamedRef[]> {

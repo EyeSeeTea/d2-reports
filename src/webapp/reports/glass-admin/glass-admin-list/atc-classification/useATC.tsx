@@ -18,12 +18,13 @@ export function useATC(): ATCState {
     const { compositionRoot } = useAppContext();
     const [reloadKey, reload] = useReload();
 
-    const { getATCs } = useGetATCs(compositionRoot, reloadKey);
+    const { uploadedYears, getATCs } = useGetATCs(compositionRoot, reloadKey);
     const { visibleColumns, saveReorderedColumns } = useATCListColumns(compositionRoot);
 
     return {
         initialSorting,
         pagination,
+        uploadedYears,
         visibleColumns,
         getATCs,
         reload,

@@ -87,6 +87,7 @@ import { SaveGLASSDataMaintenanceColumnsUseCase } from "./domain/reports/glass-a
 import { GetGLASSModulesUseCase } from "./domain/reports/glass-admin/usecases/GetGLASSModulesUseCase";
 import { UpdateGLASSDataMaintenanceUseCase } from "./domain/reports/glass-admin/usecases/UpdateGLASSDataMaintenanceUseCase";
 import { GetATCsUseCase } from "./domain/reports/glass-admin/usecases/GetATCsUseCase";
+import { UploadATCFileUseCase } from "./domain/reports/glass-admin/usecases/UploadATCFileUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -164,6 +165,7 @@ export function getCompositionRoot(api: D2Api) {
             getATCs: new GetATCsUseCase(glassAdminRepository),
             getModules: new GetGLASSModulesUseCase(glassAdminRepository),
             updateStatus: new UpdateGLASSDataMaintenanceUseCase(glassAdminRepository),
+            uploadFile: new UploadATCFileUseCase(glassAdminRepository),
             getColumns: new GetGLASSDataMaintenanceColumnsUseCase(glassAdminRepository),
             saveColumns: new SaveGLASSDataMaintenanceColumnsUseCase(glassAdminRepository),
         }),
