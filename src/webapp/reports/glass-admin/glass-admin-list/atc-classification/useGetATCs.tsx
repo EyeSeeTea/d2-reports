@@ -5,6 +5,7 @@ import { ATCViewModel, getATCViewModel } from "../../DataMaintenanceViewModel";
 import { Namespaces } from "../../../../../data/common/clients/storage/Namespaces";
 import { ATCItem } from "../../../../../domain/reports/glass-admin/entities/GLASSDataMaintenanceItem";
 import { CompositionRoot } from "../../../../../compositionRoot";
+import _ from "lodash";
 
 export function useGetATCs(compositionRoot: CompositionRoot, reloadKey: string) {
     const [uploadedYears, setUploadedYears] = useState<string[]>([]);
