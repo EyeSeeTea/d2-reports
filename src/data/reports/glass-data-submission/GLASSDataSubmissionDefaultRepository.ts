@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
+import { PaginatedObjects, Paging, Sorting } from "../../../domain/common/entities/PaginatedObjects";
 import {
     ApprovalIds,
     GLASSDataSubmissionItem,
@@ -89,34 +89,71 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         const modules = await this.getModules();
         const objects = (await this.globalStorageClient.getObject<GLASSDataSubmissionItem[]>(namespace)) ?? [];
-
         const uploads =
             (await this.globalStorageClient.getObject<GLASSDataSubmissionItemUpload[]>(
                 Namespaces.DATA_SUBMISSSIONS_UPLOADS
             )) ?? [];
 
-        const userOrgUnits = (await this.api.get<{ organisationUnits: Ref[] }>("/me").getData()).organisationUnits.map(
-            ou => ou.id
-        );
-        const { organisationUnits } = await this.api
-            .get<any>(
-                "/metadata?organisationUnits:fields=children[children[id,level],id,level],id,level&organisationUnits:filter=level:eq:1"
-            )
-            .getData();
-        const orgUnitsWithChildren = _(userOrgUnits)
-            .flatMap(ou => {
-                const res = flattenNodes(flattenNodes(organisationUnits).filter(res => res.id === ou)).map(
-                    node => node.id
-                );
-                return res;
-            })
-            .uniq()
-            .value();
-        const filteredObjects = objects.filter(object => orgUnitsWithChildren.includes(object.orgUnit));
-
+        const filteredObjects = await this.getFilteredObjects(modules, objects);
         const registrations = await this.getRegistrations(filteredObjects);
+        const rows = this.getGLASSListRows(filteredObjects, registrations, modules, uploads);
+        const filteredRows = this.getFilteredRows(rows, options);
 
-        const rows = filteredObjects.map(object => {
+        const { pager, rowsInPage } = this.paginate(filteredRows, sorting, paging);
+
+        return {
+            pager,
+            objects: rowsInPage,
+        };
+    }
+
+    private async getFilteredObjects(modules: GLASSDataSubmissionModule[], objects: GLASSDataSubmissionItem[]) {
+        const enrolledCountries = await this.getEnrolledCountries();
+        const amrFocalPointProgramId = await this.getAMRFocalPointProgramId();
+        const enrolledCountryModules = await this.getEnrolledCountryModules(
+            enrolledCountries,
+            modules,
+            amrFocalPointProgramId
+        );
+
+        const filteredObjects = objects.filter(object => {
+            return _(enrolledCountryModules)
+                .map(enrolledCountryModule => {
+                    const isInEnrolledCountry = enrolledCountryModule.enrolledCountry === object.orgUnit;
+                    const isInModule = enrolledCountryModule.trackedEntityModules.includes(object.module);
+
+                    return isInEnrolledCountry && isInModule;
+                })
+                .some();
+        });
+
+        return filteredObjects;
+    }
+
+    private async getEnrolledCountryModules(
+        enrolledCountries: string[],
+        modules: GLASSDataSubmissionModule[],
+        amrFocalPointProgramId: string
+    ) {
+        return (
+            await promiseMap(enrolledCountries, async enrolledCountry => {
+                const trackedEntityModules = await this.getTrackedEntityModules(
+                    modules,
+                    amrFocalPointProgramId,
+                    enrolledCountry
+                );
+                return { trackedEntityModules, enrolledCountry };
+            })
+        ).filter(country => !_.isEmpty(country.trackedEntityModules));
+    }
+
+    private getGLASSListRows(
+        filteredObjects: GLASSDataSubmissionItem[],
+        registrations: Record<string, RegistrationItemBase>,
+        modules: GLASSDataSubmissionModule[],
+        uploads: GLASSDataSubmissionItemUpload[]
+    ) {
+        return filteredObjects.map(object => {
             const key = getRegistrationKey({ orgUnitId: object.orgUnit, period: object.period });
             const match = registrations[key];
             const submissionStatus = statusItems.find(item => item.value === object.status)?.text ?? "";
@@ -160,26 +197,154 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 period: object.period.slice(0, 4),
             };
         });
+    }
 
-        const filteredRows = this.getFilteredRows(rows, options);
+    private async getEnrolledCountries(): Promise<string[]> {
+        const userOrgUnits = await this.getUserOrgUnits();
+        const orgUnitsWithChildren = await this.getOUsWithChildren(userOrgUnits);
 
-        const rowsInPage = _(filteredRows)
-            .orderBy([row => row[sorting.field]], [sorting.direction])
-            .drop((paging.page - 1) * paging.pageSize)
-            .take(paging.pageSize)
+        const countriesOutsideNARegion = await this.getCountriesOutsideNARegion();
+        const enrolledCountries = orgUnitsWithChildren.filter(orgUnit => countriesOutsideNARegion.includes(orgUnit));
+
+        return enrolledCountries;
+    }
+
+    private async getOUsWithChildren(userOrgUnits: string[]): Promise<string[]> {
+        const { organisationUnits } = await this.api.metadata
+            .get({
+                organisationUnits: {
+                    fields: {
+                        id: true,
+                        level: true,
+                        children: {
+                            id: true,
+                            level: true,
+                            children: {
+                                id: true,
+                                level: true,
+                            },
+                        },
+                    },
+                    filter: {
+                        level: {
+                            eq: "1",
+                        },
+                    },
+                },
+            })
+            .getData();
+
+        const orgUnitsWithChildren = _(userOrgUnits)
+            .flatMap(ou => {
+                const res = flattenNodes(flattenNodes(organisationUnits).filter(res => res.id === ou)).map(
+                    node => node.id
+                );
+                return res;
+            })
+            .uniq()
             .value();
 
-        const pager: Pager = {
-            page: paging.page,
-            pageSize: paging.pageSize,
-            pageCount: Math.ceil(filteredRows.length / paging.pageSize),
-            total: filteredRows.length,
-        };
+        return orgUnitsWithChildren;
+    }
 
-        return {
-            pager,
-            objects: rowsInPage,
-        };
+    private async getUserOrgUnits(): Promise<string[]> {
+        return (await this.api.get<{ organisationUnits: Ref[] }>("/me").getData()).organisationUnits.map(ou => ou.id);
+    }
+
+    private async getTrackedEntityModules(
+        modules: GLASSDataSubmissionModule[],
+        program: string,
+        orgUnit: string
+    ): Promise<string[]> {
+        const { instances } = await this.api
+            .get<{ instances: { attributes: { value: string }[] }[] }>("/tracker/trackedEntities", {
+                program: program,
+                orgUnit: orgUnit,
+                fields: "attributes[value]",
+            })
+            .getData();
+
+        const trackedEntityModuleNames = _(instances)
+            .flatMap(instance => instance.attributes.map(attribute => attribute.value))
+            .uniq()
+            .value();
+
+        const trackedEntityModules = trackedEntityModuleNames.map(trackedEntityModule => {
+            const formattedModuleString = _.map(trackedEntityModule, char => (char === "_" ? " - " : char))
+                .join("")
+                .toLowerCase();
+
+            return (
+                modules.find(module => module.name.toLowerCase() === formattedModuleString)?.id ?? trackedEntityModule
+            );
+        });
+
+        return trackedEntityModules;
+    }
+
+    private async getCountriesOutsideNARegion(): Promise<string[]> {
+        const { organisationUnits: kosovoOu } = await this.api.metadata
+            .get({
+                organisationUnits: {
+                    fields: {
+                        id: true,
+                    },
+                    filter: {
+                        name: {
+                            eq: "Kosovo",
+                        },
+                        level: {
+                            eq: "3",
+                        },
+                        "parent.code": {
+                            eq: "NA",
+                        },
+                    },
+                },
+            })
+            .getData();
+
+        const { organisationUnits } = await this.api.metadata
+            .get({
+                organisationUnits: {
+                    fields: {
+                        id: true,
+                    },
+                    filter: {
+                        level: {
+                            eq: "3",
+                        },
+                        "parent.code": {
+                            ne: "NA",
+                        },
+                    },
+                    paging: false,
+                },
+            })
+            .getData();
+
+        return _.concat(organisationUnits, kosovoOu).map(orgUnit => orgUnit.id);
+    }
+
+    private async getAMRFocalPointProgramId(): Promise<string> {
+        const { programs } = await this.api.metadata
+            .get({
+                programs: {
+                    fields: {
+                        id: true,
+                    },
+                    filter: {
+                        name: {
+                            eq: "AMR - Focal Point",
+                        },
+                    },
+                },
+            })
+            .getData();
+
+        const programId = _.first(programs)?.id ?? "";
+
+        return programId;
     }
 
     async getUserModules(config: Config): Promise<GLASSDataSubmissionModule[]> {
@@ -858,6 +1023,22 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 ? { ...object, status: status, statusHistory: [...object.statusHistory, statusHistory] }
                 : object;
         });
+    }
+
+    private paginate(rows: GLASSDataSubmissionItem[], sorting: Sorting<GLASSDataSubmissionItem>, paging: Paging) {
+        const rowsInPage = _(rows)
+            .orderBy([row => row[sorting.field]], [sorting.direction])
+            .drop((paging.page - 1) * paging.pageSize)
+            .take(paging.pageSize)
+            .value();
+
+        const pager: Pager = {
+            page: paging.page,
+            pageSize: paging.pageSize,
+            pageCount: Math.ceil(rows.length / paging.pageSize),
+            total: rows.length,
+        };
+        return { pager, rowsInPage };
     }
 }
 
