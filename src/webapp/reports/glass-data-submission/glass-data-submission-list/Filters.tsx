@@ -18,8 +18,11 @@ import {
     DatePicker,
     DatePickerProps,
 } from "@eyeseetea/d2-ui-components";
-import { Module, Status } from "../DataSubmissionViewModel";
-import { DataSubmissionPeriod } from "../../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
+import {
+    DataSubmissionPeriod,
+    Module,
+    Status,
+} from "../../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 import { useDataSubmissionList } from "./useDataSubmissionList";
 
 export interface DataSetsFiltersProps {
