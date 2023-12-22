@@ -137,7 +137,9 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
 
     private patchATCVersion(atcItems: ATCItem[], selectedItems: ATCItemIdentifier[]) {
         return _.flatMap(atcItems, atcItem => {
-            const matchingItem = _.find(selectedItems, { year: atcItem.year, version: atcItem.version });
+            const matchingItem = selectedItems.find(
+                item => item.year === atcItem.year && _.parseInt(item.version) === _.parseInt(atcItem.version)
+            );
 
             if (matchingItem) {
                 return [
@@ -191,7 +193,7 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         const item = _.first(items);
 
         if (item) {
-            return `${item.year}-v${item.version}`;
+            return `${item.year}-v${_.parseInt(item.version) + 1}`;
         } else {
             return "";
         }
