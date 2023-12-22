@@ -27,6 +27,7 @@ import {
 } from "../../../webapp/reports/glass-data-submission/glass-data-submission-list/Filters";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 import { Config } from "../../../domain/common/entities/Config";
+import { Event } from "@eyeseetea/d2-api/api/events";
 
 interface CompleteDataSetRegistrationsResponse {
     completeDataSetRegistrations: Registration[] | undefined;
@@ -677,13 +678,15 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             .getData();
     }
 
-    private async getProgramEvents(program: string, orgUnit: string) {
-        return await this.api.events
+    private async getProgramEvents(program: string, orgUnit: string): Promise<Event[]> {
+        const { events } = await this.api.events
             .get({
                 program,
                 orgUnit,
             })
             .getData();
+
+        return events;
     }
 
     private makeDataValuesArray(
@@ -821,7 +824,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
     private async duplicateProgram(program: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
         await promiseMap(items, async item => {
-            const programEvents = (await this.getProgramEvents(program.id, item.orgUnit ?? "")).events;
+            const programEvents = await this.getProgramEvents(program.id, item.orgUnit ?? "");
             const events = programEvents.filter(
                 event => String(new Date(event.eventDate).getFullYear()) === item.period
             );
@@ -848,7 +851,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
     private async duplicateProgramStages(program: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
         await promiseMap(items, async item => {
-            const programEvents = (await this.getProgramEvents(program.id, item.orgUnit ?? "")).events;
+            const programEvents = await this.getProgramEvents(program.id, item.orgUnit ?? "");
 
             await promiseMap(programEvents, async programEvent => {
                 const programStageEvents = (
