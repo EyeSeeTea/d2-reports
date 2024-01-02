@@ -11,6 +11,7 @@ export interface GLASSDataMaintenanceItem {
     id: Id;
     fileId: Id;
     fileName: string;
+    fileType: string;
     module: Module;
     orgUnit: string;
     orgUnitName: string;
