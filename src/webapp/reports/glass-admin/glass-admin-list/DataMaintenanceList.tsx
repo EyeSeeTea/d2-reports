@@ -43,6 +43,7 @@ export const DataMaintenanceList: React.FC = React.memo(() => {
             ],
             columns: [
                 { name: "fileName", text: i18n.t("File"), sortable: true },
+                { name: "fileType", text: i18n.t("File type"), sortable: false },
                 { name: "orgUnitName", text: i18n.t("Country"), sortable: true },
                 { name: "period", text: i18n.t("Year"), sortable: true },
                 {
