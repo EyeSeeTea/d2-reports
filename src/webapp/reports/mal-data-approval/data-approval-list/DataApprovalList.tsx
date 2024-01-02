@@ -276,7 +276,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     },
                     isActive: (rows: DataApprovalViewModel[]) => {
                         return (
-                            _.every(rows, row => row.validated === false && row.lastUpdatedValue) &&
+                            _.every(rows, row => row.approved === false && row.lastUpdatedValue) &&
                             (isMalApprover || isMalAdmin)
                         );
                     },
@@ -295,7 +295,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.validated === true),
+                    isActive: rows => _.every(rows, row => row.approved === true),
                 },
                 {
                     name: "approve",

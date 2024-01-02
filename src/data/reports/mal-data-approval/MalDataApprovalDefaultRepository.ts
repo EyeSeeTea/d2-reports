@@ -132,6 +132,7 @@ type SqlField =
     | "approvalworkflow"
     | "completed"
     | "validated"
+    | "approved"
     | "lastupdatedvalue"
     | "lastdateofsubmission"
     | "lastdateofapproval"
@@ -150,6 +151,7 @@ const fieldMapping: Record<keyof MalDataApprovalItem, SqlField> = {
     approvalWorkflow: "approvalworkflow",
     completed: "completed",
     validated: "validated",
+    approved: "approved",
     lastUpdatedValue: "lastupdatedvalue",
     lastDateOfSubmission: "lastdateofsubmission",
     lastDateOfApproval: "lastdateofapproval",
@@ -255,7 +257,22 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
         const countryCodes = await this.getCountryCodes();
 
-        return mergeHeadersAndData(options, periods, headerRows, rows, countryCodes);
+        const { pager, objects } = mergeHeadersAndData(options, periods, headerRows, rows, countryCodes);
+        const objectsInPage = await promiseMap(objects, async item => {
+            const approved = (
+                await this.api
+                    .get<any>("/dataApprovals", { ds: item.dataSetUid, pe: item.period, ou: item.orgUnitUid })
+                    .getData()
+            ).mayUnapprove;
+
+            return {
+                ...item,
+                approved,
+            };
+        });
+
+        return { pager, objects: objectsInPage };
+
         // A data value is not associated to a specific data set, but we can still map it
         // through the data element (1 data value -> 1 data element -> N data sets).
     }
@@ -287,9 +304,11 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         }));
 
         try {
-            const response = await this.api
-                .post<any>("/completeDataSetRegistrations", {}, { completeDataSetRegistrations })
-                .getData();
+            const response = (
+                await this.api
+                    .post<any>("/completeDataSetRegistrations", {}, { completeDataSetRegistrations })
+                    .getData()
+            ).response;
 
             return response.status === "SUCCESS";
         } catch (error: any) {
@@ -309,7 +328,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             }));
 
             const dateResponse = await this.api.post<any>("/dataValueSets.json", {}, { dataValues }).getData();
-            if (dateResponse.status !== "SUCCESS") throw new Error("Error when posting Submission date");
+            if (dateResponse.response.status !== "SUCCESS") throw new Error("Error when posting Submission date");
 
             let completeCheckResponses: completeCheckresponseType = await promiseMap(dataSets, async approval =>
                 this.api
@@ -337,14 +356,13 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                 _.isEqual(_.omit(value, ["workflow"]), othervalue)
             );
 
-            const completeResponse =
-                Object.keys(dataSetsToComplete).length !== 0 ? await this.complete(dataSetsToComplete) : true;
+            const completeResponse = dataSetsToComplete.length !== 0 ? await this.complete(dataSetsToComplete) : true;
 
             const response = await promiseMap(dataSets, async approval =>
                 this.api
                     .post<any>(
                         "/dataApprovals",
-                        { wf: approval.workflow, pe: approval.period, ou: approval.orgUnit },
+                        { ds: approval.dataSet, pe: approval.period, ou: approval.orgUnit },
                         {}
                     )
                     .getData()
@@ -588,7 +606,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         try {
             const response = await promiseMap(dataSets, async approval =>
                 this.api
-                    .delete<any>("/dataApprovals", { wf: approval.workflow, pe: approval.period, ou: approval.orgUnit })
+                    .delete<any>("/dataApprovals", { ds: approval.dataSet, pe: approval.period, ou: approval.orgUnit })
                     .getData()
             );
 
