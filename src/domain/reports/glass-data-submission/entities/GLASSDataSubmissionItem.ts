@@ -6,7 +6,7 @@ export type DataSubmissionPeriod = "YEARLY" | "QUARTERLY";
 
 export interface GLASSDataSubmissionItem {
     id: Id;
-    module: Module;
+    module: string;
     orgUnit: string;
     orgUnitName: string;
     period: string;
@@ -43,9 +43,9 @@ export interface EARDataSubmissionItem {
 }
 
 export interface GLASSDataSubmissionItemIdentifier {
-    orgUnit: string | undefined;
+    orgUnit: string;
     period: string;
-    module: string | undefined;
+    module: string;
 }
 
 export interface EARSubmissionItemIdentifier {
@@ -111,7 +111,7 @@ export function getEARSubmissionItemId(submissionItem: EARDataSubmissionItem): s
 
 export function parseDataSubmissionItemId(string: string): GLASSDataSubmissionItemIdentifier | undefined {
     const [orgUnit, period, module] = string.split("-");
-    if (!period) return undefined;
+    if (!period || !orgUnit || !module) return undefined;
 
     return { module, period, orgUnit };
 }
