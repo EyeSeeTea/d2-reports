@@ -28,6 +28,7 @@ import {
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 import { Config } from "../../../domain/common/entities/Config";
 import { Event } from "@eyeseetea/d2-api/api/events";
+import { generateUid } from "../../../utils/uid";
 
 interface CompleteDataSetRegistrationsResponse {
     completeDataSetRegistrations: Registration[] | undefined;
@@ -89,17 +90,11 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         if (!module) return emptyPage;
 
         const modules = await this.getModules();
-        const objects = (await this.globalStorageClient.getObject<GLASSDataSubmissionItem[]>(namespace)) ?? [];
-        const uploads =
-            (await this.globalStorageClient.getObject<GLASSDataSubmissionItemUpload[]>(
-                Namespaces.DATA_SUBMISSSIONS_UPLOADS
-            )) ?? [];
+        const objects = await this.getDataSubmissionObjects(namespace);
+        const uploads = await this.getUploads();
 
-        const filteredObjects = await this.getFilteredObjects(modules, objects);
-        const registrations = await this.getRegistrations(filteredObjects);
-        const rows = this.getGLASSListRows(filteredObjects, registrations, modules, uploads);
-        const filteredRows = this.getFilteredRows(rows, options);
-
+        const dataSubmissions = await this.getDataSubmissions(objects, modules, uploads);
+        const filteredRows = this.getFilteredRows(dataSubmissions, options);
         const { pager, rowsInPage } = this.paginate(filteredRows, sorting, paging);
 
         return {
@@ -108,96 +103,72 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         };
     }
 
-    private async getFilteredObjects(modules: GLASSDataSubmissionModule[], objects: GLASSDataSubmissionItem[]) {
-        const enrolledCountries = await this.getEnrolledCountries();
-        const amrFocalPointProgramId = await this.getAMRFocalPointProgramId();
-        const enrolledCountryModules = await this.getEnrolledCountryModules(
-            enrolledCountries,
-            modules,
-            amrFocalPointProgramId
-        );
-
-        const filteredObjects = objects.filter(object => {
-            return _(enrolledCountryModules)
-                .map(enrolledCountryModule => {
-                    const isInEnrolledCountry = enrolledCountryModule.enrolledCountry === object.orgUnit;
-                    const isInModule = enrolledCountryModule.trackedEntityModules.includes(object.module);
-
-                    return isInEnrolledCountry && isInModule;
-                })
-                .some();
-        });
-
-        return filteredObjects;
-    }
-
-    private async getEnrolledCountryModules(
-        enrolledCountries: string[],
-        modules: GLASSDataSubmissionModule[],
-        amrFocalPointProgramId: string
-    ) {
+    private async getUploads() {
         return (
-            await promiseMap(enrolledCountries, async enrolledCountry => {
-                const trackedEntityModules = await this.getTrackedEntityModules(
-                    modules,
-                    amrFocalPointProgramId,
-                    enrolledCountry
-                );
-                return { trackedEntityModules, enrolledCountry };
-            })
-        ).filter(country => !_.isEmpty(country.trackedEntityModules));
+            (await this.globalStorageClient.getObject<GLASSDataSubmissionItemUpload[]>(
+                Namespaces.DATA_SUBMISSSIONS_UPLOADS
+            )) ?? []
+        );
     }
 
-    private getGLASSListRows(
-        filteredObjects: GLASSDataSubmissionItem[],
-        registrations: Record<string, RegistrationItemBase>,
+    private async getDataSubmissionObjects(namespace: string) {
+        return (await this.globalStorageClient.getObject<GLASSDataSubmissionItem[]>(namespace)) ?? [];
+    }
+
+    private async getDataSubmissions(
+        objects: GLASSDataSubmissionItem[],
         modules: GLASSDataSubmissionModule[],
         uploads: GLASSDataSubmissionItemUpload[]
-    ) {
-        return filteredObjects.map(object => {
-            const key = getRegistrationKey({ orgUnitId: object.orgUnit, period: object.period });
+    ): Promise<GLASSDataSubmissionItem[]> {
+        const enrolledCountries = await this.getEnrolledCountries();
+        const amrFocalPointProgramId = await this.getAMRFocalPointProgramId();
+        const dataSubmissionItems = await this.getDataSubmissionIdentifiers(
+            amrFocalPointProgramId,
+            enrolledCountries.join(";"),
+            modules
+        );
+        const registrations = await this.getRegistrations(dataSubmissionItems);
+
+        const dataSubmissions: GLASSDataSubmissionItem[] = dataSubmissionItems.map(dataSubmissionItem => {
+            const dataSubmission = objects.find(
+                object =>
+                    object.period === dataSubmissionItem.period &&
+                    object.orgUnit === dataSubmissionItem.orgUnit &&
+                    object.module === dataSubmissionItem.module
+            );
+
+            const key = getRegistrationKey({
+                orgUnitId: dataSubmissionItem.orgUnit,
+                period: dataSubmissionItem.period,
+            });
             const match = registrations[key];
-            const submissionStatus = statusItems.find(item => item.value === object.status)?.text ?? "";
+
+            const submissionStatus =
+                statusItems.find(item => item.value === dataSubmission?.status)?.text ?? "Not completed";
             const dataSubmissionPeriod =
-                modules.find(module => object.module === module.id)?.dataSubmissionPeriod ?? "YEARLY";
-
-            const uploadStatus = uploads.filter(upload => upload.dataSubmission === object.id).map(item => item.status);
-            const completedDatasets = uploadStatus.filter(item => item === "COMPLETED").length;
-            const validatedDatasets = uploadStatus.filter(item => item === "VALIDATED").length;
-            const importedDatasets = uploadStatus.filter(item => item === "IMPORTED").length;
-            const uploadedDatasets = uploadStatus.filter(item => item === "UPLOADED").length;
-
-            let dataSetsUploaded = "";
-            if (completedDatasets > 0) {
-                dataSetsUploaded += `${completedDatasets} completed, `;
-            }
-            if (validatedDatasets > 0) {
-                dataSetsUploaded += `${validatedDatasets} validated, `;
-            }
-            if (importedDatasets > 0) {
-                dataSetsUploaded += `${importedDatasets} imported, `;
-            }
-            if (uploadedDatasets > 0) {
-                dataSetsUploaded += `${uploadedDatasets} uploaded, `;
-            }
-
-            // Remove trailing comma and space if any
-            dataSetsUploaded = dataSetsUploaded.replace(/,\s*$/, "");
-
-            // Show "No datasets" if all variables are 0
-            if (dataSetsUploaded === "") {
-                dataSetsUploaded = "No datasets";
-            }
+                modules.find(module => dataSubmissionItem.module === module.id)?.dataSubmissionPeriod ?? "YEARLY";
+            const dataSetsUploaded = getDatasetsUploaded(uploads, dataSubmission);
 
             return {
-                ...object,
+                ...dataSubmissionItem,
                 ...match,
+                ...dataSubmission,
                 submissionStatus,
                 dataSetsUploaded,
                 dataSubmissionPeriod,
-                period: object.period.slice(0, 4),
+                id: dataSubmission?.id ?? generateUid(),
+                period: dataSubmissionItem.period.slice(0, 4),
+                orgUnitName: match?.orgUnitName ?? "",
+                questionnaireCompleted: match?.questionnaireCompleted ?? false,
+                status: dataSubmission?.status ?? "NOT_COMPLETED",
+                statusHistory: dataSubmission?.statusHistory ?? [],
+                from: dataSubmission?.from ?? null,
+                to: dataSubmission?.to ?? null,
+                creationDate: dataSubmission?.creationDate ?? new Date().toISOString(),
             };
         });
+
+        return dataSubmissions;
     }
 
     private async getEnrolledCountries(): Promise<string[]> {
@@ -252,35 +223,39 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         return (await this.api.get<{ organisationUnits: Ref[] }>("/me").getData()).organisationUnits.map(ou => ou.id);
     }
 
-    private async getTrackedEntityModules(
-        modules: GLASSDataSubmissionModule[],
+    private async getDataSubmissionIdentifiers(
         program: string,
-        orgUnit: string
-    ): Promise<string[]> {
+        orgUnit: string,
+        modules: GLASSDataSubmissionModule[]
+    ): Promise<GLASSDataSubmissionItemIdentifier[]> {
         const { instances } = await this.api
-            .get<{ instances: { attributes: { value: string }[] }[] }>("/tracker/trackedEntities", {
+            .get<{ instances: { attributes: { value: string }[]; orgUnit: string }[] }>("/tracker/trackedEntities", {
                 program: program,
                 orgUnit: orgUnit,
-                fields: "attributes[value]",
+                fields: "attributes[value],orgUnit",
             })
             .getData();
 
-        const trackedEntityModuleNames = _(instances)
-            .flatMap(instance => instance.attributes.map(attribute => attribute.value))
-            .uniq()
+        const dataSubmissionPeriods = getDataSubmissionPeriods();
+        const orgUnitModules: { orgUnit: string; module: string }[] = _(instances)
+            .map(instance => {
+                const module = instance.attributes.map(attribute => attribute.value)[0] ?? "";
+
+                return {
+                    orgUnit: instance.orgUnit,
+                    module: moduleMapping[module] ?? "",
+                };
+            })
+            .uniqBy(instance => `${instance.orgUnit}_${instance.module}`)
             .value();
 
-        const trackedEntityModules = trackedEntityModuleNames.map(trackedEntityModule => {
-            const formattedModuleString = _.map(trackedEntityModule, char => (char === "_" ? " - " : char))
-                .join("")
-                .toLowerCase();
-
-            return (
-                modules.find(module => module.name.toLowerCase() === formattedModuleString)?.id ?? trackedEntityModule
-            );
+        return orgUnitModules.flatMap(orgUnitModule => {
+            return dataSubmissionPeriods.map(dataSubmissionPeriod => ({
+                ...orgUnitModule,
+                period: dataSubmissionPeriod.toString(),
+                module: modules.find(module => module.name === orgUnitModule.module)?.id ?? "",
+            }));
         });
-
-        return trackedEntityModules;
     }
 
     private async getCountriesOutsideNARegion(): Promise<string[]> {
@@ -416,7 +391,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
     }
 
     private async getRegistrations(
-        items: GLASSDataSubmissionItem[]
+        items: GLASSDataSubmissionItemIdentifier[]
     ): Promise<Record<RegistrationKey, RegistrationItemBase>> {
         const orgUnitIds = _.uniq(items.map(obj => obj.orgUnit));
         const periods = _.uniq(items.map(obj => obj.period));
@@ -520,7 +495,6 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
     ): GLASSDataSubmissionItem[] {
         const { orgUnitIds, module, dataSubmissionPeriod, periods, quarters, completionStatus, submissionStatus } =
             options;
-
         const quarterPeriods = _.flatMap(periods, year => quarters.map(quarter => `${year}${quarter}`));
 
         return rows.filter(row => {
@@ -529,13 +503,13 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
             const isDataSubmissionYearly = dataSubmissionPeriod === "YEARLY";
             const isInPeriod = isDataSubmissionYearly
-                ? periods.includes(String(row.period))
-                : quarterPeriods.includes(String(row.period));
+                ? periods.includes(row.period)
+                : quarterPeriods.includes(row.period);
 
             const isCompleted = !!(completionStatus !== undefined
                 ? row.questionnaireCompleted === completionStatus
                 : row);
-            const isSubmitted = !submissionStatus ? row : row.status === submissionStatus;
+            const isSubmitted = !!(!submissionStatus ? row : row.status === submissionStatus);
 
             return isInOrgUnit && isInModule && isInPeriod && isCompleted && isSubmitted;
         });
@@ -1057,10 +1031,53 @@ const emptyPage: PaginatedObjects<GLASSDataSubmissionItem> = {
     objects: [],
 };
 
+const moduleMapping: Record<string, string> = {
+    AMC: "AMC",
+    AMR: "AMR",
+    AMR_FUNGHI: "AMR - Funghi",
+    AMR_INDIVIDUAL: "AMR - Individual",
+    EAR: "EAR",
+    EGASP: "EGASP",
+};
+
 type RegistrationItemBase = Pick<
     GLASSDataSubmissionItem,
     "orgUnitName" | "orgUnit" | "period" | "questionnaireCompleted"
 >;
+
+function getDatasetsUploaded(
+    uploads: GLASSDataSubmissionItemUpload[],
+    object: GLASSDataSubmissionItem | undefined
+): string {
+    const uploadStatus = uploads.filter(upload => upload.dataSubmission === object?.id).map(item => item.status);
+    const completedDatasets = uploadStatus.filter(item => item === "COMPLETED").length;
+    const validatedDatasets = uploadStatus.filter(item => item === "VALIDATED").length;
+    const importedDatasets = uploadStatus.filter(item => item === "IMPORTED").length;
+    const uploadedDatasets = uploadStatus.filter(item => item === "UPLOADED").length;
+
+    let dataSetsUploaded = "";
+    if (completedDatasets > 0) {
+        dataSetsUploaded += `${completedDatasets} completed, `;
+    }
+    if (validatedDatasets > 0) {
+        dataSetsUploaded += `${validatedDatasets} validated, `;
+    }
+    if (importedDatasets > 0) {
+        dataSetsUploaded += `${importedDatasets} imported, `;
+    }
+    if (uploadedDatasets > 0) {
+        dataSetsUploaded += `${uploadedDatasets} uploaded, `;
+    }
+
+    // Remove trailing comma and space if any
+    dataSetsUploaded = dataSetsUploaded.replace(/,\s*$/, "");
+
+    // Show "No datasets" if all variables are 0
+    if (dataSetsUploaded === "" || !dataSetsUploaded) {
+        dataSetsUploaded = "No datasets";
+    }
+    return dataSetsUploaded;
+}
 
 function getRegistrationKey(options: { orgUnitId: Id; period: string }): RegistrationKey {
     return [options.orgUnitId, options.period].join(".");
@@ -1076,3 +1093,10 @@ type OrgUnitNode = {
     id: string;
     children?: OrgUnitNode[];
 };
+
+function getDataSubmissionPeriods(): number[] {
+    const currentYear = new Date().getFullYear();
+    const dataSubmissionPeriods = _.range(currentYear - 7, currentYear);
+
+    return dataSubmissionPeriods;
+}

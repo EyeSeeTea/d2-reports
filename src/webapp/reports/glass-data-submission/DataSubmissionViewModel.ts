@@ -14,7 +14,7 @@ export interface DataSubmissionViewModel {
     orgUnitName: string;
     period: string;
     status: Status;
-    module: Module;
+    module: string;
     questionnaireCompleted: boolean;
     dataSetsUploaded: string;
     submissionStatus: string;
