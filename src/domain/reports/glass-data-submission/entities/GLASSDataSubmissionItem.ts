@@ -75,7 +75,7 @@ export type Status =
     | "PENDING_UPDATE_APPROVAL"
     | "DRAFT";
 
-export type Module = "AMR" | "AMR - Individual" | "AMR - Funghi" | "AMC" | "EGASP" | "EAR";
+export type Module = "AMR" | "AMR - Individual" | "AMR - Fungal" | "AMC" | "EGASP" | "EAR";
 
 export interface GLASSDataSubmissionModule {
     id: Id;
