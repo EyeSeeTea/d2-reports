@@ -712,12 +712,12 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                     async amrQuestionnaire => await this.duplicateDataSet(amrQuestionnaire, items)
                 );
             }
-            if (module === "AMR - Funghi") {
-                const amrFunghiQuestionnaires =
-                    modules.find(module => module.name === "AMR - Funghi")?.questionnaires ?? [];
+            if (module === "AMR - Fungal") {
+                const amrFungalQuestionnaires =
+                    modules.find(module => module.name === "AMR - Fungal")?.questionnaires ?? [];
                 _.forEach(
-                    amrFunghiQuestionnaires,
-                    async amrFunghiQuestionnaire => await this.duplicateDataSet(amrFunghiQuestionnaire, items)
+                    amrFungalQuestionnaires,
+                    async amrFungalQuestionnaire => await this.duplicateDataSet(amrFungalQuestionnaire, items)
                 );
             }
             if (module === "AMR - Individual") {
@@ -1034,7 +1034,7 @@ const emptyPage: PaginatedObjects<GLASSDataSubmissionItem> = {
 const moduleMapping: Record<string, string> = {
     AMC: "AMC",
     AMR: "AMR",
-    AMR_FUNGHI: "AMR - Funghi",
+    AMR_FUNGAL: "AMR - Fungal",
     AMR_INDIVIDUAL: "AMR - Individual",
     EAR: "EAR",
     EGASP: "EGASP",
