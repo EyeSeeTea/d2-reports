@@ -1,8 +1,14 @@
 import { Button, Chip } from "@material-ui/core";
 import React, { useMemo, useState } from "react";
 import i18n from "../../../../../locales";
-import { ObjectsList, TableColumn, TableConfig, useObjectsTable } from "@eyeseetea/d2-ui-components";
-import { ATCViewModel } from "../../DataMaintenanceViewModel";
+import {
+    ConfirmationDialog,
+    ObjectsList,
+    TableColumn,
+    TableConfig,
+    useObjectsTable,
+} from "@eyeseetea/d2-ui-components";
+import { ATCViewModel, getVersion } from "../../DataMaintenanceViewModel";
 import { CloudUpload } from "@material-ui/icons";
 import { useATC } from "./useATC";
 import _ from "lodash";
@@ -20,12 +26,17 @@ export const ATCClassificationList: React.FC = React.memo(() => {
     const {
         isPatchModalOpen,
         isUploadATCModalOpen,
+        isRecalculateLogicModalOpen,
+        isRecalculating,
         closePatchModal,
         closeUploadATCModal,
+        closeRecalculateLogicModal,
         openPatchModal,
         openUploadATCModal,
+        openRecalculateLogicModal,
         patchVersion,
         uploadATCFile,
+        saveRecalculationLogic,
     } = useATCUpload(reload);
 
     const [isCurrentVersion, setCurrentVersion] = useState<boolean>(false);
@@ -69,6 +80,7 @@ export const ATCClassificationList: React.FC = React.memo(() => {
     );
 
     const tableProps = useObjectsTable<ATCViewModel>(baseConfig, getATCs);
+    const previousVersionExists = tableProps.rows.some(row => row.previousVersion);
 
     const columnsToShow = useMemo<TableColumn<ATCViewModel>[]>(() => {
         if (!visibleColumns || _.isEmpty(visibleColumns)) return tableProps.columns;
@@ -90,7 +102,7 @@ export const ATCClassificationList: React.FC = React.memo(() => {
                 <Button onClick={openUploadATCModal} color="primary" variant="contained">
                     {i18n.t("Upload new ATC file")}
                 </Button>
-                <Button color="primary" variant="contained">
+                <Button onClick={openRecalculateLogicModal} color="primary" variant="contained">
                     {i18n.t("Recalculate logic")}
                 </Button>
             </StyledButtonContainer>
@@ -123,6 +135,24 @@ export const ATCClassificationList: React.FC = React.memo(() => {
                 uploadedYears={uploadedYears}
                 saveFile={uploadATCFile}
             />
+
+            <ConfirmationDialog
+                isOpen={isRecalculateLogicModalOpen}
+                title={"Recalculate"}
+                onSave={saveRecalculationLogic}
+                onCancel={closeRecalculateLogicModal}
+                saveText={i18n.t(isRecalculating ? "Recalculating..." : "Start recalculation")}
+                cancelText={i18n.t("Cancel")}
+                disableSave={isRecalculating}
+                maxWidth="md"
+                fullWidth
+            >
+                {previousVersionExists && (
+                    <p>Last recalculation was done with {getVersion(tableProps.rows, "previousVersion")}</p>
+                )}
+                <p>RECALCULATE all existing submissions with {getVersion(tableProps.rows, "currentVersion")}</p>
+                <p>There is no UNDO for this action</p>
+            </ConfirmationDialog>
         </React.Fragment>
     );
 });

@@ -31,6 +31,7 @@ export interface GLASSMaintenancePaginatedObjects<T> extends PaginatedObjects<T>
 
 export interface ATCItem {
     currentVersion: boolean;
+    previousVersion: boolean;
     uploadedDate: string;
     version: string;
     year: string;

@@ -7,7 +7,7 @@ import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreSt
 import { StorageClient } from "../../common/clients/storage/StorageClient";
 import { Instance } from "../../common/entities/Instance";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
-import { NamedRef } from "../../../domain/common/entities/Ref";
+import { NamedRef, Ref } from "../../../domain/common/entities/Ref";
 import { D2Api, Pager } from "../../../types/d2-api";
 import {
     ATCItem,
@@ -32,6 +32,13 @@ import {
 
 interface ATCJson {
     [key: string]: any;
+}
+
+interface AMCRecalculation {
+    currentDate: string;
+    recalculate: boolean;
+    orgUnitIds: string[];
+    periods: number[];
 }
 
 export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenanceRepository {
@@ -121,15 +128,151 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         }
     }
 
-    private uploadNewATC(year: string, atcItems: ATCItem[]) {
+    async saveRecalculationLogic(namespace: string, atcNamespace: string): Promise<void> {
+        const atcs = await this.getATCItems("ATCs");
+
+        const updatedATCs = atcs.map(atc => {
+            if (atc.currentVersion) {
+                return {
+                    ...atc,
+                    previousVersion: true,
+                };
+            } else {
+                return {
+                    ...atc,
+                    previousVersion: false,
+                };
+            }
+        });
+
+        const currentDate = new Date().toISOString();
+        const periods = this.getATCPeriods();
+        const enrolledCountries = await this.getEnrolledCountries();
+
+        const amcRecalculation: AMCRecalculation = {
+            currentDate: currentDate,
+            periods: periods,
+            orgUnitIds: enrolledCountries,
+            recalculate: true,
+        };
+
+        this.globalStorageClient.saveObject<AMCRecalculation>(namespace, amcRecalculation);
+        this.globalStorageClient.saveObject<ATCItem[]>(atcNamespace, updatedATCs);
+    }
+
+    private getATCPeriods = (): number[] => {
+        const currentYear = new Date().getFullYear();
+        const startYear = 2016;
+
+        return _.range(startYear, currentYear + 1);
+    };
+
+    private async getEnrolledCountries(): Promise<string[]> {
+        const userOrgUnits = await this.getUserOrgUnits();
+        const orgUnitsWithChildren = await this.getOUsWithChildren(userOrgUnits);
+
+        const countriesOutsideNARegion = await this.getCountriesOutsideNARegion();
+        const enrolledCountries = orgUnitsWithChildren.filter(orgUnit => countriesOutsideNARegion.includes(orgUnit));
+
+        return enrolledCountries;
+    }
+
+    private async getOUsWithChildren(userOrgUnits: string[]): Promise<string[]> {
+        const { organisationUnits } = await this.api.metadata
+            .get({
+                organisationUnits: {
+                    fields: {
+                        id: true,
+                        level: true,
+                        children: {
+                            id: true,
+                            level: true,
+                            children: {
+                                id: true,
+                                level: true,
+                            },
+                        },
+                    },
+                    filter: {
+                        level: {
+                            eq: "1",
+                        },
+                    },
+                },
+            })
+            .getData();
+
+        const orgUnitsWithChildren = _(userOrgUnits)
+            .flatMap(ou => {
+                const res = flattenNodes(flattenNodes(organisationUnits).filter(res => res.id === ou)).map(
+                    node => node.id
+                );
+                return res;
+            })
+            .uniq()
+            .value();
+
+        return orgUnitsWithChildren;
+    }
+
+    private async getUserOrgUnits(): Promise<string[]> {
+        return (await this.api.get<{ organisationUnits: Ref[] }>("/me").getData()).organisationUnits.map(ou => ou.id);
+    }
+
+    private async getCountriesOutsideNARegion(): Promise<string[]> {
+        const { organisationUnits: kosovoOu } = await this.api.metadata
+            .get({
+                organisationUnits: {
+                    fields: {
+                        id: true,
+                    },
+                    filter: {
+                        name: {
+                            eq: "Kosovo",
+                        },
+                        level: {
+                            eq: "3",
+                        },
+                        "parent.code": {
+                            eq: "NA",
+                        },
+                    },
+                },
+            })
+            .getData();
+
+        const { organisationUnits } = await this.api.metadata
+            .get({
+                organisationUnits: {
+                    fields: {
+                        id: true,
+                    },
+                    filter: {
+                        level: {
+                            eq: "3",
+                        },
+                        "parent.code": {
+                            ne: "NA",
+                        },
+                    },
+                    paging: false,
+                },
+            })
+            .getData();
+
+        return _.concat(organisationUnits, kosovoOu).map(orgUnit => orgUnit.id);
+    }
+
+    private uploadNewATC(year: string, atcItems: ATCItem[]): ATCItem[] {
         const atcYears = atcItems.map(atcItem => _.parseInt(atcItem.year));
         const currentVersionYear = Math.max(...atcYears);
 
-        const newItem = {
+        const newItem: ATCItem = {
             year: year,
-            version: 1,
+            version: "1",
             uploadedDate: new Date().toISOString(),
             currentVersion: _.parseInt(year) > currentVersionYear,
+            previousVersion: false,
         };
 
         return [...atcItems, newItem];
@@ -305,3 +448,12 @@ const emptyPage: GLASSMaintenancePaginatedObjects<GLASSDataMaintenanceItem> = {
 };
 
 const earModule = "EAR";
+
+const flattenNodes = (orgUnitNodes: OrgUnitNode[]): OrgUnitNode[] =>
+    _.flatMap(orgUnitNodes, node => (node.children ? [node, ...flattenNodes(node.children)] : [node]));
+
+type OrgUnitNode = {
+    level: number;
+    id: string;
+    children?: OrgUnitNode[];
+};

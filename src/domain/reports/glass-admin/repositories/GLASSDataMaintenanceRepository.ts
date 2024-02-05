@@ -30,6 +30,7 @@ export interface GLASSDataMaintenanceRepository {
     getUserModules(config: Config): Promise<GLASSModule[]>;
     delete(namespace: string, items: Id[]): Promise<void>;
     uploadATC(namespace: string, file: File, year: string, items?: ATCItemIdentifier[]): Promise<void>;
+    saveRecalculationLogic(namespace: string, atcNamespace: string): Promise<void>;
     getColumns(namespace: string): Promise<string[]>;
     saveColumns(namespace: string, columns: string[]): Promise<void>;
 }

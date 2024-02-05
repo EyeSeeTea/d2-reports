@@ -1,5 +1,5 @@
 import { useSnackbar } from "@eyeseetea/d2-ui-components";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useBooleanState } from "../../../../utils/use-boolean";
 import i18n from "../../../../../locales";
 import { useAppContext } from "../../../../contexts/app-context";
@@ -12,6 +12,9 @@ export function useATCUpload(reload: () => void) {
 
     const [isPatchModalOpen, { enable: openPatchModal, disable: closePatchModal }] = useBooleanState(false);
     const [isUploadATCModalOpen, { enable: openUploadATCModal, disable: closeUploadATCModal }] = useBooleanState(false);
+    const [isRecalculateLogicModalOpen, { enable: openRecalculateLogicModal, disable: closeRecalculateLogicModal }] =
+        useBooleanState(false);
+    const [isRecalculating, setIsRecalculating] = useState<boolean>(false);
 
     const patchVersion = useCallback(
         async (selectedFile: File | undefined, period: string, selectedItems: ATCItemIdentifier[]) => {
@@ -47,14 +50,33 @@ export function useATCUpload(reload: () => void) {
         [closeUploadATCModal, compositionRoot.glassAdmin, reload, snackbar]
     );
 
+    const saveRecalculationLogic = useCallback(async () => {
+        try {
+            setIsRecalculating(true);
+            await compositionRoot.glassAdmin.saveRecalculationLogic(Namespaces.AMC_RECALCULATION, Namespaces.ATCS);
+            snackbar.success("Recalculation logic object has been updated");
+        } catch (error) {
+            snackbar.error(i18n.t("Error when saving recalculation logic"));
+        } finally {
+            setIsRecalculating(false);
+            closeRecalculateLogicModal();
+            reload();
+        }
+    }, [closeRecalculateLogicModal, compositionRoot.glassAdmin, reload, snackbar]);
+
     return {
         isPatchModalOpen,
         isUploadATCModalOpen,
+        isRecalculateLogicModalOpen,
+        isRecalculating,
         closePatchModal,
         closeUploadATCModal,
         openPatchModal,
         openUploadATCModal,
+        openRecalculateLogicModal,
+        closeRecalculateLogicModal,
         patchVersion,
         uploadATCFile,
+        saveRecalculationLogic,
     };
 }
