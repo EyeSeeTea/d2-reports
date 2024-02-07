@@ -10,6 +10,7 @@ import { Namespaces } from "../../common/clients/storage/Namespaces";
 import { NamedRef, Ref } from "../../../domain/common/entities/Ref";
 import { D2Api, Pager } from "../../../types/d2-api";
 import {
+    AMCRecalculation,
     ATCItem,
     ATCItemIdentifier,
     GLASSDataMaintenanceItem,
@@ -32,13 +33,6 @@ import {
 
 interface ATCJson {
     [key: string]: any;
-}
-
-interface AMCRecalculation {
-    currentDate: string;
-    recalculate: boolean;
-    orgUnitIds: string[];
-    periods: number[];
 }
 
 export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenanceRepository {
@@ -128,10 +122,28 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         }
     }
 
+    async getRecalculationLogic(namespace: string): Promise<AMCRecalculation | undefined> {
+        return await this.globalStorageClient.getObject<AMCRecalculation>(namespace);
+    }
+
+    async cancelRecalculation(namespace: string): Promise<void> {
+        const amcRecalculationLogic = await this.getRecalculationLogic(namespace);
+
+        if (amcRecalculationLogic) {
+            const updatedRecalculationLogic = {
+                ...amcRecalculationLogic,
+                recalculate: false,
+            };
+
+            await this.globalStorageClient.saveObject<AMCRecalculation>(namespace, updatedRecalculationLogic);
+        }
+    }
+
     async saveRecalculationLogic(namespace: string, atcNamespace: string): Promise<void> {
+        const amcRecalculationLogic = await this.getRecalculationLogic(namespace);
         const atcs = await this.getATCItems("ATCs");
 
-        const updatedATCs = atcs.map(atc => {
+        const updatedATCs: ATCItem[] = atcs.map(atc => {
             if (atc.currentVersion) {
                 return {
                     ...atc,
@@ -153,6 +165,7 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
             currentDate: currentDate,
             periods: periods,
             orgUnitIds: enrolledCountries,
+            loggerProgram: amcRecalculationLogic?.loggerProgram ?? "",
             recalculate: true,
         };
 
@@ -160,11 +173,31 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         this.globalStorageClient.saveObject<ATCItem[]>(atcNamespace, updatedATCs);
     }
 
-    private getATCPeriods = (): number[] => {
+    async getLoggerProgramName(programId: string): Promise<string> {
+        const { programs } = await this.api.metadata
+            .get({
+                programs: {
+                    fields: {
+                        id: true,
+                        name: true,
+                    },
+                    filter: {
+                        id: {
+                            eq: programId,
+                        },
+                    },
+                },
+            })
+            .getData();
+
+        return programs[0]?.name ?? "";
+    }
+
+    private getATCPeriods = (): string[] => {
         const currentYear = new Date().getFullYear();
         const startYear = 2016;
 
-        return _.range(startYear, currentYear + 1);
+        return _.range(startYear, currentYear + 1).map(year => year.toString());
     };
 
     private async getEnrolledCountries(): Promise<string[]> {

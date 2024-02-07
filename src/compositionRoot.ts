@@ -89,6 +89,9 @@ import { UpdateGLASSDataMaintenanceUseCase } from "./domain/reports/glass-admin/
 import { GetATCsUseCase } from "./domain/reports/glass-admin/usecases/GetATCsUseCase";
 import { UploadATCFileUseCase } from "./domain/reports/glass-admin/usecases/UploadATCFileUseCase";
 import { SaveAMCRecalculationLogic } from "./domain/reports/glass-admin/usecases/SaveAMCRecalculationLogic";
+import { GetATCLoggerProgramUseCase } from "./domain/reports/glass-admin/usecases/GetATCLoggerProgramUseCase";
+import { GetATCRecalculationLogicUseCase } from "./domain/reports/glass-admin/usecases/GetATCRecalculationLogicUseCase";
+import { CancelRecalculationUseCase } from "./domain/reports/glass-admin/usecases/CancelRecalculationUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -165,6 +168,9 @@ export function getCompositionRoot(api: D2Api) {
             get: new GetGLASSDataMaintenanceUseCase(glassAdminRepository),
             getATCs: new GetATCsUseCase(glassAdminRepository),
             getModules: new GetGLASSModulesUseCase(glassAdminRepository),
+            getATCRecalculationLogic: new GetATCRecalculationLogicUseCase(glassAdminRepository),
+            cancelRecalculation: new CancelRecalculationUseCase(glassAdminRepository),
+            getATCLoggerProgram: new GetATCLoggerProgramUseCase(glassAdminRepository),
             updateStatus: new UpdateGLASSDataMaintenanceUseCase(glassAdminRepository),
             saveRecalculationLogic: new SaveAMCRecalculationLogic(glassAdminRepository),
             uploadFile: new UploadATCFileUseCase(glassAdminRepository),

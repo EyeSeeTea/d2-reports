@@ -291,6 +291,7 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
 
         if (typeof dataQuality === "undefined" || dataQuality.validationResults.length === 0) {
             const { indicators, programIndicators } = await this.getMetadata(this.api, {});
+            console.log({ dataQuality, indicators, programIndicators });
 
             await this.makeDataQualityObject(indicators, programIndicators);
         } else {
