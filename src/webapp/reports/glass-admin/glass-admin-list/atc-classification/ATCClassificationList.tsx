@@ -19,6 +19,7 @@ import {
     parseATCItemId,
 } from "../../../../../domain/reports/glass-admin/entities/GLASSDataMaintenanceItem";
 import { useATCUpload } from "./useATCUpload";
+import { useATCActions } from "./useATCActions";
 
 export const ATCClassificationList: React.FC = React.memo(() => {
     const { initialSorting, pagination, uploadedYears, visibleColumns, getATCs, reload, saveReorderedColumns } =
@@ -27,19 +28,22 @@ export const ATCClassificationList: React.FC = React.memo(() => {
         isPatchModalOpen,
         isUploadATCModalOpen,
         isRecalculateLogicModalOpen,
-        isRecalculating,
-        isRecalculated,
-        cancelRecalculation,
+        loggerProgram,
         closePatchModal,
         closeUploadATCModal,
         closeRecalculateLogicModal,
         openPatchModal,
         openUploadATCModal,
         openRecalculateLogicModal,
+    } = useATCUpload();
+    const {
+        isRecalculating,
+        isRecalculated,
+        cancelRecalculation,
         patchVersion,
-        uploadATCFile,
         saveRecalculationLogic,
-    } = useATCUpload(reload);
+        uploadATCFile,
+    } = useATCActions(loggerProgram, reload, closePatchModal, closeUploadATCModal, closeRecalculateLogicModal);
 
     const [isCurrentVersion, setCurrentVersion] = useState<boolean>(false);
     const [selectedItems, setSelectedItems] = useState<ATCItemIdentifier[]>([]);
