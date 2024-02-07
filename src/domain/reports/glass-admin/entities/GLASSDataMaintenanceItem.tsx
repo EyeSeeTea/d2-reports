@@ -43,6 +43,14 @@ export interface ATCItemIdentifier {
     year: string;
 }
 
+export interface AMCRecalculation {
+    currentDate: string;
+    recalculate: boolean;
+    orgUnitIds: Id[];
+    periods: string[];
+    loggerProgram: string;
+}
+
 export function getATCItemId(atc: ATCItem): string {
     return [atc.year, atc.version, atc.currentVersion].join("-");
 }

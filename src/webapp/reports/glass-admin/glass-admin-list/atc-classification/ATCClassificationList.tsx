@@ -28,6 +28,8 @@ export const ATCClassificationList: React.FC = React.memo(() => {
         isUploadATCModalOpen,
         isRecalculateLogicModalOpen,
         isRecalculating,
+        isRecalculated,
+        cancelRecalculation,
         closePatchModal,
         closeUploadATCModal,
         closeRecalculateLogicModal,
@@ -102,9 +104,21 @@ export const ATCClassificationList: React.FC = React.memo(() => {
                 <Button onClick={openUploadATCModal} color="primary" variant="contained">
                     {i18n.t("Upload new ATC file")}
                 </Button>
-                <Button onClick={openRecalculateLogicModal} color="primary" variant="contained">
-                    {i18n.t("Recalculate logic")}
-                </Button>
+
+                {!isRecalculated ? (
+                    <Button onClick={openRecalculateLogicModal} color="primary" variant="contained">
+                        {i18n.t("Recalculate logic")}
+                    </Button>
+                ) : (
+                    <>
+                        <Button color="default" variant="contained" disabled>
+                            {i18n.t("Recalculation Ongoing...")}
+                        </Button>{" "}
+                        <CancelButton onClick={cancelRecalculation} variant="contained">
+                            {i18n.t("Cancel recalculation")}
+                        </CancelButton>
+                    </>
+                )}
             </StyledButtonContainer>
 
             <ObjectsList<ATCViewModel>
@@ -161,4 +175,14 @@ const StyledButtonContainer = styled.div`
     display: flex;
     justify-content: end;
     gap: 1rem;
+`;
+
+const CancelButton = styled(Button)`
+     {
+        background-color: #f44336;
+        color: white;
+        &:hover {
+            background-color: #d32f2f;
+        }
+    }
 `;
