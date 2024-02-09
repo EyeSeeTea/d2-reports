@@ -162,9 +162,9 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         const enrolledCountries = await this.getEnrolledCountries();
 
         const amcRecalculation: AMCRecalculation = {
-            currentDate: currentDate,
+            date: currentDate,
             periods: periods,
-            orgUnitIds: enrolledCountries,
+            orgUnitsIds: enrolledCountries,
             loggerProgram: amcRecalculationLogic?.loggerProgram ?? "",
             recalculate: true,
         };

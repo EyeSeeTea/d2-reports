@@ -167,29 +167,25 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         api: D2Api,
         metadataItems: IndicatorMetadataType[]
     ): Promise<IndicatorItem[]> {
-        return _.compact(
-            await promiseMap(metadataItems, async item => {
-                try {
-                    const numeratorValidation = await api.expressions.validate("indicator", item.numerator).getData();
-                    const denominatorValidation = await api.expressions
-                        .validate("indicator", item.denominator)
-                        .getData();
+        return (await promiseMap(metadataItems, async item => {
+            try {
+                const numeratorValidation = await api.expressions.validate("indicator", item.numerator).getData();
+                const denominatorValidation = await api.expressions.validate("indicator", item.denominator).getData();
 
-                    const numeratorResult = this.statusToBoolean(numeratorValidation.status);
-                    const denominatorResult = this.statusToBoolean(denominatorValidation.status);
+                const numeratorResult = this.statusToBoolean(numeratorValidation.status);
+                const denominatorResult = this.statusToBoolean(denominatorValidation.status);
 
-                    return {
-                        ...item,
-                        user: item.user.displayName,
-                        numeratorResult,
-                        denominatorResult,
-                        metadataType: "Indicator",
-                    };
-                } catch (error) {
-                    console.debug(error);
-                }
-            })
-        ) as IndicatorItem[];
+                return {
+                    ...item,
+                    user: item.user.displayName,
+                    numeratorResult,
+                    denominatorResult,
+                    metadataType: "Indicator",
+                };
+            } catch (error) {
+                console.debug(error);
+            }
+        })) as IndicatorItem[];
     }
 
     private async getProgramIndicatorValidations(
@@ -235,7 +231,6 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         const indicatorValidations = await this.getIndicatorValidations(api, indicators);
         const programIndicatorValidations = await this.getProgramIndicatorValidations(api, programIndicators);
 
-        console.log({ indicatorValidations, programIndicatorValidations });
         return _.concat<DataQualityItemType>(indicatorValidations, programIndicatorValidations);
     }
 
@@ -286,7 +281,6 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
 
         if (typeof dataQuality === "undefined" || dataQuality.validationResults.length === 0) {
             const { indicators, programIndicators } = await this.getMetadata(this.api, {});
-            console.log({ dataQuality, indicators, programIndicators });
 
             await this.makeDataQualityObject(indicators, programIndicators);
         } else {

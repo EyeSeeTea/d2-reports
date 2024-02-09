@@ -44,9 +44,9 @@ export interface ATCItemIdentifier {
 }
 
 export interface AMCRecalculation {
-    currentDate: string;
+    date: string;
     recalculate: boolean;
-    orgUnitIds: Id[];
+    orgUnitsIds: Id[];
     periods: string[];
     loggerProgram: string;
 }
