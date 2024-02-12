@@ -28,7 +28,6 @@ export const ATCClassificationList: React.FC = React.memo(() => {
         isPatchModalOpen,
         isUploadATCModalOpen,
         isRecalculateLogicModalOpen,
-        loggerProgram,
         closePatchModal,
         closeUploadATCModal,
         closeRecalculateLogicModal,
@@ -43,7 +42,7 @@ export const ATCClassificationList: React.FC = React.memo(() => {
         patchVersion,
         saveRecalculationLogic,
         uploadATCFile,
-    } = useATCActions(loggerProgram, reload, closePatchModal, closeUploadATCModal, closeRecalculateLogicModal);
+    } = useATCActions(reload, closePatchModal, closeUploadATCModal, closeRecalculateLogicModal);
 
     const [isCurrentVersion, setCurrentVersion] = useState<boolean>(false);
     const [selectedItems, setSelectedItems] = useState<ATCItemIdentifier[]>([]);
@@ -166,10 +165,18 @@ export const ATCClassificationList: React.FC = React.memo(() => {
                 fullWidth
             >
                 {previousVersionExists && (
-                    <p>Last recalculation was done with {getVersion(tableProps.rows, "previousVersion")}</p>
+                    <p>
+                        {i18n.t("Last recalculation was done with {{previousVersion}}", {
+                            previousVersion: getVersion(tableProps.rows, "previousVersion"),
+                        })}
+                    </p>
                 )}
-                <p>RECALCULATE all existing submissions with {getVersion(tableProps.rows, "currentVersion")}</p>
-                <p>There is no UNDO for this action</p>
+                <p>
+                    {i18n.t("RECALCULATE all existing submissions with {{currentVersion}}", {
+                        currentVersion: getVersion(tableProps.rows, "currentVersion"),
+                    })}
+                </p>
+                <p>{i18n.t("There is no UNDO for this action")}</p>
             </ConfirmationDialog>
         </React.Fragment>
     );
@@ -182,11 +189,9 @@ const StyledButtonContainer = styled.div`
 `;
 
 const CancelButton = styled(Button)`
-     {
-        background-color: #f44336;
-        color: white;
-        &:hover {
-            background-color: #d32f2f;
-        }
+    background-color: #f44336;
+    color: white;
+    &:hover {
+        background-color: #d32f2f;
     }
 `;

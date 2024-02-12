@@ -3,7 +3,7 @@ import { GLASSDataMaintenanceRepository } from "../repositories/GLASSDataMainten
 export class SaveAMCRecalculationLogic {
     constructor(private maintenanceRepository: GLASSDataMaintenanceRepository) {}
 
-    execute(namespace: string, atcNamespace: string): Promise<void> {
-        return this.maintenanceRepository.saveRecalculationLogic(namespace, atcNamespace);
+    execute(namespace: string): Promise<void> {
+        return this.maintenanceRepository.saveRecalculationLogic(namespace);
     }
 }

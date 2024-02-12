@@ -3,7 +3,9 @@ import { GLASSDataMaintenanceRepository } from "../repositories/GLASSDataMainten
 export class GetATCLoggerProgramUseCase {
     constructor(private maintenanceRepository: GLASSDataMaintenanceRepository) {}
 
-    execute(programId: string): Promise<string> {
-        return this.maintenanceRepository.getLoggerProgramName(programId);
+    async execute(namespace: string): Promise<string> {
+        const amcRecalculation = await this.maintenanceRepository.getRecalculationLogic(namespace);
+
+        return this.maintenanceRepository.getLoggerProgramName(amcRecalculation?.loggerProgram ?? "");
     }
 }
