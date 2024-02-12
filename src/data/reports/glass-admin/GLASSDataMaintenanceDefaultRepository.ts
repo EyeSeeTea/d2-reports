@@ -31,9 +31,12 @@ import {
     getPaginatedObjects,
 } from "../../../domain/common/entities/PaginatedObjects";
 
-interface ATCJson {
-    [key: string]: any;
-}
+type ATCJson = {
+    name: "atc" | "ddd_combinations" | "ddd" | "conversion" | "ddd_alterations" | "atc_alterations";
+    data: unknown[];
+};
+
+const START_YEAR_PERIOD = 2016;
 
 export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenanceRepository {
     private storageClient: StorageClient;
@@ -104,21 +107,21 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         const atcItems = await this.getATCItems(namespace);
         const jsons = await this.extractJsonFromZIP(file);
 
-        if (jsons.length === 4) {
+        if (jsons.length === 6) {
             if (items) {
                 const updatedVersion = this.updateVersion(items);
                 const updatedATCItems = this.patchATCVersion(atcItems, items);
 
-                await this.globalStorageClient.saveObject<ATCJson>(`ATC-${updatedVersion}`, jsons);
-                await this.globalStorageClient.saveObject<ATCJson>(Namespaces.ATCS, updatedATCItems);
+                await this.globalStorageClient.saveObject<ATCJson[]>(`ATC-${updatedVersion}`, jsons);
+                await this.globalStorageClient.saveObject<ATCItem[]>(Namespaces.ATCS, updatedATCItems);
             } else {
                 const updatedATCItems = this.uploadNewATC(year, atcItems);
 
-                await this.globalStorageClient.saveObject<ATCJson>(`ATC-${year}-v1`, jsons);
-                await this.globalStorageClient.saveObject<ATCJson>(Namespaces.ATCS, updatedATCItems);
+                await this.globalStorageClient.saveObject<ATCJson[]>(`ATC-${year}-v1`, jsons);
+                await this.globalStorageClient.saveObject<ATCItem[]>(Namespaces.ATCS, updatedATCItems);
             }
         } else {
-            throw new Error("The zip file does not contain exactly 4 JSON files.");
+            throw new Error("The zip file does not contain exactly 6 JSON files.");
         }
     }
 
@@ -139,23 +142,8 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         }
     }
 
-    async saveRecalculationLogic(namespace: string, atcNamespace: string): Promise<void> {
+    async saveRecalculationLogic(namespace: string): Promise<void> {
         const amcRecalculationLogic = await this.getRecalculationLogic(namespace);
-        const atcs = await this.getATCItems("ATCs");
-
-        const updatedATCs: ATCItem[] = atcs.map(atc => {
-            if (atc.currentVersion) {
-                return {
-                    ...atc,
-                    previousVersion: true,
-                };
-            } else {
-                return {
-                    ...atc,
-                    previousVersion: false,
-                };
-            }
-        });
 
         const currentDate = new Date().toISOString();
         const periods = this.getATCPeriods();
@@ -170,7 +158,6 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         };
 
         this.globalStorageClient.saveObject<AMCRecalculation>(namespace, amcRecalculation);
-        this.globalStorageClient.saveObject<ATCItem[]>(atcNamespace, updatedATCs);
     }
 
     async getLoggerProgramName(programId: string): Promise<string> {
@@ -195,9 +182,8 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
 
     private getATCPeriods = (): string[] => {
         const currentYear = new Date().getFullYear();
-        const startYear = 2016;
 
-        return _.range(startYear, currentYear + 1).map(year => year.toString());
+        return _.range(START_YEAR_PERIOD, currentYear + 1).map(year => year.toString());
     };
 
     private async getEnrolledCountries(): Promise<string[]> {
@@ -298,42 +284,63 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
 
     private uploadNewATC(year: string, atcItems: ATCItem[]): ATCItem[] {
         const atcYears = atcItems.map(atcItem => _.parseInt(atcItem.year));
-        const currentVersionYear = Math.max(...atcYears);
+        const previousVersionYear = Math.max(...atcYears);
 
         const newItem: ATCItem = {
             year: year,
             version: "1",
             uploadedDate: new Date().toISOString(),
-            currentVersion: _.parseInt(year) > currentVersionYear,
+            currentVersion: _.parseInt(year) > previousVersionYear,
             previousVersion: false,
         };
 
-        return [...atcItems, newItem];
+        return _(atcItems)
+            .map(atcItem => {
+                if (atcItem.currentVersion) {
+                    return {
+                        ...atcItem,
+                        currentVersion: false,
+                        previousVersion: true,
+                    };
+                } else if (atcItem.previousVersion) {
+                    return {
+                        ...atcItem,
+                        previousVersion: false,
+                    };
+                } else {
+                    return atcItem;
+                }
+            })
+            .concat(newItem)
+            .value();
     }
 
-    private patchATCVersion(atcItems: ATCItem[], selectedItems: ATCItemIdentifier[]) {
-        return _.flatMap(atcItems, atcItem => {
+    private patchATCVersion(atcItems: ATCItem[], selectedItems: ATCItemIdentifier[]): ATCItem[] {
+        return atcItems.reduce((acc: ATCItem[], atcItem: ATCItem) => {
             const matchingItem = selectedItems.find(
                 item => item.year === atcItem.year && _.parseInt(item.version) === _.parseInt(atcItem.version)
             );
 
             if (matchingItem) {
                 return [
+                    ...acc,
                     {
                         ...atcItem,
                         currentVersion: false,
+                        previousVersion: matchingItem.currentVersion,
                     },
                     {
                         year: matchingItem.year,
-                        version: _.parseInt(matchingItem.version) + 1,
+                        version: (_.parseInt(matchingItem.version) + 1).toString(),
                         uploadedDate: new Date().toISOString(),
-                        currentVersion: matchingItem.currentVersion === true,
+                        currentVersion: matchingItem.currentVersion,
+                        previousVersion: false,
                     },
                 ];
             }
 
-            return [atcItem];
-        });
+            return acc;
+        }, []);
     }
 
     private async extractJsonFromZIP(file: File): Promise<ATCJson[]> {
