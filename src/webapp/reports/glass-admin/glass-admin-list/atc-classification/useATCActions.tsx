@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ATCItemIdentifier } from "../../../../../domain/reports/glass-admin/entities/GLASSDataMaintenanceItem";
 import { useAppContext } from "../../../../contexts/app-context";
 import { Namespaces } from "../../../../../data/common/clients/storage/Namespaces";
@@ -6,7 +6,6 @@ import { useSnackbar } from "@eyeseetea/d2-ui-components";
 import i18n from "../../../../../locales";
 
 export function useATCActions(
-    loggerProgram: string,
     reload: () => void,
     closePatchModal: () => void,
     closeUploadATCModal: () => void,
@@ -17,6 +16,11 @@ export function useATCActions(
 
     const [isRecalculating, setIsRecalculating] = useState<boolean>(false);
     const [isRecalculated, setIsRecalculated] = useState<boolean>(false);
+    const [loggerProgram, setLoggerProgram] = useState<string>("");
+
+    useEffect(() => {
+        compositionRoot.glassAdmin.getATCLoggerProgram(Namespaces.AMC_RECALCULATION).then(setLoggerProgram);
+    }, [compositionRoot.glassAdmin]);
 
     const patchVersion = useCallback(
         async (selectedFile: File | undefined, period: string, selectedItems: ATCItemIdentifier[]) => {
@@ -57,14 +61,18 @@ export function useATCActions(
             .cancelRecalculation(Namespaces.AMC_RECALCULATION)
             .then(() => setIsRecalculated(false));
         reload();
-        snackbar.success("Recalculation has been cancelled successfully");
+        snackbar.success(i18n.t("Recalculation has been cancelled successfully"));
     }, [compositionRoot.glassAdmin, reload, snackbar]);
 
     const saveRecalculationLogic = useCallback(async () => {
         try {
             setIsRecalculating(true);
-            await compositionRoot.glassAdmin.saveRecalculationLogic(Namespaces.AMC_RECALCULATION, Namespaces.ATCS);
-            snackbar.success(`Please go to the program ${loggerProgram} to see the logs of this recalculation`);
+            await compositionRoot.glassAdmin.saveRecalculationLogic(Namespaces.AMC_RECALCULATION);
+            snackbar.success(
+                i18n.t("Please go to the program {{loggerProgram}} to see the logs of this recalculation", {
+                    loggerProgram,
+                })
+            );
         } catch (error) {
             snackbar.error(i18n.t("Error when saving recalculation logic"));
         } finally {
