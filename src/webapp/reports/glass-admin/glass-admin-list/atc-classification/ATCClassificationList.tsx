@@ -37,6 +37,8 @@ export const ATCClassificationList: React.FC = React.memo(() => {
     } = useATCUpload();
     const {
         isRecalculating,
+        isPatchingNewVersion,
+        isUploadingNewATC,
         isRecalculated,
         cancelRecalculation,
         patchVersion,
@@ -141,6 +143,7 @@ export const ATCClassificationList: React.FC = React.memo(() => {
                         : "You are replacing an old ATC file. It won't affect calculations"
                 }
                 title="Patch version"
+                disableSave={isPatchingNewVersion}
                 saveFile={patchVersion}
             />
 
@@ -149,6 +152,7 @@ export const ATCClassificationList: React.FC = React.memo(() => {
                 closeModal={closeUploadATCModal}
                 description="All years will be overwritten with the data provided in this file."
                 title="Upload new ATC file"
+                disableSave={isUploadingNewATC}
                 uploadedYears={uploadedYears}
                 saveFile={uploadATCFile}
             />

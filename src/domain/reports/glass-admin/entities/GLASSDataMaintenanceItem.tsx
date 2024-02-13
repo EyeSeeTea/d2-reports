@@ -29,6 +29,10 @@ export interface GLASSMaintenancePaginatedObjects<T> extends PaginatedObjects<T>
     rowIds: string[];
 }
 
+export interface ATCPaginatedObjects<T> extends PaginatedObjects<T> {
+    uploadedYears: string[];
+}
+
 export interface ATCItem {
     currentVersion: boolean;
     previousVersion: boolean;
