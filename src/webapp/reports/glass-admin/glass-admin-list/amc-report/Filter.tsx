@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { GLASSModule, Module } from "../../../../../domain/reports/glass-admin/entities/GLASSDataMaintenanceItem";
+import React, { useCallback, useMemo } from "react";
+import { Module } from "../../../../../domain/reports/glass-admin/entities/GLASSDataMaintenanceItem";
 import styled from "styled-components";
 import { Dropdown, DropdownProps } from "@eyeseetea/d2-ui-components";
 import i18n from "../../../../../locales";
 import { NamedRef } from "../../../../../domain/common/entities/Base";
 import { useAppContext } from "../../../../contexts/app-context";
+import { useGetModules } from "./useGetModules";
 
 export interface FiltersProps {
     values: Filter;
@@ -17,16 +18,13 @@ export interface Filter {
 
 export const Filters: React.FC<FiltersProps> = React.memo(props => {
     const { compositionRoot, config } = useAppContext();
+    const { userModules } = useGetModules(compositionRoot, config);
+
     const { values: filter, onChange } = props;
 
-    const [userModules, setUserModules] = useState<GLASSModule[]>([]);
     const filterOptions = useMemo(() => getFilterOptions(userModules), [userModules]);
-
-    useEffect(() => {
-        compositionRoot.glassAdmin.getModules(config).then(modules => setUserModules(modules));
-    }, [compositionRoot.glassAdmin, config]);
-
     const moduleItems = useMemoOptionsFromNamedRef(filterOptions.modules);
+
     const setModule = useCallback<SingleDropdownHandler>(
         module => {
             onChange(filter => ({ ...filter, module: module as Module }));
