@@ -2,6 +2,8 @@ import { Config } from "../../../domain/common/entities/Config";
 import {
     EARDataSubmissionItem,
     GLASSDataSubmissionItem,
+    Module,
+    Status,
     getDataSubmissionItemId,
     getEARSubmissionItemId,
 } from "../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
@@ -12,7 +14,7 @@ export interface DataSubmissionViewModel {
     orgUnitName: string;
     period: string;
     status: Status;
-    module: Module;
+    module: string;
     questionnaireCompleted: boolean;
     dataSetsUploaded: string;
     submissionStatus: string;
@@ -28,19 +30,6 @@ export interface EARDataSubmissionViewModel {
     submissionStatus: string;
     status: Status;
 }
-
-export type Module = "AMR" | "EGASP" | "AMRIndividual" | "EAR";
-
-export type Status =
-    | "NOT_COMPLETED"
-    | "COMPLETE"
-    | "UPDATE_REQUEST_ACCEPTED"
-    | "PENDING_APPROVAL"
-    | "REJECTED"
-    | "APPROVED"
-    | "ACCEPTED"
-    | "PENDING_UPDATE_APPROVAL"
-    | "DRAFT";
 
 export function getDataSubmissionViews(_config: Config, items: GLASSDataSubmissionItem[]): DataSubmissionViewModel[] {
     return items.map(item => {
