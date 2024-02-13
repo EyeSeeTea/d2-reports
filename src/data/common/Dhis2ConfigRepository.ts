@@ -46,6 +46,12 @@ const base = {
         constantCode: "",
         approvalWorkflows: { namePrefix: "AMR" },
     },
+    "glass-admin": {
+        dataSets: { namePrefix: "AMR", nameExcluded: /-APVD$/ },
+        sqlViewNames: [],
+        constantCode: "",
+        approvalWorkflows: { namePrefix: "AMR" },
+    },
     auditEmergency: {
         dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
         sqlViewNames: [],
