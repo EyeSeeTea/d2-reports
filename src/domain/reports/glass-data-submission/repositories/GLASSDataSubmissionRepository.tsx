@@ -1,4 +1,3 @@
-import { Module, Status } from "../../../../webapp/reports/glass-data-submission/DataSubmissionViewModel";
 import { Id } from "../../../common/entities/Base";
 import { Config } from "../../../common/entities/Config";
 import { PaginatedObjects, Paging, Sorting } from "../../../common/entities/PaginatedObjects";
@@ -8,13 +7,15 @@ import {
     EARSubmissionItemIdentifier,
     GLASSDataSubmissionItem,
     GLASSDataSubmissionItemIdentifier,
-    GLASSUserPermission,
+    GLASSDataSubmissionModule,
+    Module,
+    Status,
 } from "../entities/GLASSDataSubmissionItem";
 
 export interface GLASSDataSubmissionRepository {
     get(options: GLASSDataSubmissionOptions, namespace: string): Promise<PaginatedObjects<GLASSDataSubmissionItem>>;
+    getUserModules(config: Config): Promise<GLASSDataSubmissionModule[]>;
     getEAR(options: EARDataSubmissionOptions, namespace: string): Promise<PaginatedObjects<EARDataSubmissionItem>>;
-    getUserGroupPermissions(): Promise<GLASSUserPermission>;
     getColumns(namespace: string): Promise<string[]>;
     saveColumns(namespace: string, columns: string[]): Promise<void>;
     dhis2MessageCount(): Promise<number>;
@@ -41,7 +42,7 @@ export interface GLASSDataSubmissionOptions {
     sorting: Sorting<GLASSDataSubmissionItem>;
     periods: string[];
     quarters: string[];
-    module: Module;
+    module: Module | undefined;
     orgUnitIds: Id[];
     dataSubmissionPeriod: DataSubmissionPeriod;
     completionStatus?: boolean;
@@ -52,7 +53,7 @@ export interface EARDataSubmissionOptions {
     config: Config;
     paging: Paging;
     sorting: Sorting<EARDataSubmissionItem>;
-    module: Module;
+    module: Module | undefined;
     orgUnitIds: Id[];
     from: Date | undefined;
     to: Date | undefined;
