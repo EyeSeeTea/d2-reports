@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import {
     OrgUnitsFilterButton,
     OrgUnitsFilterButtonProps,
 } from "../../../components/org-units-filter/OrgUnitsFilterButton";
-import { Id } from "../../../../domain/common/entities/Base";
+import { Id, NamedRef } from "../../../../domain/common/entities/Base";
 import { useAppContext } from "../../../contexts/app-context";
 import _ from "lodash";
 import { getRootIds } from "../../../../domain/common/entities/OrgUnit";
@@ -18,20 +18,23 @@ import {
     DatePicker,
     DatePickerProps,
 } from "@eyeseetea/d2-ui-components";
-import { Module, Status } from "../DataSubmissionViewModel";
-import { DataSubmissionPeriod } from "../../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
+import {
+    DataSubmissionPeriod,
+    Module,
+    Status,
+} from "../../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
+import { useDataSubmissionList } from "./useDataSubmissionList";
 
 export interface DataSetsFiltersProps {
     values: Filter;
     options: FilterOptions;
     onChange: React.Dispatch<React.SetStateAction<Filter>>;
-    userPermissions: Module[];
     dataSubmissionPeriod?: DataSubmissionPeriod;
     isEARModule?: boolean;
 }
 
 export interface Filter {
-    module: Module;
+    module: Module | undefined;
     orgUnitPaths: Id[];
     periods: string[];
     quarters: string[];
@@ -72,14 +75,9 @@ export const earStatusItems = [
 
 export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { config, api } = useAppContext();
-    const {
-        values: filter,
-        options: filterOptions,
-        onChange,
-        userPermissions,
-        isEARModule,
-        dataSubmissionPeriod,
-    } = props;
+    const { values: filter, options: filterOptions, onChange } = props;
+
+    const { dataSubmissionPeriod, isEARModule, userModules } = useDataSubmissionList(filter);
 
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
 
@@ -95,16 +93,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const [orgUnits, setOrgUnits] = useState<OrgUnit[]>([]);
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
 
-    const moduleItems = React.useMemo(() => {
-        const modules = [
-            { value: "AMR", text: i18n.t("AMR") },
-            { value: "AMRIndividual", text: i18n.t("AMR - Individual") },
-            { value: "EAR", text: i18n.t("EAR") },
-            { value: "EGASP", text: i18n.t("EGASP") },
-        ];
-
-        return _.filter(modules, module => _.includes(userPermissions, module.value));
-    }, [userPermissions]);
+    const moduleItems = useMemoOptionsFromNamedRef(userModules);
 
     const completionStatusItems = React.useMemo(() => {
         return [
@@ -152,7 +141,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { orgUnitPaths } = filter;
     const orgUnitsByPath = React.useMemo(() => _.keyBy(orgUnits, ou => ou.path), [orgUnits]);
 
-    const setModule = React.useCallback<SingleDropdownHandler>(
+    const setModule = useCallback<SingleDropdownHandler>(
         module => {
             onChange(filter => ({ ...filter, module: module as Module }));
         },
@@ -230,10 +219,9 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         <Container>
             <SingleDropdownStyled
                 items={moduleItems}
-                value={isEARModule ? "EAR" : filter.module}
+                value={filter.module}
                 onChange={setModule}
                 label={i18n.t("Module")}
-                hideEmpty
             />
 
             <OrgUnitsFilterButton
@@ -300,6 +288,12 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
 function useMemoOptionsFromStrings(options: string[]) {
     return useMemo(() => {
         return options.map(option => ({ value: option, text: option }));
+    }, [options]);
+}
+
+function useMemoOptionsFromNamedRef(options: NamedRef[]) {
+    return useMemo(() => {
+        return options.map(option => ({ value: option.id, text: option.name }));
     }, [options]);
 }
 

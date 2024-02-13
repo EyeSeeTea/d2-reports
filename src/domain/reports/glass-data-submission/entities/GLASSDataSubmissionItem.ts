@@ -1,11 +1,12 @@
-import { Module, Status } from "../../../../webapp/reports/glass-data-submission/DataSubmissionViewModel";
+import _ from "lodash";
 import { Id, NamedRef } from "../../../common/entities/Base";
+import { User } from "../../../common/entities/User";
 
 export type DataSubmissionPeriod = "YEARLY" | "QUARTERLY";
 
 export interface GLASSDataSubmissionItem {
     id: Id;
-    module: Module;
+    module: string;
     orgUnit: string;
     orgUnitName: string;
     period: string;
@@ -42,9 +43,9 @@ export interface EARDataSubmissionItem {
 }
 
 export interface GLASSDataSubmissionItemIdentifier {
-    orgUnit: string | undefined;
+    orgUnit: string;
     period: string;
-    module: string | undefined;
+    module: string;
 }
 
 export interface EARSubmissionItemIdentifier {
@@ -63,9 +64,22 @@ export interface ApprovalIds {
     programStageApprovedId: Id;
 }
 
+export type Status =
+    | "NOT_COMPLETED"
+    | "COMPLETE"
+    | "UPDATE_REQUEST_ACCEPTED"
+    | "PENDING_APPROVAL"
+    | "REJECTED"
+    | "APPROVED"
+    | "ACCEPTED"
+    | "PENDING_UPDATE_APPROVAL"
+    | "DRAFT";
+
+export type Module = "AMR" | "AMR - Individual" | "AMR - Fungal" | "AMC" | "EGASP" | "EAR";
+
 export interface GLASSDataSubmissionModule {
     id: Id;
-    name: string;
+    name: Module;
     dataSets: ApprovalIds[];
     programs: ApprovalIds[];
     questionnaires: ApprovalIds[];
@@ -80,10 +94,6 @@ export interface GLASSDataSubmissionModule {
         approveAccess: NamedRef[];
     };
 }
-
-export type GLASSUserPermission = {
-    [key in Module]: NamedRef[];
-};
 
 export function getDataSubmissionItemId(submissionItem: GLASSDataSubmissionItem): string {
     return [submissionItem.orgUnit, submissionItem.period, submissionItem.module].join("-");
@@ -101,7 +111,7 @@ export function getEARSubmissionItemId(submissionItem: EARDataSubmissionItem): s
 
 export function parseDataSubmissionItemId(string: string): GLASSDataSubmissionItemIdentifier | undefined {
     const [orgUnit, period, module] = string.split("-");
-    if (!period) return undefined;
+    if (!period || !orgUnit || !module) return undefined;
 
     return { module, period, orgUnit };
 }
@@ -112,4 +122,17 @@ export function parseEARSubmissionItemId(string: string): EARSubmissionItemIdent
     if (!id) return undefined;
 
     return { module, id, orgUnitId, orgUnitName, levelOfConfidentiality };
+}
+
+export function getUserModules(modules: GLASSDataSubmissionModule[], user: User): GLASSDataSubmissionModule[] {
+    const userGroups = user.userGroups;
+    const userGroupIds = userGroups.map(userGroup => userGroup.id);
+
+    const userModules = modules.filter(module => {
+        const moduleUserGroupIds = module.userGroups.approveAccess.map(userGroup => userGroup.id) ?? [];
+
+        return _.some(moduleUserGroupIds, moduleUserGroupId => userGroupIds.includes(moduleUserGroupId));
+    });
+
+    return userModules;
 }
