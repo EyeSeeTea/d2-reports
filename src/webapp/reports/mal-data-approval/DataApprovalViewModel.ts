@@ -24,6 +24,7 @@ export interface DataApprovalViewModel {
     lastDateOfApproval: Date | undefined;
     modificationCount: string | undefined;
     monitoring: boolean | undefined;
+    approved: boolean | undefined;
 }
 
 export function getDataApprovalViews(
@@ -57,6 +58,7 @@ export function getDataApprovalViews(
                 config.dataSets["PWCUb3Se1Ie"]?.name ?? "",
                 monitoring
             ),
+            approved: item.approved,
         };
     });
 }
