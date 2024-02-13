@@ -4,7 +4,7 @@ import { GLASSDataMaintenanceRepository } from "../repositories/GLASSDataMainten
 export class UploadATCFileUseCase {
     constructor(private maintenanceRepository: GLASSDataMaintenanceRepository) {}
 
-    execute(namespace: string, file: File, year: string, items?: ATCItemIdentifier[]): Promise<void> {
-        return this.maintenanceRepository.uploadATC(namespace, file, year, items);
+    execute(namespace: string, file: File, year: string, selectedItems?: ATCItemIdentifier[]): Promise<void> {
+        return this.maintenanceRepository.uploadATC(namespace, file, year, selectedItems);
     }
 }
