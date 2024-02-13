@@ -107,7 +107,7 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         const atcItems = await this.getATCItems(namespace);
         const jsons = await this.extractJsonFromZIP(file);
 
-        if (jsons.length === 4) {
+        if (jsons.length === 6) {
             if (selectedItems) {
                 const updatedVersion = this.updateVersion(atcItems, selectedItems);
                 const updatedATCItems = this.patchATCVersion(atcItems, selectedItems);
