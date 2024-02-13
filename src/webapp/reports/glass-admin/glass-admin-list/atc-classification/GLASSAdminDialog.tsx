@@ -19,13 +19,14 @@ interface DialogProps extends ConfirmationDialogProps {
 }
 
 export const GLASSAdminDialog: React.FC<DialogProps> = React.memo(props => {
-    const { description, isOpen, selectedItems, title, uploadedYears, closeModal, saveFile } = props;
+    const { description, isOpen, selectedItems, title, uploadedYears, disableSave, closeModal, saveFile } = props;
 
     const [period, setPeriod] = useState<string>("");
     const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
 
     const isYearUploaded = !!uploadedYears?.includes(period);
-    const disableSave = !selectedFile || isYearUploaded;
+    const disableModalSave =
+        disableSave !== undefined ? disableSave || !selectedFile || isYearUploaded : !selectedFile || isYearUploaded;
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
@@ -45,7 +46,7 @@ export const GLASSAdminDialog: React.FC<DialogProps> = React.memo(props => {
             onCancel={closeModal}
             saveText={i18n.t("Continue")}
             cancelText={i18n.t("Cancel")}
-            disableSave={disableSave}
+            disableSave={disableModalSave}
             maxWidth="md"
             fullWidth
         >

@@ -15,6 +15,8 @@ export function useATCActions(
     const snackbar = useSnackbar();
 
     const [isRecalculating, setIsRecalculating] = useState<boolean>(false);
+    const [isUploadingNewATC, setIsUploadingNewATC] = useState<boolean | undefined>(undefined);
+    const [isPatchingNewVersion, setIsPatchingNewVersion] = useState<boolean | undefined>(undefined);
     const [isRecalculated, setIsRecalculated] = useState<boolean>(false);
     const [loggerProgram, setLoggerProgram] = useState<string>("");
 
@@ -25,6 +27,7 @@ export function useATCActions(
     const patchVersion = useCallback(
         async (selectedFile: File | undefined, period: string, selectedItems: ATCItemIdentifier[]) => {
             try {
+                setIsPatchingNewVersion(true);
                 if (selectedFile) {
                     await compositionRoot.glassAdmin.uploadFile(Namespaces.ATCS, selectedFile, period, selectedItems);
                     snackbar.success(i18n.t("Version has been successfully patched"));
@@ -32,6 +35,7 @@ export function useATCActions(
             } catch (error) {
                 snackbar.error(i18n.t("Error encountered when parsing version"));
             } finally {
+                setIsPatchingNewVersion(undefined);
                 closePatchModal();
                 reload();
             }
@@ -42,6 +46,7 @@ export function useATCActions(
     const uploadATCFile = useCallback(
         async (selectedFile: File | undefined, period: string) => {
             try {
+                setIsUploadingNewATC(true);
                 if (selectedFile) {
                     await compositionRoot.glassAdmin.uploadFile(Namespaces.ATCS, selectedFile, period);
                     snackbar.success(i18n.t("Upload finished"));
@@ -49,6 +54,7 @@ export function useATCActions(
             } catch (error) {
                 snackbar.error(i18n.t("Error parsing the file"));
             } finally {
+                setIsUploadingNewATC(undefined);
                 closeUploadATCModal();
                 reload();
             }
@@ -84,6 +90,8 @@ export function useATCActions(
     }, [closeRecalculateLogicModal, compositionRoot.glassAdmin, loggerProgram, reload, snackbar]);
 
     return {
+        isPatchingNewVersion,
+        isUploadingNewATC,
         isRecalculating,
         isRecalculated,
         cancelRecalculation,

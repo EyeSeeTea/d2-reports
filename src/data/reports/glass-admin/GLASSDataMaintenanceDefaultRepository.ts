@@ -13,6 +13,7 @@ import {
     AMCRecalculation,
     ATCItem,
     ATCItemIdentifier,
+    ATCPaginatedObjects,
     GLASSDataMaintenanceItem,
     GLASSMaintenancePaginatedObjects,
     GLASSModule,
@@ -24,12 +25,7 @@ import JSZip from "jszip";
 import _ from "lodash";
 import { Config } from "../../../domain/common/entities/Config";
 import { Id } from "../../../domain/common/entities/Base";
-import {
-    PaginatedObjects,
-    Paging,
-    Sorting,
-    getPaginatedObjects,
-} from "../../../domain/common/entities/PaginatedObjects";
+import { Paging, Sorting, getPaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
 
 type ATCJson = {
     name: "atc" | "ddd_combinations" | "ddd" | "conversion" | "ddd_alterations" | "atc_alterations";
@@ -66,13 +62,17 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         return { objects: objects, pager: pager, rowIds: rowIds };
     }
 
-    async getATCs(options: ATCOptions, namespace: string): Promise<PaginatedObjects<ATCItem>> {
+    async getATCs(options: ATCOptions, namespace: string): Promise<ATCPaginatedObjects<ATCItem>> {
         const { paging, sorting } = options;
 
         const atcs = await this.getATCItems(namespace);
+        const uploadedYears = _(atcs)
+            .map(atc => atc.year)
+            .uniq()
+            .value();
         const { objects, pager } = this.paginate(atcs, sorting, paging);
 
-        return { objects: objects, pager: pager };
+        return { objects: objects, pager: pager, uploadedYears: uploadedYears };
     }
 
     private async getATCItems(namespace: string) {
