@@ -110,11 +110,7 @@ export const ATCClassificationList: React.FC = React.memo(() => {
                     {i18n.t("Upload new ATC file")}
                 </Button>
 
-                {!isRecalculated ? (
-                    <Button onClick={openRecalculateLogicModal} color="primary" variant="contained">
-                        {i18n.t("Recalculate logic")}
-                    </Button>
-                ) : (
+                {isRecalculated && (
                     <>
                         <Button color="default" variant="contained" disabled>
                             {i18n.t("Recalculation Ongoing...")}
@@ -123,6 +119,12 @@ export const ATCClassificationList: React.FC = React.memo(() => {
                             {i18n.t("Cancel recalculation")}
                         </CancelButton>
                     </>
+                )}
+
+                {isRecalculated === false && (
+                    <Button onClick={openRecalculateLogicModal} color="primary" variant="contained">
+                        {i18n.t("Recalculate logic")}
+                    </Button>
                 )}
             </StyledButtonContainer>
 

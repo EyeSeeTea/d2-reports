@@ -14,14 +14,21 @@ export function useATCActions(
     const { compositionRoot } = useAppContext();
     const snackbar = useSnackbar();
 
-    const [isRecalculating, setIsRecalculating] = useState<boolean>(false);
-    const [isUploadingNewATC, setIsUploadingNewATC] = useState<boolean | undefined>(undefined);
-    const [isPatchingNewVersion, setIsPatchingNewVersion] = useState<boolean | undefined>(undefined);
-    const [isRecalculated, setIsRecalculated] = useState<boolean>(false);
     const [loggerProgram, setLoggerProgram] = useState<string>("");
+    const [isRecalculating, setIsRecalculating] = useState<boolean>(false);
+    const [isUploadingNewATC, setIsUploadingNewATC] = useState<boolean>();
+    const [isPatchingNewVersion, setIsPatchingNewVersion] = useState<boolean>();
+    const [isRecalculated, setIsRecalculated] = useState<boolean>();
 
     useEffect(() => {
-        compositionRoot.glassAdmin.getATCLoggerProgram(Namespaces.AMC_RECALCULATION).then(setLoggerProgram);
+        compositionRoot.glassAdmin.getATCRecalculationLogic(Namespaces.AMC_RECALCULATION).then(recalculationLogic => {
+            if (recalculationLogic) {
+                setIsRecalculated(recalculationLogic.recalculate);
+                compositionRoot.glassAdmin
+                    .getATCLoggerProgram(Namespaces.AMC_RECALCULATION, recalculationLogic)
+                    .then(setLoggerProgram);
+            }
+        });
     }, [compositionRoot.glassAdmin]);
 
     const patchVersion = useCallback(
