@@ -20,17 +20,21 @@ export const DataMaintenanceList: React.FC = React.memo(() => {
         <React.Fragment>
             <Filters values={filters} onChange={setFilters} />
 
-            <TabHeader labels={reportTabs} tabIndex={tabIndex} onChange={handleChange} />
+            {filters.module && (
+                <>
+                    <TabHeader labels={reportTabs} tabIndex={tabIndex} onChange={handleChange} />
 
-            <TabPanel value={tabIndex} index={0}>
-                <AMCReport filters={filters} />
-            </TabPanel>
+                    <TabPanel value={tabIndex} index={0}>
+                        <AMCReport filters={filters} />
+                    </TabPanel>
 
-            <TabPanel value={tabIndex} index={1}>
-                <ATCClassificationList />
-            </TabPanel>
+                    <TabPanel value={tabIndex} index={1}>
+                        <ATCClassificationList />
+                    </TabPanel>
 
-            <LoadingScreen isOpen={isDeleteModalOpen} />
+                    <LoadingScreen isOpen={isDeleteModalOpen} />
+                </>
+            )}
         </React.Fragment>
     );
 });
