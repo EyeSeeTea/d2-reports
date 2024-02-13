@@ -103,14 +103,14 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         return this.storageClient.saveObject<string[]>(namespace, columns);
     }
 
-    async uploadATC(namespace: string, file: File, year: string, items: ATCItemIdentifier[]): Promise<void> {
+    async uploadATC(namespace: string, file: File, year: string, selectedItems?: ATCItemIdentifier[]): Promise<void> {
         const atcItems = await this.getATCItems(namespace);
         const jsons = await this.extractJsonFromZIP(file);
 
-        if (jsons.length === 6) {
-            if (items) {
-                const updatedVersion = this.updateVersion(items);
-                const updatedATCItems = this.patchATCVersion(atcItems, items);
+        if (jsons.length === 4) {
+            if (selectedItems) {
+                const updatedVersion = this.updateVersion(atcItems, selectedItems);
+                const updatedATCItems = this.patchATCVersion(atcItems, selectedItems);
 
                 await this.globalStorageClient.saveObject<ATCJson[]>(`ATC-${updatedVersion}`, jsons);
                 await this.globalStorageClient.saveObject<ATCItem[]>(Namespaces.ATCS, updatedATCItems);
@@ -316,31 +316,59 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
     }
 
     private patchATCVersion(atcItems: ATCItem[], selectedItems: ATCItemIdentifier[]): ATCItem[] {
-        return atcItems.reduce((acc: ATCItem[], atcItem: ATCItem) => {
-            const matchingItem = selectedItems.find(
-                item => item.year === atcItem.year && _.parseInt(item.version) === _.parseInt(atcItem.version)
-            );
+        const newItems: ATCItem[] = selectedItems.map(selectedItem => this.getNewPatchItem(selectedItem, atcItems));
+        const selectedATCItem = this.getSelectedATCItem(atcItems, selectedItems[0]);
 
-            if (matchingItem) {
-                return [
-                    ...acc,
-                    {
+        const updatedATCItems = _(atcItems)
+            .map(atcItem => {
+                const matchingItem = this.getSelectedATCItem(selectedItems, atcItem);
+
+                if (atcItem.previousVersion && selectedATCItem?.currentVersion) {
+                    return {
+                        ...atcItem,
+                        previousVersion: false,
+                    };
+                } else if (matchingItem?.currentVersion) {
+                    return {
                         ...atcItem,
                         currentVersion: false,
-                        previousVersion: matchingItem.currentVersion,
-                    },
-                    {
-                        year: matchingItem.year,
-                        version: (_.parseInt(matchingItem.version) + 1).toString(),
-                        uploadedDate: new Date().toISOString(),
-                        currentVersion: matchingItem.currentVersion,
-                        previousVersion: false,
-                    },
-                ];
-            }
+                        previousVersion: true,
+                    };
+                }
 
-            return acc;
-        }, []);
+                return atcItem;
+            })
+            .value();
+
+        return [...newItems, ...updatedATCItems];
+    }
+
+    private getNewPatchItem(selectedItem: ATCItemIdentifier, atcItems: ATCItem[]): ATCItem {
+        const newVersion = this.getNewVersionNumber(atcItems, selectedItem);
+
+        return {
+            currentVersion: selectedItem.currentVersion,
+            previousVersion: false,
+            uploadedDate: new Date().toISOString(),
+            version: newVersion,
+            year: selectedItem.year,
+        };
+    }
+
+    private getNewVersionNumber(atcItems: ATCItem[], selectedItem: ATCItemIdentifier | undefined) {
+        return (
+            (_(atcItems)
+                .filter(atcItem => atcItem.year === selectedItem?.year)
+                .map(atcItem => _.parseInt(atcItem.version))
+                .max() ?? 0) + 1
+        )?.toString();
+    }
+
+    private getSelectedATCItem(atcItems: ATCItemIdentifier[], selectedItem: ATCItemIdentifier | undefined) {
+        return atcItems.find(
+            atcItem =>
+                atcItem.year === selectedItem?.year && _.parseInt(atcItem.version) === _.parseInt(selectedItem?.version)
+        );
     }
 
     private async extractJsonFromZIP(file: File): Promise<ATCJson[]> {
@@ -372,11 +400,12 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         return jsons;
     }
 
-    private updateVersion(items: ATCItemIdentifier[]): string {
+    private updateVersion(atcItems: ATCItem[], items: ATCItemIdentifier[]): string {
         const item = _.first(items);
+        const newVersion = this.getNewVersionNumber(atcItems, item);
 
         if (item) {
-            return `${item.year}-v${_.parseInt(item.version) + 1}`;
+            return `${item.year}-v${_.parseInt(newVersion)}`;
         } else {
             return "";
         }
