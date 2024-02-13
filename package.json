@@ -77,7 +77,7 @@
         "glass-build-manifest": "d2-manifest package.json build/manifest.webapp --manifest.version=$npm_package_reportVersions_glass --manifest.icons.48 glass-icon.png --manifest.name='DHIS2 GLASS Submission Report' --manifest.description='DHIS2 GLASS Submission Report'"
     },
     "reportVersions": {
-        "glass": "1.0.3",
+        "glass": "1.0.0",
         "mal": "1.0.3"
     },
     "husky": {
