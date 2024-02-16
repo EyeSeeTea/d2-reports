@@ -3,15 +3,12 @@ import _ from "lodash";
 import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { Id, NamedRef } from "../../../../domain/common/entities/Base";
-import { getOrgUnitsFromId, getRootIds } from "../../../../domain/common/entities/OrgUnit";
+import { FilterOrgUnit, getOrgUnitsFromId, getRootIds } from "../../../../domain/common/entities/OrgUnit";
 import i18n from "../../../../locales";
-import { D2Api } from "../../../../types/d2-api";
 import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
-import {
-    OrgUnitsFilterButton,
-    OrgUnitsFilterButtonProps,
-} from "../../../components/org-units-filter/OrgUnitsFilterButton";
 import { useAppContext } from "../../../contexts/app-context";
+import { OrgUnitChildSelectorButton } from "../../../components/org-units-filter/OrgUnitChildSelectorButton";
+import { D2Api } from "../../../../types/d2-api";
 
 export interface DataSetsFiltersProps {
     values: DataSetsFilter;
@@ -32,17 +29,6 @@ interface FilterOptions {
     periods: string[];
 }
 
-interface OrgUnit {
-    id: Id;
-    path: string;
-    name: string;
-    level: number;
-    children: {
-        level: number;
-        path: string;
-    }[];
-}
-
 export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { config, api } = useAppContext();
     const { values: filter, options: filterOptions, onChange } = props;
@@ -50,7 +36,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const dataSetItems = useMemoOptionsFromNamedRef(filterOptions.dataSets);
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
 
-    const [orgUnits, setOrgUnits] = useState<OrgUnit[]>([]);
+    const [orgUnits, setOrgUnits] = useState<FilterOrgUnit[]>([]);
     const dataSetOrgUnits = getOrgUnitsFromId(config.orgUnits, orgUnits);
     const selectableOUs = _.union(
         orgUnits.filter(org => org.level < 3),
@@ -74,7 +60,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     }, []);
 
     useEffect(() => {
-        async function getOrganisationUnits(api: D2Api, levels: string[]): Promise<OrgUnit[]> {
+        async function getOrganisationUnits(api: D2Api, levels: string[]): Promise<FilterOrgUnit[]> {
             const { organisationUnits } = await api.metadata
                 .get({
                     organisationUnits: {
@@ -96,40 +82,6 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         const levels = ["1", "2", "3"];
         getOrganisationUnits(api, levels).then(value => setOrgUnits(value));
     }, [api]);
-
-    const { orgUnitPaths } = filter;
-    const orgUnitsByPath = React.useMemo(() => _.keyBy(orgUnits, ou => ou.path), [orgUnits]);
-
-    const setOrgUnitPaths = React.useCallback<OrgUnitsFilterButtonProps["setSelected"]>(
-        newSelectedPaths => {
-            const prevSelectedPaths = orgUnitPaths;
-            const addedPaths = _.difference(newSelectedPaths, prevSelectedPaths);
-            const removedPaths = _.difference(prevSelectedPaths, newSelectedPaths);
-
-            const pathsToAdd = _.flatMap(addedPaths, addedPath => {
-                const orgUnit = orgUnitsByPath[addedPath];
-
-                if (orgUnit && orgUnit.level < countryLevel) {
-                    return [orgUnit, ...orgUnit.children].map(ou => ou.path);
-                } else {
-                    return [addedPath];
-                }
-            });
-
-            const pathsToRemove = _.flatMap(removedPaths, pathToRemove => {
-                return prevSelectedPaths.filter(path => path.startsWith(pathToRemove));
-            });
-
-            const newSelectedPathsWithChildren = _(prevSelectedPaths)
-                .union(pathsToAdd)
-                .difference(pathsToRemove)
-                .uniq()
-                .value();
-
-            onChange(prev => ({ ...prev, orgUnitPaths: newSelectedPathsWithChildren }));
-        },
-        [onChange, orgUnitPaths, orgUnitsByPath]
-    );
 
     const setDataSetIds = React.useCallback<DropdownHandler>(
         dataSetIds => onChange(prev => ({ ...prev, dataSetIds })),
@@ -157,13 +109,14 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
 
     return (
         <Container>
-            <OrgUnitsFilterButton
+            <OrgUnitChildSelectorButton
                 api={api}
                 rootIds={rootIds}
-                selected={filter.orgUnitPaths}
-                setSelected={setOrgUnitPaths}
-                selectableLevels={[1, 2, 3]}
+                onChange={onChange}
+                orgUnitPaths={filter.orgUnitPaths}
+                orgUnits={orgUnits}
                 selectableIds={selectableIds}
+                selectableLevels={[1, 2, 3]}
             />
 
             <DropdownStyled
@@ -234,5 +187,3 @@ function fromBool(value: boolean | undefined): string | undefined {
 
 type DropdownHandler = MultipleDropdownProps["onChange"];
 type SingleDropdownHandler = DropdownProps["onChange"];
-
-const countryLevel = 3;

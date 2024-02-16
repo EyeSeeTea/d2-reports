@@ -10,6 +10,17 @@ export interface OrgUnit {
     level: number;
 }
 
+export interface FilterOrgUnit {
+    id: Id;
+    path: string;
+    name: string;
+    level: number;
+    children: {
+        level: number;
+        path: string;
+    }[];
+}
+
 const pathSeparator = "/";
 
 export function getRoots(orgUnits: OrgUnit[]): OrgUnit[] {

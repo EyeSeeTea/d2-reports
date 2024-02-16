@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2023-08-23T15:02:41.593Z\n"
-"PO-Revision-Date: 2023-08-23T15:02:41.593Z\n"
+"POT-Creation-Date: 2024-01-02T18:22:02.263Z\n"
+"PO-Revision-Date: 2024-01-02T18:22:02.263Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -95,6 +95,9 @@ msgid "lastUpdated"
 msgstr ""
 
 msgid "created"
+msgstr ""
+
+msgid "Period"
 msgstr ""
 
 msgid "CSY Audit Filters - Emergency Care"
@@ -454,9 +457,6 @@ msgstr ""
 msgid "Malaria Data Approval Report"
 msgstr ""
 
-msgid "Period"
-msgstr ""
-
 msgid "Data set"
 msgstr ""
 
@@ -544,7 +544,31 @@ msgstr ""
 msgid "Subscribe"
 msgstr ""
 
+msgid "Subscribe to selected items"
+msgstr ""
+
 msgid "Unsubscribe"
+msgstr ""
+
+msgid "Unsubscribe to selected items"
+msgstr ""
+
+msgid "Subscribed raw elements"
+msgstr ""
+
+msgid "Subscribe to all children"
+msgstr ""
+
+msgid "Unsubscribe to all children"
+msgstr ""
+
+msgid "Data Elements"
+msgstr ""
+
+msgid "Dashboards"
+msgstr ""
+
+msgid "Visualizations"
 msgstr ""
 
 msgid "Element Type"
@@ -554,6 +578,9 @@ msgid "Subscription Status"
 msgstr ""
 
 msgid "Section"
+msgstr ""
+
+msgid "Data Element Groups"
 msgstr ""
 
 msgid "NHWA Data Approval Status Report"
@@ -574,6 +601,29 @@ msgstr ""
 msgid "Error when trying to unapprove data set"
 msgstr ""
 
+msgid "Category Option Combo"
+msgstr ""
+
+msgid "Organisation Unit"
+msgstr ""
+
+msgid "Correct Value"
+msgstr ""
+
+msgid "Current value"
+msgstr ""
+
+msgid "Fix all incorrect values"
+msgstr ""
+
+msgid "Updating values..."
+msgstr ""
+
+msgid ""
+"Module 1 totals with missing sum or sum that does not match the "
+"auto-calculated"
+msgstr ""
+
 msgid "NHWA Comments Report"
 msgstr ""
 
@@ -590,4 +640,48 @@ msgid "Stored by"
 msgstr ""
 
 msgid "Toggle filters"
+msgstr ""
+
+msgid "No values to update"
+msgstr ""
+
+msgid "Occupation"
+msgstr ""
+
+msgid "Practising"
+msgstr ""
+
+msgid "Professionally Active"
+msgstr ""
+
+msgid "Licensed To Practice"
+msgstr ""
+
+msgid "Correct total"
+msgstr ""
+
+msgid "Comment to Assign"
+msgstr ""
+
+msgid "Fix Total"
+msgstr ""
+
+msgid "Fix Incorrect Totals"
+msgstr ""
+
+msgid ""
+"Module 1 totals by Activity Label with missing value that does not match "
+"the auto-calculated"
+msgstr ""
+
+msgid "Organisation Unit Parent"
+msgstr ""
+
+msgid "Name To Fix"
+msgstr ""
+
+msgid "Dismiss"
+msgstr ""
+
+msgid "Module 1 (subnational) with fixes for organisation unit name"
 msgstr ""

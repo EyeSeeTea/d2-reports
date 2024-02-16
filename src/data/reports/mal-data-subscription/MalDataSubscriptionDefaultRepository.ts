@@ -1,73 +1,50 @@
 import _ from "lodash";
-import { D2Api, Id, PaginatedObjects } from "../../../types/d2-api";
-import { promiseMap } from "../../../utils/promises";
+import { D2Api, Pager } from "../../../types/d2-api";
 import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
 import { StorageClient } from "../../common/clients/storage/StorageClient";
-import { Dhis2SqlViews } from "../../common/Dhis2SqlViews";
 import { Instance } from "../../common/entities/Instance";
-import { getSqlViewId } from "../../../domain/common/entities/Config";
-import { SQL_VIEW_MAL_DATAELEMENTS_NAME } from "../../common/Dhis2ConfigRepository";
 import {
-    MalDataSubscriptionItem,
+    ChildrenDataElement,
+    DashboardSubscriptionItem,
+    DataElementsSubscriptionItem,
+    MalSubscriptionPaginatedObjects,
+    MonitoringDetail,
+    MonitoringValue,
     SubscriptionStatus,
+    SubscriptionValue,
 } from "../../../domain/reports/mal-data-subscription/entities/MalDataSubscriptionItem";
 import {
     MalDataSubscriptionOptions,
     MalDataSubscriptionRepository,
 } from "../../../domain/reports/mal-data-subscription/repositories/MalDataSubscriptionRepository";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
+import { NamedRef } from "../../../domain/common/entities/Base";
+import { Paging, Sorting } from "../../../domain/common/entities/PaginatedObjects";
 
-export interface Pagination {
-    page: number;
-    pageSize: number;
+interface Visualization {
+    id: string;
+    name: string;
+    dataDimensionItems: DataDimensionItems[] | undefined;
 }
 
-export function paginate<Obj>(objects: Obj[], pagination: Pagination) {
-    const pager = {
-        page: pagination.page,
-        pageSize: pagination.pageSize,
-        pageCount: Math.ceil(objects.length / pagination.pageSize),
-        total: objects.length,
-    };
-    const { page, pageSize } = pagination;
-    const start = (page - 1) * pageSize;
-
-    const paginatedObjects = _(objects)
-        .slice(start, start + pageSize)
-        .value();
-
-    return { pager: pager, objects: paginatedObjects };
+interface Dashboard {
+    id: string;
+    name: string;
+    dashboardItems: {
+        visualization: {
+            dataDimensionItems: DataDimensionItems[] | undefined;
+        };
+    }[];
 }
 
-interface Variables {
-    dataSets: string;
-    dataElementId: string;
-    sectionId: string;
-    elementType: string;
-    orderByColumn: SqlField;
-    orderByDirection: "asc" | "desc";
+interface DataDimensionItems {
+    indicator:
+        | {
+              numerator: string;
+              denominator: string;
+          }
+        | undefined;
 }
-
-type dataElementsType = { id: string; name: string };
-
-type dataSetElementsType = { dataElement: dataElementsType };
-
-type SqlField =
-    | "dataelementname"
-    | "dataelementuid"
-    | "sectionname"
-    | "sectionuid"
-    | "lastdateofsubscription"
-    | "subscription";
-
-const fieldMapping: Record<keyof MalDataSubscriptionItem, SqlField> = {
-    dataElementName: "dataelementname",
-    dataElementId: "dataelementuid",
-    subscription: "subscription",
-    sectionName: "sectionname",
-    sectionId: "sectionuid",
-    lastDateOfSubscription: "lastdateofsubscription",
-};
 
 export class MalDataSubscriptionDefaultRepository implements MalDataSubscriptionRepository {
     private storageClient: StorageClient;
@@ -79,40 +56,188 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
         this.globalStorageClient = new DataStoreStorageClient("global", instance);
     }
 
-    async get(options: MalDataSubscriptionOptions): Promise<PaginatedObjects<MalDataSubscriptionItem>> {
-        const { config, elementTypes, dataElementIds, sections } = options; // ?
-        const { sorting, paging } = options; // ?
+    async get(
+        options: MalDataSubscriptionOptions
+    ): Promise<MalSubscriptionPaginatedObjects<DataElementsSubscriptionItem>> {
+        const {
+            dataElementGroups: dataElementGroupIds,
+            subscriptionStatus,
+            sections: sectionIds,
+            elementType,
+            sorting,
+            paging,
+        } = options;
+        if (!sorting || elementType !== "dataElements") return emptyPage;
 
-        const sqlViews = new Dhis2SqlViews(this.api);
-        const allDataSetIds = _.values(config.dataSets).map(ds => ds.id); // ?
+        const subscriptionValues =
+            (await this.globalStorageClient.getObject<SubscriptionStatus[]>(Namespaces.MAL_SUBSCRIPTION_STATUS)) ?? [];
 
-        const { pager, rows } = await sqlViews
-            .query<Variables, SqlField>(
-                getSqlViewId(config, SQL_VIEW_MAL_DATAELEMENTS_NAME),
-                {
-                    dataSets: sqlViewJoinIds(allDataSetIds),
-                    elementType: sqlViewJoinIds(elementTypes),
-                    sectionId: sqlViewJoinIds(sections),
-                    dataElementId: sqlViewJoinIds(dataElementIds),
-                    orderByColumn: fieldMapping[sorting.field],
-                    orderByDirection: sorting.direction,
-                },
-                paging
+        const { dataElements } = await this.api
+            .get<{
+                dataElements: {
+                    id: string;
+                    name: string;
+                    code: string;
+                    dataElementGroups: NamedRef[];
+                    dataSetElements: {
+                        dataSet: {
+                            id: string;
+                            name: string;
+                            sections: { id: string; name: string; dataElements: { id: string }[] }[];
+                        };
+                    }[];
+                }[];
+            }>(
+                `/dataElements?filter=name:ilike:apvd&fields=id,name,code,dataElementGroups[id,name],dataSetElements[dataSet[id,name,sections[id,name,dataElements]]]&paging=false`
             )
             .getData();
 
-        const items: Array<MalDataSubscriptionItem> = rows.map(
-            (item): MalDataSubscriptionItem => ({
-                dataElementName: item.dataelementname,
-                subscription: Boolean(item.subscription),
-                sectionName: item.sectionname,
-                sectionId: item.sectionuid,
-                dataElementId: item.dataelementuid,
-                lastDateOfSubscription: item.lastdateofsubscription,
-            })
-        );
+        const rows = dataElements
+            .map(dataElement => {
+                const subscriptionValue = subscriptionValues.find(
+                    subscription => subscription.dataElementId === dataElement.id
+                );
 
-        return { pager, objects: items };
+                const section: NamedRef | undefined = _.chain(dataElement.dataSetElements)
+                    .flatMap("dataSet.sections")
+                    .find(section => _.some(section.dataElements, { id: dataElement.id }))
+                    .value();
+
+                return {
+                    dataElementId: dataElement.id,
+                    dataElementName: dataElement.name,
+                    subscription: !!subscriptionValue?.subscribed,
+                    lastDateOfSubscription: subscriptionValue?.lastDateOfSubscription ?? "",
+                    section,
+                    dataElementGroups: dataElement.dataElementGroups,
+                };
+            })
+            .filter(row => {
+                const isSubscribed = !!(!subscriptionStatus
+                    ? row
+                    : (subscriptionStatus === "Subscribed") === row.subscription);
+                const isInSection = !!(_.isEmpty(sectionIds) ? row : _.includes(sectionIds, row.section?.id));
+                const isInDataElementGroup = !!(_.isEmpty(dataElementGroupIds)
+                    ? row
+                    : _.intersection(
+                          dataElementGroupIds,
+                          row.dataElementGroups.map(dataElementGroup => dataElementGroup.id)
+                      ).length > 0);
+
+                return isSubscribed && isInSection && isInDataElementGroup;
+            });
+
+        const sections = _(rows)
+            .map(row => row.section)
+            .compact()
+            .uniqBy("id")
+            .value();
+
+        const dataElementGroups = _(rows)
+            .flatMap(row => row.dataElementGroups)
+            .uniqBy("id")
+            .value();
+
+        const { objects, pager } = paginate(rows, paging, sorting);
+
+        return { pager, objects, sections, dataElementGroups, totalRows: rows };
+    }
+
+    async getChildrenDataElements(
+        options: MalDataSubscriptionOptions
+    ): Promise<MalSubscriptionPaginatedObjects<DashboardSubscriptionItem>> {
+        const { dashboardSorting, subscriptionStatus, elementType, paging } = options;
+        if (!dashboardSorting || elementType === "dataElements") return emptyPage;
+
+        const subscriptionValues =
+            (await this.globalStorageClient.getObject<SubscriptionStatus[]>(Namespaces.MAL_SUBSCRIPTION_STATUS)) ?? [];
+
+        const { dataElements } = await this.api
+            .get<{ dataElements: ChildrenDataElement[] }>(
+                "/dataElements?fields=id,name,code,dataElementGroups[id,name],dataSetElements[dataSet[id,name]]&paging=false"
+            )
+            .getData();
+
+        if (elementType === "dashboards") {
+            const { dashboards } = await this.api
+                .get<{
+                    dashboards: Dashboard[];
+                }>(
+                    "/dashboards?fields=id,name,dashboardItems[visualization[dataDimensionItems[indicator[id,name,numerator,denominator]]]]"
+                )
+                .getData();
+
+            const dataElementsInDashboard = dashboards.map(dashboard =>
+                getDataElementsInParent(
+                    dashboard,
+                    _(dashboard.dashboardItems)
+                        ?.map(item => item.visualization?.dataDimensionItems)
+                        .flatten()
+                        .compact()
+                        .value(),
+                    dataElements
+                )
+            );
+
+            const rows: DashboardSubscriptionItem[] = dashboards
+                .map(dashboard => getRows(dashboard, dataElementsInDashboard, subscriptionValues))
+                .filter(row => (!subscriptionStatus ? row : subscriptionStatus === row.subscription));
+
+            const { objects, pager } = paginate(rows, paging, dashboardSorting);
+
+            return { pager, objects, totalRows: rows };
+        } else if (elementType === "visualizations") {
+            const { visualizations } = await this.api
+                .get<{
+                    visualizations: Visualization[];
+                }>("/visualizations?fields=id,name,dataDimensionItems[indicator[id,name,numerator,denominator]]")
+                .getData();
+
+            const dataElementsInVisualization = visualizations.map(visualization =>
+                getDataElementsInParent(visualization, visualization.dataDimensionItems, dataElements)
+            );
+
+            const rows: DashboardSubscriptionItem[] = visualizations
+                .map(visualization => getRows(visualization, dataElementsInVisualization, subscriptionValues))
+                .filter(row => (!subscriptionStatus ? row : subscriptionStatus === row.subscription));
+
+            const { objects, pager } = paginate(rows, paging, dashboardSorting);
+
+            return { pager, objects, totalRows: rows };
+        } else {
+            return emptyPage;
+        }
+    }
+
+    async getMonitoringDetails(): Promise<MonitoringDetail[]> {
+        const { dataElements } = await this.api
+            .get<{
+                dataElements: {
+                    id: string;
+                    code: string;
+                    dataSetElements: {
+                        dataSet: NamedRef;
+                    }[];
+                }[];
+            }>(`/dataElements?fields=id,code,dataSetElements[dataSet[id,name]]&paging=false`)
+            .getData();
+
+        const dataElementsMonitoringDetails: MonitoringDetail[] = dataElements
+            .filter(dataElement => dataElement.code)
+            .map(dataElement => {
+                const dataSetName =
+                    dataElement.dataSetElements.find(({ dataSet }) => dataSet.name.includes("APVD"))?.dataSet.name ??
+                    dataElement.dataSetElements[0]?.dataSet.name ??
+                    "";
+
+                return {
+                    dataElementId: dataElement.id,
+                    dataElementCode: dataElement.code,
+                    dataSet: dataSetName,
+                };
+            });
+
+        return dataElementsMonitoringDetails;
     }
 
     async getColumns(namespace: string): Promise<string[]> {
@@ -125,52 +250,6 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
         return this.storageClient.saveObject<string[]>(namespace, columns);
     }
 
-    async getSortOrder(): Promise<string[]> {
-        const sortOrderArray = await this.storageClient.getObject<string[]>(Namespaces.MAL_DIFF_NAMES_SORT_ORDER);
-
-        return sortOrderArray ?? [];
-    }
-
-    async generateSortOrder(): Promise<void> {
-        try {
-            const dataSetData: {
-                dataSetElements: dataSetElementsType[];
-                sections: { id: string }[];
-            } = await this.api
-                .get<any>(`/dataSets/PWCUb3Se1Ie`, { fields: "sections,dataSetElements[dataElement[id,name]]" })
-                .getData();
-
-            if (_.isEmpty(dataSetData.sections) || _.isEmpty(dataSetData.dataSetElements)) {
-                return this.storageClient.saveObject<string[]>(Namespaces.MAL_DIFF_NAMES_SORT_ORDER, []);
-            }
-
-            const dataSetElements: dataElementsType[] = dataSetData.dataSetElements.map(item => item.dataElement);
-
-            const sectionsDEs = await promiseMap(dataSetData.sections, async sections => {
-                return this.api.get<any>(`/sections/${sections.id}`, { fields: "dataElements" }).getData();
-            });
-
-            const sectionsDEsIds: { id: string }[] = sectionsDEs.flatMap(item => {
-                return item.dataElements.map((dataElementId: { id: string }) => {
-                    return dataElementId;
-                });
-            });
-
-            const sortOrderArray: string[] = sectionsDEsIds
-                .map(obj =>
-                    Object.assign(
-                        obj,
-                        dataSetElements.find(obj2 => obj.id === obj2.id)
-                    )
-                )
-                .map(item => item.name);
-
-            return this.storageClient.saveObject<string[]>(Namespaces.MAL_DIFF_NAMES_SORT_ORDER, sortOrderArray);
-        } catch (error: any) {
-            console.debug(error);
-        }
-    }
-
     async getSubscription(namespace: string): Promise<any[]> {
         const subscription = await this.globalStorageClient.getObject<SubscriptionStatus[]>(namespace);
 
@@ -180,11 +259,124 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
     async saveSubscription(namespace: string, subscription: SubscriptionStatus[]): Promise<void> {
         return await this.globalStorageClient.saveObject<SubscriptionStatus[]>(namespace, subscription);
     }
+
+    async getMonitoring(namespace: string): Promise<MonitoringValue> {
+        const monitoring = (await this.globalStorageClient.getObject<MonitoringValue>(namespace)) ?? {
+            dataElements: [],
+        };
+
+        return monitoring;
+    }
+
+    async saveMonitoring(namespace: string, monitoring: MonitoringValue): Promise<void> {
+        return await this.globalStorageClient.saveObject<MonitoringValue>(namespace, monitoring);
+    }
 }
 
-/* From the docs: "The variables must contain alphanumeric, dash, underscore and
-   whitespace characters only.". Use "-" as id separator and also "-" as empty value.
-*/
-function sqlViewJoinIds(ids: Id[]): string {
-    return ids.join("-") || "-";
+function getDataElementsInParent(
+    parent: Dashboard | Visualization,
+    dataDimensionItems: DataDimensionItems[] | undefined,
+    dataElements: ChildrenDataElement[]
+) {
+    const indicatorVariables = _(dataDimensionItems)
+        ?.map(dimensionItem => [dimensionItem.indicator?.numerator, dimensionItem.indicator?.denominator])
+        .flattenDeep()
+        .compact()
+        .value();
+
+    const dataElementVariables = _.uniq(
+        _.compact(_.flatMap(indicatorVariables, str => str.match(/#{([a-zA-Z0-9]+)}/g)))
+    );
+
+    const dataElementIds = dataElementVariables
+        .map(token => token.slice(2, -1))
+        .filter(id => /^[a-zA-Z0-9]+$/.test(id));
+
+    const dataElementsWithGroups = _.filter(dataElements, dataElement => dataElementIds.includes(dataElement.id));
+
+    return _({
+        dataElementsWithGroups,
+    })
+        .keyBy(_item => parent.id)
+        .value();
+}
+
+function getRows(
+    parent: Dashboard | Visualization,
+    dataElementsInParent: Record<string, ChildrenDataElement[]>[],
+    subscriptionValues: SubscriptionStatus[]
+) {
+    const children: ChildrenDataElement[] = (findArrayValueById(parent.id, dataElementsInParent) ?? []).map(child => {
+        const dataSetName =
+            child.dataSetElements.find((item: any) => item.dataSet.name.includes("APVD"))?.dataSet.name ??
+            child.dataSetElements[0]?.dataSet.name ??
+            "";
+
+        return {
+            ...child,
+            dataSetName,
+            subscription: subscriptionValues.find(subscription => subscription.dataElementId === child.id)?.subscribed
+                ? "Subscribed"
+                : "Not Subscribed",
+            lastDateOfSubscription:
+                subscriptionValues.find(subscription => subscription.dataElementId === child.id)
+                    ?.lastDateOfSubscription ?? "",
+        };
+    });
+
+    const subscribedElements = _.intersection(
+        subscriptionValues
+            .filter(subscription => subscription.subscribed)
+            .map(subscription => subscription.dataElementId),
+        children.map(child => child.id)
+    ).length;
+
+    const subscription: SubscriptionValue =
+        subscribedElements !== 0 && subscribedElements !== children.length
+            ? "Subscribed to some elements"
+            : subscribedElements !== 0 && subscribedElements === children.length
+            ? "Subscribed"
+            : "Not Subscribed";
+
+    return {
+        ...parent,
+        children,
+        subscribedElements: !_.isEmpty(children)
+            ? `${subscribedElements} / ${children.length}`
+            : String(subscribedElements),
+        subscription,
+        lastDateOfSubscription:
+            _.maxBy(
+                children.map(child => child.lastDateOfSubscription),
+                dateString => new Date(dateString).getTime()
+            ) ?? "",
+    };
+}
+
+const emptyPage = {
+    pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 },
+    objects: [],
+    totalRows: [],
+};
+
+function paginate<Obj>(objects: Obj[], paging: Paging, sorting: Sorting<Obj>) {
+    const pager: Pager = {
+        page: paging.page,
+        pageSize: paging.pageSize,
+        pageCount: Math.ceil(objects.length / paging.pageSize),
+        total: objects.length,
+    };
+
+    const paginatedObjects = _(objects)
+        .orderBy([row => row[sorting.field]], [sorting.direction])
+        .drop((paging.page - 1) * paging.pageSize)
+        .take(paging.pageSize)
+        .value();
+
+    return { pager, objects: paginatedObjects };
+}
+
+function findArrayValueById(id: string, record: Record<string, any[]>[]) {
+    const entry = _.find(record, obj => id in obj);
+    return entry ? entry[id] : [];
 }

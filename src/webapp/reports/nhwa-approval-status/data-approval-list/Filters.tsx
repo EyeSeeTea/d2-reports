@@ -1,12 +1,13 @@
 import _ from "lodash";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { Id, NamedRef } from "../../../../domain/common/entities/Base";
-import { getRootIds } from "../../../../domain/common/entities/OrgUnit";
+import { FilterOrgUnit, getRootIds } from "../../../../domain/common/entities/OrgUnit";
 import i18n from "../../../../locales";
 import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
-import { OrgUnitsFilterButton } from "../../../components/org-units-filter/OrgUnitsFilterButton";
 import { useAppContext } from "../../../contexts/app-context";
+import { OrgUnitChildSelectorButton } from "../../../components/org-units-filter/OrgUnitChildSelectorButton";
+import { D2Api } from "@eyeseetea/d2-api/2.34";
 
 export interface DataSetsFiltersProps {
     values: DataSetsFilter;
@@ -30,6 +31,7 @@ interface FilterOptions {
 export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { config, api } = useAppContext();
     const { values: filter, options: filterOptions, onChange } = props;
+    const [orgUnits, setOrgUnits] = useState<FilterOrgUnit[]>([]);
 
     const dataSetItems = useMemoOptionsFromNamedRef(filterOptions.dataSets);
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
@@ -45,13 +47,38 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         { id: "false", name: "Ready for approval" },
     ]);
 
+    useEffect(() => {
+        async function getOrganisationUnits(api: D2Api, levels: string[]): Promise<FilterOrgUnit[]> {
+            const { organisationUnits } = await api.metadata
+                .get({
+                    organisationUnits: {
+                        filter: { level: { in: levels } },
+                        fields: {
+                            id: true,
+                            path: true,
+                            name: true,
+                            level: true,
+                            children: { level: true, path: true },
+                        },
+                    },
+                })
+                .getData();
+
+            return _.orderBy(organisationUnits, "level", "asc");
+        }
+
+        const levels = ["1", "2", "3"];
+        getOrganisationUnits(api, levels).then(value => setOrgUnits(value));
+    }, [api]);
+
     return (
         <Container>
-            <OrgUnitsFilterButton
+            <OrgUnitChildSelectorButton
                 api={api}
                 rootIds={rootIds}
-                selected={filter.orgUnitPaths}
-                setSelected={paths => onChange({ ...filter, orgUnitPaths: paths })}
+                onChange={onChange}
+                orgUnitPaths={filter.orgUnitPaths}
+                orgUnits={orgUnits}
             />
 
             <Dropdown

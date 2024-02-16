@@ -29,13 +29,13 @@ import { GenerateSortOrderUseCase } from "./domain/reports/mal-data-approval/use
 import { GetMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/GetMonitoringUseCase";
 import { SaveMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/SaveMonitoringUseCase";
 import { DuplicateDataValuesUseCase } from "./domain/reports/mal-data-approval/usecases/DuplicateDataValuesUseCase";
-import { GetMalSubscriptionDataSetsUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalSubscriptionDataSetsUseCase";
+import { GetMalDataElementsSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalDataElementsSubscriptionUseCase";
 import { SaveMalDataSubscriptionColumnsUseCase } from "./domain/reports/mal-data-subscription/usecases/SaveMalDataSubscriptionColumnsUseCase";
 import { GetMalDataSubscriptionColumnsUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalDataSubscriptionColumnsUseCase";
-import { GetSubscriptionSortOrderUseCase } from "./domain/reports/mal-data-subscription/usecases/GetSubscriptionSortOrderUseCase";
-import { GenerateSubscriptionSortOrderUseCase } from "./domain/reports/mal-data-subscription/usecases/GenerateSubscriptionSortOrderUseCase";
 import { SaveSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/SaveSubscriptionUseCase";
 import { GetSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/GetSubscriptionUseCase";
+import { GetMonitoringUseCase as GetSubscriptionMonitoringUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMonitoringUseCase";
+import { SaveMonitoringUseCase as SaveSubscriptionMonitoringUseCase } from "./domain/reports/mal-data-subscription/usecases/SaveMonitoringUseCase";
 import { CSYAuditEmergencyDefaultRepository } from "./data/reports/csy-audit-emergency/CSYAuditEmergencyDefaultRepository";
 import { GetAuditEmergencyUseCase } from "./domain/reports/csy-audit-emergency/usecases/GetAuditEmergencyUseCase";
 import { SaveAuditEmergencyUseCase } from "./domain/reports/csy-audit-emergency/usecases/SaveAuditEmergencyUseCase";
@@ -47,7 +47,6 @@ import { GetGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-dat
 import { SaveGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-data-submission/usecases/SaveGLASSDataSubmissionColumnsUseCase";
 import { UpdateGLASSSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/UpdateGLASSSubmissionUseCase";
 import { DHIS2MessageCountUseCase } from "./domain/reports/glass-data-submission/usecases/DHIS2MessageCountUseCase";
-import { GetGLASSUserPermissionsUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSUserPermissionsUseCase";
 import { CSYSummaryDefaultRepository } from "./data/reports/csy-summary-patient/CSYSummaryDefaultRepository";
 import { GetSummaryUseCase } from "./domain/reports/csy-summary-patient/usecases/GetSummaryUseCase";
 import { SaveSummaryUseCase } from "./domain/reports/csy-summary-patient/usecases/SaveSummaryUseCase";
@@ -55,6 +54,7 @@ import { CSYSummaryMortalityDefaultRepository } from "./data/reports/csy-summary
 import { GetSummaryMortalityUseCase } from "./domain/reports/csy-summary-mortality/usecases/GetSummaryUseCase";
 import { SaveSummaryMortalityUseCase } from "./domain/reports/csy-summary-mortality/usecases/SaveSummaryUseCase";
 import { CSYAuditTraumaDefaultRepository } from "./data/reports/csy-audit-trauma/CSYAuditTraumaDefaultRepository";
+import { GetMalDashboardsSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalDashboardsSubscriptionUseCase";
 import { GetAutoCompleteComputeValuesUseCase } from "./domain/reports/nhwa-auto-complete-compute/usecases/GetAutoCompleteComputeValuesUseCase";
 import { DataSetD2Repository } from "./data/common/DataSetD2Repository";
 import { DataValuesD2Repository } from "./data/common/DataValuesD2Repository";
@@ -78,6 +78,20 @@ import { GetDataQualityColumnsUseCase } from "./domain/reports/data-quality/usec
 import { SaveDataQualityUseCase } from "./domain/reports/data-quality/usecases/SaveDataQualityUseCase";
 import { LoadDataQualityValidation } from "./domain/reports/data-quality/usecases/loadDataQualityValidation";
 import { ResetDataQualityValidation } from "./domain/reports/data-quality/usecases/ResetDataQualityValidation";
+import { GetMonitoringDetailsUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMonitoringDetailsUseCase";
+import { GetGLASSDataMaintenanceUseCase } from "./domain/reports/glass-admin/usecases/GetGLASSDataMaintenanceUseCase";
+import { GLASSDataMaintenanceDefaultRepository } from "./data/reports/glass-admin/GLASSDataMaintenanceDefaultRepository";
+import { GetGLASSDataMaintenanceColumnsUseCase } from "./domain/reports/glass-admin/usecases/GetGLASSDataMaintenanceColumnsUseCase";
+import { SaveGLASSDataMaintenanceColumnsUseCase } from "./domain/reports/glass-admin/usecases/SaveGLASSDataMaintenanceColumnsUseCase";
+import { GetGLASSModulesUseCase } from "./domain/reports/glass-admin/usecases/GetGLASSModulesUseCase";
+import { UpdateGLASSDataMaintenanceUseCase } from "./domain/reports/glass-admin/usecases/UpdateGLASSDataMaintenanceUseCase";
+import { GetATCsUseCase } from "./domain/reports/glass-admin/usecases/GetATCsUseCase";
+import { UploadATCFileUseCase } from "./domain/reports/glass-admin/usecases/UploadATCFileUseCase";
+import { SaveAMCRecalculationLogic } from "./domain/reports/glass-admin/usecases/SaveAMCRecalculationLogic";
+import { GetATCLoggerProgramUseCase } from "./domain/reports/glass-admin/usecases/GetATCLoggerProgramUseCase";
+import { GetATCRecalculationLogicUseCase } from "./domain/reports/glass-admin/usecases/GetATCRecalculationLogicUseCase";
+import { CancelRecalculationUseCase } from "./domain/reports/glass-admin/usecases/CancelRecalculationUseCase";
+import { GetGLASSDataSubmissionModulesUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSDataSubmissionModulesUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -89,6 +103,7 @@ export function getCompositionRoot(api: D2Api) {
     const dataSubscriptionRepository = new MalDataSubscriptionDefaultRepository(api);
     const dataQualityRepository = new DataQualityDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
+    const glassAdminRepository = new GLASSDataMaintenanceDefaultRepository(api);
     const glassDataRepository = new GLASSDataSubmissionDefaultRepository(api);
     const csySummaryRepository = new CSYSummaryDefaultRepository(api);
     const csySummaryMortalityRepository = new CSYSummaryMortalityDefaultRepository(api);
@@ -131,13 +146,15 @@ export function getCompositionRoot(api: D2Api) {
             generateSortOrder: new GenerateSortOrderUseCase(dataDuplicationRepository),
         }),
         malDataSubscription: getExecute({
-            get: new GetMalSubscriptionDataSetsUseCase(dataSubscriptionRepository),
+            get: new GetMalDataElementsSubscriptionUseCase(dataSubscriptionRepository),
+            getDashboardDataElements: new GetMalDashboardsSubscriptionUseCase(dataSubscriptionRepository),
+            getMonitoringDetails: new GetMonitoringDetailsUseCase(dataSubscriptionRepository),
             getColumns: new GetMalDataSubscriptionColumnsUseCase(dataSubscriptionRepository),
             saveColumns: new SaveMalDataSubscriptionColumnsUseCase(dataSubscriptionRepository),
-            getSortOrder: new GetSubscriptionSortOrderUseCase(dataSubscriptionRepository),
-            generateSortOrder: new GenerateSubscriptionSortOrderUseCase(dataSubscriptionRepository),
             getSubscription: new GetSubscriptionUseCase(dataSubscriptionRepository),
             saveSubscription: new SaveSubscriptionUseCase(dataSubscriptionRepository),
+            getMonitoring: new GetSubscriptionMonitoringUseCase(dataSubscriptionRepository),
+            saveMonitoring: new SaveSubscriptionMonitoringUseCase(dataSubscriptionRepository),
         }),
         auditEmergency: getExecute({
             get: new GetAuditEmergencyUseCase(csyAuditEmergencyRepository),
@@ -147,10 +164,23 @@ export function getCompositionRoot(api: D2Api) {
             get: new GetAuditTraumaUseCase(csyAuditTraumaRepository),
             save: new SaveAuditTraumaUseCase(csyAuditTraumaRepository),
         }),
+        glassAdmin: getExecute({
+            get: new GetGLASSDataMaintenanceUseCase(glassAdminRepository),
+            getATCs: new GetATCsUseCase(glassAdminRepository),
+            getModules: new GetGLASSModulesUseCase(glassAdminRepository),
+            getATCRecalculationLogic: new GetATCRecalculationLogicUseCase(glassAdminRepository),
+            cancelRecalculation: new CancelRecalculationUseCase(glassAdminRepository),
+            getATCLoggerProgram: new GetATCLoggerProgramUseCase(glassAdminRepository),
+            updateStatus: new UpdateGLASSDataMaintenanceUseCase(glassAdminRepository),
+            saveRecalculationLogic: new SaveAMCRecalculationLogic(glassAdminRepository),
+            uploadFile: new UploadATCFileUseCase(glassAdminRepository),
+            getColumns: new GetGLASSDataMaintenanceColumnsUseCase(glassAdminRepository),
+            saveColumns: new SaveGLASSDataMaintenanceColumnsUseCase(glassAdminRepository),
+        }),
         glassDataSubmission: getExecute({
             get: new GetGLASSDataSubmissionUseCase(glassDataRepository),
+            getModules: new GetGLASSDataSubmissionModulesUseCase(glassDataRepository),
             getEAR: new GetEARDataSubmissionUseCase(glassDataRepository),
-            getUserGroupPermissions: new GetGLASSUserPermissionsUseCase(glassDataRepository),
             getColumns: new GetGLASSDataSubmissionColumnsUseCase(glassDataRepository),
             saveColumns: new SaveGLASSDataSubmissionColumnsUseCase(glassDataRepository),
             dhis2MessageCount: new DHIS2MessageCountUseCase(glassDataRepository),

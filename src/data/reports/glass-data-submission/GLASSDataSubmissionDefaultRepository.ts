@@ -1,13 +1,14 @@
 import _ from "lodash";
-import { PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
+import { PaginatedObjects, Paging, Sorting } from "../../../domain/common/entities/PaginatedObjects";
 import {
     ApprovalIds,
     GLASSDataSubmissionItem,
     GLASSDataSubmissionItemIdentifier,
     GLASSDataSubmissionModule,
-    GLASSUserPermission,
     EARDataSubmissionItem,
     EARSubmissionItemIdentifier,
+    getUserModules,
+    Status,
 } from "../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 import {
     EARDataSubmissionOptions,
@@ -19,13 +20,15 @@ import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreSt
 import { StorageClient } from "../../common/clients/storage/StorageClient";
 import { Instance } from "../../common/entities/Instance";
 import { promiseMap } from "../../../utils/promises";
-import { Status } from "../../../webapp/reports/glass-data-submission/DataSubmissionViewModel";
 import { Id, NamedRef, Ref } from "../../../domain/common/entities/Base";
 import {
     earStatusItems,
     statusItems,
 } from "../../../webapp/reports/glass-data-submission/glass-data-submission-list/Filters";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
+import { Config } from "../../../domain/common/entities/Config";
+import { Event } from "@eyeseetea/d2-api/api/events";
+import { generateUid } from "../../../utils/uid";
 
 interface CompleteDataSetRegistrationsResponse {
     completeDataSetRegistrations: Registration[] | undefined;
@@ -83,47 +86,126 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         options: GLASSDataSubmissionOptions,
         namespace: string
     ): Promise<PaginatedObjects<GLASSDataSubmissionItem>> {
-        const {
-            paging,
-            sorting,
-            module,
-            orgUnitIds,
-            periods,
-            quarters,
-            completionStatus,
-            submissionStatus,
-            dataSubmissionPeriod,
-        } = options;
+        const { paging, sorting, module } = options;
+        if (!module) return emptyPage;
 
-        const modules =
-            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
-                Namespaces.DATA_SUBMISSSIONS_MODULES
-            )) ?? [];
-        const objects =
-            (await this.globalStorageClient.getObject<GLASSDataSubmissionItem[]>(namespace))?.filter(object => {
-                const amrModule = modules.find(module => module.name === "AMR")?.id;
-                const amrIndividualModule = modules.find(module => module.name === "AMR - Individual")?.id;
-                const egaspModule = modules.find(module => module.name === "EGASP")?.id;
+        const modules = await this.getModules();
+        const objects = await this.getDataSubmissionObjects(namespace);
+        const uploads = await this.getUploads();
 
-                if (module === "AMR") return object.module === amrModule;
-                else if (module === "AMRIndividual") return object.module === amrIndividualModule;
-                else if (module === "EGASP") return object.module === egaspModule;
-                else return [];
-            }) ?? [];
+        const dataSubmissions = await this.getDataSubmissions(objects, modules, uploads);
+        const filteredRows = this.getFilteredRows(dataSubmissions, options);
+        const { pager, rowsInPage } = this.paginate(filteredRows, sorting, paging);
 
-        const uploads =
+        return {
+            pager,
+            objects: rowsInPage,
+        };
+    }
+
+    private async getUploads() {
+        return (
             (await this.globalStorageClient.getObject<GLASSDataSubmissionItemUpload[]>(
                 Namespaces.DATA_SUBMISSSIONS_UPLOADS
-            )) ?? [];
-
-        const userOrgUnits = (await this.api.get<{ organisationUnits: Ref[] }>("/me").getData()).organisationUnits.map(
-            ou => ou.id
+            )) ?? []
         );
-        const { organisationUnits } = await this.api
-            .get<any>(
-                "/metadata?organisationUnits:fields=children[children[id,level],id,level],id,level&organisationUnits:filter=level:eq:1"
-            )
+    }
+
+    private async getDataSubmissionObjects(namespace: string) {
+        return (await this.globalStorageClient.getObject<GLASSDataSubmissionItem[]>(namespace)) ?? [];
+    }
+
+    private async getDataSubmissions(
+        objects: GLASSDataSubmissionItem[],
+        modules: GLASSDataSubmissionModule[],
+        uploads: GLASSDataSubmissionItemUpload[]
+    ): Promise<GLASSDataSubmissionItem[]> {
+        const enrolledCountries = await this.getEnrolledCountries();
+        const amrFocalPointProgramId = await this.getAMRFocalPointProgramId();
+        const dataSubmissionItems = await this.getDataSubmissionIdentifiers(
+            amrFocalPointProgramId,
+            enrolledCountries.join(";"),
+            modules
+        );
+        const registrations = await this.getRegistrations(dataSubmissionItems);
+
+        const dataSubmissions: GLASSDataSubmissionItem[] = dataSubmissionItems.map(dataSubmissionItem => {
+            const dataSubmission = objects.find(
+                object =>
+                    object.period === dataSubmissionItem.period &&
+                    object.orgUnit === dataSubmissionItem.orgUnit &&
+                    object.module === dataSubmissionItem.module
+            );
+
+            const key = getRegistrationKey({
+                orgUnitId: dataSubmissionItem.orgUnit,
+                period: dataSubmissionItem.period,
+            });
+            const match = registrations[key];
+
+            const submissionStatus =
+                statusItems.find(item => item.value === dataSubmission?.status)?.text ?? "Not completed";
+            const dataSubmissionPeriod =
+                modules.find(module => dataSubmissionItem.module === module.id)?.dataSubmissionPeriod ?? "YEARLY";
+            const dataSetsUploaded = getDatasetsUploaded(uploads, dataSubmission);
+
+            return {
+                ...dataSubmissionItem,
+                ...match,
+                ...dataSubmission,
+                submissionStatus,
+                dataSetsUploaded,
+                dataSubmissionPeriod,
+                id: dataSubmission?.id ?? generateUid(),
+                period: dataSubmissionItem.period.slice(0, 4),
+                orgUnitName: match?.orgUnitName ?? "",
+                questionnaireCompleted: match?.questionnaireCompleted ?? false,
+                status: dataSubmission?.status ?? "NOT_COMPLETED",
+                statusHistory: dataSubmission?.statusHistory ?? [],
+                from: dataSubmission?.from ?? null,
+                to: dataSubmission?.to ?? null,
+                creationDate: dataSubmission?.creationDate ?? new Date().toISOString(),
+            };
+        });
+
+        return dataSubmissions;
+    }
+
+    private async getEnrolledCountries(): Promise<string[]> {
+        const userOrgUnits = await this.getUserOrgUnits();
+        const orgUnitsWithChildren = await this.getOUsWithChildren(userOrgUnits);
+
+        const countriesOutsideNARegion = await this.getCountriesOutsideNARegion();
+        const enrolledCountries = orgUnitsWithChildren.filter(orgUnit => countriesOutsideNARegion.includes(orgUnit));
+
+        return enrolledCountries;
+    }
+
+    private async getOUsWithChildren(userOrgUnits: string[]): Promise<string[]> {
+        const { organisationUnits } = await this.api.metadata
+            .get({
+                organisationUnits: {
+                    fields: {
+                        id: true,
+                        level: true,
+                        children: {
+                            id: true,
+                            level: true,
+                            children: {
+                                id: true,
+                                level: true,
+                            },
+                        },
+                    },
+                    filter: {
+                        level: {
+                            eq: "1",
+                        },
+                    },
+                },
+            })
             .getData();
+
         const orgUnitsWithChildren = _(userOrgUnits)
             .flatMap(ou => {
                 const res = flattenNodes(flattenNodes(organisationUnits).filter(res => res.id === ou)).map(
@@ -133,85 +215,118 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             })
             .uniq()
             .value();
-        const filteredObjects = objects.filter(object => orgUnitsWithChildren.includes(object.orgUnit));
 
-        const registrations = await this.getRegistrations(filteredObjects);
+        return orgUnitsWithChildren;
+    }
 
-        const rows = filteredObjects.map(object => {
-            const key = getRegistrationKey({ orgUnitId: object.orgUnit, period: object.period });
-            const match = registrations[key];
-            const submissionStatus = statusItems.find(item => item.value === object.status)?.text ?? "";
-            const dataSubmissionPeriod =
-                modules.find(module => object.module === module.id)?.dataSubmissionPeriod ?? "YEARLY";
+    private async getUserOrgUnits(): Promise<string[]> {
+        return (await this.api.get<{ organisationUnits: Ref[] }>("/me").getData()).organisationUnits.map(ou => ou.id);
+    }
 
-            const uploadStatus = uploads.filter(upload => upload.dataSubmission === object.id).map(item => item.status);
-            const completedDatasets = uploadStatus.filter(item => item === "COMPLETED").length;
-            const validatedDatasets = uploadStatus.filter(item => item === "VALIDATED").length;
-            const importedDatasets = uploadStatus.filter(item => item === "IMPORTED").length;
-            const uploadedDatasets = uploadStatus.filter(item => item === "UPLOADED").length;
+    private async getDataSubmissionIdentifiers(
+        program: string,
+        orgUnit: string,
+        modules: GLASSDataSubmissionModule[]
+    ): Promise<GLASSDataSubmissionItemIdentifier[]> {
+        const { instances } = await this.api
+            .get<{ instances: { attributes: { value: string }[]; orgUnit: string }[] }>("/tracker/trackedEntities", {
+                program: program,
+                orgUnit: orgUnit,
+                fields: "attributes[value],orgUnit",
+            })
+            .getData();
 
-            let dataSetsUploaded = "";
-            if (completedDatasets > 0) {
-                dataSetsUploaded += `${completedDatasets} completed, `;
-            }
-            if (validatedDatasets > 0) {
-                dataSetsUploaded += `${validatedDatasets} validated, `;
-            }
-            if (importedDatasets > 0) {
-                dataSetsUploaded += `${importedDatasets} imported, `;
-            }
-            if (uploadedDatasets > 0) {
-                dataSetsUploaded += `${uploadedDatasets} uploaded, `;
-            }
+        const dataSubmissionPeriods = getDataSubmissionPeriods();
+        const orgUnitModules: { orgUnit: string; module: string }[] = _(instances)
+            .map(instance => {
+                const module = instance.attributes.map(attribute => attribute.value)[0] ?? "";
 
-            // Remove trailing comma and space if any
-            dataSetsUploaded = dataSetsUploaded.replace(/,\s*$/, "");
-
-            // Show "No datasets" if all variables are 0
-            if (dataSetsUploaded === "") {
-                dataSetsUploaded = "No datasets";
-            }
-
-            return {
-                ...object,
-                ...match,
-                submissionStatus,
-                dataSetsUploaded,
-                dataSubmissionPeriod,
-                period: object.period.slice(0, 4),
-            };
-        });
-
-        const quarterPeriods = _.flatMap(periods, year => quarters.map(quarter => `${year}${quarter}`));
-
-        const filteredRows = rows.filter(row => {
-            return (
-                (_.isEmpty(orgUnitIds) || !row.orgUnit ? row : orgUnitIds.includes(row.orgUnit)) &&
-                (dataSubmissionPeriod === "YEARLY"
-                    ? periods.includes(String(row.period))
-                    : quarterPeriods.includes(String(row.period))) &&
-                (completionStatus !== undefined ? row.questionnaireCompleted === completionStatus : row) &&
-                (!submissionStatus ? row : row.status === submissionStatus)
-            );
-        });
-
-        const rowsInPage = _(filteredRows)
-            .orderBy([row => row[sorting.field]], [sorting.direction])
-            .drop((paging.page - 1) * paging.pageSize)
-            .take(paging.pageSize)
+                return {
+                    orgUnit: instance.orgUnit,
+                    module: moduleMapping[module] ?? "",
+                };
+            })
+            .uniqBy(instance => `${instance.orgUnit}_${instance.module}`)
             .value();
 
-        const pager: Pager = {
-            page: paging.page,
-            pageSize: paging.pageSize,
-            pageCount: Math.ceil(filteredRows.length / paging.pageSize),
-            total: filteredRows.length,
-        };
+        return orgUnitModules.flatMap(orgUnitModule => {
+            return dataSubmissionPeriods.map(dataSubmissionPeriod => ({
+                ...orgUnitModule,
+                period: dataSubmissionPeriod.toString(),
+                module: modules.find(module => module.name === orgUnitModule.module)?.id ?? "",
+            }));
+        });
+    }
 
-        return {
-            pager,
-            objects: rowsInPage,
-        };
+    private async getCountriesOutsideNARegion(): Promise<string[]> {
+        const { organisationUnits: kosovoOu } = await this.api.metadata
+            .get({
+                organisationUnits: {
+                    fields: {
+                        id: true,
+                    },
+                    filter: {
+                        name: {
+                            eq: "Kosovo",
+                        },
+                        level: {
+                            eq: "3",
+                        },
+                        "parent.code": {
+                            eq: "NA",
+                        },
+                    },
+                },
+            })
+            .getData();
+
+        const { organisationUnits } = await this.api.metadata
+            .get({
+                organisationUnits: {
+                    fields: {
+                        id: true,
+                    },
+                    filter: {
+                        level: {
+                            eq: "3",
+                        },
+                        "parent.code": {
+                            ne: "NA",
+                        },
+                    },
+                    paging: false,
+                },
+            })
+            .getData();
+
+        return _.concat(organisationUnits, kosovoOu).map(orgUnit => orgUnit.id);
+    }
+
+    private async getAMRFocalPointProgramId(): Promise<string> {
+        const { programs } = await this.api.metadata
+            .get({
+                programs: {
+                    fields: {
+                        id: true,
+                    },
+                    filter: {
+                        name: {
+                            eq: "AMR - Focal Point",
+                        },
+                    },
+                },
+            })
+            .getData();
+
+        const programId = _.first(programs)?.id ?? "";
+
+        return programId;
+    }
+
+    async getUserModules(config: Config): Promise<GLASSDataSubmissionModule[]> {
+        const modules = await this.getModules();
+
+        return getUserModules(modules, config.currentUser);
     }
 
     async getEAR(
@@ -275,28 +390,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         };
     }
 
-    async getUserGroupPermissions(): Promise<GLASSUserPermission> {
-        const modules =
-            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
-                Namespaces.DATA_SUBMISSSIONS_MODULES
-            )) ?? [];
-
-        const amrPermissions = modules.find(module => module.name === "AMR")?.userGroups.approveAccess ?? [];
-        const amrIndividualPermissions =
-            modules.find(module => module.name === "AMR - Individual")?.userGroups.approveAccess ?? [];
-        const earPermissions = modules.find(module => module.name === "EAR")?.userGroups.approveAccess ?? [];
-        const egaspPermissions = modules.find(module => module.name === "EGASP")?.userGroups.approveAccess ?? [];
-
-        return {
-            AMR: amrPermissions,
-            AMRIndividual: amrIndividualPermissions,
-            EAR: earPermissions,
-            EGASP: egaspPermissions,
-        };
-    }
-
     private async getRegistrations(
-        items: GLASSDataSubmissionItem[]
+        items: GLASSDataSubmissionItemIdentifier[]
     ): Promise<Record<RegistrationKey, RegistrationItemBase>> {
         const orgUnitIds = _.uniq(items.map(obj => obj.orgUnit));
         const periods = _.uniq(items.map(obj => obj.period));
@@ -378,6 +473,46 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 .getData()) ?? [];
 
         return messageConversations.length;
+    }
+
+    private async getModules(): Promise<GLASSDataSubmissionModule[]> {
+        const modules =
+            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
+                Namespaces.DATA_SUBMISSSIONS_MODULES
+            )) ?? [];
+
+        return _(modules)
+            .map(module => ({
+                ...module,
+                userGroups: { ...module.userGroups, approveAccess: module.userGroups.approveAccess ?? [] },
+            }))
+            .value();
+    }
+
+    private getFilteredRows(
+        rows: GLASSDataSubmissionItem[],
+        options: GLASSDataSubmissionOptions
+    ): GLASSDataSubmissionItem[] {
+        const { orgUnitIds, module, dataSubmissionPeriod, periods, quarters, completionStatus, submissionStatus } =
+            options;
+        const quarterPeriods = _.flatMap(periods, year => quarters.map(quarter => `${year}${quarter}`));
+
+        return rows.filter(row => {
+            const isInOrgUnit = !!(_.isEmpty(orgUnitIds) || !row.orgUnit ? row : orgUnitIds.includes(row.orgUnit));
+            const isInModule = row.module === module;
+
+            const isDataSubmissionYearly = dataSubmissionPeriod === "YEARLY";
+            const isInPeriod = isDataSubmissionYearly
+                ? periods.includes(row.period)
+                : quarterPeriods.includes(row.period);
+
+            const isCompleted = !!(completionStatus !== undefined
+                ? row.questionnaireCompleted === completionStatus
+                : row);
+            const isSubmitted = !!(!submissionStatus ? row : row.status === submissionStatus);
+
+            return isInOrgUnit && isInModule && isInPeriod && isCompleted && isSubmitted;
+        });
     }
 
     private async getNotificationText(
@@ -517,13 +652,15 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             .getData();
     }
 
-    private async getProgramEvents(program: string, orgUnit: string) {
-        return await this.api.events
+    private async getProgramEvents(program: string, orgUnit: string): Promise<Event[]> {
+        const { events } = await this.api.events
             .get({
                 program,
                 orgUnit,
             })
             .getData();
+
+        return events;
     }
 
     private makeDataValuesArray(
@@ -555,22 +692,33 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         items: GLASSDataSubmissionItemIdentifier[],
         signals?: EARSubmissionItemIdentifier[]
     ) {
-        const modules =
-            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
-                Namespaces.DATA_SUBMISSSIONS_MODULES
-            )) ?? [];
+        const modules = await this.getModules();
 
         if (!_.isEmpty(items)) {
             const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
             const module = modules.find(module => module.id === _.first(items)?.module)?.name ?? "";
 
+            if (module === "AMC") {
+                const amcPrograms = modules.find(module => module.name === "AMC")?.programs ?? [];
+                _.forEach(amcPrograms, async amcProgram => await this.duplicateProgram(amcProgram, items));
+            }
             if (module === "AMR") {
-              const amrDataSets = modules.find(module => module.name === "AMR")?.dataSets ?? [];
-              const amrQuestionnaires = modules.find(module => module.name === "AMR")?.questionnaires ?? [];
+                const amrDataSets = modules.find(module => module.name === "AMR")?.dataSets ?? [];
+                const amrQuestionnaires = modules.find(module => module.name === "AMR")?.questionnaires ?? [];
 
-              _.forEach(amrDataSets, async amrDataSet => await this.duplicateDataSet(amrDataSet, items));
-              _.forEach(amrQuestionnaires, async amrQuestionnaire => await this.duplicateDataSet(amrQuestionnaire, items));
-              
+                _.forEach(amrDataSets, async amrDataSet => await this.duplicateDataSet(amrDataSet, items));
+                _.forEach(
+                    amrQuestionnaires,
+                    async amrQuestionnaire => await this.duplicateDataSet(amrQuestionnaire, items)
+                );
+            }
+            if (module === "AMR - Fungal") {
+                const amrFungalQuestionnaires =
+                    modules.find(module => module.name === "AMR - Fungal")?.questionnaires ?? [];
+                _.forEach(
+                    amrFungalQuestionnaires,
+                    async amrFungalQuestionnaire => await this.duplicateDataSet(amrFungalQuestionnaire, items)
+                );
             }
             if (module === "AMR - Individual") {
                 const amrIndividualPrograms =
@@ -650,20 +798,10 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
     private async duplicateProgram(program: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
         await promiseMap(items, async item => {
-            const programEvents = (await this.getProgramEvents(program.id, item.orgUnit ?? "")).events;
-            const events = programEvents
-                .map(event => {
-                    return {
-                        program: event.program,
-                        orgUnit: event.orgUnit,
-                        eventDate: event.eventDate,
-                        status: event.status,
-                        storedBy: event.storedBy,
-                        coordinate: event.coordinate,
-                        dataValues: event.dataValues,
-                    };
-                })
-                .filter(event => String(new Date(event.eventDate).getFullYear()) === item.period);
+            const programEvents = await this.getProgramEvents(program.id, item.orgUnit ?? "");
+            const events = programEvents.filter(
+                event => String(new Date(event.eventDate).getFullYear()) === item.period
+            );
 
             if (!_.isEmpty(events)) {
                 const eventsToPost = events.map(event => {
@@ -687,7 +825,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
     private async duplicateProgramStages(program: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
         await promiseMap(items, async item => {
-            const programEvents = (await this.getProgramEvents(program.id, item.orgUnit ?? "")).events;
+            const programEvents = await this.getProgramEvents(program.id, item.orgUnit ?? "");
 
             await promiseMap(programEvents, async programEvent => {
                 const programStageEvents = (
@@ -729,10 +867,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         isDatasetUpdate: boolean,
         signals?: EARSubmissionItemIdentifier[]
     ) {
-        const modules =
-            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
-                Namespaces.DATA_SUBMISSSIONS_MODULES
-            )) ?? [];
+        const modules = await this.getModules();
 
         if (!_.isEmpty(items)) {
             const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
@@ -766,10 +901,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
     async reopen(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
         const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
-        const modules =
-            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
-                Namespaces.DATA_SUBMISSSIONS_MODULES
-            )) ?? [];
+        const modules = await this.getModules();
 
         const newSubmissionValues = this.getNewSubmissionValues(items, objects, "NOT_COMPLETED");
         const recipients = await this.getRecipientUsers(items, modules);
@@ -785,10 +917,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
     async accept(namespace: string, items: GLASSDataSubmissionItemIdentifier[]) {
         const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
-        const modules =
-            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
-                Namespaces.DATA_SUBMISSSIONS_MODULES
-            )) ?? [];
+        const modules = await this.getModules();
 
         const newSubmissionValues = this.getNewSubmissionValues(items, objects, "UPDATE_REQUEST_ACCEPTED");
         const recipients = await this.getRecipientUsers(items, modules);
@@ -802,10 +931,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
     }
 
     async getGLASSDashboardId(_namespace: string, _items: GLASSDataSubmissionItemIdentifier[]): Promise<string> {
-        const modules =
-            (await this.globalStorageClient.getObject<GLASSDataSubmissionModule[]>(
-                Namespaces.DATA_SUBMISSSIONS_MODULES
-            )) ?? [];
+        const modules = await this.getModules();
         const glassUnapvdDashboardId = modules.find(module => module.name === "AMR")?.dashboards.validationReport ?? "";
 
         return glassUnapvdDashboardId;
@@ -882,12 +1008,76 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 : object;
         });
     }
+
+    private paginate(rows: GLASSDataSubmissionItem[], sorting: Sorting<GLASSDataSubmissionItem>, paging: Paging) {
+        const rowsInPage = _(rows)
+            .orderBy([row => row[sorting.field]], [sorting.direction])
+            .drop((paging.page - 1) * paging.pageSize)
+            .take(paging.pageSize)
+            .value();
+
+        const pager: Pager = {
+            page: paging.page,
+            pageSize: paging.pageSize,
+            pageCount: Math.ceil(rows.length / paging.pageSize),
+            total: rows.length,
+        };
+        return { pager, rowsInPage };
+    }
 }
+
+const emptyPage: PaginatedObjects<GLASSDataSubmissionItem> = {
+    pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 },
+    objects: [],
+};
+
+const moduleMapping: Record<string, string> = {
+    AMC: "AMC",
+    AMR: "AMR",
+    AMR_FUNGAL: "AMR - Fungal",
+    AMR_INDIVIDUAL: "AMR - Individual",
+    EAR: "EAR",
+    EGASP: "EGASP",
+};
 
 type RegistrationItemBase = Pick<
     GLASSDataSubmissionItem,
     "orgUnitName" | "orgUnit" | "period" | "questionnaireCompleted"
 >;
+
+function getDatasetsUploaded(
+    uploads: GLASSDataSubmissionItemUpload[],
+    object: GLASSDataSubmissionItem | undefined
+): string {
+    const uploadStatus = uploads.filter(upload => upload.dataSubmission === object?.id).map(item => item.status);
+    const completedDatasets = uploadStatus.filter(item => item === "COMPLETED").length;
+    const validatedDatasets = uploadStatus.filter(item => item === "VALIDATED").length;
+    const importedDatasets = uploadStatus.filter(item => item === "IMPORTED").length;
+    const uploadedDatasets = uploadStatus.filter(item => item === "UPLOADED").length;
+
+    let dataSetsUploaded = "";
+    if (completedDatasets > 0) {
+        dataSetsUploaded += `${completedDatasets} completed, `;
+    }
+    if (validatedDatasets > 0) {
+        dataSetsUploaded += `${validatedDatasets} validated, `;
+    }
+    if (importedDatasets > 0) {
+        dataSetsUploaded += `${importedDatasets} imported, `;
+    }
+    if (uploadedDatasets > 0) {
+        dataSetsUploaded += `${uploadedDatasets} uploaded, `;
+    }
+
+    // Remove trailing comma and space if any
+    dataSetsUploaded = dataSetsUploaded.replace(/,\s*$/, "");
+
+    // Show "No datasets" if all variables are 0
+    if (dataSetsUploaded === "" || !dataSetsUploaded) {
+        dataSetsUploaded = "No datasets";
+    }
+    return dataSetsUploaded;
+}
 
 function getRegistrationKey(options: { orgUnitId: Id; period: string }): RegistrationKey {
     return [options.orgUnitId, options.period].join(".");
@@ -903,3 +1093,10 @@ type OrgUnitNode = {
     id: string;
     children?: OrgUnitNode[];
 };
+
+function getDataSubmissionPeriods(): number[] {
+    const currentYear = new Date().getFullYear();
+    const dataSubmissionPeriods = _.range(currentYear - 7, currentYear);
+
+    return dataSubmissionPeriods;
+}

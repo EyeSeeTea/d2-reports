@@ -6,7 +6,7 @@ import { OrgUnitsFilterButton } from "../../../components/org-units-filter/OrgUn
 import styled from "styled-components";
 import { Dropdown, DropdownProps } from "@eyeseetea/d2-ui-components";
 import i18n from "../../../../locales";
-import { getRootIds } from "../../../../domain/common/entities/OrgUnit";
+import _ from "lodash";
 
 export interface FiltersProps {
     values: Filter;
@@ -39,7 +39,13 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
 
     const [periodType, setPerType] = useState<string>("yearly");
 
-    const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
+    const rootIds = React.useMemo(
+        () =>
+            _(config.currentUser.orgUnits)
+                .map(ou => ou.id)
+                .value(),
+        [config]
+    );
 
     const periodTypeItems = React.useMemo(() => {
         return [
@@ -105,7 +111,7 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
                 rootIds={rootIds}
                 selected={filter.orgUnitPaths}
                 setSelected={paths => onChange({ ...filter, orgUnitPaths: paths })}
-                selectableLevels={[1, 2, 3]}
+                selectableLevels={[1, 2, 3, 4, 5, 6, 7]}
             />
 
             <SingleDropdownStyled

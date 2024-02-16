@@ -12,6 +12,7 @@ export interface MalDataApprovalItem {
     approvalWorkflow: string | undefined;
     completed: boolean;
     validated: boolean;
+    approved?: boolean;
     lastUpdatedValue: string | undefined;
     lastDateOfSubmission: string | undefined;
     lastDateOfApproval: string | undefined;
@@ -39,13 +40,7 @@ export interface CountryCode {
     code: string;
 }
 
-export type MonitoringValue = Record<
-    string,
-    Record<
-        string,
-        { monitoring: Monitoring[]; userGroups: string }[] | { monitoring: Monitoring[]; userGroups: string }[]
-    >
->;
+export type MonitoringValue = Record<string, Record<string, { monitoring: Monitoring[]; userGroups: string[] }[]>>;
 
 export function getDataDuplicationItemId(dataSet: MalDataApprovalItem): string {
     return [
@@ -72,7 +67,7 @@ export function getDataDuplicationItemMonitoringValue(
     } else {
         const monitoringArray = _.first(monitoring["dataSets"]?.[dataSetName])?.monitoring;
 
-        return !!_.find(monitoringArray, { orgUnit: dataSet.orgUnitCode, period: dataSet.period });
+        return !!_.find(monitoringArray, { orgUnit: dataSet.orgUnitCode, period: dataSet.period })?.enable;
     }
 }
 
