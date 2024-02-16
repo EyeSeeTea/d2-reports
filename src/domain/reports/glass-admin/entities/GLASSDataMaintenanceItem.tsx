@@ -5,12 +5,13 @@ import { User } from "../../../common/entities/User";
 
 export type Status = "UPLOADED" | "VALIDATED" | "COMPLETED" | "DELETED";
 
-export type Module = "AMR" | "EGASP" | "AMRIndividual" | "EAR";
+export type Module = "AMR" | "AMR - Individual" | "AMR - Fungal" | "AMC" | "EGASP" | "EAR";
 
 export interface GLASSDataMaintenanceItem {
     id: Id;
     fileId: Id;
     fileName: string;
+    fileType: string;
     module: Module;
     orgUnit: string;
     orgUnitName: string;
