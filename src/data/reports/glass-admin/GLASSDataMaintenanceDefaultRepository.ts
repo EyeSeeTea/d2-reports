@@ -7,11 +7,13 @@ import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreSt
 import { StorageClient } from "../../common/clients/storage/StorageClient";
 import { Instance } from "../../common/entities/Instance";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
-import { NamedRef } from "../../../domain/common/entities/Ref";
+import { NamedRef, Ref } from "../../../domain/common/entities/Ref";
 import { D2Api, Pager } from "../../../types/d2-api";
 import {
+    AMCRecalculation,
     ATCItem,
     ATCItemIdentifier,
+    ATCPaginatedObjects,
     GLASSDataMaintenanceItem,
     GLASSMaintenancePaginatedObjects,
     GLASSModule,
@@ -23,16 +25,14 @@ import JSZip from "jszip";
 import _ from "lodash";
 import { Config } from "../../../domain/common/entities/Config";
 import { Id } from "../../../domain/common/entities/Base";
-import {
-    PaginatedObjects,
-    Paging,
-    Sorting,
-    getPaginatedObjects,
-} from "../../../domain/common/entities/PaginatedObjects";
+import { Paging, Sorting, getPaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
 
-interface ATCJson {
-    [key: string]: any;
-}
+type ATCJson = {
+    name: "atc" | "ddd_combinations" | "ddd" | "conversion" | "ddd_alterations" | "atc_alterations";
+    data: unknown[];
+};
+
+const START_YEAR_PERIOD = 2016;
 
 export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenanceRepository {
     private storageClient: StorageClient;
@@ -62,13 +62,17 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         return { objects: objects, pager: pager, rowIds: rowIds };
     }
 
-    async getATCs(options: ATCOptions, namespace: string): Promise<PaginatedObjects<ATCItem>> {
+    async getATCs(options: ATCOptions, namespace: string): Promise<ATCPaginatedObjects<ATCItem>> {
         const { paging, sorting } = options;
 
         const atcs = await this.getATCItems(namespace);
+        const uploadedYears = _(atcs)
+            .map(atc => atc.year)
+            .uniq()
+            .value();
         const { objects, pager } = this.paginate(atcs, sorting, paging);
 
-        return { objects: objects, pager: pager };
+        return { objects: objects, pager: pager, uploadedYears: uploadedYears };
     }
 
     private async getATCItems(namespace: string) {
@@ -99,65 +103,272 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         return this.storageClient.saveObject<string[]>(namespace, columns);
     }
 
-    async uploadATC(namespace: string, file: File, year: string, items: ATCItemIdentifier[]): Promise<void> {
+    async uploadATC(namespace: string, file: File, year: string, selectedItems?: ATCItemIdentifier[]): Promise<void> {
         const atcItems = await this.getATCItems(namespace);
         const jsons = await this.extractJsonFromZIP(file);
 
-        if (jsons.length === 4) {
-            if (items) {
-                const updatedVersion = this.updateVersion(items);
-                const updatedATCItems = this.patchATCVersion(atcItems, items);
+        if (jsons.length === 6) {
+            if (selectedItems) {
+                const updatedVersion = this.updateVersion(atcItems, selectedItems);
+                const updatedATCItems = this.patchATCVersion(atcItems, selectedItems);
 
-                await this.globalStorageClient.saveObject<ATCJson>(`ATC-${updatedVersion}`, jsons);
-                await this.globalStorageClient.saveObject<ATCJson>(Namespaces.ATCS, updatedATCItems);
+                await this.globalStorageClient.saveObject<ATCJson[]>(`ATC-${updatedVersion}`, jsons);
+                await this.globalStorageClient.saveObject<ATCItem[]>(Namespaces.ATCS, updatedATCItems);
             } else {
                 const updatedATCItems = this.uploadNewATC(year, atcItems);
 
-                await this.globalStorageClient.saveObject<ATCJson>(`ATC-${year}-v1`, jsons);
-                await this.globalStorageClient.saveObject<ATCJson>(Namespaces.ATCS, updatedATCItems);
+                await this.globalStorageClient.saveObject<ATCJson[]>(`ATC-${year}-v1`, jsons);
+                await this.globalStorageClient.saveObject<ATCItem[]>(Namespaces.ATCS, updatedATCItems);
             }
         } else {
-            throw new Error("The zip file does not contain exactly 4 JSON files.");
+            throw new Error("The zip file does not contain exactly 6 JSON files.");
         }
     }
 
-    private uploadNewATC(year: string, atcItems: ATCItem[]) {
-        const atcYears = atcItems.map(atcItem => _.parseInt(atcItem.year));
-        const currentVersionYear = Math.max(...atcYears);
-
-        const newItem = {
-            year: year,
-            version: 1,
-            uploadedDate: new Date().toISOString(),
-            currentVersion: _.parseInt(year) > currentVersionYear,
-        };
-
-        return [...atcItems, newItem];
+    async getRecalculationLogic(namespace: string): Promise<AMCRecalculation | undefined> {
+        return await this.globalStorageClient.getObject<AMCRecalculation>(namespace);
     }
 
-    private patchATCVersion(atcItems: ATCItem[], selectedItems: ATCItemIdentifier[]) {
-        return _.flatMap(atcItems, atcItem => {
-            const matchingItem = selectedItems.find(
-                item => item.year === atcItem.year && _.parseInt(item.version) === _.parseInt(atcItem.version)
-            );
+    async cancelRecalculation(namespace: string): Promise<void> {
+        const amcRecalculationLogic = await this.getRecalculationLogic(namespace);
 
-            if (matchingItem) {
-                return [
-                    {
+        if (amcRecalculationLogic) {
+            const updatedRecalculationLogic = {
+                ...amcRecalculationLogic,
+                recalculate: false,
+            };
+
+            await this.globalStorageClient.saveObject<AMCRecalculation>(namespace, updatedRecalculationLogic);
+        }
+    }
+
+    async saveRecalculationLogic(namespace: string): Promise<void> {
+        const amcRecalculationLogic = await this.getRecalculationLogic(namespace);
+
+        const currentDate = new Date().toISOString();
+        const periods = this.getATCPeriods();
+        const enrolledCountries = await this.getEnrolledCountries();
+
+        const amcRecalculation: AMCRecalculation = {
+            date: currentDate,
+            periods: periods,
+            orgUnitsIds: enrolledCountries,
+            loggerProgram: amcRecalculationLogic?.loggerProgram ?? "",
+            recalculate: true,
+        };
+
+        this.globalStorageClient.saveObject<AMCRecalculation>(namespace, amcRecalculation);
+    }
+
+    async getLoggerProgramName(programId: string): Promise<string> {
+        const { programs } = await this.api.metadata
+            .get({
+                programs: {
+                    fields: {
+                        id: true,
+                        name: true,
+                    },
+                    filter: {
+                        id: {
+                            eq: programId,
+                        },
+                    },
+                },
+            })
+            .getData();
+
+        return programs[0]?.name ?? "";
+    }
+
+    private getATCPeriods = (): string[] => {
+        const currentYear = new Date().getFullYear();
+
+        return _.range(START_YEAR_PERIOD, currentYear + 1).map(year => year.toString());
+    };
+
+    private async getEnrolledCountries(): Promise<string[]> {
+        const userOrgUnits = await this.getUserOrgUnits();
+        const orgUnitsWithChildren = await this.getOUsWithChildren(userOrgUnits);
+
+        const countriesOutsideNARegion = await this.getCountriesOutsideNARegion();
+        const enrolledCountries = orgUnitsWithChildren.filter(orgUnit => countriesOutsideNARegion.includes(orgUnit));
+
+        return enrolledCountries;
+    }
+
+    private async getOUsWithChildren(userOrgUnits: string[]): Promise<string[]> {
+        const { organisationUnits } = await this.api.metadata
+            .get({
+                organisationUnits: {
+                    fields: {
+                        id: true,
+                        level: true,
+                        children: {
+                            id: true,
+                            level: true,
+                            children: {
+                                id: true,
+                                level: true,
+                            },
+                        },
+                    },
+                    filter: {
+                        level: {
+                            eq: "1",
+                        },
+                    },
+                },
+            })
+            .getData();
+
+        const orgUnitsWithChildren = _(userOrgUnits)
+            .flatMap(ou => {
+                const res = flattenNodes(flattenNodes(organisationUnits).filter(res => res.id === ou)).map(
+                    node => node.id
+                );
+                return res;
+            })
+            .uniq()
+            .value();
+
+        return orgUnitsWithChildren;
+    }
+
+    private async getUserOrgUnits(): Promise<string[]> {
+        return (await this.api.get<{ organisationUnits: Ref[] }>("/me").getData()).organisationUnits.map(ou => ou.id);
+    }
+
+    private async getCountriesOutsideNARegion(): Promise<string[]> {
+        const { organisationUnits: kosovoOu } = await this.api.metadata
+            .get({
+                organisationUnits: {
+                    fields: {
+                        id: true,
+                    },
+                    filter: {
+                        name: {
+                            eq: "Kosovo",
+                        },
+                        level: {
+                            eq: "3",
+                        },
+                        "parent.code": {
+                            eq: "NA",
+                        },
+                    },
+                },
+            })
+            .getData();
+
+        const { organisationUnits } = await this.api.metadata
+            .get({
+                organisationUnits: {
+                    fields: {
+                        id: true,
+                    },
+                    filter: {
+                        level: {
+                            eq: "3",
+                        },
+                        "parent.code": {
+                            ne: "NA",
+                        },
+                    },
+                    paging: false,
+                },
+            })
+            .getData();
+
+        return _.concat(organisationUnits, kosovoOu).map(orgUnit => orgUnit.id);
+    }
+
+    private uploadNewATC(year: string, atcItems: ATCItem[]): ATCItem[] {
+        const atcYears = atcItems.map(atcItem => _.parseInt(atcItem.year));
+        const previousVersionYear = Math.max(...atcYears);
+
+        const newItem: ATCItem = {
+            year: year,
+            version: "1",
+            uploadedDate: new Date().toISOString(),
+            currentVersion: _.parseInt(year) > previousVersionYear,
+            previousVersion: false,
+        };
+
+        return _(atcItems)
+            .map(atcItem => {
+                if (atcItem.currentVersion) {
+                    return {
                         ...atcItem,
                         currentVersion: false,
-                    },
-                    {
-                        year: matchingItem.year,
-                        version: _.parseInt(matchingItem.version) + 1,
-                        uploadedDate: new Date().toISOString(),
-                        currentVersion: matchingItem.currentVersion === true,
-                    },
-                ];
-            }
+                        previousVersion: true,
+                    };
+                } else if (atcItem.previousVersion) {
+                    return {
+                        ...atcItem,
+                        previousVersion: false,
+                    };
+                } else {
+                    return atcItem;
+                }
+            })
+            .concat(newItem)
+            .value();
+    }
 
-            return [atcItem];
-        });
+    private patchATCVersion(atcItems: ATCItem[], selectedItems: ATCItemIdentifier[]): ATCItem[] {
+        const newItems: ATCItem[] = selectedItems.map(selectedItem => this.getNewPatchItem(selectedItem, atcItems));
+        const selectedATCItem = this.getSelectedATCItem(atcItems, selectedItems[0]);
+
+        const updatedATCItems = _(atcItems)
+            .map(atcItem => {
+                const matchingItem = this.getSelectedATCItem(selectedItems, atcItem);
+
+                if (atcItem.previousVersion && selectedATCItem?.currentVersion) {
+                    return {
+                        ...atcItem,
+                        previousVersion: false,
+                    };
+                } else if (matchingItem?.currentVersion) {
+                    return {
+                        ...atcItem,
+                        currentVersion: false,
+                        previousVersion: true,
+                    };
+                }
+
+                return atcItem;
+            })
+            .value();
+
+        return [...newItems, ...updatedATCItems];
+    }
+
+    private getNewPatchItem(selectedItem: ATCItemIdentifier, atcItems: ATCItem[]): ATCItem {
+        const newVersion = this.getNewVersionNumber(atcItems, selectedItem);
+
+        return {
+            currentVersion: selectedItem.currentVersion,
+            previousVersion: false,
+            uploadedDate: new Date().toISOString(),
+            version: newVersion,
+            year: selectedItem.year,
+        };
+    }
+
+    private getNewVersionNumber(atcItems: ATCItem[], selectedItem: ATCItemIdentifier | undefined) {
+        return (
+            (_(atcItems)
+                .filter(atcItem => atcItem.year === selectedItem?.year)
+                .map(atcItem => _.parseInt(atcItem.version))
+                .max() ?? 0) + 1
+        )?.toString();
+    }
+
+    private getSelectedATCItem(atcItems: ATCItemIdentifier[], selectedItem: ATCItemIdentifier | undefined) {
+        return atcItems.find(
+            atcItem =>
+                atcItem.year === selectedItem?.year && _.parseInt(atcItem.version) === _.parseInt(selectedItem?.version)
+        );
     }
 
     private async extractJsonFromZIP(file: File): Promise<ATCJson[]> {
@@ -189,11 +400,12 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         return jsons;
     }
 
-    private updateVersion(items: ATCItemIdentifier[]): string {
+    private updateVersion(atcItems: ATCItem[], items: ATCItemIdentifier[]): string {
         const item = _.first(items);
+        const newVersion = this.getNewVersionNumber(atcItems, item);
 
         if (item) {
-            return `${item.year}-v${_.parseInt(item.version) + 1}`;
+            return `${item.year}-v${_.parseInt(newVersion)}`;
         } else {
             return "";
         }
@@ -305,3 +517,12 @@ const emptyPage: GLASSMaintenancePaginatedObjects<GLASSDataMaintenanceItem> = {
 };
 
 const earModule = "EAR";
+
+const flattenNodes = (orgUnitNodes: OrgUnitNode[]): OrgUnitNode[] =>
+    _.flatMap(orgUnitNodes, node => (node.children ? [node, ...flattenNodes(node.children)] : [node]));
+
+type OrgUnitNode = {
+    level: number;
+    id: string;
+    children?: OrgUnitNode[];
+};

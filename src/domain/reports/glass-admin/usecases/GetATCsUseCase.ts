@@ -1,11 +1,10 @@
-import { PaginatedObjects } from "../../../common/entities/PaginatedObjects";
-import { ATCItem } from "../entities/GLASSDataMaintenanceItem";
+import { ATCItem, ATCPaginatedObjects } from "../entities/GLASSDataMaintenanceItem";
 import { ATCOptions, GLASSDataMaintenanceRepository } from "../repositories/GLASSDataMaintenanceRepository";
 
 export class GetATCsUseCase {
     constructor(private maintenanceRepository: GLASSDataMaintenanceRepository) {}
 
-    execute(options: ATCOptions, namespace: string): Promise<PaginatedObjects<ATCItem>> {
+    execute(options: ATCOptions, namespace: string): Promise<ATCPaginatedObjects<ATCItem>> {
         return this.maintenanceRepository.getATCs(options, namespace);
     }
 }

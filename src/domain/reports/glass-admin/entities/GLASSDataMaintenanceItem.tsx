@@ -30,8 +30,13 @@ export interface GLASSMaintenancePaginatedObjects<T> extends PaginatedObjects<T>
     rowIds: string[];
 }
 
+export interface ATCPaginatedObjects<T> extends PaginatedObjects<T> {
+    uploadedYears: string[];
+}
+
 export interface ATCItem {
     currentVersion: boolean;
+    previousVersion: boolean;
     uploadedDate: string;
     version: string;
     year: string;
@@ -41,6 +46,14 @@ export interface ATCItemIdentifier {
     currentVersion: boolean;
     version: string;
     year: string;
+}
+
+export interface AMCRecalculation {
+    date: string;
+    recalculate: boolean;
+    orgUnitsIds: Id[];
+    periods: string[];
+    loggerProgram: string;
 }
 
 export function getATCItemId(atc: ATCItem): string {

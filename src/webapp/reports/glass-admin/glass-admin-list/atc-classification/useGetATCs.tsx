@@ -5,14 +5,13 @@ import { ATCViewModel, getATCViewModel } from "../../DataMaintenanceViewModel";
 import { Namespaces } from "../../../../../data/common/clients/storage/Namespaces";
 import { ATCItem } from "../../../../../domain/reports/glass-admin/entities/GLASSDataMaintenanceItem";
 import { CompositionRoot } from "../../../../../compositionRoot";
-import _ from "lodash";
 
 export function useGetATCs(compositionRoot: CompositionRoot, reloadKey: string) {
     const [uploadedYears, setUploadedYears] = useState<string[]>([]);
 
     const getATCs = useCallback(
         async (_search: string, paging: TablePagination, sorting: TableSorting<ATCViewModel>) => {
-            const { objects, pager } = await compositionRoot.glassAdmin.getATCs(
+            const { objects, pager, uploadedYears } = await compositionRoot.glassAdmin.getATCs(
                 {
                     paging: { page: paging.page, pageSize: paging.pageSize },
                     sorting: getSortingFromTableSorting(sorting),
@@ -20,12 +19,7 @@ export function useGetATCs(compositionRoot: CompositionRoot, reloadKey: string) 
                 Namespaces.ATCS
             );
 
-            const uploadedYears = _(objects)
-                .map(object => object.year)
-                .uniq()
-                .value();
             setUploadedYears(uploadedYears);
-
             console.debug("Reloading", reloadKey);
 
             return { objects: getATCViewModel(objects), pager: pager };

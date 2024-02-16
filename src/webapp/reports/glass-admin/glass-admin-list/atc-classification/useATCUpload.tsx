@@ -1,60 +1,20 @@
-import { useSnackbar } from "@eyeseetea/d2-ui-components";
-import { useCallback } from "react";
 import { useBooleanState } from "../../../../utils/use-boolean";
-import i18n from "../../../../../locales";
-import { useAppContext } from "../../../../contexts/app-context";
-import { ATCItemIdentifier } from "../../../../../domain/reports/glass-admin/entities/GLASSDataMaintenanceItem";
-import { Namespaces } from "../../../../../data/common/clients/storage/Namespaces";
 
-export function useATCUpload(reload: () => void) {
-    const { compositionRoot } = useAppContext();
-    const snackbar = useSnackbar();
-
+export function useATCUpload() {
     const [isPatchModalOpen, { enable: openPatchModal, disable: closePatchModal }] = useBooleanState(false);
     const [isUploadATCModalOpen, { enable: openUploadATCModal, disable: closeUploadATCModal }] = useBooleanState(false);
-
-    const patchVersion = useCallback(
-        async (selectedFile: File | undefined, period: string, selectedItems: ATCItemIdentifier[]) => {
-            try {
-                if (selectedFile) {
-                    await compositionRoot.glassAdmin.uploadFile(Namespaces.ATCS, selectedFile, period, selectedItems);
-                    snackbar.success(i18n.t("Version has been successfully patched"));
-                }
-            } catch (error) {
-                snackbar.error(i18n.t("Error encountered when parsing version"));
-            } finally {
-                closePatchModal();
-                reload();
-            }
-        },
-        [closePatchModal, compositionRoot.glassAdmin, reload, snackbar]
-    );
-
-    const uploadATCFile = useCallback(
-        async (selectedFile: File | undefined, period: string) => {
-            try {
-                if (selectedFile) {
-                    await compositionRoot.glassAdmin.uploadFile(Namespaces.ATCS, selectedFile, period);
-                    snackbar.success(i18n.t("Upload finished"));
-                }
-            } catch (error) {
-                snackbar.error(i18n.t("Error parsing the file"));
-            } finally {
-                closeUploadATCModal();
-                reload();
-            }
-        },
-        [closeUploadATCModal, compositionRoot.glassAdmin, reload, snackbar]
-    );
+    const [isRecalculateLogicModalOpen, { enable: openRecalculateLogicModal, disable: closeRecalculateLogicModal }] =
+        useBooleanState(false);
 
     return {
         isPatchModalOpen,
         isUploadATCModalOpen,
+        isRecalculateLogicModalOpen,
         closePatchModal,
         closeUploadATCModal,
         openPatchModal,
         openUploadATCModal,
-        patchVersion,
-        uploadATCFile,
+        openRecalculateLogicModal,
+        closeRecalculateLogicModal,
     };
 }

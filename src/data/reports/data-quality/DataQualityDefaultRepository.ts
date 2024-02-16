@@ -228,6 +228,7 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
     ): Promise<DataQualityItemType[]> {
         const indicatorValidations = await this.getIndicatorValidations(this.api, indicators);
         const programIndicatorValidations = await this.getProgramIndicatorValidations(this.api, programIndicators);
+
         return _.concat<DataQualityItemType>(indicatorValidations, programIndicatorValidations);
     }
 
