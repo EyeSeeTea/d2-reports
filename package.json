@@ -95,8 +95,8 @@
         "mal-build-manifest": "d2-manifest package.json build/manifest.webapp --manifest.version=$npm_package_reportVersions_mal --manifest.icons.48 mal-icon.png --manifest.name='DHIS2 MAL Approval Report' --manifest.description='DHIS2 MAL Approval Report'",
         "glass-admin-manifest": "d2-manifest package.json manifest.webapp --manifest.version=$npm_package_reportVersions_glass_admin --manifest.icons.48='glass-icon.png' --manifest.name='DHIS2 GLASS Admin Maintenance Report' --manifest.description='DHIS2 GLASS Admin Maintenance Report'",
         "glass-admin-build-manifest": "d2-manifest package.json build/manifest.webapp --manifest.version=$npm_package_reportVersions_glass_admin --manifest.icons.48 glass-icon.png --manifest.name='DHIS2 GLASS Admin Maintenance Report' --manifest.description='DHIS2 GLASS Admin Maintenance Report'",
-        "glass-manifest": "d2-manifest package.json manifest.webapp --manifest.version=$npm_package_reportVersions_glass --manifest.icons.48='glass-icon.png' --manifest.name='DHIS2 GLASS Submission Report' --manifest.description='DHIS2 GLASS Submission Report'",
-        "glass-build-manifest": "d2-manifest package.json build/manifest.webapp --manifest.version=$npm_package_reportVersions_glass --manifest.icons.48 glass-icon.png --manifest.name='DHIS2 GLASS Submission Report' --manifest.description='DHIS2 GLASS Submission Report'"
+        "glass-manifest": "d2-manifest package.json manifest.webapp --manifest.version=$npm_package_reportVersions_glass_submission --manifest.icons.48='glass-icon.png' --manifest.name='DHIS2 GLASS Submission Report' --manifest.description='DHIS2 GLASS Submission Report'",
+        "glass-build-manifest": "d2-manifest package.json build/manifest.webapp --manifest.version=$npm_package_reportVersions_glass_submission --manifest.icons.48 glass-icon.png --manifest.name='DHIS2 GLASS Submission Report' --manifest.description='DHIS2 GLASS Submission Report'"
     },
     "reportVersions": {
         "csy-audit-emergency": "1.0.0",
