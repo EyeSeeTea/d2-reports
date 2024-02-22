@@ -56,6 +56,13 @@ interface MessageConversations {
     }[];
 }
 
+type TrackedEntityInstance = {
+    attributes: {
+        value: string;
+    }[];
+    orgUnit: string;
+};
+
 type DataValueType = {
     dataElement: string;
     period: string;
@@ -228,13 +235,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         orgUnit: string,
         modules: GLASSDataSubmissionModule[]
     ): Promise<GLASSDataSubmissionItemIdentifier[]> {
-        const { instances } = await this.api
-            .get<{ instances: { attributes: { value: string }[]; orgUnit: string }[] }>("/tracker/trackedEntities", {
-                program: program,
-                orgUnit: orgUnit,
-                fields: "attributes[value],orgUnit",
-            })
-            .getData();
+        const instances = await this.getTrackedEntityInstances(program, orgUnit);
 
         const dataSubmissionPeriods = getDataSubmissionPeriods();
         const orgUnitModules: { orgUnit: string; module: string }[] = _(instances)
@@ -256,6 +257,34 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 module: modules.find(module => module.name === orgUnitModule.module)?.id ?? "",
             }));
         });
+    }
+
+    private async getTrackedEntityInstances(program: string, orgUnit: string): Promise<TrackedEntityInstance[]> {
+        let instances: TrackedEntityInstance[] = [];
+        let currentPage = 1;
+        let totalPages = 1;
+        const pageSize = 200;
+
+        while (currentPage <= totalPages) {
+            const response = await this.api
+                .get<{ instances: TrackedEntityInstance[] }>("/tracker/trackedEntities", {
+                    program: program,
+                    orgUnit: orgUnit,
+                    fields: "attributes[value],orgUnit",
+                    pageSize: pageSize,
+                    page: currentPage,
+                })
+                .getData();
+
+            instances = instances.concat(response.instances);
+
+            if (response.instances.length === pageSize) {
+                totalPages++;
+            }
+            currentPage++;
+        }
+
+        return instances;
     }
 
     private async getCountriesOutsideNARegion(): Promise<string[]> {
@@ -1034,7 +1063,7 @@ const emptyPage: PaginatedObjects<GLASSDataSubmissionItem> = {
 const moduleMapping: Record<string, string> = {
     AMC: "AMC",
     AMR: "AMR",
-    AMR_FUNGAL: "AMR - Fungal",
+    AMR_FUNGHI: "AMR - Fungal",
     AMR_INDIVIDUAL: "AMR - Individual",
     EAR: "EAR",
     EGASP: "EGASP",
