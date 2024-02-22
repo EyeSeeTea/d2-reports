@@ -56,12 +56,12 @@ interface MessageConversations {
     }[];
 }
 
-interface TrackedEntityInstance {
+type TrackedEntityInstance = {
     attributes: {
         value: string;
     }[];
     orgUnit: string;
-}
+};
 
 type DataValueType = {
     dataElement: string;
