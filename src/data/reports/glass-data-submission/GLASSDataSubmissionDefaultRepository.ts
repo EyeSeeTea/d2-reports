@@ -263,7 +263,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         let instances: TrackedEntityInstance[] = [];
         let currentPage = 1;
         let totalPages = 1;
-        const pageSize = 50;
+        const pageSize = 200;
 
         while (currentPage <= totalPages) {
             const response = await this.api
