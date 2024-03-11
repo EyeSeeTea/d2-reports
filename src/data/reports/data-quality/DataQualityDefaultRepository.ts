@@ -167,58 +167,71 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         api: D2Api,
         metadataItems: IndicatorMetadataType[]
     ): Promise<IndicatorItem[]> {
-        return (await promiseMap(metadataItems, async item => {
-            try {
-                const numeratorValidation = await api.expressions.validate("indicator", item.numerator).getData();
-                const denominatorValidation = await api.expressions.validate("indicator", item.denominator).getData();
+        return _(
+            await promiseMap(metadataItems, async item => {
+                try {
+                    const numeratorValidation = await api.expressions.validate("indicator", item.numerator).getData();
+                    const denominatorValidation = await api.expressions
+                        .validate("indicator", item.denominator)
+                        .getData();
 
-                const numeratorResult = this.statusToBoolean(numeratorValidation.status);
-                const denominatorResult = this.statusToBoolean(denominatorValidation.status);
+                    const numeratorResult = this.statusToBoolean(numeratorValidation.status);
+                    const denominatorResult = this.statusToBoolean(denominatorValidation.status);
 
-                return {
-                    ...item,
-                    user: item.user.displayName,
-                    numeratorResult,
-                    denominatorResult,
-                    metadataType: "Indicator",
-                };
-            } catch (error) {
-                console.debug(error);
-            }
-        })) as IndicatorItem[];
+                    return {
+                        ...item,
+                        user: item.user.displayName,
+                        numeratorResult,
+                        denominatorResult,
+                        metadataType: "Indicator",
+                    };
+                } catch (error) {
+                    console.debug(error);
+                    return undefined;
+                }
+            })
+        )
+            .compact()
+            .value() as IndicatorItem[];
     }
 
     private async getProgramIndicatorValidations(
         api: D2Api,
         metadataItems: ProgramIndicatorMetadataType[]
     ): Promise<ProgramIndicatorItem[]> {
-        return (await promiseMap(metadataItems, async item => {
-            try {
-                const expressionValidation = item.expression
-                    ? await api.expressions.validate("program-indicator-formula", item.expression).getData()
-                    : undefined;
+        return _(
+            await promiseMap(metadataItems, async item => {
+                try {
+                    const expressionValidation = item.expression
+                        ? await api.expressions.validate("program-indicator-formula", item.expression).getData()
+                        : undefined;
 
-                const filterValidation = item.filter
-                    ? await api.expressions.validate("program-indicator-filter", item.filter).getData()
-                    : undefined;
+                    const filterValidation = item.filter
+                        ? await api.expressions.validate("program-indicator-filter", item.filter).getData()
+                        : undefined;
 
-                const expressionResult = expressionValidation
-                    ? this.statusToBoolean(expressionValidation.status)
-                    : false;
+                    const expressionResult = expressionValidation
+                        ? this.statusToBoolean(expressionValidation.status)
+                        : false;
 
-                const filterResult = filterValidation ? this.statusToBoolean(filterValidation.status) : undefined;
+                    const filterResult = filterValidation ? this.statusToBoolean(filterValidation.status) : undefined;
 
-                return {
-                    ...item,
-                    user: item.user.displayName,
-                    expressionResult,
-                    filterResult,
-                    metadataType: "ProgramIndicator",
-                };
-            } catch (error) {
-                console.debug(error);
-            }
-        })) as ProgramIndicatorItem[];
+                    return {
+                        ...item,
+                        user: item.user.displayName,
+                        expressionResult,
+                        filterResult,
+                        metadataType: "ProgramIndicator",
+                    };
+                } catch (error) {
+                    console.debug(error);
+
+                    return undefined;
+                }
+            })
+        )
+            .compact()
+            .value() as ProgramIndicatorItem[];
     }
 
     private async getValidations(
@@ -226,8 +239,8 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         indicators: IndicatorMetadataType[],
         programIndicators: ProgramIndicatorMetadataType[]
     ): Promise<DataQualityItemType[]> {
-        const indicatorValidations = await this.getIndicatorValidations(this.api, indicators);
-        const programIndicatorValidations = await this.getProgramIndicatorValidations(this.api, programIndicators);
+        const indicatorValidations = await this.getIndicatorValidations(api, indicators);
+        const programIndicatorValidations = await this.getProgramIndicatorValidations(api, programIndicators);
 
         return _.concat<DataQualityItemType>(indicatorValidations, programIndicatorValidations);
     }
@@ -266,12 +279,11 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
         indicatorsMeta: IndicatorMetadataType[],
         programIndicatorsMeta: ProgramIndicatorMetadataType[],
         oldValidations?: DataQualityItemType[]
-    ) {
+    ): Promise<void> {
         const validations = await this.getValidations(this.api, indicatorsMeta, programIndicatorsMeta);
-
         const validationErrors = this.getValidationErrors(validations, oldValidations);
 
-        await this.saveDataQuality(Namespaces.DATA_QUALITY, this.makeNewDataQualityConfig(validationErrors));
+        return await this.saveDataQuality(Namespaces.DATA_QUALITY, this.makeNewDataQualityConfig(validationErrors));
     }
 
     async loadValidation() {
