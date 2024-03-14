@@ -79,6 +79,24 @@ type DataValueSetsType = {
     dataValues: DataValueType[];
 };
 
+type Attribute = {
+    value: string;
+};
+
+interface TrackedEntity {
+    attributes: Attribute[];
+    enrollments: {
+        attributes: Attribute[];
+        events: {
+            program: string;
+            programStage: string;
+        }[];
+    }[];
+    programOwners: {
+        program: string;
+    }[];
+}
+
 export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmissionRepository {
     private storageClient: StorageClient;
     private globalStorageClient: StorageClient;
@@ -681,11 +699,13 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             .getData();
     }
 
-    private async getProgramEvents(program: string, orgUnit: string): Promise<Event[]> {
+    private async getProgramEvents(program: string, orgUnit: string, isEGASPModule: boolean): Promise<Event[]> {
         const { events } = await this.api.events
             .get({
-                program,
-                orgUnit,
+                program: program,
+                orgUnit: orgUnit,
+                ouMode: isEGASPModule ? "DESCENDANTS" : "SELECTED",
+                skipPaging: true,
             })
             .getData();
 
@@ -725,42 +745,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         if (!_.isEmpty(items)) {
             const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
-            const module = modules.find(module => module.id === _.first(items)?.module)?.name ?? "";
 
-            if (module === "AMC") {
-                const amcPrograms = modules.find(module => module.name === "AMC")?.programs ?? [];
-                _.forEach(amcPrograms, async amcProgram => await this.duplicateProgram(amcProgram, items));
-            }
-            if (module === "AMR") {
-                const amrDataSets = modules.find(module => module.name === "AMR")?.dataSets ?? [];
-                const amrQuestionnaires = modules.find(module => module.name === "AMR")?.questionnaires ?? [];
-
-                _.forEach(amrDataSets, async amrDataSet => await this.duplicateDataSet(amrDataSet, items));
-                _.forEach(
-                    amrQuestionnaires,
-                    async amrQuestionnaire => await this.duplicateDataSet(amrQuestionnaire, items)
-                );
-            }
-            if (module === "AMR - Fungal") {
-                const amrFungalQuestionnaires =
-                    modules.find(module => module.name === "AMR - Fungal")?.questionnaires ?? [];
-                _.forEach(
-                    amrFungalQuestionnaires,
-                    async amrFungalQuestionnaire => await this.duplicateDataSet(amrFungalQuestionnaire, items)
-                );
-            }
-            if (module === "AMR - Individual") {
-                const amrIndividualPrograms =
-                    modules.find(module => module.name === "AMR - Individual")?.programs ?? [];
-                _.forEach(amrIndividualPrograms, async amrIndividualProgram => {
-                    await this.duplicateProgramStages(amrIndividualProgram, items);
-                });
-            }
-            if (module === "EGASP") {
-                const egaspPrograms = modules.find(module => module.name === "EGASP")?.programs ?? [];
-                _.forEach(egaspPrograms, async egaspProgram => await this.duplicateProgram(egaspProgram, items));
-            }
-
+            await this.approveByModule(modules, items);
             const newSubmissionValues = this.getNewSubmissionValues(items, objects, "APPROVED");
             const recipients = await this.getRecipientUsers(items, modules);
 
@@ -780,8 +766,95 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         }
     }
 
+    private async approveByModule(modules: GLASSDataSubmissionModule[], items: GLASSDataSubmissionItemIdentifier[]) {
+        const selectedModule = modules.find(module => module.id === _.first(items)?.module)?.name ?? "";
+        const { AMC, AMR, AMR_FUNGHI, AMR_INDIVIDUAL, EGASP } = moduleMapping;
+
+        switch (selectedModule) {
+            case AMC: {
+                const amcPrograms = modules.find(module => module.name === AMC)?.programs ?? [];
+                const amcProductRegisterProgramId = await this.getAMCProductRegisterId(); // the AMC - Product Register program is tne only tracker program in this module
+
+                const amcEventPrograms = _.filter(
+                    amcPrograms,
+                    amcProgram => amcProgram.id !== amcProductRegisterProgramId
+                );
+                const amcTrackerPrograms = _.filter(
+                    amcPrograms,
+                    amcProgram => amcProgram.id === amcProductRegisterProgramId
+                );
+
+                _.forEach(amcEventPrograms, async amcProgram => await this.duplicateEventProgram(amcProgram, items));
+                _.forEach(
+                    amcTrackerPrograms,
+                    async amcProgram => await this.duplicateTrackerProgram(amcProgram, items)
+                );
+                break;
+            }
+            case AMR: {
+                const amrDataSets = modules.find(module => module.name === AMR)?.dataSets ?? [];
+                const amrQuestionnaires = modules.find(module => module.name === AMR)?.questionnaires ?? [];
+
+                _.forEach(amrDataSets, async amrDataSet => await this.duplicateDataSet(amrDataSet, items));
+                _.forEach(
+                    amrQuestionnaires,
+                    async amrQuestionnaire => await this.duplicateDataSet(amrQuestionnaire, items)
+                );
+                break;
+            }
+            case AMR_FUNGHI: {
+                const amrFungalQuestionnaires =
+                    modules.find(module => module.name === AMR_FUNGHI)?.questionnaires ?? [];
+                const amrFungalPrograms = modules.find(module => module.name === AMR_FUNGHI)?.programs ?? [];
+
+                _.forEach(
+                    amrFungalQuestionnaires,
+                    async amrFungalQuestionnaire => await this.duplicateDataSet(amrFungalQuestionnaire, items)
+                );
+                _.forEach(
+                    amrFungalPrograms,
+                    async amrFungalProgram => await this.duplicateTrackerProgram(amrFungalProgram, items)
+                );
+                break;
+            }
+            case AMR_INDIVIDUAL: {
+                const amrIndividualQuestionnaires =
+                    modules.find(module => module.name === AMR_INDIVIDUAL)?.questionnaires ?? [];
+                const amrIndividualPrograms = modules.find(module => module.name === AMR_INDIVIDUAL)?.programs ?? [];
+
+                _.forEach(amrIndividualQuestionnaires, async amrIndividualQuestionnaire => {
+                    await this.duplicateDataSet(amrIndividualQuestionnaire, items);
+                });
+                _.forEach(amrIndividualPrograms, async amrIndividualProgram => {
+                    await this.duplicateTrackerProgram(amrIndividualProgram, items);
+                });
+                break;
+            }
+            case EGASP: {
+                const egaspPrograms = modules.find(module => module.name === EGASP)?.programs ?? [];
+                _.forEach(
+                    egaspPrograms,
+                    async egaspProgram =>
+                        await this.duplicateEventProgram(egaspProgram, items, selectedModule === EGASP)
+                );
+                break;
+            }
+        }
+    }
+
+    private async getAMCProductRegisterId() {
+        const { objects } = await this.api.models.programs
+            .get({
+                fields: { id: true },
+                filter: { name: { eq: "AMC - Product Register" } },
+            })
+            .getData();
+
+        return _.first(objects)?.id ?? "";
+    }
+
     private async duplicateDataSet(dataSet: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
-        await promiseMap(items, async item => {
+        _.forEach(items, async item => {
             const dataValueSets = (await this.getDataSetsValue(dataSet.id, item.orgUnit ?? "", item.period)).dataValues;
 
             if (!_.isEmpty(dataValueSets)) {
@@ -825,23 +898,143 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         });
     }
 
-    private async duplicateProgram(program: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
-        await promiseMap(items, async item => {
-            const programEvents = await this.getProgramEvents(program.id, item.orgUnit ?? "");
+    private async duplicateTrackerProgram(
+        program: ApprovalIds,
+        items: GLASSDataSubmissionItemIdentifier[]
+    ): Promise<void> {
+        const approvedProgramStages = await this.getProgramStages(program.approvedId);
+        const programStages = await this.getProgramStages(program.id);
+
+        _.forEach(items, async item => {
+            const trackedEntities = await this.getTrackedEntities(program.id, item.orgUnit);
+
+            if (!_.isEmpty(trackedEntities)) {
+                const approvedTrackedEntities = await this.getTrackedEntities(program.approvedId, item.orgUnit);
+
+                !_.isEmpty(approvedTrackedEntities) &&
+                    this.api.post(
+                        "/tracker",
+                        { importStrategy: "DELETE" },
+                        { trackedEntities: approvedTrackedEntities }
+                    );
+
+                const trackedEntitiesToPost: TrackedEntity[] = trackedEntities.map(trackedEntity => ({
+                    ...trackedEntity,
+                    trackedEntity: "",
+                    programOwners: trackedEntity.programOwners.map(programOwner => ({
+                        ...programOwner,
+                        program: program.approvedId,
+                    })),
+                    enrollments: trackedEntity.enrollments.map(enrollment => ({
+                        ...enrollment,
+                        enrollment: "",
+                        trackedEntity: "",
+                        program: program.approvedId,
+                        events: enrollment.events.map(event => {
+                            const programStageName = programStages.find(
+                                programStage => programStage.id === event.programStage
+                            )?.name;
+                            const programStageApproved =
+                                approvedProgramStages.find(
+                                    approvedProgramStage => approvedProgramStage.name === programStageName
+                                )?.id ?? "";
+
+                            return {
+                                ...event,
+                                event: "",
+                                trackedEntity: "",
+                                program: program.approvedId,
+                                programStage: programStageApproved,
+                            };
+                        }),
+                    })),
+                }));
+
+                return await this.api.post("/tracker", {}, { trackedEntities: trackedEntitiesToPost }).getData();
+            }
+        });
+    }
+
+    private async getTrackedEntities(program: string, orgUnit: string): Promise<TrackedEntity[]> {
+        let instances: TrackedEntity[] = [];
+        let currentPage = 1;
+        let totalPages = 1;
+        const pageSize = 200;
+
+        while (currentPage <= totalPages) {
+            const { instances: trackedEntities } = await this.api
+                .get<{
+                    instances: TrackedEntity[];
+                }>("/tracker/trackedEntities", {
+                    program: program,
+                    orgUnit: orgUnit,
+                    fields: ":all",
+                })
+                .getData();
+
+            instances = instances.concat(trackedEntities);
+
+            if (instances.length === pageSize) {
+                totalPages++;
+            }
+            currentPage++;
+        }
+
+        return instances;
+    }
+
+    private async getProgramStages(program: string): Promise<NamedRef[]> {
+        const { programs } = await this.api.metadata
+            .get({
+                programs: {
+                    fields: {
+                        programStages: {
+                            id: true,
+                            name: true,
+                        },
+                    },
+                    filter: {
+                        id: { eq: program },
+                    },
+                    paging: false,
+                },
+            })
+            .getData();
+
+        return _.first(programs)?.programStages ?? [];
+    }
+
+    private async duplicateEventProgram(
+        program: ApprovalIds,
+        items: GLASSDataSubmissionItemIdentifier[],
+        isEGASPModule?: boolean
+    ): Promise<void> {
+        _.forEach(items, async item => {
+            const programEvents = await this.getProgramEvents(program.id, item.orgUnit, isEGASPModule ?? false);
             const events = programEvents.filter(
                 event => String(new Date(event.eventDate).getFullYear()) === item.period
             );
 
             if (!_.isEmpty(events)) {
+                const approvedProgramEvents = await this.getProgramEvents(
+                    program.approvedId,
+                    item.orgUnit,
+                    isEGASPModule ?? false
+                );
+                const approvedEvents = approvedProgramEvents.filter(
+                    event => String(new Date(event.eventDate).getFullYear()) === item.period
+                );
+
+                !_.isEmpty(approvedEvents) &&
+                    this.api.post("/events", { importStrategy: "DELETE" }, { events: approvedEvents });
+
+                const approvedProgramStage = (await this.getProgramStages(program.approvedId))[0];
                 const eventsToPost = events.map(event => {
                     return {
+                        ...event,
+                        event: "",
                         program: program.approvedId,
-                        orgUnit: event.orgUnit,
-                        eventDate: event.eventDate,
-                        status: event.status,
-                        storedBy: event.storedBy,
-                        coordinate: event.coordinate,
-                        dataValues: event.dataValues,
+                        programStage: approvedProgramStage?.id ?? "",
                     };
                 });
 
@@ -849,43 +1042,6 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                     return await this.api.events.post({}, { events: _.reject(eventsGroup, _.isEmpty) }).getData();
                 });
             }
-        });
-    }
-
-    private async duplicateProgramStages(program: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
-        await promiseMap(items, async item => {
-            const programEvents = await this.getProgramEvents(program.id, item.orgUnit ?? "");
-
-            await promiseMap(programEvents, async programEvent => {
-                const programStageEvents = (
-                    await this.api.events
-                        .get({
-                            event: programEvent.event,
-                            program: program.id,
-                            programStage: program.programStageId,
-                            orgUnit: item.orgUnit,
-                        })
-                        .getData()
-                ).events;
-
-                if (!_.isEmpty(programStageEvents)) {
-                    const eventsToPost = programStageEvents.map(event => ({
-                        program: program.approvedId,
-                        programStage: program.programStageApprovedId,
-                        orgUnit: event.orgUnit,
-                        event: event.event,
-                        eventDate: event.eventDate,
-                        status: event.status,
-                        dataValues: event.dataValues,
-                    }));
-
-                    await promiseMap(
-                        _.chunk(eventsToPost, 100),
-                        async eventsGroup =>
-                            await this.api.events.post({}, { events: _.reject(eventsGroup, _.isEmpty) }).getData()
-                    );
-                }
-            });
         });
     }
 
