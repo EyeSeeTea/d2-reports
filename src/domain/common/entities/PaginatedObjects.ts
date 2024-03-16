@@ -1,3 +1,5 @@
+import _ from "lodash";
+
 export interface PaginatedObjects<T> {
     pager: Pager;
     objects: T[];
@@ -18,4 +20,12 @@ export interface Paging {
 export interface Sorting<T> {
     field: keyof T;
     direction: "asc" | "desc";
+}
+
+export function getPaginatedObjects<T>(rows: T[], sorting: Sorting<T>, paging: Paging): T[] {
+    return _(rows)
+        .orderBy([row => row[sorting.field]], [sorting.direction])
+        .drop((paging.page - 1) * paging.pageSize)
+        .take(paging.pageSize)
+        .value();
 }

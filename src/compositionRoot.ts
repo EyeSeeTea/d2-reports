@@ -47,7 +47,6 @@ import { GetGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-dat
 import { SaveGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-data-submission/usecases/SaveGLASSDataSubmissionColumnsUseCase";
 import { UpdateGLASSSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/UpdateGLASSSubmissionUseCase";
 import { DHIS2MessageCountUseCase } from "./domain/reports/glass-data-submission/usecases/DHIS2MessageCountUseCase";
-import { GetGLASSUserPermissionsUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSUserPermissionsUseCase";
 import { CSYSummaryDefaultRepository } from "./data/reports/csy-summary-patient/CSYSummaryDefaultRepository";
 import { GetSummaryUseCase } from "./domain/reports/csy-summary-patient/usecases/GetSummaryUseCase";
 import { SaveSummaryUseCase } from "./domain/reports/csy-summary-patient/usecases/SaveSummaryUseCase";
@@ -84,6 +83,19 @@ import { AuthoritiesMonitoringDefaultRepository } from "./data/reports/authoriti
 import { GetAuthoritiesMonitoringUseCase } from "./domain/reports/authorities-monitoring/usecases/GetAuthoritiesMonitoringUseCase";
 import { GetAuthoritiesMonitoringColumnsUseCase } from "./domain/reports/authorities-monitoring/usecases/GetAuthoritiesMonitoringColumnsUseCase";
 import { SaveAuthoritiesMonitoringColumnsUseCase } from "./domain/reports/authorities-monitoring/usecases/SaveAuthoritiesMonitoringColumnsUseCase";
+import { GetGLASSDataMaintenanceUseCase } from "./domain/reports/glass-admin/usecases/GetGLASSDataMaintenanceUseCase";
+import { GLASSDataMaintenanceDefaultRepository } from "./data/reports/glass-admin/GLASSDataMaintenanceDefaultRepository";
+import { GetGLASSDataMaintenanceColumnsUseCase } from "./domain/reports/glass-admin/usecases/GetGLASSDataMaintenanceColumnsUseCase";
+import { SaveGLASSDataMaintenanceColumnsUseCase } from "./domain/reports/glass-admin/usecases/SaveGLASSDataMaintenanceColumnsUseCase";
+import { GetGLASSModulesUseCase } from "./domain/reports/glass-admin/usecases/GetGLASSModulesUseCase";
+import { UpdateGLASSDataMaintenanceUseCase } from "./domain/reports/glass-admin/usecases/UpdateGLASSDataMaintenanceUseCase";
+import { GetATCsUseCase } from "./domain/reports/glass-admin/usecases/GetATCsUseCase";
+import { UploadATCFileUseCase } from "./domain/reports/glass-admin/usecases/UploadATCFileUseCase";
+import { SaveAMCRecalculationLogic } from "./domain/reports/glass-admin/usecases/SaveAMCRecalculationLogic";
+import { GetATCLoggerProgramUseCase } from "./domain/reports/glass-admin/usecases/GetATCLoggerProgramUseCase";
+import { GetATCRecalculationLogicUseCase } from "./domain/reports/glass-admin/usecases/GetATCRecalculationLogicUseCase";
+import { CancelRecalculationUseCase } from "./domain/reports/glass-admin/usecases/CancelRecalculationUseCase";
+import { GetGLASSDataSubmissionModulesUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSDataSubmissionModulesUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -95,6 +107,7 @@ export function getCompositionRoot(api: D2Api) {
     const dataSubscriptionRepository = new MalDataSubscriptionDefaultRepository(api);
     const dataQualityRepository = new DataQualityDefaultRepository(api);
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
+    const glassAdminRepository = new GLASSDataMaintenanceDefaultRepository(api);
     const glassDataRepository = new GLASSDataSubmissionDefaultRepository(api);
     const csySummaryRepository = new CSYSummaryDefaultRepository(api);
     const csySummaryMortalityRepository = new CSYSummaryMortalityDefaultRepository(api);
@@ -156,10 +169,23 @@ export function getCompositionRoot(api: D2Api) {
             get: new GetAuditTraumaUseCase(csyAuditTraumaRepository),
             save: new SaveAuditTraumaUseCase(csyAuditTraumaRepository),
         }),
+        glassAdmin: getExecute({
+            get: new GetGLASSDataMaintenanceUseCase(glassAdminRepository),
+            getATCs: new GetATCsUseCase(glassAdminRepository),
+            getModules: new GetGLASSModulesUseCase(glassAdminRepository),
+            getATCRecalculationLogic: new GetATCRecalculationLogicUseCase(glassAdminRepository),
+            cancelRecalculation: new CancelRecalculationUseCase(glassAdminRepository),
+            getATCLoggerProgram: new GetATCLoggerProgramUseCase(glassAdminRepository),
+            updateStatus: new UpdateGLASSDataMaintenanceUseCase(glassAdminRepository),
+            saveRecalculationLogic: new SaveAMCRecalculationLogic(glassAdminRepository),
+            uploadFile: new UploadATCFileUseCase(glassAdminRepository),
+            getColumns: new GetGLASSDataMaintenanceColumnsUseCase(glassAdminRepository),
+            saveColumns: new SaveGLASSDataMaintenanceColumnsUseCase(glassAdminRepository),
+        }),
         glassDataSubmission: getExecute({
             get: new GetGLASSDataSubmissionUseCase(glassDataRepository),
+            getModules: new GetGLASSDataSubmissionModulesUseCase(glassDataRepository),
             getEAR: new GetEARDataSubmissionUseCase(glassDataRepository),
-            getUserGroupPermissions: new GetGLASSUserPermissionsUseCase(glassDataRepository),
             getColumns: new GetGLASSDataSubmissionColumnsUseCase(glassDataRepository),
             saveColumns: new SaveGLASSDataSubmissionColumnsUseCase(glassDataRepository),
             dhis2MessageCount: new DHIS2MessageCountUseCase(glassDataRepository),

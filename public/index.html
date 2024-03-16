@@ -30,6 +30,8 @@
         <title>DHIS2 MAL Approval Report</title>
     <% } else if (process.env.REACT_APP_REPORT_VARIANT==='glass-submission' ) { %>
         <title>DHIS2 GLASS Submission Report</title>
+    <% } else if (process.env.REACT_APP_REPORT_VARIANT==='glass-admin' ) { %>
+        <title>DHIS2 GLASS Admin Maintenance Report</title>
     <% } else { %>
         <title>DHIS2 Reports</title>
     <% } %>

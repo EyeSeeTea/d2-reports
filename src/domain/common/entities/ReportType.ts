@@ -3,8 +3,10 @@ export type ReportType =
     | "mal"
     | "mal-subscription"
     | "glass"
+    | "glass-admin"
     | "auditEmergency"
     | "auditTrauma"
     | "summary-patient"
     | "summary-mortality"
-    | "authMonitoring";
+    | "authMonitoring"
+    | "data-quality";

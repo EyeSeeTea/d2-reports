@@ -10,6 +10,7 @@ import { DataValuesRepository } from "../../../common/repositories/DataValuesRep
 import { DataElementTotal } from "../entities/AutoCompleteComputeSettings";
 import { AutoCompleteComputeSettingsRepository } from "../repositores/AutoCompleteComputeSettingsRepository";
 import { DataValue } from "./../../../common/entities/DataValue";
+import { promiseMap } from "../../../../utils/promises";
 
 export type AutoCompleteComputeValuesFilter = {
     cacheKey: string;
@@ -66,13 +67,21 @@ export class GetAutoCompleteComputeValuesUseCase {
             .keyBy(de => de.id)
             .value();
 
-        const dataValues = await this.dataValuesRepository.get({
-            dataSetIds: [dataSet.id],
-            orgUnitIds: filters.orgUnits.length ? filters.orgUnits : dataSet.organisationUnits.map(ou => ou.id),
-            periods: filters.periods.length ? filters.periods : defaultPeriods.map(x => x.value),
+        const orgUnitsToRequest = filters.orgUnits.length
+            ? filters.orgUnits
+            : dataSet.organisationUnits.map(ou => ou.id);
+
+        const dataValues = await promiseMap(_.chunk(orgUnitsToRequest, 50), async orgUnits => {
+            const dataValuesPerOrgUnit = await this.dataValuesRepository.get({
+                dataSetIds: [dataSet.id],
+                orgUnitIds: orgUnits,
+                periods: filters.periods.length ? filters.periods : defaultPeriods.map(x => x.value),
+            });
+            return dataValuesPerOrgUnit;
         });
 
         const dvByOrgUnitAndPeriods = _(dataValues)
+            .flatten()
             .groupBy(dv => `${dv.orgUnit}.${dv.period}`)
             .value();
 
