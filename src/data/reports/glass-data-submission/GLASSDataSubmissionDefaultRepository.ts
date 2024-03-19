@@ -56,13 +56,6 @@ interface MessageConversations {
     }[];
 }
 
-type TrackedEntityInstance = {
-    attributes: {
-        value: string;
-    }[];
-    orgUnit: string;
-};
-
 type DataValueType = {
     dataElement: string;
     period: string;
@@ -83,8 +76,9 @@ type Attribute = {
     value: string;
 };
 
-interface TrackedEntity {
+type TrackedEntityInstance = {
     attributes: Attribute[];
+    orgUnit: string;
     enrollments: {
         attributes: Attribute[];
         events: {
@@ -95,7 +89,7 @@ interface TrackedEntity {
     programOwners: {
         program: string;
     }[];
-}
+};
 
 export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmissionRepository {
     private storageClient: StorageClient;
@@ -275,34 +269,6 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 module: modules.find(module => module.name === orgUnitModule.module)?.id ?? "",
             }));
         });
-    }
-
-    private async getTrackedEntityInstances(program: string, orgUnit: string): Promise<TrackedEntityInstance[]> {
-        let instances: TrackedEntityInstance[] = [];
-        let currentPage = 1;
-        let totalPages = 1;
-        const pageSize = 200;
-
-        while (currentPage <= totalPages) {
-            const response = await this.api
-                .get<{ instances: TrackedEntityInstance[] }>("/tracker/trackedEntities", {
-                    program: program,
-                    orgUnit: orgUnit,
-                    fields: "attributes[value],orgUnit",
-                    pageSize: pageSize,
-                    page: currentPage,
-                })
-                .getData();
-
-            instances = instances.concat(response.instances);
-
-            if (response.instances.length === pageSize) {
-                totalPages++;
-            }
-            currentPage++;
-        }
-
-        return instances;
     }
 
     private async getCountriesOutsideNARegion(): Promise<string[]> {
@@ -700,7 +666,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
     }
 
     private async getProgramEvents(program: string, orgUnit: string, isEGASPModule: boolean): Promise<Event[]> {
-        const { events } = await this.api.events
+        const { events } = await this.api.events // to do: use new tracker api
             .get({
                 program: program,
                 orgUnit: orgUnit,
@@ -846,7 +812,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const { objects } = await this.api.models.programs
             .get({
                 fields: { id: true },
-                filter: { name: { eq: "AMC - Product Register" } },
+                filter: { code: { eq: AMC_PRODUCT_REGISTER_CODE } },
             })
             .getData();
 
@@ -855,7 +821,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
     private async duplicateDataSet(dataSet: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
         _.forEach(items, async item => {
-            const dataValueSets = (await this.getDataSetsValue(dataSet.id, item.orgUnit ?? "", item.period)).dataValues;
+            const dataValueSets = (await this.getDataSetsValue(dataSet.id, item.orgUnit, item.period)).dataValues;
 
             if (!_.isEmpty(dataValueSets)) {
                 const DSDataElements: { dataSetElements: { dataElement: NamedRef }[] } = await this.getDSDataElements(
@@ -906,10 +872,10 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const programStages = await this.getProgramStages(program.id);
 
         _.forEach(items, async item => {
-            const trackedEntities = await this.getTrackedEntities(program.id, item.orgUnit);
+            const trackedEntities = await this.getTrackedEntityInstances(program.id, item.orgUnit);
 
             if (!_.isEmpty(trackedEntities)) {
-                const approvedTrackedEntities = await this.getTrackedEntities(program.approvedId, item.orgUnit);
+                const approvedTrackedEntities = await this.getTrackedEntityInstances(program.approvedId, item.orgUnit);
 
                 !_.isEmpty(approvedTrackedEntities) &&
                     this.api.post(
@@ -918,7 +884,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                         { trackedEntities: approvedTrackedEntities }
                     );
 
-                const trackedEntitiesToPost: TrackedEntity[] = trackedEntities.map(trackedEntity => ({
+                const trackedEntitiesToPost: TrackedEntityInstance[] = trackedEntities.map(trackedEntity => ({
                     ...trackedEntity,
                     trackedEntity: "",
                     programOwners: trackedEntity.programOwners.map(programOwner => ({
@@ -950,37 +916,50 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                     })),
                 }));
 
-                return await this.api.post("/tracker", {}, { trackedEntities: trackedEntitiesToPost }).getData();
+                return await this.api
+                    .post(
+                        "/tracker",
+                        { async: true, importStrategy: "CREATE_AND_UPDATE" },
+                        { trackedEntities: trackedEntitiesToPost }
+                    )
+                    .getData();
             }
         });
     }
 
-    private async getTrackedEntities(program: string, orgUnit: string): Promise<TrackedEntity[]> {
-        let instances: TrackedEntity[] = [];
+    private async getTrackedEntityInstances(program: string, orgUnit: string): Promise<TrackedEntityInstance[]> {
+        let trackedEntities: TrackedEntityInstance[] = [];
         let currentPage = 1;
-        let totalPages = 1;
+        let response;
         const pageSize = 200;
 
-        while (currentPage <= totalPages) {
-            const { instances: trackedEntities } = await this.api
-                .get<{
-                    instances: TrackedEntity[];
-                }>("/tracker/trackedEntities", {
-                    program: program,
-                    orgUnit: orgUnit,
-                    fields: ":all",
-                })
-                .getData();
+        try {
+            do {
+                response = await this.api
+                    .get<{
+                        instances: TrackedEntityInstance[];
+                        total: number;
+                        page: number;
+                    }>("/tracker/trackedEntities", {
+                        program: program,
+                        orgUnit: orgUnit,
+                        pageSize,
+                        page: currentPage,
+                        totalPages: true,
+                        fields: ":all",
+                    })
+                    .getData();
 
-            instances = instances.concat(trackedEntities);
-
-            if (instances.length === pageSize) {
-                totalPages++;
-            }
-            currentPage++;
+                if (!response.total) {
+                    throw new Error(`Error getting paginated events of program ${program} and organisation ${orgUnit}`);
+                }
+                trackedEntities = trackedEntities.concat(response.instances);
+                currentPage++;
+            } while (response.page < Math.ceil(response.total / pageSize));
+            return trackedEntities;
+        } catch {
+            return [];
         }
-
-        return instances;
     }
 
     private async getProgramStages(program: string): Promise<NamedRef[]> {
@@ -1026,7 +1005,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 );
 
                 !_.isEmpty(approvedEvents) &&
-                    this.api.post("/events", { importStrategy: "DELETE" }, { events: approvedEvents });
+                    this.api.post("/events", { importStrategy: "DELETE" }, { events: approvedEvents }); // to do: use new tracker api
 
                 const approvedProgramStage = (await this.getProgramStages(program.approvedId))[0];
                 const eventsToPost = events.map(event => {
@@ -1215,6 +1194,8 @@ const emptyPage: PaginatedObjects<GLASSDataSubmissionItem> = {
     pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 },
     objects: [],
 };
+
+const AMC_PRODUCT_REGISTER_CODE = "AMR_GLASS_AMC_PRO_PRODUCT_REGISTER";
 
 const moduleMapping: Record<string, string> = {
     AMC: "AMC",
