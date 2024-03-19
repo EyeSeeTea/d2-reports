@@ -13,12 +13,12 @@ import {
     AuthoritiesMonitoringItem,
     AuthoritiesMonitoringPaginatedObjects,
 } from "../../../domain/reports/authorities-monitoring/entities/AuthoritiesMonitoringItem";
+import { NamedRef } from "../../../domain/common/entities/Base";
+import { d2ToolsNamespace } from "../../common/clients/storage/Namespaces";
 
 interface TemplateGroup {
-    group: string;
-    template: string;
-    username: string;
-    groupname: string;
+    group: NamedRef;
+    template: NamedRef;
 }
 
 export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonitoringRepository {
@@ -42,18 +42,22 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
             usernameQuery,
             userRoles: userRolesOptions,
         } = options;
-        const { TEMPLATE_GROUPS: templateGroups } = (await this.globalStorageClient.getObject<{
-            TEMPLATE_GROUPS: TemplateGroup[];
-        }>(namespace)) ?? { TEMPLATE_GROUPS: [] };
+
+        const { TEMPLATE_GROUPS: templateGroups } = (await this.api
+            .dataStore(d2ToolsNamespace)
+            .get<{
+                TEMPLATE_GROUPS: TemplateGroup[];
+            }>(namespace)
+            .getData()) ?? { TEMPLATE_GROUPS: [] };
 
         const objects: AuthoritiesMonitoringItem[] = _(
             await promiseMap(templateGroups, async templateGroup => {
-                const templateDetails = await this.getUserTemplate(templateGroup.template);
+                const templateDetails = await this.getUserTemplate(templateGroup.template.id);
                 const templateAuthorities = _(templateDetails.userCredentials.userRoles)
                     .flatMap(userRole => userRole.authorities)
                     .uniq()
                     .value();
-                const templateGroupUsers = await this.getTemplateGroupUsers(templateGroup.group);
+                const templateGroupUsers = await this.getTemplateGroupUsers(templateGroup.group.id);
 
                 const usersWithNotAllowedRoles = templateGroupUsers.filter(user => {
                     const userAuthorities = _(user.userCredentials.userRoles)
@@ -87,7 +91,7 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
                         name: user.name,
                         lastLogin: user.userCredentials.lastLogin ?? "-",
                         username: user.userCredentials.username,
-                        templateGroup: templateGroup.groupname,
+                        templateGroup: templateGroup.group.name,
                         roles: excludedRoles,
                         authorities: excludedRoles.flatMap(role => role.authorities),
                     };
@@ -130,7 +134,7 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
         return {
             pager: pager,
             objects: rowsInPage,
-            templateGroups: templateGroups.map(templateGroup => templateGroup.groupname),
+            templateGroups: templateGroups.map(templateGroup => templateGroup.group.name),
             userRoles: userRoles,
         };
     }

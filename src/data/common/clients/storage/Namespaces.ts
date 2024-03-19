@@ -1,5 +1,6 @@
 export const d2ReportsDataStoreNamespace = "d2-reports";
 export const glassDataStoreNamespace = "glass";
+export const d2ToolsNamespace = "d2-tools";
 export const constantPrefix = "D2 Report Storage";
 
 export type Namespace = typeof Namespaces[keyof typeof Namespaces];
