@@ -732,13 +732,18 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         }
     }
 
-    private async approveByModule(modules: GLASSDataSubmissionModule[], items: GLASSDataSubmissionItemIdentifier[]) {
+    private async approveByModule(
+        modules: GLASSDataSubmissionModule[],
+        items: GLASSDataSubmissionItemIdentifier[]
+    ): Promise<void> {
         const selectedModule = modules.find(module => module.id === _.first(items)?.module)?.name ?? "";
         const { AMC, AMR, AMR_FUNGHI, AMR_INDIVIDUAL, EGASP } = moduleMapping;
 
         switch (selectedModule) {
             case AMC: {
-                const amcPrograms = modules.find(module => module.name === AMC)?.programs ?? [];
+                const amcModule = modules.find(module => module.name === AMC);
+                const amcPrograms = amcModule?.programs ?? [];
+                const amcProgramStages = amcModule?.programStages ?? [];
                 const amcProductRegisterProgramId = await this.getAMCProductRegisterId(); // the AMC - Product Register program is tne only tracker program in this module
 
                 const amcEventPrograms = _.filter(
@@ -753,7 +758,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 _.forEach(amcEventPrograms, async amcProgram => await this.duplicateEventProgram(amcProgram, items));
                 _.forEach(
                     amcTrackerPrograms,
-                    async amcProgram => await this.duplicateTrackerProgram(amcProgram, items)
+                    async amcProgram => await this.duplicateTrackerProgram(amcProgram, amcProgramStages, items)
                 );
                 break;
             }
@@ -769,9 +774,10 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 break;
             }
             case AMR_FUNGHI: {
-                const amrFungalQuestionnaires =
-                    modules.find(module => module.name === AMR_FUNGHI)?.questionnaires ?? [];
-                const amrFungalPrograms = modules.find(module => module.name === AMR_FUNGHI)?.programs ?? [];
+                const amrFungalModule = modules.find(module => module.name === AMR_FUNGHI);
+                const amrFungalQuestionnaires = amrFungalModule?.questionnaires ?? [];
+                const amrFungalPrograms = amrFungalModule?.programs ?? [];
+                const amrFungalProgramStages = amrFungalModule?.programStages ?? [];
 
                 _.forEach(
                     amrFungalQuestionnaires,
@@ -779,20 +785,22 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 );
                 _.forEach(
                     amrFungalPrograms,
-                    async amrFungalProgram => await this.duplicateTrackerProgram(amrFungalProgram, items)
+                    async amrFungalProgram => await this.duplicateTrackerProgram(amrFungalProgram, amrFungalProgramStages, items)
                 );
                 break;
             }
             case AMR_INDIVIDUAL: {
+                const amrIndividualModule = modules.find(module => module.name === AMR_INDIVIDUAL);
                 const amrIndividualQuestionnaires =
-                    modules.find(module => module.name === AMR_INDIVIDUAL)?.questionnaires ?? [];
-                const amrIndividualPrograms = modules.find(module => module.name === AMR_INDIVIDUAL)?.programs ?? [];
+                    amrIndividualModule?.questionnaires ?? [];
+                const amrIndividualPrograms = amrIndividualModule?.programs ?? [];
+                const amrIndividualProgramStages = amrIndividualModule?.programStages ?? [];
 
                 _.forEach(amrIndividualQuestionnaires, async amrIndividualQuestionnaire => {
                     await this.duplicateDataSet(amrIndividualQuestionnaire, items);
                 });
                 _.forEach(amrIndividualPrograms, async amrIndividualProgram => {
-                    await this.duplicateTrackerProgram(amrIndividualProgram, items);
+                    await this.duplicateTrackerProgram(amrIndividualProgram, amrIndividualProgramStages, items);
                 });
                 break;
             }
@@ -866,11 +874,9 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
     private async duplicateTrackerProgram(
         program: ApprovalIds,
+        programStages: ApprovalIds[],
         items: GLASSDataSubmissionItemIdentifier[]
     ): Promise<void> {
-        const approvedProgramStages = await this.getProgramStages(program.approvedId);
-        const programStages = await this.getProgramStages(program.id);
-
         _.forEach(items, async item => {
             const trackedEntities = await this.getTrackedEntityInstances(program.id, item.orgUnit);
 
@@ -897,20 +903,16 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                         trackedEntity: "",
                         program: program.approvedId,
                         events: enrollment.events.map(event => {
-                            const programStageName = programStages.find(
-                                programStage => programStage.id === event.programStage
-                            )?.name;
-                            const programStageApproved =
-                                approvedProgramStages.find(
-                                    approvedProgramStage => approvedProgramStage.name === programStageName
-                                )?.id ?? "";
+                            const approvedProgramStage =
+                                programStages.find(programStage => event.programStage === programStage.id)
+                                    ?.approvedId ?? "";
 
                             return {
                                 ...event,
                                 event: "",
                                 trackedEntity: "",
                                 program: program.approvedId,
-                                programStage: programStageApproved,
+                                programStage: approvedProgramStage,
                             };
                         }),
                     })),
