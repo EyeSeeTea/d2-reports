@@ -60,8 +60,6 @@ export interface EARSubmissionItemIdentifier {
 export interface ApprovalIds {
     id: Id;
     approvedId: Id;
-    programStageId: Id;
-    programStageApprovedId: Id;
 }
 
 export type Status =
@@ -82,6 +80,7 @@ export interface GLASSDataSubmissionModule {
     name: Module;
     dataSets: ApprovalIds[];
     programs: ApprovalIds[];
+    programStages: ApprovalIds[];
     questionnaires: ApprovalIds[];
     dashboards: {
         reportsMenu: string;
