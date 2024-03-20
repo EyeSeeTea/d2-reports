@@ -3,10 +3,12 @@ import {
     ObjectsList,
     TableColumn,
     TableConfig,
+    TableGlobalAction,
     TablePagination,
     TableSorting,
     useObjectsTable,
 } from "@eyeseetea/d2-ui-components";
+import StorageIcon from "@material-ui/icons/Storage";
 import { useAppContext } from "../../../contexts/app-context";
 import { useReload } from "../../../utils/use-reload";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
@@ -24,6 +26,7 @@ export const AuthoritiesMonitoringList: React.FC = React.memo(() => {
     const { compositionRoot } = useAppContext();
 
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter());
+    const [sorting, setSorting] = useState<TableSorting<DataMonitoringViewModel>>();
     const [templateGroups, setTemplateGroups] = useState<string[]>([]);
     const [usernameQuery, setUsernameQuery] = useState<string>("");
     const [userRoles, setUserRoles] = useState<UserRole[]>([]);
@@ -72,6 +75,7 @@ export const AuthoritiesMonitoringList: React.FC = React.memo(() => {
                 }
             );
 
+            setSorting(sorting);
             setUserRoles(userRoles);
             setTemplateGroups(templateGroups);
 
@@ -115,6 +119,25 @@ export const AuthoritiesMonitoringList: React.FC = React.memo(() => {
             .value();
     }, [tableProps.columns, visibleColumns]);
 
+    const downloadCsv: TableGlobalAction = {
+        name: "downloadCsv",
+        text: "Download CSV",
+        icon: <StorageIcon />,
+        onClick: async () => {
+            if (!sorting) return;
+            const { objects: authMonitoringItems } = await compositionRoot.authMonitoring.get(
+                Namespaces.AUTH_MONITORING,
+                {
+                    paging: { page: 1, pageSize: 100000 },
+                    sorting: getSortingFromTableSorting(sorting),
+                    ...filters,
+                }
+            );
+
+            compositionRoot.authMonitoring.save("authorities-monitoring-report.csv", authMonitoringItems);
+        },
+    };
+
     return (
         <ObjectsList<DataMonitoringViewModel>
             {...tableProps}
@@ -124,6 +147,7 @@ export const AuthoritiesMonitoringList: React.FC = React.memo(() => {
                 setUsernameQuery(value);
                 setFilters({ ...filters, usernameQuery: value });
             }}
+            globalActions={[downloadCsv]}
         >
             <Filters values={filters} options={filterOptions} onChange={setFilters} />
         </ObjectsList>

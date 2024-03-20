@@ -96,6 +96,7 @@ import { GetATCLoggerProgramUseCase } from "./domain/reports/glass-admin/usecase
 import { GetATCRecalculationLogicUseCase } from "./domain/reports/glass-admin/usecases/GetATCRecalculationLogicUseCase";
 import { CancelRecalculationUseCase } from "./domain/reports/glass-admin/usecases/CancelRecalculationUseCase";
 import { GetGLASSDataSubmissionModulesUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSDataSubmissionModulesUseCase";
+import { SaveAuthoritiesMonitoringUseCase } from "./domain/reports/authorities-monitoring/usecases/SaveAuthoritiesMonitoringUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -236,6 +237,7 @@ export function getCompositionRoot(api: D2Api) {
         },
         authMonitoring: getExecute({
             get: new GetAuthoritiesMonitoringUseCase(authoritiesMonitoringRepository),
+            save: new SaveAuthoritiesMonitoringUseCase(authoritiesMonitoringRepository),
             getColumns: new GetAuthoritiesMonitoringColumnsUseCase(authoritiesMonitoringRepository),
             saveColumns: new SaveAuthoritiesMonitoringColumnsUseCase(authoritiesMonitoringRepository),
         }),

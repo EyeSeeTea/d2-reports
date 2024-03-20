@@ -15,6 +15,9 @@ import {
 } from "../../../domain/reports/authorities-monitoring/entities/AuthoritiesMonitoringItem";
 import { NamedRef } from "../../../domain/common/entities/Base";
 import { d2ToolsNamespace } from "../../common/clients/storage/Namespaces";
+import { downloadFile } from "../../common/utils/download-file";
+import { CsvWriterDataSource } from "../../common/CsvWriterCsvDataSource";
+import { CsvData } from "../../common/CsvDataSource";
 
 interface TemplateGroup {
     group: NamedRef;
@@ -23,12 +26,10 @@ interface TemplateGroup {
 
 export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonitoringRepository {
     private storageClient: StorageClient;
-    private globalStorageClient: StorageClient;
 
     constructor(private api: D2Api) {
         const instance = new Instance({ url: this.api.baseUrl });
         this.storageClient = new DataStoreStorageClient("user", instance);
-        this.globalStorageClient = new DataStoreStorageClient("global", instance);
     }
 
     async get(
@@ -139,6 +140,27 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
         };
     }
 
+    async save(filename: string, items: AuthoritiesMonitoringItem[]): Promise<void> {
+        const headers = csvFields.map(field => ({ id: field, text: field }));
+        const rows = items.map(
+            (dataValue): AuthoritiesMonitoringItemRow => ({
+                id: dataValue.id,
+                name: dataValue.name,
+                lastLogin: dataValue.lastLogin,
+                username: dataValue.username,
+                roles: dataValue.roles.map(role => role.name).join(", "),
+                authorities: dataValue.authorities.join(", "),
+                templateGroup: dataValue.templateGroup,
+            })
+        );
+        const timestamp = new Date().toISOString();
+        const csvDataSource = new CsvWriterDataSource();
+        const csvData: CsvData<CsvField> = { headers, rows };
+        const csvContents = `Time: ${timestamp}\n` + csvDataSource.toString(csvData);
+
+        await downloadFile(csvContents, filename, "text/csv");
+    }
+
     async getColumns(namespace: string): Promise<string[]> {
         const columns = await this.storageClient.getObject<string[]>(namespace);
 
@@ -168,3 +190,9 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
         return users;
     }
 }
+
+const csvFields = ["id", "name", "lastLogin", "username", "roles", "authorities", "templateGroup"] as const;
+
+type CsvField = typeof csvFields[number];
+
+type AuthoritiesMonitoringItemRow = Record<CsvField, string>;

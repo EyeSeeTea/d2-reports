@@ -9,6 +9,7 @@ export interface AuthoritiesMonitoringRepository {
         namespace: string,
         options: AuthoritiesMonitoringOptions
     ): Promise<AuthoritiesMonitoringPaginatedObjects<AuthoritiesMonitoringItem>>;
+    save(filename: string, items: AuthoritiesMonitoringItem[]): Promise<void>;
     getColumns(namespace: string): Promise<string[]>;
     saveColumns(namespace: string, columns: string[]): Promise<void>;
 }
