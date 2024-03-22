@@ -51,55 +51,53 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
             }>(namespace)
             .getData()) ?? { TEMPLATE_GROUPS: [] };
 
-        const objects: AuthoritiesMonitoringItem[] = _(
-            await promiseMap(templateGroups, async templateGroup => {
-                const templateDetails = await this.getUserTemplate(templateGroup.template.id);
-                const templateAuthorities = _(templateDetails.userCredentials.userRoles)
-                    .flatMap(userRole => userRole.authorities)
-                    .uniq()
-                    .value();
-                const templateGroupUsers = await this.getTemplateGroupUsers(templateGroup.group.id);
+        const templateUserGroups = templateGroups.map(templateGroup => templateGroup.group.id);
+        const templateGroupUsers = await this.getTemplateGroupUserss(templateUserGroups);
 
-                const usersWithNotAllowedRoles = templateGroupUsers.filter(user => {
-                    const userAuthorities = _(user.userCredentials.userRoles)
-                        .flatMap(role => role.authorities)
-                        .uniq()
-                        .value();
+        const rolesByUserGroup = await promiseMap(templateGroups, async templateGroup => {
+            const userTemplateRoles = (await this.getUserTemplate(templateGroup.template.id)).userCredentials.userRoles;
 
-                    const userHasExcludedAuthorities = !_(userAuthorities)
-                        .map(authority => templateAuthorities.includes(authority))
-                        .every();
+            return {
+                userGroup: templateGroup.group,
+                roles: userTemplateRoles,
+            };
+        });
 
-                    return userHasExcludedAuthorities;
-                });
+        const objects: AuthoritiesMonitoringItem[] = _(templateGroupUsers)
+            .map(user => {
+                const userTemplateGroups = user.userGroups
+                    .filter(group => templateUserGroups.includes(group.id))
+                    .map(userGroup => userGroup.id);
 
-                return usersWithNotAllowedRoles.map(user => {
-                    const excludedRoles = _(user.userCredentials.userRoles)
-                        .filter(
-                            role =>
-                                !_(role.authorities)
-                                    .map(authority => templateAuthorities.includes(authority))
-                                    .every()
-                        )
-                        .map(role => ({
-                            ...role,
-                            authorities: _.difference(role.authorities, templateAuthorities),
-                        }))
-                        .value();
+                const currentUserRoles = user.userCredentials.userRoles;
+                const currentUserAuthorities = currentUserRoles.flatMap(userRole => userRole.authorities);
 
-                    return {
-                        id: user.id,
-                        name: user.name,
-                        lastLogin: user.userCredentials.lastLogin ?? "-",
-                        username: user.userCredentials.username,
-                        templateGroup: templateGroup.group.name,
-                        roles: excludedRoles,
-                        authorities: excludedRoles.flatMap(role => role.authorities),
-                    };
-                });
+                const allowedUserRoles = rolesByUserGroup
+                    .filter(templateGroupRole => userTemplateGroups.includes(templateGroupRole.userGroup.id))
+                    .flatMap(templateGroupRole => templateGroupRole.roles);
+                const allowedUserAuthorities = allowedUserRoles.flatMap(userRole => userRole.authorities);
+
+                const excludedAuthorities = _.difference(currentUserAuthorities, allowedUserAuthorities);
+                const excludedRoles = currentUserRoles.filter(role =>
+                    role.authorities.some(authority => excludedAuthorities.includes(authority))
+                );
+                const templateGroups = rolesByUserGroup
+                    .filter(userGroupRole =>
+                        user.userGroups.map(userGroup => userGroup.id).includes(userGroupRole.userGroup.id)
+                    )
+                    .map(templateGroup => templateGroup.userGroup.name);
+
+                return {
+                    id: user.id,
+                    name: user.name,
+                    lastLogin: user.userCredentials.lastLogin ?? "-",
+                    username: user.userCredentials.username,
+                    authorities: excludedAuthorities,
+                    templateGroups: templateGroups,
+                    roles: excludedRoles,
+                };
             })
-        )
-            .flatten()
+            .filter(user => user.authorities.length > 0)
             .value();
 
         const userRoles = _(objects)
@@ -108,9 +106,9 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
             .value();
 
         const filteredRows = objects.filter(row => {
-            const isInTemplateGroup = !!(_.isEmpty(templateGroupsOptions) || !row.templateGroup
+            const isInTemplateGroup = !!(_.isEmpty(templateGroupsOptions) || !row.templateGroups
                 ? row
-                : templateGroupsOptions.includes(row.templateGroup));
+                : _.intersection(templateGroupsOptions, row.templateGroups));
             const hasUserRole = !!(_.isEmpty(userRolesOptions) || !row.roles
                 ? row
                 : _.some(userRolesOptions.map(r => row.roles.map(role => role.id).includes(r))));
@@ -150,7 +148,7 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
                 username: dataValue.username,
                 roles: dataValue.roles.map(role => role.name).join(", "),
                 authorities: dataValue.authorities.join(", "),
-                templateGroup: dataValue.templateGroup,
+                templateGroups: dataValue.templateGroups.join(", "),
             })
         );
         const timestamp = new Date().toISOString();
@@ -169,6 +167,50 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
 
     async saveColumns(namespace: string, columns: string[]): Promise<void> {
         return this.storageClient.saveObject<string[]>(namespace, columns);
+    }
+
+    private async getTemplateGroupUserss(templateUserGroups: string[]): Promise<UserDetails[]> {
+        let users: UserDetails[] = [];
+        let currentPage = 1;
+        let response;
+        const pageSize = 250;
+
+        try {
+            do {
+                response = await this.api.models.users
+                    .get({
+                        fields: {
+                            id: true,
+                            name: true,
+                            userCredentials: {
+                                id: true,
+                                username: true,
+                                lastLogin: true,
+                                userRoles: {
+                                    id: true,
+                                    name: true,
+                                    authorities: true,
+                                },
+                            },
+                            userGroups: true,
+                        },
+                        filter: {
+                            "userGroups.id": {
+                                in: templateUserGroups,
+                            },
+                        },
+                        page: currentPage,
+                        pageSize: pageSize,
+                    })
+                    .getData();
+
+                users = users.concat(response.objects);
+                currentPage++;
+            } while (response.pager.page < Math.ceil(response.pager.total / pageSize));
+            return users;
+        } catch {
+            return [];
+        }
     }
 
     private async getUserTemplate(userId: string): Promise<UserDetails> {
@@ -191,7 +233,7 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
     }
 }
 
-const csvFields = ["id", "name", "lastLogin", "username", "roles", "authorities", "templateGroup"] as const;
+const csvFields = ["id", "name", "lastLogin", "username", "roles", "authorities", "templateGroups"] as const;
 
 type CsvField = typeof csvFields[number];
 

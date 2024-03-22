@@ -9,7 +9,7 @@ export interface DataMonitoringViewModel {
     name: string;
     lastLogin: string;
     username: string;
-    templateGroup: string;
+    templateGroups: string;
     roles: string;
     authorities: string;
 }
@@ -22,7 +22,7 @@ export function getDataMonitoringViews(items: AuthoritiesMonitoringItem[]): Data
             name: item.name,
             lastLogin: item.lastLogin,
             username: item.username,
-            templateGroup: item.templateGroup,
+            templateGroups: item.templateGroups.join(", "),
             roles: item.roles.map(role => role.name).join(", "),
             authorities: item.authorities.join(", "),
         };

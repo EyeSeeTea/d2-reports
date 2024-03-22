@@ -45,7 +45,7 @@ export const AuthoritiesMonitoringList: React.FC = React.memo(() => {
                 { name: "uid", text: i18n.t("ID"), sortable: true },
                 { name: "name", text: i18n.t("Name"), sortable: true },
                 { name: "username", text: i18n.t("Username"), sortable: false },
-                { name: "templateGroup", text: i18n.t("Template Group"), sortable: false },
+                { name: "templateGroups", text: i18n.t("Template Groups"), sortable: false },
                 { name: "lastLogin", text: i18n.t("Last login"), sortable: false },
                 { name: "roles", text: i18n.t("Role"), sortable: false },
                 { name: "authorities", text: i18n.t("Unauthorized privileges"), sortable: false },

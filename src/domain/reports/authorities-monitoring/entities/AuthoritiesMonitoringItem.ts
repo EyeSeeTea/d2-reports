@@ -1,5 +1,5 @@
 import { PaginatedObjects } from "../../../../types/d2-api";
-import { NamedRef } from "../../../common/entities/Ref";
+import { NamedRef, Ref } from "../../../common/entities/Ref";
 
 export interface UserRole {
     id: string;
@@ -8,6 +8,7 @@ export interface UserRole {
 }
 
 export interface UserDetails extends NamedRef {
+    userGroups: Ref[];
     userCredentials: {
         id: string;
         username: string;
@@ -23,7 +24,7 @@ export interface AuthoritiesMonitoringItem {
     username: string;
     roles: UserRole[];
     authorities: string[];
-    templateGroup: string;
+    templateGroups: string[];
 }
 
 export interface AuthoritiesMonitoringPaginatedObjects<T> extends PaginatedObjects<T> {
@@ -32,5 +33,5 @@ export interface AuthoritiesMonitoringPaginatedObjects<T> extends PaginatedObjec
 }
 
 export function getDataMonitoringItemId(item: AuthoritiesMonitoringItem): string {
-    return [item.id, item.templateGroup].join("-");
+    return [item.id, item.templateGroups].join("-");
 }
