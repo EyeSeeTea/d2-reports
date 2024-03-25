@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { PaginatedObjects, Paging, Sorting } from "../../../domain/common/entities/PaginatedObjects";
+import { paginate, PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
 import {
     ApprovalIds,
     GLASSDataSubmissionItem,
@@ -102,7 +102,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         const dataSubmissions = await this.getDataSubmissions(objects, modules, uploads);
         const filteredRows = this.getFilteredRows(dataSubmissions, options);
-        const { pager, rowsInPage } = this.paginate(filteredRows, sorting, paging);
+        const { pager, objects: rowsInPage } = paginate(filteredRows, sorting, paging);
 
         return {
             pager,
@@ -1036,22 +1036,6 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 ? { ...object, status: status, statusHistory: [...object.statusHistory, statusHistory] }
                 : object;
         });
-    }
-
-    private paginate(rows: GLASSDataSubmissionItem[], sorting: Sorting<GLASSDataSubmissionItem>, paging: Paging) {
-        const rowsInPage = _(rows)
-            .orderBy([row => row[sorting.field]], [sorting.direction])
-            .drop((paging.page - 1) * paging.pageSize)
-            .take(paging.pageSize)
-            .value();
-
-        const pager: Pager = {
-            page: paging.page,
-            pageSize: paging.pageSize,
-            pageCount: Math.ceil(rows.length / paging.pageSize),
-            total: rows.length,
-        };
-        return { pager, rowsInPage };
     }
 }
 
