@@ -51,8 +51,9 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
             }>(namespace)
             .getData()) ?? { TEMPLATE_GROUPS: [] };
 
+        const userTemplateIds = templateGroups.map(templateGroup => templateGroup.template.id);
         const templateUserGroups = templateGroups.map(templateGroup => templateGroup.group.id);
-        const templateGroupUsers = await this.getTemplateGroupUserss(templateUserGroups);
+        const templateGroupUsers = await this.getTemplateGroupUsers(templateUserGroups);
 
         const rolesByUserGroup = await promiseMap(templateGroups, async templateGroup => {
             const userTemplateRoles = (await this.getUserTemplate(templateGroup.template.id)).userCredentials.userRoles;
@@ -97,7 +98,7 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
                     roles: excludedRoles,
                 };
             })
-            .filter(user => user.authorities.length > 0)
+            .filter(user => !_.isEmpty(user.authorities) && !userTemplateIds.includes(user.id))
             .value();
 
         const userRoles = _(objects)
@@ -169,7 +170,7 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
         return this.storageClient.saveObject<string[]>(namespace, columns);
     }
 
-    private async getTemplateGroupUserss(templateUserGroups: string[]): Promise<UserDetails[]> {
+    private async getTemplateGroupUsers(templateUserGroups: string[]): Promise<UserDetails[]> {
         let users: UserDetails[] = [];
         let currentPage = 1;
         let response;
@@ -219,17 +220,6 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
                 fields: "id,name,userCredentials[username,lastLogin,userRoles[id,name,authorities]]",
             })
             .getData();
-    }
-
-    private async getTemplateGroupUsers(userGroupId: string): Promise<UserDetails[]> {
-        const { users } = await this.api
-            .get<{ users: UserDetails[] }>("/users", {
-                fields: "id,name,userCredentials[username,lastLogin,userRoles[id,name,authorities]]",
-                filter: `userGroups.id:in:[${userGroupId}]`,
-            })
-            .getData();
-
-        return users;
     }
 }
 
