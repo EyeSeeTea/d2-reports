@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2024-02-21T10:35:18.689Z\n"
-"PO-Revision-Date: 2024-02-21T10:35:18.689Z\n"
+"POT-Creation-Date: 2024-03-16T08:51:25.798Z\n"
+"PO-Revision-Date: 2024-03-16T08:51:25.798Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -17,6 +17,9 @@ msgstr ""
 msgid "LOG OUT"
 msgstr ""
 
+msgid "Close"
+msgstr ""
+
 msgid "Loading..."
 msgstr ""
 
@@ -24,9 +27,6 @@ msgid "Organisation unit"
 msgstr ""
 
 msgid "Select parent organisation unit"
-msgstr ""
-
-msgid "Close"
 msgstr ""
 
 msgid "Clear"
@@ -95,6 +95,39 @@ msgid "lastUpdated"
 msgstr ""
 
 msgid "created"
+msgstr ""
+
+msgid "WIDP Admin Templates Report"
+msgstr ""
+
+msgid "List of users with not allowed roles"
+msgstr ""
+
+msgid "ID"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Username"
+msgstr ""
+
+msgid "Template Group"
+msgstr ""
+
+msgid "Last login"
+msgstr ""
+
+msgid "Role"
+msgstr ""
+
+msgid "Unauthorized privileges"
+msgstr ""
+
+msgid "Search by username..."
+msgstr ""
+
+msgid "Advanced filters"
 msgstr ""
 
 msgid "Period"
@@ -245,9 +278,6 @@ msgid "Unknown"
 msgstr ""
 
 msgid "Patient Characteristics"
-msgstr ""
-
-msgid "Name"
 msgstr ""
 
 msgid "Last Updated"

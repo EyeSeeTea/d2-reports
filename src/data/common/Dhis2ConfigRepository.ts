@@ -76,6 +76,12 @@ const base = {
         constantCode: "",
         approvalWorkflows: { namePrefix: "" },
     },
+    authMonitoring: {
+        dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
+        sqlViewNames: [],
+        constantCode: "",
+        approvalWorkflows: { namePrefix: "" },
+    },
     "data-quality": {
         dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
         sqlViewNames: [],

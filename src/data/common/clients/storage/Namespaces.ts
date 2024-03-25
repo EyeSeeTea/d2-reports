@@ -1,5 +1,6 @@
 export const d2ReportsDataStoreNamespace = "d2-reports";
 export const glassDataStoreNamespace = "glass";
+export const d2ToolsNamespace = "d2-tools";
 export const constantPrefix = "D2 Report Storage";
 
 export type Namespace = typeof Namespaces[keyof typeof Namespaces];
@@ -27,6 +28,8 @@ export const Namespaces = {
     DATA_QUALITY: "data-quality",
     INDICATOR_STATUS_USER_COLUMNS: "indicator-status-user-columns",
     PROGRAM_INDICATOR_STATUS_USER_COLUMNS: "program-indicator-status-user-columns",
+    AUTH_MONITORING: "user-monitoring",
+    AUTH_MONITORING_USER_COLUMNS: "auth-monitoring-user-columns",
 };
 
 export const NamespaceProperties: Record<Namespace, string[]> = {
@@ -48,4 +51,6 @@ export const NamespaceProperties: Record<Namespace, string[]> = {
     [Namespaces.DATA_QUALITY]: [],
     [Namespaces.INDICATOR_STATUS_USER_COLUMNS]: [],
     [Namespaces.PROGRAM_INDICATOR_STATUS_USER_COLUMNS]: [],
+    [Namespaces.AUTH_MONITORING]: [],
+    [Namespaces.AUTH_MONITORING_USER_COLUMNS]: [],
 };

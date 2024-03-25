@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { D2Api, Pager } from "../../../types/d2-api";
+import { D2Api } from "../../../types/d2-api";
 import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
 import { StorageClient } from "../../common/clients/storage/StorageClient";
 import { Instance } from "../../common/entities/Instance";
@@ -19,7 +19,7 @@ import {
 } from "../../../domain/reports/mal-data-subscription/repositories/MalDataSubscriptionRepository";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 import { NamedRef } from "../../../domain/common/entities/Base";
-import { Paging, Sorting } from "../../../domain/common/entities/PaginatedObjects";
+import { paginate } from "../../../domain/common/entities/PaginatedObjects";
 
 interface Visualization {
     id: string;
@@ -138,7 +138,7 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
             .uniqBy("id")
             .value();
 
-        const { objects, pager } = paginate(rows, paging, sorting);
+        const { objects, pager } = paginate(rows, sorting, paging);
 
         return { pager, objects, sections, dataElementGroups, totalRows: rows };
     }
@@ -183,7 +183,7 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                 .map(dashboard => getRows(dashboard, dataElementsInDashboard, subscriptionValues))
                 .filter(row => (!subscriptionStatus ? row : subscriptionStatus === row.subscription));
 
-            const { objects, pager } = paginate(rows, paging, dashboardSorting);
+            const { objects, pager } = paginate(rows, dashboardSorting, paging);
 
             return { pager, objects, totalRows: rows };
         } else if (elementType === "visualizations") {
@@ -201,7 +201,7 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                 .map(visualization => getRows(visualization, dataElementsInVisualization, subscriptionValues))
                 .filter(row => (!subscriptionStatus ? row : subscriptionStatus === row.subscription));
 
-            const { objects, pager } = paginate(rows, paging, dashboardSorting);
+            const { objects, pager } = paginate(rows, dashboardSorting, paging);
 
             return { pager, objects, totalRows: rows };
         } else {
@@ -358,23 +358,6 @@ const emptyPage = {
     objects: [],
     totalRows: [],
 };
-
-function paginate<Obj>(objects: Obj[], paging: Paging, sorting: Sorting<Obj>) {
-    const pager: Pager = {
-        page: paging.page,
-        pageSize: paging.pageSize,
-        pageCount: Math.ceil(objects.length / paging.pageSize),
-        total: objects.length,
-    };
-
-    const paginatedObjects = _(objects)
-        .orderBy([row => row[sorting.field]], [sorting.direction])
-        .drop((paging.page - 1) * paging.pageSize)
-        .take(paging.pageSize)
-        .value();
-
-    return { pager, objects: paginatedObjects };
-}
 
 function findArrayValueById(id: string, record: Record<string, any[]>[]) {
     const entry = _.find(record, obj => id in obj);

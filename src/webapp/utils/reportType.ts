@@ -20,6 +20,8 @@ export function getReportType(): ReportType {
             return "auditEmergency";
         case report === "csy-audit-trauma":
             return "auditTrauma";
+        case report === "authorities-monitoring":
+            return "authMonitoring";
         case report === "data-quality":
             return "data-quality";
         default:
