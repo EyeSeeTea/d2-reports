@@ -880,7 +880,11 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         _.forEach(items, async item => {
             const trackedEntities = (
                 await this.getTrackedEntityInstances(program.id, item.orgUnit, item.period)
-            ).filter(trackedEntity => _.first(trackedEntity.programOwners)?.program === program.id);
+            ).filter(trackedEntity => {
+                const teiProgramStage = trackedEntity.enrollments[0]?.events[0]?.programStage ?? "";
+
+                return programStages.map(programStage => programStage.id).includes(teiProgramStage);
+            });
 
             if (!_.isEmpty(trackedEntities)) {
                 const approvedTrackedEntities = await this.getTrackedEntityInstances(
