@@ -785,14 +785,14 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 );
                 _.forEach(
                     amrFungalPrograms,
-                    async amrFungalProgram => await this.duplicateTrackerProgram(amrFungalProgram, amrFungalProgramStages, items)
+                    async amrFungalProgram =>
+                        await this.duplicateTrackerProgram(amrFungalProgram, amrFungalProgramStages, items)
                 );
                 break;
             }
             case AMR_INDIVIDUAL: {
                 const amrIndividualModule = modules.find(module => module.name === AMR_INDIVIDUAL);
-                const amrIndividualQuestionnaires =
-                    amrIndividualModule?.questionnaires ?? [];
+                const amrIndividualQuestionnaires = amrIndividualModule?.questionnaires ?? [];
                 const amrIndividualPrograms = amrIndividualModule?.programs ?? [];
                 const amrIndividualProgramStages = amrIndividualModule?.programStages ?? [];
 
@@ -878,11 +878,16 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         items: GLASSDataSubmissionItemIdentifier[]
     ): Promise<void> {
         _.forEach(items, async item => {
-            const trackedEntities = await this.getTrackedEntityInstances(program.id, item.orgUnit);
+            const trackedEntities = (
+                await this.getTrackedEntityInstances(program.id, item.orgUnit, item.period)
+            ).filter(trackedEntity => _.first(trackedEntity.programOwners)?.program === program.id);
 
             if (!_.isEmpty(trackedEntities)) {
-                const approvedTrackedEntities = await this.getTrackedEntityInstances(program.approvedId, item.orgUnit);
-
+                const approvedTrackedEntities = await this.getTrackedEntityInstances(
+                    program.approvedId,
+                    item.orgUnit,
+                    item.period
+                );
                 !_.isEmpty(approvedTrackedEntities) &&
                     this.api.post(
                         "/tracker",
@@ -929,7 +934,14 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         });
     }
 
-    private async getTrackedEntityInstances(program: string, orgUnit: string): Promise<TrackedEntityInstance[]> {
+    private async getTrackedEntityInstances(
+        program: string,
+        orgUnit: string,
+        period?: string
+    ): Promise<TrackedEntityInstance[]> {
+        const startDate = period && `${period}-01-01`;
+        const endDate = period && `${period}-12-31`;
+
         let trackedEntities: TrackedEntityInstance[] = [];
         let currentPage = 1;
         let response;
@@ -945,6 +957,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                     }>("/tracker/trackedEntities", {
                         program: program,
                         orgUnit: orgUnit,
+                        enrollmentOccurredAfter: startDate,
+                        enrollmentOccurredBefore: endDate,
                         pageSize,
                         page: currentPage,
                         totalPages: true,
