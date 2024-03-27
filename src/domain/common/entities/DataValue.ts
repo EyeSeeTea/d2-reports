@@ -16,6 +16,8 @@ export interface DataValuesSelector {
     dataSetIds?: Id[];
     orgUnitIds?: Id[];
     periods?: string[];
+    startDate?: string;
+    endDate?: string;
 }
 
 export type DataValueToPost = Omit<
