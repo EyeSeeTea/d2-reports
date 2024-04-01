@@ -878,19 +878,15 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         items: GLASSDataSubmissionItemIdentifier[]
     ): Promise<void> {
         _.forEach(items, async item => {
-            const trackedEntities = (
-                await this.getTrackedEntityInstances(program.id, item.orgUnit, item.period)
-            ).filter(trackedEntity => {
-                const teiProgramStage = trackedEntity.enrollments[0]?.events[0]?.programStage ?? "";
-
-                return programStages.map(programStage => programStage.id).includes(teiProgramStage);
-            });
+            const trackedEntities = this.getTEIsWithProgramStages(
+                await this.getTrackedEntityInstances(program.id, item.orgUnit, item.period),
+                programStages.map(programStage => programStage.id)
+            );
 
             if (!_.isEmpty(trackedEntities)) {
-                const approvedTrackedEntities = await this.getTrackedEntityInstances(
-                    program.approvedId,
-                    item.orgUnit,
-                    item.period
+                const approvedTrackedEntities = this.getTEIsWithProgramStages(
+                    await this.getTrackedEntityInstances(program.approvedId, item.orgUnit, item.period),
+                    programStages.map(programStage => programStage.approvedId)
                 );
                 !_.isEmpty(approvedTrackedEntities) &&
                     this.api.post(
@@ -935,6 +931,17 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                     )
                     .getData();
             }
+        });
+    }
+
+    private getTEIsWithProgramStages(
+        trackedEntityInstances: TrackedEntityInstance[],
+        programStages: string[]
+    ): TrackedEntityInstance[] {
+        return trackedEntityInstances.filter(trackedEntity => {
+            const teiProgramStage = trackedEntity.enrollments[0]?.events[0]?.programStage ?? "";
+
+            return programStages.includes(teiProgramStage);
         });
     }
 
@@ -1220,7 +1227,8 @@ const AMC_PRODUCT_REGISTER_CODE = "AMR_GLASS_AMC_PRO_PRODUCT_REGISTER";
 const moduleMapping: Record<string, string> = {
     AMC: "AMC",
     AMR: "AMR",
-    AMR_FUNGHI: "AMR - Fungal",
+    AMR_FUNGHI: "AMR - Fungal", // to do: remove this line when submissions have value AMR_FUNGAL
+    AMR_FUNGAL: "AMR - Fungal",
     AMR_INDIVIDUAL: "AMR - Individual",
     EAR: "EAR",
     EGASP: "EGASP",
