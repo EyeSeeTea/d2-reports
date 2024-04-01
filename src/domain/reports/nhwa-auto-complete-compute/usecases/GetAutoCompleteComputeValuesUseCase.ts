@@ -3,7 +3,6 @@ import {
     AutoCompleteComputeViewModel,
     AutoCompleteComputeViewModelWithPaging,
 } from "../../../../webapp/reports/nhwa-auto-complete-compute/NHWAAutoCompleteCompute";
-import { defaultPeriods } from "../../../../webapp/reports/common/nhwa-settings";
 import { CategoryOptionCombo, DataElement } from "../../../common/entities/DataSet";
 import { DataSetRepository } from "../../../common/repositories/DataSetRepository";
 import { DataValuesRepository } from "../../../common/repositories/DataValuesRepository";
@@ -72,10 +71,13 @@ export class GetAutoCompleteComputeValuesUseCase {
             : dataSet.organisationUnits.map(ou => ou.id);
 
         const dataValues = await promiseMap(_.chunk(orgUnitsToRequest, 50), async orgUnits => {
+            const currentPeriods = filters.periods.length ? filters.periods : undefined;
             const dataValuesPerOrgUnit = await this.dataValuesRepository.get({
                 dataSetIds: [dataSet.id],
                 orgUnitIds: orgUnits,
-                periods: filters.periods.length ? filters.periods : defaultPeriods.map(x => x.value),
+                periods: currentPeriods,
+                startDate: currentPeriods ? undefined : "1800",
+                endDate: currentPeriods ? undefined : "2100",
             });
             return dataValuesPerOrgUnit;
         });
