@@ -102,7 +102,16 @@
         "glass-admin-manifest": "d2-manifest package.json manifest.webapp --manifest.version=$npm_package_reportVersions_glass_admin --manifest.icons.48='glass-icon.png' --manifest.name='DHIS2 GLASS Admin Maintenance Report' --manifest.description='DHIS2 GLASS Admin Maintenance Report'",
         "glass-admin-build-manifest": "d2-manifest package.json build/manifest.webapp --manifest.version=$npm_package_reportVersions_glass_admin --manifest.icons.48 glass-icon.png --manifest.name='DHIS2 GLASS Admin Maintenance Report' --manifest.description='DHIS2 GLASS Admin Maintenance Report'",
         "glass-manifest": "d2-manifest package.json manifest.webapp --manifest.version=$npm_package_reportVersions_glass --manifest.icons.48='glass-icon.png' --manifest.name='DHIS2 GLASS Submission Report' --manifest.description='DHIS2 GLASS Submission Report'",
-        "glass-build-manifest": "d2-manifest package.json build/manifest.webapp --manifest.version=$npm_package_reportVersions_glass --manifest.icons.48 glass-icon.png --manifest.name='DHIS2 GLASS Submission Report' --manifest.description='DHIS2 GLASS Submission Report'"
+        "glass-build-manifest": "d2-manifest package.json build/manifest.webapp --manifest.version=$npm_package_reportVersions_glass --manifest.icons.48 glass-icon.png --manifest.name='DHIS2 GLASS Submission Report' --manifest.description='DHIS2 GLASS Submission Report'",
+        "nhwa-auto-complete-compute-manifest": "d2-manifest package.json build/manifest.webapp --manifest.version=$npm_package_reportVersions_nhwa-auto-complete-compute",
+        "nhwa-auto-complete-compute-build-folder": "rm -rf build/ && d2-manifest package.json manifest.webapp --manifest.version=$npm_package_reportVersions_nhwa-auto-complete-compute && react-scripts build && yarn run nhwa-auto-complete-compute-manifest && cp -r i18n icon.png build",
+        "nhwa-auto-complete-compute-build": "REACT_APP_DHIS2_BASE_URL='' REACT_APP_DHIS2_AUTH='' yarn nhwa-auto-complete-compute-build-folder && rm -f $npm_package_name.zip && cd build && rm -f manifest.json mal-favicon.ico && zip --quiet -r ../$npm_package_name.zip *",
+        "nhwa-fix-totals-activity-level-manifest": "d2-manifest package.json build/manifest.webapp --manifest.version=$npm_package_reportVersions_nhwa-fix-totals-activity-level",
+        "nhwa-fix-totals-activity-level-build-folder": "rm -rf build/ && d2-manifest package.json manifest.webapp --manifest.version=$npm_package_reportVersions_nhwa-fix-totals-activity-level && react-scripts build && yarn run nhwa-fix-totals-activity-level-manifest && cp -r i18n icon.png build",
+        "nhwa-fix-totals-activity-level-build": "REACT_APP_DHIS2_BASE_URL='' REACT_APP_DHIS2_AUTH='' yarn nhwa-fix-totals-activity-level-build-folder && rm -f $npm_package_name.zip && cd build && rm -f manifest.json mal-favicon.ico && zip --quiet -r ../$npm_package_name.zip *",
+        "nhwa-subnational-correct-orgunit-manifest": "d2-manifest package.json build/manifest.webapp --manifest.version=$npm_package_reportVersions_subnational-correct-orgunit",
+        "nhwa-subnational-correct-orgunit-build-folder": "rm -rf build/ && d2-manifest package.json manifest.webapp --manifest.version=$npm_package_reportVersions_nhwa-subnational-correct-orgunit && react-scripts build && yarn run nhwa-subnational-correct-orgunit-manifest && cp -r i18n icon.png build",
+        "nhwa-subnational-correct-orgunit-build": "REACT_APP_DHIS2_BASE_URL='' REACT_APP_DHIS2_AUTH='' yarn nhwa-subnational-correct-orgunit-build-folder && rm -f $npm_package_name.zip && cd build && rm -f manifest.json mal-favicon.ico && zip --quiet -r ../$npm_package_name.zip *"
     },
     "reportVersions": {
         "authorities-monitoring": "1.0.0",
@@ -116,6 +125,9 @@
         "glass": "1.0.3",
         "mal": "0.1.3",
         "mal-subscription": "1.0.0",
+        "nhwa-auto-complete-compute": "1.0.0",
+        "nhwa-fix-totals-activity-level": "1.0.0",
+        "nhwa-subnational-correct-orgunit": "1.0.0",
         "nhwa": "1.0.0"
     },
     "husky": {
