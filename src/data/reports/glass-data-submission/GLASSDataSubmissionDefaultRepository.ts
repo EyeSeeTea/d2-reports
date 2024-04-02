@@ -56,13 +56,6 @@ interface MessageConversations {
     }[];
 }
 
-type TrackedEntityInstance = {
-    attributes: {
-        value: string;
-    }[];
-    orgUnit: string;
-};
-
 type DataValueType = {
     dataElement: string;
     period: string;
@@ -77,6 +70,25 @@ type DataValueSetsType = {
     orgUnit: string;
     completeDate?: string;
     dataValues: DataValueType[];
+};
+
+type Attribute = {
+    value: string;
+};
+
+type TrackedEntityInstance = {
+    attributes: Attribute[];
+    orgUnit: string;
+    enrollments: {
+        attributes: Attribute[];
+        events: {
+            program: string;
+            programStage: string;
+        }[];
+    }[];
+    programOwners: {
+        program: string;
+    }[];
 };
 
 export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmissionRepository {
@@ -257,34 +269,6 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 module: modules.find(module => module.name === orgUnitModule.module)?.id ?? "",
             }));
         });
-    }
-
-    private async getTrackedEntityInstances(program: string, orgUnit: string): Promise<TrackedEntityInstance[]> {
-        let instances: TrackedEntityInstance[] = [];
-        let currentPage = 1;
-        let totalPages = 1;
-        const pageSize = 200;
-
-        while (currentPage <= totalPages) {
-            const response = await this.api
-                .get<{ instances: TrackedEntityInstance[] }>("/tracker/trackedEntities", {
-                    program: program,
-                    orgUnit: orgUnit,
-                    fields: "attributes[value],orgUnit",
-                    pageSize: pageSize,
-                    page: currentPage,
-                })
-                .getData();
-
-            instances = instances.concat(response.instances);
-
-            if (response.instances.length === pageSize) {
-                totalPages++;
-            }
-            currentPage++;
-        }
-
-        return instances;
     }
 
     private async getCountriesOutsideNARegion(): Promise<string[]> {
@@ -681,11 +665,13 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             .getData();
     }
 
-    private async getProgramEvents(program: string, orgUnit: string): Promise<Event[]> {
-        const { events } = await this.api.events
+    private async getProgramEvents(program: string, orgUnit: string, isEGASPModule: boolean): Promise<Event[]> {
+        const { events } = await this.api.events // to do: use new tracker api
             .get({
-                program,
-                orgUnit,
+                program: program,
+                orgUnit: orgUnit,
+                ouMode: isEGASPModule ? "DESCENDANTS" : "SELECTED",
+                skipPaging: true,
             })
             .getData();
 
@@ -725,42 +711,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         if (!_.isEmpty(items)) {
             const objects = await this.globalStorageClient.listObjectsInCollection<GLASSDataSubmissionItem>(namespace);
-            const module = modules.find(module => module.id === _.first(items)?.module)?.name ?? "";
 
-            if (module === "AMC") {
-                const amcPrograms = modules.find(module => module.name === "AMC")?.programs ?? [];
-                _.forEach(amcPrograms, async amcProgram => await this.duplicateProgram(amcProgram, items));
-            }
-            if (module === "AMR") {
-                const amrDataSets = modules.find(module => module.name === "AMR")?.dataSets ?? [];
-                const amrQuestionnaires = modules.find(module => module.name === "AMR")?.questionnaires ?? [];
-
-                _.forEach(amrDataSets, async amrDataSet => await this.duplicateDataSet(amrDataSet, items));
-                _.forEach(
-                    amrQuestionnaires,
-                    async amrQuestionnaire => await this.duplicateDataSet(amrQuestionnaire, items)
-                );
-            }
-            if (module === "AMR - Fungal") {
-                const amrFungalQuestionnaires =
-                    modules.find(module => module.name === "AMR - Fungal")?.questionnaires ?? [];
-                _.forEach(
-                    amrFungalQuestionnaires,
-                    async amrFungalQuestionnaire => await this.duplicateDataSet(amrFungalQuestionnaire, items)
-                );
-            }
-            if (module === "AMR - Individual") {
-                const amrIndividualPrograms =
-                    modules.find(module => module.name === "AMR - Individual")?.programs ?? [];
-                _.forEach(amrIndividualPrograms, async amrIndividualProgram => {
-                    await this.duplicateProgramStages(amrIndividualProgram, items);
-                });
-            }
-            if (module === "EGASP") {
-                const egaspPrograms = modules.find(module => module.name === "EGASP")?.programs ?? [];
-                _.forEach(egaspPrograms, async egaspProgram => await this.duplicateProgram(egaspProgram, items));
-            }
-
+            await this.approveByModule(modules, items);
             const newSubmissionValues = this.getNewSubmissionValues(items, objects, "APPROVED");
             const recipients = await this.getRecipientUsers(items, modules);
 
@@ -780,9 +732,104 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         }
     }
 
+    private async approveByModule(
+        modules: GLASSDataSubmissionModule[],
+        items: GLASSDataSubmissionItemIdentifier[]
+    ): Promise<void> {
+        const selectedModule = modules.find(module => module.id === _.first(items)?.module)?.name ?? "";
+        const { AMC, AMR, AMR_FUNGHI, AMR_INDIVIDUAL, EGASP } = moduleMapping;
+
+        switch (selectedModule) {
+            case AMC: {
+                const amcModule = modules.find(module => module.name === AMC);
+                const amcPrograms = amcModule?.programs ?? [];
+                const amcProgramStages = amcModule?.programStages ?? [];
+                const amcProductRegisterProgramId = await this.getAMCProductRegisterId(); // the AMC - Product Register program is tne only tracker program in this module
+
+                const amcEventPrograms = _.filter(
+                    amcPrograms,
+                    amcProgram => amcProgram.id !== amcProductRegisterProgramId
+                );
+                const amcTrackerPrograms = _.filter(
+                    amcPrograms,
+                    amcProgram => amcProgram.id === amcProductRegisterProgramId
+                );
+
+                _.forEach(amcEventPrograms, async amcProgram => await this.duplicateEventProgram(amcProgram, items));
+                _.forEach(
+                    amcTrackerPrograms,
+                    async amcProgram => await this.duplicateTrackerProgram(amcProgram, amcProgramStages, items)
+                );
+                break;
+            }
+            case AMR: {
+                const amrDataSets = modules.find(module => module.name === AMR)?.dataSets ?? [];
+                const amrQuestionnaires = modules.find(module => module.name === AMR)?.questionnaires ?? [];
+
+                _.forEach(amrDataSets, async amrDataSet => await this.duplicateDataSet(amrDataSet, items));
+                _.forEach(
+                    amrQuestionnaires,
+                    async amrQuestionnaire => await this.duplicateDataSet(amrQuestionnaire, items)
+                );
+                break;
+            }
+            case AMR_FUNGHI: {
+                const amrFungalModule = modules.find(module => module.name === AMR_FUNGHI);
+                const amrFungalQuestionnaires = amrFungalModule?.questionnaires ?? [];
+                const amrFungalPrograms = amrFungalModule?.programs ?? [];
+                const amrFungalProgramStages = amrFungalModule?.programStages ?? [];
+
+                _.forEach(
+                    amrFungalQuestionnaires,
+                    async amrFungalQuestionnaire => await this.duplicateDataSet(amrFungalQuestionnaire, items)
+                );
+                _.forEach(
+                    amrFungalPrograms,
+                    async amrFungalProgram =>
+                        await this.duplicateTrackerProgram(amrFungalProgram, amrFungalProgramStages, items)
+                );
+                break;
+            }
+            case AMR_INDIVIDUAL: {
+                const amrIndividualModule = modules.find(module => module.name === AMR_INDIVIDUAL);
+                const amrIndividualQuestionnaires = amrIndividualModule?.questionnaires ?? [];
+                const amrIndividualPrograms = amrIndividualModule?.programs ?? [];
+                const amrIndividualProgramStages = amrIndividualModule?.programStages ?? [];
+
+                _.forEach(amrIndividualQuestionnaires, async amrIndividualQuestionnaire => {
+                    await this.duplicateDataSet(amrIndividualQuestionnaire, items);
+                });
+                _.forEach(amrIndividualPrograms, async amrIndividualProgram => {
+                    await this.duplicateTrackerProgram(amrIndividualProgram, amrIndividualProgramStages, items);
+                });
+                break;
+            }
+            case EGASP: {
+                const egaspPrograms = modules.find(module => module.name === EGASP)?.programs ?? [];
+                _.forEach(
+                    egaspPrograms,
+                    async egaspProgram =>
+                        await this.duplicateEventProgram(egaspProgram, items, selectedModule === EGASP)
+                );
+                break;
+            }
+        }
+    }
+
+    private async getAMCProductRegisterId() {
+        const { objects } = await this.api.models.programs
+            .get({
+                fields: { id: true },
+                filter: { code: { eq: AMC_PRODUCT_REGISTER_CODE } },
+            })
+            .getData();
+
+        return _.first(objects)?.id ?? "";
+    }
+
     private async duplicateDataSet(dataSet: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
-        await promiseMap(items, async item => {
-            const dataValueSets = (await this.getDataSetsValue(dataSet.id, item.orgUnit ?? "", item.period)).dataValues;
+        _.forEach(items, async item => {
+            const dataValueSets = (await this.getDataSetsValue(dataSet.id, item.orgUnit, item.period)).dataValues;
 
             if (!_.isEmpty(dataValueSets)) {
                 const DSDataElements: { dataSetElements: { dataElement: NamedRef }[] } = await this.getDSDataElements(
@@ -825,23 +872,175 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         });
     }
 
-    private async duplicateProgram(program: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
-        await promiseMap(items, async item => {
-            const programEvents = await this.getProgramEvents(program.id, item.orgUnit ?? "");
+    private async duplicateTrackerProgram(
+        program: ApprovalIds,
+        programStages: ApprovalIds[],
+        items: GLASSDataSubmissionItemIdentifier[]
+    ): Promise<void> {
+        _.forEach(items, async item => {
+            const trackedEntities = this.getTEIsWithProgramStages(
+                await this.getTrackedEntityInstances(program.id, item.orgUnit, item.period),
+                programStages.map(programStage => programStage.id)
+            );
+
+            if (!_.isEmpty(trackedEntities)) {
+                const approvedTrackedEntities = this.getTEIsWithProgramStages(
+                    await this.getTrackedEntityInstances(program.approvedId, item.orgUnit, item.period),
+                    programStages.map(programStage => programStage.approvedId)
+                );
+                !_.isEmpty(approvedTrackedEntities) &&
+                    this.api.post(
+                        "/tracker",
+                        { importStrategy: "DELETE" },
+                        { trackedEntities: approvedTrackedEntities }
+                    );
+
+                const trackedEntitiesToPost: TrackedEntityInstance[] = trackedEntities.map(trackedEntity => ({
+                    ...trackedEntity,
+                    trackedEntity: "",
+                    programOwners: trackedEntity.programOwners.map(programOwner => ({
+                        ...programOwner,
+                        program: program.approvedId,
+                    })),
+                    enrollments: trackedEntity.enrollments.map(enrollment => ({
+                        ...enrollment,
+                        enrollment: "",
+                        trackedEntity: "",
+                        program: program.approvedId,
+                        events: enrollment.events.map(event => {
+                            const approvedProgramStage =
+                                programStages.find(programStage => event.programStage === programStage.id)
+                                    ?.approvedId ?? "";
+
+                            return {
+                                ...event,
+                                event: "",
+                                trackedEntity: "",
+                                program: program.approvedId,
+                                programStage: approvedProgramStage,
+                            };
+                        }),
+                    })),
+                }));
+
+                return await this.api
+                    .post(
+                        "/tracker",
+                        { async: true, importStrategy: "CREATE_AND_UPDATE" },
+                        { trackedEntities: trackedEntitiesToPost }
+                    )
+                    .getData();
+            }
+        });
+    }
+
+    private getTEIsWithProgramStages(
+        trackedEntityInstances: TrackedEntityInstance[],
+        programStages: string[]
+    ): TrackedEntityInstance[] {
+        return trackedEntityInstances.filter(trackedEntity => {
+            const teiProgramStage = trackedEntity.enrollments[0]?.events[0]?.programStage ?? "";
+
+            return programStages.includes(teiProgramStage);
+        });
+    }
+
+    private async getTrackedEntityInstances(
+        program: string,
+        orgUnit: string,
+        period?: string
+    ): Promise<TrackedEntityInstance[]> {
+        const startDate = period && `${period}-01-01`;
+        const endDate = period && `${period}-12-31`;
+
+        let trackedEntities: TrackedEntityInstance[] = [];
+        let currentPage = 1;
+        let response;
+        const pageSize = 200;
+
+        try {
+            do {
+                response = await this.api
+                    .get<{
+                        instances: TrackedEntityInstance[];
+                        total: number;
+                        page: number;
+                    }>("/tracker/trackedEntities", {
+                        program: program,
+                        orgUnit: orgUnit,
+                        enrollmentOccurredAfter: startDate,
+                        enrollmentOccurredBefore: endDate,
+                        pageSize,
+                        page: currentPage,
+                        totalPages: true,
+                        fields: ":all",
+                    })
+                    .getData();
+
+                if (!response.total) {
+                    throw new Error(`Error getting paginated events of program ${program} and organisation ${orgUnit}`);
+                }
+                trackedEntities = trackedEntities.concat(response.instances);
+                currentPage++;
+            } while (response.page < Math.ceil(response.total / pageSize));
+            return trackedEntities;
+        } catch {
+            return [];
+        }
+    }
+
+    private async getProgramStages(program: string): Promise<NamedRef[]> {
+        const { programs } = await this.api.metadata
+            .get({
+                programs: {
+                    fields: {
+                        programStages: {
+                            id: true,
+                            name: true,
+                        },
+                    },
+                    filter: {
+                        id: { eq: program },
+                    },
+                    paging: false,
+                },
+            })
+            .getData();
+
+        return _.first(programs)?.programStages ?? [];
+    }
+
+    private async duplicateEventProgram(
+        program: ApprovalIds,
+        items: GLASSDataSubmissionItemIdentifier[],
+        isEGASPModule?: boolean
+    ): Promise<void> {
+        _.forEach(items, async item => {
+            const programEvents = await this.getProgramEvents(program.id, item.orgUnit, isEGASPModule ?? false);
             const events = programEvents.filter(
                 event => String(new Date(event.eventDate).getFullYear()) === item.period
             );
 
             if (!_.isEmpty(events)) {
+                const approvedProgramEvents = await this.getProgramEvents(
+                    program.approvedId,
+                    item.orgUnit,
+                    isEGASPModule ?? false
+                );
+                const approvedEvents = approvedProgramEvents.filter(
+                    event => String(new Date(event.eventDate).getFullYear()) === item.period
+                );
+
+                !_.isEmpty(approvedEvents) &&
+                    this.api.post("/events", { importStrategy: "DELETE" }, { events: approvedEvents }); // to do: use new tracker api
+
+                const approvedProgramStage = (await this.getProgramStages(program.approvedId))[0];
                 const eventsToPost = events.map(event => {
                     return {
+                        ...event,
+                        event: "",
                         program: program.approvedId,
-                        orgUnit: event.orgUnit,
-                        eventDate: event.eventDate,
-                        status: event.status,
-                        storedBy: event.storedBy,
-                        coordinate: event.coordinate,
-                        dataValues: event.dataValues,
+                        programStage: approvedProgramStage?.id ?? "",
                     };
                 });
 
@@ -849,43 +1048,6 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                     return await this.api.events.post({}, { events: _.reject(eventsGroup, _.isEmpty) }).getData();
                 });
             }
-        });
-    }
-
-    private async duplicateProgramStages(program: ApprovalIds, items: GLASSDataSubmissionItemIdentifier[]) {
-        await promiseMap(items, async item => {
-            const programEvents = await this.getProgramEvents(program.id, item.orgUnit ?? "");
-
-            await promiseMap(programEvents, async programEvent => {
-                const programStageEvents = (
-                    await this.api.events
-                        .get({
-                            event: programEvent.event,
-                            program: program.id,
-                            programStage: program.programStageId,
-                            orgUnit: item.orgUnit,
-                        })
-                        .getData()
-                ).events;
-
-                if (!_.isEmpty(programStageEvents)) {
-                    const eventsToPost = programStageEvents.map(event => ({
-                        program: program.approvedId,
-                        programStage: program.programStageApprovedId,
-                        orgUnit: event.orgUnit,
-                        event: event.event,
-                        eventDate: event.eventDate,
-                        status: event.status,
-                        dataValues: event.dataValues,
-                    }));
-
-                    await promiseMap(
-                        _.chunk(eventsToPost, 100),
-                        async eventsGroup =>
-                            await this.api.events.post({}, { events: _.reject(eventsGroup, _.isEmpty) }).getData()
-                    );
-                }
-            });
         });
     }
 
@@ -1060,10 +1222,13 @@ const emptyPage: PaginatedObjects<GLASSDataSubmissionItem> = {
     objects: [],
 };
 
+const AMC_PRODUCT_REGISTER_CODE = "AMR_GLASS_AMC_PRO_PRODUCT_REGISTER";
+
 const moduleMapping: Record<string, string> = {
     AMC: "AMC",
     AMR: "AMR",
-    AMR_FUNGHI: "AMR - Fungal",
+    AMR_FUNGHI: "AMR - Fungal", // to do: remove this line when submissions have value AMR_FUNGAL
+    AMR_FUNGAL: "AMR - Fungal",
     AMR_INDIVIDUAL: "AMR - Individual",
     EAR: "EAR",
     EGASP: "EGASP",
