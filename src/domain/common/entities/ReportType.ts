@@ -8,4 +8,5 @@ export type ReportType =
     | "auditTrauma"
     | "summary-patient"
     | "summary-mortality"
+    | "authMonitoring"
     | "data-quality";

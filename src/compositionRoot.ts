@@ -79,6 +79,10 @@ import { SaveDataQualityUseCase } from "./domain/reports/data-quality/usecases/S
 import { LoadDataQualityValidation } from "./domain/reports/data-quality/usecases/loadDataQualityValidation";
 import { ResetDataQualityValidation } from "./domain/reports/data-quality/usecases/ResetDataQualityValidation";
 import { GetMonitoringDetailsUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMonitoringDetailsUseCase";
+import { AuthoritiesMonitoringDefaultRepository } from "./data/reports/authorities-monitoring/AuthoritiesMonitoringDefaultRepository";
+import { GetAuthoritiesMonitoringUseCase } from "./domain/reports/authorities-monitoring/usecases/GetAuthoritiesMonitoringUseCase";
+import { GetAuthoritiesMonitoringColumnsUseCase } from "./domain/reports/authorities-monitoring/usecases/GetAuthoritiesMonitoringColumnsUseCase";
+import { SaveAuthoritiesMonitoringColumnsUseCase } from "./domain/reports/authorities-monitoring/usecases/SaveAuthoritiesMonitoringColumnsUseCase";
 import { GetGLASSDataMaintenanceUseCase } from "./domain/reports/glass-admin/usecases/GetGLASSDataMaintenanceUseCase";
 import { GLASSDataMaintenanceDefaultRepository } from "./data/reports/glass-admin/GLASSDataMaintenanceDefaultRepository";
 import { GetGLASSDataMaintenanceColumnsUseCase } from "./domain/reports/glass-admin/usecases/GetGLASSDataMaintenanceColumnsUseCase";
@@ -92,6 +96,7 @@ import { GetATCLoggerProgramUseCase } from "./domain/reports/glass-admin/usecase
 import { GetATCRecalculationLogicUseCase } from "./domain/reports/glass-admin/usecases/GetATCRecalculationLogicUseCase";
 import { CancelRecalculationUseCase } from "./domain/reports/glass-admin/usecases/CancelRecalculationUseCase";
 import { GetGLASSDataSubmissionModulesUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSDataSubmissionModulesUseCase";
+import { SaveAuthoritiesMonitoringUseCase } from "./domain/reports/authorities-monitoring/usecases/SaveAuthoritiesMonitoringUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -114,6 +119,7 @@ export function getCompositionRoot(api: D2Api) {
     const fixTotalSettingsRepository = new FixTotalsSettingsD2Repository(api);
     const subnationalCorrectRepository = new SubnationalCorrectD2Repository(api);
     const subnationalCorrectSettingsRepository = new SubnationalCorrectD2SettingsRepository(api);
+    const authoritiesMonitoringRepository = new AuthoritiesMonitoringDefaultRepository(api);
 
     return {
         admin: getExecute({
@@ -229,6 +235,12 @@ export function getCompositionRoot(api: D2Api) {
                 subnationalCorrectSettingsRepository
             ),
         },
+        authMonitoring: getExecute({
+            get: new GetAuthoritiesMonitoringUseCase(authoritiesMonitoringRepository),
+            save: new SaveAuthoritiesMonitoringUseCase(authoritiesMonitoringRepository),
+            getColumns: new GetAuthoritiesMonitoringColumnsUseCase(authoritiesMonitoringRepository),
+            saveColumns: new SaveAuthoritiesMonitoringColumnsUseCase(authoritiesMonitoringRepository),
+        }),
     };
 }
 
