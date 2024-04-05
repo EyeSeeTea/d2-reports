@@ -8,7 +8,7 @@ import { StorageClient } from "../../common/clients/storage/StorageClient";
 import { Instance } from "../../common/entities/Instance";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 import { NamedRef, Ref } from "../../../domain/common/entities/Ref";
-import { D2Api, Pager } from "../../../types/d2-api";
+import { D2Api } from "../../../types/d2-api";
 import {
     AMCRecalculation,
     ATCItem,
@@ -25,7 +25,7 @@ import JSZip from "jszip";
 import _ from "lodash";
 import { Config } from "../../../domain/common/entities/Config";
 import { Id } from "../../../domain/common/entities/Base";
-import { Paging, Sorting, getPaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
+import { paginate } from "../../../domain/common/entities/PaginatedObjects";
 
 type ATCJson = {
     name: "atc" | "ddd_combinations" | "ddd" | "conversion" | "ddd_alterations" | "atc_alterations";
@@ -57,7 +57,7 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         const filteredFiles = this.getFilteredFiles(uploads, countries, module);
 
         const rowIds = this.getRowIds(filteredFiles);
-        const { objects, pager } = this.paginate(filteredFiles, sorting, paging);
+        const { objects, pager } = paginate(filteredFiles, sorting, paging);
 
         return { objects: objects, pager: pager, rowIds: rowIds };
     }
@@ -70,7 +70,7 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
             .map(atc => atc.year)
             .uniq()
             .value();
-        const { objects, pager } = this.paginate(atcs, sorting, paging);
+        const { objects, pager } = paginate(atcs, sorting, paging);
 
         return { objects: objects, pager: pager, uploadedYears: uploadedYears };
     }
@@ -491,22 +491,6 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
             .filter(row => row.status !== "DELETED")
             .map(row => row.id)
             .value();
-    }
-
-    private getPager<T>(rows: T[], paging: Paging): Pager {
-        return {
-            page: paging.page,
-            pageSize: paging.pageSize,
-            pageCount: Math.ceil(rows.length / paging.pageSize),
-            total: rows.length,
-        };
-    }
-
-    private paginate<T>(objects: T[], sorting: Sorting<T>, paging: Paging) {
-        const pager = this.getPager(objects, paging);
-        const paginatedObjects = getPaginatedObjects(objects, sorting, paging);
-
-        return { pager, objects: paginatedObjects };
     }
 }
 

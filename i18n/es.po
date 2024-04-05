@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2024-01-02T18:22:02.263Z\n"
+"POT-Creation-Date: 2024-04-05T06:42:58.086Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -17,6 +17,9 @@ msgstr ""
 msgid "LOG OUT"
 msgstr ""
 
+msgid "Close"
+msgstr ""
+
 msgid "Loading..."
 msgstr ""
 
@@ -24,9 +27,6 @@ msgid "Organisation unit"
 msgstr ""
 
 msgid "Select parent organisation unit"
-msgstr ""
-
-msgid "Close"
 msgstr ""
 
 msgid "Clear"
@@ -95,6 +95,39 @@ msgid "lastUpdated"
 msgstr ""
 
 msgid "created"
+msgstr ""
+
+msgid "WIDP Admin Templates Report"
+msgstr ""
+
+msgid "List of users with not allowed roles"
+msgstr ""
+
+msgid "ID"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Username"
+msgstr ""
+
+msgid "Template Groups"
+msgstr ""
+
+msgid "Last login"
+msgstr ""
+
+msgid "Role"
+msgstr ""
+
+msgid "Unauthorized privileges"
+msgstr ""
+
+msgid "Search by username..."
+msgstr ""
+
+msgid "Advanced filters"
 msgstr ""
 
 msgid "Period"
@@ -247,9 +280,6 @@ msgstr ""
 msgid "Patient Characteristics"
 msgstr ""
 
-msgid "Name"
-msgstr ""
-
 msgid "Last Updated"
 msgstr ""
 
@@ -298,19 +328,93 @@ msgstr ""
 msgid "Data quality"
 msgstr ""
 
-msgid "GLASS Data Submission Report"
+msgid "GLASS Admin Maintenance Report"
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
+msgid "File"
 msgstr ""
 
 msgid "Country"
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+msgid "Delete all incomplete files"
+msgstr ""
+
+msgid "Module"
+msgstr ""
+
+msgid "Patch"
+msgstr ""
+
+msgid " "
+msgstr ""
+
+msgid "Current Version"
+msgstr ""
+
+msgid "Uploaded date"
+msgstr ""
+
+msgid "Upload new ATC file"
+msgstr ""
+
+msgid "Recalculation Ongoing..."
+msgstr ""
+
+msgid "Cancel recalculation"
+msgstr ""
+
+msgid "Recalculate logic"
+msgstr ""
+
+msgid "Last recalculation was done with {{previousVersion}}"
+msgstr ""
+
+msgid "RECALCULATE all existing submissions with {{currentVersion}}"
+msgstr ""
+
+msgid "There is no UNDO for this action"
+msgstr ""
+
+msgid "Continue"
+msgstr ""
+
+msgid "Version has been successfully patched"
+msgstr ""
+
+msgid "Error encountered when parsing version"
+msgstr ""
+
+msgid "Upload finished"
+msgstr ""
+
+msgid "Error parsing the file"
+msgstr ""
+
+msgid "Recalculation has been cancelled successfully"
+msgstr ""
+
+msgid ""
+"Please go to the program {{loggerProgram}} to see the logs of this "
+"recalculation"
+msgstr ""
+
+msgid "Error when saving recalculation logic"
+msgstr ""
+
+msgid "GLASS Data Submission Report"
 msgstr ""
 
 msgid "Questionnaire completed"
 msgstr ""
 
 msgid "DataSets uploaded"
-msgstr ""
-
-msgid "Status"
 msgstr ""
 
 msgid "Go to GLASS Unapproved Dashboard"
@@ -403,25 +507,10 @@ msgstr ""
 msgid "October-December"
 msgstr ""
 
-msgid "AMR"
-msgstr ""
-
-msgid "AMR - Individual"
-msgstr ""
-
-msgid "EAR"
-msgstr ""
-
-msgid "EGASP"
-msgstr ""
-
 msgid "Completed"
 msgstr ""
 
 msgid "Not completed"
-msgstr ""
-
-msgid "Module"
 msgstr ""
 
 msgid "Years"

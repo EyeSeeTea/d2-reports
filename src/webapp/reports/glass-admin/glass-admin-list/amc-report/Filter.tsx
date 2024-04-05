@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, } from "react";
+import React, { useCallback, useMemo } from "react";
 import { Module } from "../../../../../domain/reports/glass-admin/entities/GLASSDataMaintenanceItem";
 import styled from "styled-components";
 import { Dropdown, DropdownProps } from "@eyeseetea/d2-ui-components";
