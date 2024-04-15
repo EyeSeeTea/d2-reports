@@ -30,8 +30,14 @@ interface ExcludeRolesByGroup {
     role: NamedRef;
 }
 
+interface ExcludeRolesByUser {
+    user: NamedRef;
+    role: NamedRef;
+}
+
 interface UserMonitoring {
-    excludedRolesByGroups: ExcludeRolesByGroup[];
+    excludeRolesByGroups: ExcludeRolesByGroup[];
+    excludeRolesByUsers: ExcludeRolesByUser[];
     templateGroups: TemplateGroup[];
 }
 
@@ -49,9 +55,13 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
     ): Promise<AuthoritiesMonitoringPaginatedObjects<AuthoritiesMonitoringItem>> {
         const { paging, sorting } = options;
 
-        const { excludedRolesByGroups, templateGroups } = await this.getUserMonitoring(namespace);
+        const { excludeRolesByGroups, excludeRolesByUsers, templateGroups } = await this.getUserMonitoring(namespace);
 
-        const objects = await this.getAuthoritiesMonitoringObject(templateGroups, excludedRolesByGroups);
+        const objects = await this.getAuthoritiesMonitoringObject(
+            templateGroups,
+            excludeRolesByGroups,
+            excludeRolesByUsers
+        );
 
         const userRoles = _(objects)
             .flatMap(object => object.roles)
@@ -71,20 +81,30 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
     }
 
     private async getUserMonitoring(namespace: string): Promise<UserMonitoring> {
-        const { TEMPLATE_GROUPS: templateGroups, EXCLUDE_ROLES_BY_GROUPS: excludedRolesByGroups } = (await this.api
+        const {
+            TEMPLATE_GROUPS: templateGroups,
+            EXCLUDE_ROLES_BY_GROUPS: excludedRolesByGroups,
+            EXCLUDE_ROLES_BY_USERS: excludeRolesByUsers,
+        } = (await this.api
             .dataStore(d2ToolsNamespace)
             .get<{
                 TEMPLATE_GROUPS: TemplateGroup[];
                 EXCLUDE_ROLES_BY_GROUPS: ExcludeRolesByGroup[];
+                EXCLUDE_ROLES_BY_USERS: ExcludeRolesByUser[];
             }>(namespace)
-            .getData()) ?? { TEMPLATE_GROUPS: [], EXCLUDE_ROLES_BY_GROUPS: [] };
+            .getData()) ?? { TEMPLATE_GROUPS: [], EXCLUDE_ROLES_BY_GROUPS: [], EXCLUDE_ROLES_BY_USERS: [] };
 
-        return { excludedRolesByGroups, templateGroups };
+        return {
+            excludeRolesByGroups: excludedRolesByGroups,
+            excludeRolesByUsers: excludeRolesByUsers,
+            templateGroups: templateGroups,
+        };
     }
 
     private async getAuthoritiesMonitoringObject(
         templateGroups: TemplateGroup[],
-        excludedRolesByGroups: ExcludeRolesByGroup[]
+        excludedRolesByGroups: ExcludeRolesByGroup[],
+        excludeRolesByUsers: ExcludeRolesByUser[]
     ): Promise<AuthoritiesMonitoringItem[]> {
         const userTemplateIds = templateGroups.map(templateGroup => templateGroup.template.id);
         const templateGroupUserGroups = templateGroups.map(templateGroup => templateGroup.group.id);
@@ -144,8 +164,18 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
 
                     return isInExcludedUserGroup && hasExcludedRole;
                 });
+                const isExcludedByRolesByUsers = excludeRolesByUsers.some(excludedRolesByUser => {
+                    const hasExcludedRole = user.userCredentials.userRoles
+                        .map(userRole => userRole.id)
+                        .includes(excludedRolesByUser.role.id);
+                    const isExcludedUser = user.id === excludedRolesByUser.user.id;
 
-                return hasExcludedAuthorities && !isTemplateUser && !isExcludedByRolesByGroup;
+                    return hasExcludedRole && isExcludedUser;
+                });
+
+                return (
+                    hasExcludedAuthorities && !isTemplateUser && !isExcludedByRolesByGroup && !isExcludedByRolesByUsers
+                );
             })
             .value();
     }
