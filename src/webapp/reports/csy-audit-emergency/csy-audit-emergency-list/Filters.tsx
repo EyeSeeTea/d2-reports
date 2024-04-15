@@ -6,6 +6,7 @@ import styled from "styled-components";
 import { Dropdown, DropdownProps } from "@eyeseetea/d2-ui-components";
 import i18n from "../../../../locales";
 import _ from "lodash";
+import { AuditType } from "../../../../domain/reports/csy-audit-emergency/entities/AuditItem";
 
 export interface FiltersProps {
     values: Filter;
@@ -14,7 +15,7 @@ export interface FiltersProps {
 }
 
 export interface Filter {
-    auditType: string;
+    auditType: AuditType;
     orgUnitPaths: Id[];
     periodType: string;
     year: string;
@@ -88,7 +89,7 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
 
     const setAuditType = React.useCallback<SingleDropdownHandler>(
         auditType => {
-            onChange(filter => ({ ...filter, auditType: auditType ?? "" }));
+            onChange(filter => ({ ...filter, auditType: auditType as AuditType }));
         },
         [onChange]
     );
