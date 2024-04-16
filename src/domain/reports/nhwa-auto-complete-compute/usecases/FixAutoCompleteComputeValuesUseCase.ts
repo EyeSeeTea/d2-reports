@@ -1,3 +1,4 @@
+import _ from "lodash";
 import { AutoCompleteComputeViewModel } from "../../../../webapp/reports/nhwa-auto-complete-compute/NHWAAutoCompleteCompute";
 import { DataValueToPost } from "../../../common/entities/DataValue";
 import { Stats } from "../../../common/entities/Stats";
@@ -21,6 +22,10 @@ export class FixAutoCompleteComputeValuesUseCase {
             imported: statsSaved.imported + statsDeleted.imported,
             updated: statsSaved.updated + statsDeleted.updated,
             ignored: statsSaved.ignored + statsDeleted.ignored,
+            errorMessages: _(statsSaved.errorMessages)
+                .concat(statsDeleted.errorMessages)
+                .uniqBy(message => message.message)
+                .value(),
         };
     }
 
