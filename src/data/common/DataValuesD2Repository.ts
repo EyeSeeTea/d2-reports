@@ -33,37 +33,56 @@ export class DataValuesD2Repository implements DataValuesRepository {
         dataValues: DataValueToPost[],
         importStrategy: "CREATE_AND_UPDATE" | "DELETE"
     ): Promise<Stats> {
-        if (_.isEmpty(dataValues)) return { deleted: 0, ignored: 0, imported: 0, updated: 0 };
+        if (_.isEmpty(dataValues)) return { deleted: 0, ignored: 0, imported: 0, updated: 0, errorMessages: [] };
 
-        const result = await promiseMap(_.chunk(dataValues, 50), async dataValues => {
-            const res = (await this.api.dataValues
-                .postSet({ force: true, importStrategy }, { dataValues })
-                .getData()) as unknown as ResponseDataValues;
+        const result = await promiseMap(_.chunk(dataValues, 25), async dataValues => {
+            try {
+                const res = (await this.api.dataValues
+                    .postSet({ importStrategy }, { dataValues })
+                    .getData()) as unknown as ResponseDataValues;
 
-            if (res.status !== "OK") {
-                throw new Error(`Error on post: ${JSON.stringify(res, null, 4)}`);
+                return {
+                    ...res.response.importCount,
+                    errorMessages: this.buildConflictsErrors(res.response.conflicts),
+                };
+            } catch (error) {
+                const dvError = error as unknown as ResponseErrorDataValue;
+                const ignoreDetails = this.buildConflictsErrors(dvError.response.data.response.conflicts);
+                return { ...dvError.response.data.response.importCount, errorMessages: ignoreDetails };
             }
-
-            return res.response.importCount;
         });
 
         return {
-            imported: _(result).sumBy(x => x.imported),
-            updated: _(result).sumBy(x => x.updated),
-            ignored: _(result).sumBy(x => x.ignored),
-            deleted: _(result).sumBy(x => x.deleted),
+            imported: _(result).sumBy(x => x?.imported || 0),
+            updated: _(result).sumBy(x => x?.updated || 0),
+            ignored: _(result).sumBy(x => x?.ignored || 0),
+            deleted: _(result).sumBy(x => x?.deleted || 0),
+            errorMessages: _(result)
+                .flatMap(message => message.errorMessages || [])
+                .value(),
         };
+    }
+
+    private buildConflictsErrors(conflicts: D2ConflictDataValue[]): Stats["errorMessages"] {
+        return conflicts.map(conflict => {
+            return { id: conflict.object, message: `ERROR: ${conflict.errorCode}: ${conflict.value}` };
+        });
     }
 }
 
 type ResponseDataValues = {
     status: string;
-    response: {
-        importCount: {
-            imported: number;
-            updated: 0;
-            ignored: 0;
-            deleted: 0;
-        };
-    };
+    response: ResponseDataValue;
 };
+
+type ResponseErrorDataValue = {
+    status: string;
+    response: { data: { response: ResponseDataValue } };
+};
+
+type ResponseDataValue = {
+    conflicts: D2ConflictDataValue[];
+    importCount: { imported: number; updated: 0; ignored: 0; deleted: 0 };
+};
+
+type D2ConflictDataValue = { object: string; value: string; errorCode: string };

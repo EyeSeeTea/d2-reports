@@ -1,5 +1,7 @@
+import _ from "lodash";
 import React from "react";
-import { Typography, makeStyles } from "@material-ui/core";
+import styled from "styled-components";
+import { Button, Typography, makeStyles } from "@material-ui/core";
 import {
     ObjectsList,
     TableConfig,
@@ -10,6 +12,7 @@ import {
     useSnackbar,
 } from "@eyeseetea/d2-ui-components";
 import DoneAllIcon from "@material-ui/icons/DoneAll";
+
 import i18n from "../../../locales";
 import { useAppContext } from "../../contexts/app-context";
 import { getOrgUnitIdsFromPaths, getRootIds, OrgUnit } from "../../../domain/common/entities/OrgUnit";
@@ -17,6 +20,8 @@ import { CategoryOptionCombo, DataElement } from "../../../domain/common/entitie
 import { countryLevel } from "../common/nhwa-settings";
 import { useReload } from "../../utils/use-reload";
 import { Filters } from "../common/Filters";
+import { Stats } from "../../../domain/common/entities/Stats";
+import { Alert } from "../../components/alert/Alert";
 
 export type AutoCompleteComputeViewModelWithPaging = {
     page: number;
@@ -37,6 +42,20 @@ export type AutoCompleteComputeViewModel = {
     currentValue: string | undefined;
 };
 
+function replaceOrgUnitIdByName(message: string, orgUnits: OrgUnit[]): string {
+    const regex = /organisation unit:\s*`([^`]+)`/;
+    const match = message.match(regex);
+    if (match) {
+        const orgUnitId = _(match).nth(1);
+        if (!orgUnitId) return message;
+        const orgUnit = orgUnits.find(orgUnit => orgUnit.id === orgUnitId);
+        if (!orgUnit) return message;
+        return message.replace(orgUnitId, orgUnit.name);
+    } else {
+        return message;
+    }
+}
+
 export const NHWAAutoCompleteCompute: React.FC = () => {
     const { compositionRoot, api, config } = useAppContext();
     const loading = useLoading();
@@ -45,6 +64,7 @@ export const NHWAAutoCompleteCompute: React.FC = () => {
     const [selectedPeriods, setSelectedPeriods] = React.useState<string[]>([]);
     const [selectedOrgUnits, setSelectedOrgUnits] = React.useState<string[]>([]);
     const [orgUnits, setOrgUnits] = React.useState<OrgUnit[]>([]);
+    const [errors, setErrors] = React.useState<Stats["errorMessages"]>();
     const classes = useStyles();
 
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
@@ -120,11 +140,15 @@ export const NHWAAutoCompleteCompute: React.FC = () => {
                         compositionRoot.nhwa.fixAutoCompleteComputeValues
                             .execute(results.rows)
                             .then(stats => {
+                                loading.hide();
                                 reload();
-                                snackbar.openSnackbar("success", JSON.stringify(stats, null, 4), {
+                                const statsWithoutErrorMessages = _(stats).omit("errorMessages").value();
+                                snackbar.openSnackbar("success", JSON.stringify(statsWithoutErrorMessages, null, 4), {
                                     autoHideDuration: 20 * 10000,
                                 });
-                                loading.hide();
+                                if (stats.errorMessages.length > 0) {
+                                    setErrors(stats.errorMessages);
+                                }
                             })
                             .catch(err => {
                                 snackbar.error(err);
@@ -182,10 +206,28 @@ export const NHWAAutoCompleteCompute: React.FC = () => {
                     }}
                 />
             </ObjectsList>
+
+            {errors && (
+                <>
+                    <Button variant="contained" color="secondary" size="small" onClick={() => setErrors(undefined)}>
+                        Clear Errors
+                    </Button>
+                    <AlertContainer>
+                        {errors.map((error, index) => {
+                            return <Alert key={index} message={replaceOrgUnitIdByName(error.message, orgUnits)} />;
+                        })}
+                    </AlertContainer>
+                </>
+            )}
         </div>
     );
 };
 
-const useStyles = makeStyles({
-    wrapper: { padding: 20 },
-});
+const AlertContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+    padding: 0.5em 0;
+`;
+
+const useStyles = makeStyles({ wrapper: { padding: 20 } });
