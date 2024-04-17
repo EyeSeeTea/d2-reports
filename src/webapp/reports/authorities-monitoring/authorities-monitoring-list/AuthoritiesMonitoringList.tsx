@@ -17,10 +17,8 @@ import { DataMonitoringViewModel, getDataMonitoringViews } from "../DataMonitori
 import { Filter, Filters } from "./Filters";
 import _ from "lodash";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
-import {
-    AuthoritiesMonitoringItem,
-    UserRole,
-} from "../../../../domain/reports/authorities-monitoring/entities/AuthoritiesMonitoringItem";
+import { AuthoritiesMonitoringItem } from "../../../../domain/reports/authorities-monitoring/entities/AuthoritiesMonitoringItem";
+import { UserRole } from "../../../../domain/reports/authorities-monitoring/entities/User";
 
 export const AuthoritiesMonitoringList: React.FC = React.memo(() => {
     const { compositionRoot } = useAppContext();
