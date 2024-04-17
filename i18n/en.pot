@@ -58,6 +58,16 @@ msgstr ""
 msgid "Are you sure?"
 msgstr ""
 
+msgid ""
+"Module 1 totals with missing sum or sum that does not match the "
+"auto-calculated"
+msgstr ""
+
+msgid ""
+"Module 1 (Subnational single entry) totals with missing sum or sum that "
+"does not match the auto-calculated"
+msgstr ""
+
 msgid "Metadata Admin Report"
 msgstr ""
 
@@ -761,11 +771,6 @@ msgid "Fix all incorrect values"
 msgstr ""
 
 msgid "Updating values..."
-msgstr ""
-
-msgid ""
-"Module 1 totals with missing sum or sum that does not match the "
-"auto-calculated"
 msgstr ""
 
 msgid "NHWA Comments Report"

@@ -97,6 +97,7 @@ import { GetATCRecalculationLogicUseCase } from "./domain/reports/glass-admin/us
 import { CancelRecalculationUseCase } from "./domain/reports/glass-admin/usecases/CancelRecalculationUseCase";
 import { GetGLASSDataSubmissionModulesUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSDataSubmissionModulesUseCase";
 import { SaveAuthoritiesMonitoringUseCase } from "./domain/reports/authorities-monitoring/usecases/SaveAuthoritiesMonitoringUseCase";
+import { GetAutoCompleteComputeSettingsUseCase } from "./domain/reports/nhwa-auto-complete-compute/usecases/GetAutoCompleteComputeSettingsUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -217,10 +218,12 @@ export function getCompositionRoot(api: D2Api) {
             get: new GetConfig(configRepository),
         }),
         nhwa: {
+            getAutoCompleteComputeSettings: new GetAutoCompleteComputeSettingsUseCase(
+                autoCompleteComputeSettingsRepository
+            ),
             getAutoCompleteComputeValues: new GetAutoCompleteComputeValuesUseCase(
                 dataSetRepository,
-                dataValuesRepository,
-                autoCompleteComputeSettingsRepository
+                dataValuesRepository
             ),
             fixAutoCompleteComputeValues: new FixAutoCompleteComputeValuesUseCase(dataValuesRepository),
             getTotalsByActivityLevel: new GetTotalsByActivityLevelUseCase(

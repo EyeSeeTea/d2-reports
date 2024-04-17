@@ -6,8 +6,7 @@ import {
 import { CategoryOptionCombo, DataElement } from "../../../common/entities/DataSet";
 import { DataSetRepository } from "../../../common/repositories/DataSetRepository";
 import { DataValuesRepository } from "../../../common/repositories/DataValuesRepository";
-import { DataElementTotal } from "../entities/AutoCompleteComputeSettings";
-import { AutoCompleteComputeSettingsRepository } from "../repositores/AutoCompleteComputeSettingsRepository";
+import { AutoCompleteComputeSettings, DataElementTotal } from "../entities/AutoCompleteComputeSettings";
 import { DataValue } from "./../../../common/entities/DataValue";
 import { promiseMap } from "../../../../utils/promises";
 
@@ -17,20 +16,14 @@ export type AutoCompleteComputeValuesFilter = {
     pageSize: number;
     sortingField: string;
     sortingOrder: "asc" | "desc";
-    filters: {
-        periods: string[];
-        orgUnits: string[];
-    };
+    filters: { periods: string[]; orgUnits: string[] };
+    settings: AutoCompleteComputeSettings;
 };
 
 export class GetAutoCompleteComputeValuesUseCase {
     dataCache: { key: string; value: AutoCompleteComputeViewModel[] } | undefined;
 
-    constructor(
-        private dataSetRepository: DataSetRepository,
-        private dataValuesRepository: DataValuesRepository,
-        private settingsRepository: AutoCompleteComputeSettingsRepository
-    ) {}
+    constructor(private dataSetRepository: DataSetRepository, private dataValuesRepository: DataValuesRepository) {}
 
     async execute(options: AutoCompleteComputeValuesFilter): Promise<AutoCompleteComputeViewModelWithPaging> {
         const autoCompleteValues = await this.getAllAutoCompleteValues(options);
@@ -50,8 +43,7 @@ export class GetAutoCompleteComputeValuesUseCase {
     private async getAllAutoCompleteValues(
         options: AutoCompleteComputeValuesFilter
     ): Promise<AutoCompleteComputeViewModel[]> {
-        const settings = await this.settingsRepository.get();
-        const { cacheKey, filters } = options;
+        const { cacheKey, filters, settings } = options;
         if (this.dataCache && this.dataCache.key === cacheKey) return this.dataCache.value;
 
         const dataSets = await this.dataSetRepository.getById(settings.dataSet);

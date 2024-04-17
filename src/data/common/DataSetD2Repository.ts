@@ -33,7 +33,8 @@ export class DataSetD2Repository implements DataSetRepository {
                         },
                         organisationUnits: {
                             id: true,
-                            name: true,
+                            displayName: true,
+                            level: true,
                         },
                     },
                     filter: {
@@ -60,8 +61,8 @@ export class DataSetD2Repository implements DataSetRepository {
                         organisationUnits: d2DataSet.organisationUnits.map(d2OrgUnit => {
                             return {
                                 id: d2OrgUnit.id,
-                                name: d2OrgUnit.name,
-                                level: 0,
+                                name: d2OrgUnit.displayName,
+                                level: d2OrgUnit.level,
                                 path: "",
                             };
                         }),
