@@ -1,7 +1,6 @@
 import _ from "lodash";
 import React from "react";
-import styled from "styled-components";
-import { Button, Typography, makeStyles } from "@material-ui/core";
+import { Typography, makeStyles } from "@material-ui/core";
 import {
     ObjectsList,
     TableConfig,
@@ -21,7 +20,7 @@ import { countryLevel } from "../common/nhwa-settings";
 import { useReload } from "../../utils/use-reload";
 import { Filters } from "../common/Filters";
 import { Stats } from "../../../domain/common/entities/Stats";
-import { Alert } from "../../components/alert/Alert";
+import { AlertStatsErrors } from "../../components/alert-stats-errors/AlertStatsErrors";
 
 export type AutoCompleteComputeViewModelWithPaging = {
     page: number;
@@ -41,20 +40,6 @@ export type AutoCompleteComputeViewModel = {
     valueToFix: string;
     currentValue: string | undefined;
 };
-
-function replaceOrgUnitIdByName(message: string, orgUnits: OrgUnit[]): string {
-    const regex = /organisation unit:\s*`([^`]+)`/;
-    const match = message.match(regex);
-    if (match) {
-        const orgUnitId = _(match).nth(1);
-        if (!orgUnitId) return message;
-        const orgUnit = orgUnits.find(orgUnit => orgUnit.id === orgUnitId);
-        if (!orgUnit) return message;
-        return message.replace(orgUnitId, orgUnit.name);
-    } else {
-        return message;
-    }
-}
 
 export const NHWAAutoCompleteCompute: React.FC = () => {
     const { compositionRoot, api, config } = useAppContext();
@@ -189,6 +174,8 @@ export const NHWAAutoCompleteCompute: React.FC = () => {
                 {i18n.t("Module 1 totals with missing sum or sum that does not match the auto-calculated")}
             </Typography>
 
+            <AlertStatsErrors errors={errors} onCleanError={() => setErrors(undefined)} orgUnits={orgUnits} />
+
             <ObjectsList<AutoCompleteComputeViewModel> {...tableProps} onChangeSearch={undefined}>
                 <Filters
                     api={api}
@@ -206,28 +193,8 @@ export const NHWAAutoCompleteCompute: React.FC = () => {
                     }}
                 />
             </ObjectsList>
-
-            {errors && (
-                <>
-                    <Button variant="contained" color="secondary" size="small" onClick={() => setErrors(undefined)}>
-                        Clear Errors
-                    </Button>
-                    <AlertContainer>
-                        {errors.map((error, index) => {
-                            return <Alert key={index} message={replaceOrgUnitIdByName(error.message, orgUnits)} />;
-                        })}
-                    </AlertContainer>
-                </>
-            )}
         </div>
     );
 };
-
-const AlertContainer = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 0.5em;
-    padding: 0.5em 0;
-`;
 
 const useStyles = makeStyles({ wrapper: { padding: 20 } });
