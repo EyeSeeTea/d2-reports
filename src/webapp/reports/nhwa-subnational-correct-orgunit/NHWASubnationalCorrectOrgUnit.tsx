@@ -1,3 +1,4 @@
+import _ from "lodash";
 import React from "react";
 import { Typography, makeStyles } from "@material-ui/core";
 import {
@@ -44,7 +45,8 @@ export const NHWASubnationalCorrectOrgUnit: React.FC = () => {
                 compositionRoot.nhwa.dismissSubnationalCorrectValues
                     .execute(onlyRowsSelected)
                     .then(stats => {
-                        snackbar.openSnackbar("success", JSON.stringify(stats, null, 4), {
+                        const statsWithoutErrorMessages = _(stats).omit("errorMessages").value();
+                        snackbar.openSnackbar("success", JSON.stringify(statsWithoutErrorMessages, null, 4), {
                             autoHideDuration: 5000,
                         });
                         reload();

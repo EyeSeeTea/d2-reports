@@ -5,6 +5,8 @@ import { DataValuesRepository } from "../../domain/common/repositories/DataValue
 import { D2Api } from "../../types/d2-api";
 import { promiseMap } from "../../utils/promises";
 
+const emptyImportResult = { deleted: 0, ignored: 0, imported: 0, updated: 0, errorMessages: [] };
+
 export class DataValuesD2Repository implements DataValuesRepository {
     constructor(private api: D2Api) {}
 
@@ -33,7 +35,7 @@ export class DataValuesD2Repository implements DataValuesRepository {
         dataValues: DataValueToPost[],
         importStrategy: "CREATE_AND_UPDATE" | "DELETE"
     ): Promise<Stats> {
-        if (_.isEmpty(dataValues)) return { deleted: 0, ignored: 0, imported: 0, updated: 0, errorMessages: [] };
+        if (_.isEmpty(dataValues)) return emptyImportResult;
 
         const result = await promiseMap(_.chunk(dataValues, 25), async dataValues => {
             try {
@@ -47,16 +49,20 @@ export class DataValuesD2Repository implements DataValuesRepository {
                 };
             } catch (error) {
                 const dvError = error as unknown as ResponseErrorDataValue;
-                const ignoreDetails = this.buildConflictsErrors(dvError.response.data.response.conflicts);
-                return { ...dvError.response.data.response.importCount, errorMessages: ignoreDetails };
+
+                const ignoreDetails = this.buildConflictsErrors(dvError.response?.data?.response?.conflicts || []);
+                return {
+                    ...(dvError.response?.data?.response?.importCount || emptyImportResult),
+                    errorMessages: ignoreDetails,
+                };
             }
         });
 
         return {
-            imported: _(result).sumBy(x => x?.imported || 0),
-            updated: _(result).sumBy(x => x?.updated || 0),
-            ignored: _(result).sumBy(x => x?.ignored || 0),
-            deleted: _(result).sumBy(x => x?.deleted || 0),
+            imported: _(result).sumBy(x => x.imported || 0),
+            updated: _(result).sumBy(x => x.updated || 0),
+            ignored: _(result).sumBy(x => x.ignored || 0),
+            deleted: _(result).sumBy(x => x.deleted || 0),
             errorMessages: _(result)
                 .flatMap(message => message.errorMessages || [])
                 .value(),
@@ -77,7 +83,7 @@ type ResponseDataValues = {
 
 type ResponseErrorDataValue = {
     status: string;
-    response: { data: { response: ResponseDataValue } };
+    response?: { data?: { response?: ResponseDataValue } };
 };
 
 type ResponseDataValue = {
