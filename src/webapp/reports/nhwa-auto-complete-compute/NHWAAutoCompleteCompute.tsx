@@ -1,3 +1,4 @@
+import _ from "lodash";
 import React from "react";
 import { Typography, makeStyles } from "@material-ui/core";
 import {
@@ -10,6 +11,7 @@ import {
     useSnackbar,
 } from "@eyeseetea/d2-ui-components";
 import DoneAllIcon from "@material-ui/icons/DoneAll";
+
 import i18n from "../../../locales";
 import { useAppContext } from "../../contexts/app-context";
 import { getOrgUnitIdsFromPaths, getRootIds, OrgUnit } from "../../../domain/common/entities/OrgUnit";
@@ -17,6 +19,8 @@ import { CategoryOptionCombo, DataElement } from "../../../domain/common/entitie
 import { countryLevel } from "../common/nhwa-settings";
 import { useReload } from "../../utils/use-reload";
 import { Filters } from "../common/Filters";
+import { Stats } from "../../../domain/common/entities/Stats";
+import { AlertStatsErrors } from "../../components/alert-stats-errors/AlertStatsErrors";
 
 export type AutoCompleteComputeViewModelWithPaging = {
     page: number;
@@ -45,6 +49,7 @@ export const NHWAAutoCompleteCompute: React.FC = () => {
     const [selectedPeriods, setSelectedPeriods] = React.useState<string[]>([]);
     const [selectedOrgUnits, setSelectedOrgUnits] = React.useState<string[]>([]);
     const [orgUnits, setOrgUnits] = React.useState<OrgUnit[]>([]);
+    const [errors, setErrors] = React.useState<Stats["errorMessages"]>();
     const classes = useStyles();
 
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
@@ -120,11 +125,15 @@ export const NHWAAutoCompleteCompute: React.FC = () => {
                         compositionRoot.nhwa.fixAutoCompleteComputeValues
                             .execute(results.rows)
                             .then(stats => {
+                                loading.hide();
                                 reload();
-                                snackbar.openSnackbar("success", JSON.stringify(stats, null, 4), {
+                                const statsWithoutErrorMessages = _(stats).omit("errorMessages").value();
+                                snackbar.openSnackbar("success", JSON.stringify(statsWithoutErrorMessages, null, 4), {
                                     autoHideDuration: 20 * 10000,
                                 });
-                                loading.hide();
+                                if (stats.errorMessages.length > 0) {
+                                    setErrors(stats.errorMessages);
+                                }
                             })
                             .catch(err => {
                                 snackbar.error(err);
@@ -165,6 +174,8 @@ export const NHWAAutoCompleteCompute: React.FC = () => {
                 {i18n.t("Module 1 totals with missing sum or sum that does not match the auto-calculated")}
             </Typography>
 
+            <AlertStatsErrors errors={errors} onCleanError={() => setErrors(undefined)} orgUnits={orgUnits} />
+
             <ObjectsList<AutoCompleteComputeViewModel> {...tableProps} onChangeSearch={undefined}>
                 <Filters
                     api={api}
@@ -186,6 +197,4 @@ export const NHWAAutoCompleteCompute: React.FC = () => {
     );
 };
 
-const useStyles = makeStyles({
-    wrapper: { padding: 20 },
-});
+const useStyles = makeStyles({ wrapper: { padding: 20 } });
