@@ -17,6 +17,7 @@ export class DataValuesD2Repository implements DataValuesRepository {
             period: options.periods,
             startDate: options.startDate,
             endDate: options.endDate,
+            children: options.children,
         });
 
         const res = await res$.getData();

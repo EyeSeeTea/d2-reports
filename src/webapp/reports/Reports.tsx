@@ -16,6 +16,7 @@ import { NHWAFixTotals } from "./nhwa-fix-totals-activity-level/NHWAFixTotals";
 import { NHWASubnationalCorrectOrgUnit } from "./nhwa-subnational-correct-orgunit/NHWASubnationalCorrectOrgUnit";
 import AuthoritiesMonitoringReport from "./authorities-monitoring/AuthoritiesMonitoringReport";
 import GLASSAdminReport from "./glass-admin/GLASSAdminReport";
+import i18n from "../../locales";
 
 const widget = process.env.REACT_APP_REPORT_VARIANT || "";
 
@@ -61,7 +62,13 @@ const Component: React.FC = () => {
             return <DataQualityReport />;
         }
         case "nhwa-auto-complete-compute": {
-            return <NHWAAutoCompleteCompute />;
+            return (
+                <NHWAAutoCompleteCompute
+                    countryLevel="3"
+                    settingsKey="nhwa-auto-complete-compute"
+                    title={i18n.t("Module 1 totals with missing sum or sum that does not match the auto-calculated")}
+                />
+            );
         }
         case "nhwa-fix-totals-activity-level": {
             return <NHWAFixTotals />;
@@ -71,6 +78,17 @@ const Component: React.FC = () => {
         }
         case "authorities-monitoring": {
             return <AuthoritiesMonitoringReport />;
+        }
+        case "nhwa-auto-complete-compute-subnational": {
+            return (
+                <NHWAAutoCompleteCompute
+                    countryLevel="4"
+                    settingsKey="nhwa-auto-complete-compute-subnational"
+                    title={i18n.t(
+                        "Module 1 (Subnational single entry) totals with missing sum or sum that does not match the auto-calculated"
+                    )}
+                />
+            );
         }
         default: {
             return <p>{`Please provide a valid REACT_APP_REPORT_VARIANT`}</p>;
