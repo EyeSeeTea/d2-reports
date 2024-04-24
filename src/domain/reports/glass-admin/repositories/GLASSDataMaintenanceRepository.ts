@@ -11,6 +11,7 @@ import {
     GLASSModule,
     Module,
 } from "../entities/GLASSDataMaintenanceItem";
+import { GlassAtcData } from "../entities/GlassAtcData";
 
 export interface GLASSDataMaintenanceOptions {
     paging: Paging;
@@ -34,7 +35,12 @@ export interface GLASSDataMaintenanceRepository {
     cancelRecalculation(namespace: string): Promise<void>;
     getUserModules(config: Config): Promise<GLASSModule[]>;
     delete(namespace: string, items: Id[]): Promise<void>;
-    uploadATC(namespace: string, file: File, year: string, selectedItems?: ATCItemIdentifier[]): Promise<void>;
+    uploadATC(
+        namespace: string,
+        atcData: GlassAtcData,
+        year: string,
+        selectedItems?: ATCItemIdentifier[]
+    ): Promise<void>;
     saveRecalculationLogic(namespace: string): Promise<void>;
     getColumns(namespace: string): Promise<string[]>;
     saveColumns(namespace: string, columns: string[]): Promise<void>;

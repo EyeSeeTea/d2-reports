@@ -4,6 +4,8 @@ import { useAppContext } from "../../../../contexts/app-context";
 import { Namespaces } from "../../../../../data/common/clients/storage/Namespaces";
 import { useSnackbar } from "@eyeseetea/d2-ui-components";
 import i18n from "../../../../../locales";
+import { GlassAtcData, getGlassAtcData } from "../../../../../domain/reports/glass-admin/entities/GlassAtcData";
+import { extractJsonDataFromZIP } from "./utils";
 
 export function useATCActions(
     reload: () => void,
@@ -16,9 +18,9 @@ export function useATCActions(
 
     const [loggerProgram, setLoggerProgram] = useState<string>("");
     const [isRecalculating, setIsRecalculating] = useState<boolean>(false);
-    const [isUploadingNewATC, setIsUploadingNewATC] = useState<boolean>();
-    const [isPatchingNewVersion, setIsPatchingNewVersion] = useState<boolean>();
-    const [isRecalculated, setIsRecalculated] = useState<boolean>();
+    const [isUploadingNewATC, setIsUploadingNewATC] = useState<boolean>(false);
+    const [isPatchingNewVersion, setIsPatchingNewVersion] = useState<boolean>(false);
+    const [isRecalculated, setIsRecalculated] = useState<boolean>(false);
 
     useEffect(() => {
         compositionRoot.glassAdmin.getATCRecalculationLogic(Namespaces.AMC_RECALCULATION).then(recalculationLogic => {
@@ -36,13 +38,14 @@ export function useATCActions(
             try {
                 setIsPatchingNewVersion(true);
                 if (selectedFile) {
-                    await compositionRoot.glassAdmin.uploadFile(Namespaces.ATCS, selectedFile, period, selectedItems);
+                    const data = await getDataToUpload(selectedFile);
+                    await compositionRoot.glassAdmin.uploadFile(Namespaces.ATCS, data, period, selectedItems);
                     snackbar.success(i18n.t("Version has been successfully patched"));
                 }
             } catch (error) {
-                snackbar.error(i18n.t("Error encountered when parsing version"));
+                snackbar.error(i18n.t(`Error encountered when parsing version: ${error}`));
             } finally {
-                setIsPatchingNewVersion(undefined);
+                setIsPatchingNewVersion(false);
                 closePatchModal();
                 reload();
             }
@@ -55,13 +58,14 @@ export function useATCActions(
             try {
                 setIsUploadingNewATC(true);
                 if (selectedFile) {
-                    await compositionRoot.glassAdmin.uploadFile(Namespaces.ATCS, selectedFile, period);
+                    const data = await getDataToUpload(selectedFile);
+                    await compositionRoot.glassAdmin.uploadFile(Namespaces.ATCS, data, period);
                     snackbar.success(i18n.t("Upload finished"));
                 }
             } catch (error) {
-                snackbar.error(i18n.t("Error parsing the file"));
+                snackbar.error(i18n.t(`Error uploading the file: ${error}`));
             } finally {
-                setIsUploadingNewATC(undefined);
+                setIsUploadingNewATC(false);
                 closeUploadATCModal();
                 reload();
             }
@@ -106,4 +110,9 @@ export function useATCActions(
         saveRecalculationLogic,
         uploadATCFile,
     };
+}
+
+async function getDataToUpload(file: File): Promise<GlassAtcData> {
+    const jsonData = await extractJsonDataFromZIP(file);
+    return getGlassAtcData(jsonData);
 }

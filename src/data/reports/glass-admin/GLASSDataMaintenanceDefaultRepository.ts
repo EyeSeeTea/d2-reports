@@ -21,16 +21,11 @@ import {
     Status,
     getUserModules,
 } from "../../../domain/reports/glass-admin/entities/GLASSDataMaintenanceItem";
-import JSZip from "jszip";
 import _ from "lodash";
 import { Config } from "../../../domain/common/entities/Config";
 import { Id } from "../../../domain/common/entities/Base";
 import { paginate } from "../../../domain/common/entities/PaginatedObjects";
-
-type ATCJson = {
-    name: "atc" | "ddd_combinations" | "ddd" | "conversion" | "ddd_alterations" | "atc_alterations";
-    data: unknown[];
-};
+import { GlassAtcData } from "../../../domain/reports/glass-admin/entities/GlassAtcData";
 
 const START_YEAR_PERIOD = 2016;
 
@@ -103,25 +98,23 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         return this.storageClient.saveObject<string[]>(namespace, columns);
     }
 
-    async uploadATC(namespace: string, file: File, year: string, selectedItems?: ATCItemIdentifier[]): Promise<void> {
+    async uploadATC(
+        namespace: string,
+        atcData: GlassAtcData,
+        year: string,
+        selectedItems?: ATCItemIdentifier[]
+    ): Promise<void> {
         const atcItems = await this.getATCItems(namespace);
-        const jsons = await this.extractJsonFromZIP(file);
 
-        if (jsons.length === 6) {
-            if (selectedItems) {
-                const updatedVersion = this.updateVersion(atcItems, selectedItems);
-                const updatedATCItems = this.patchATCVersion(atcItems, selectedItems);
-
-                await this.globalStorageClient.saveObject<ATCJson[]>(`ATC-${updatedVersion}`, jsons);
-                await this.globalStorageClient.saveObject<ATCItem[]>(Namespaces.ATCS, updatedATCItems);
-            } else {
-                const updatedATCItems = this.uploadNewATC(year, atcItems);
-
-                await this.globalStorageClient.saveObject<ATCJson[]>(`ATC-${year}-v1`, jsons);
-                await this.globalStorageClient.saveObject<ATCItem[]>(Namespaces.ATCS, updatedATCItems);
-            }
+        if (selectedItems) {
+            const updatedVersion = this.updateVersion(atcItems, selectedItems);
+            const updatedATCItems = this.patchATCVersion(atcItems, selectedItems);
+            await this.globalStorageClient.saveObject<GlassAtcData>(`ATC-${updatedVersion}`, atcData);
+            await this.globalStorageClient.saveObject<ATCItem[]>(Namespaces.ATCS, updatedATCItems);
         } else {
-            throw new Error("The zip file does not contain exactly 6 JSON files.");
+            const updatedATCItems = this.uploadNewATC(year, atcItems);
+            await this.globalStorageClient.saveObject<GlassAtcData>(`ATC-${year}-v1`, atcData);
+            await this.globalStorageClient.saveObject<ATCItem[]>(Namespaces.ATCS, updatedATCItems);
         }
     }
 
@@ -369,35 +362,6 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
             atcItem =>
                 atcItem.year === selectedItem?.year && _.parseInt(atcItem.version) === _.parseInt(selectedItem?.version)
         );
-    }
-
-    private async extractJsonFromZIP(file: File): Promise<ATCJson[]> {
-        const zip = new JSZip();
-        const jsonPromises: Promise<ATCJson>[] = [];
-        const contents = await zip.loadAsync(file);
-
-        contents.forEach((relativePath, file) => {
-            if (file.dir) {
-                return;
-            }
-
-            // Check if the file has a .json extension
-            if (/\.(json)$/i.test(relativePath)) {
-                const jsonPromise = file.async("string").then(content => {
-                    try {
-                        return JSON.parse(content) as ATCJson;
-                    } catch (error) {
-                        console.error(`Error parsing JSON from ${relativePath}: ${error}`);
-                        throw error;
-                    }
-                });
-
-                jsonPromises.push(jsonPromise);
-            }
-        });
-        const jsons = await Promise.all(jsonPromises);
-
-        return jsons;
     }
 
     private updateVersion(atcItems: ATCItem[], items: ATCItemIdentifier[]): string {
