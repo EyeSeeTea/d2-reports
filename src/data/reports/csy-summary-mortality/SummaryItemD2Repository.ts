@@ -1,9 +1,9 @@
 import _ from "lodash";
 import { getOrgUnitIdsFromPaths } from "../../../domain/common/entities/OrgUnit";
-import { PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
+import { emptyPage, PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
 import { SummaryItem, SummaryType } from "../../../domain/reports/csy-summary-mortality/entities/SummaryItem";
 import {
-    SummaryItemOptions,
+    SummaryOptions,
     SummaryItemRepository,
 } from "../../../domain/reports/csy-summary-mortality/repositories/SummaryItemRepository";
 import { D2Api, Pager } from "../../../types/d2-api";
@@ -11,40 +11,41 @@ import { CsvData } from "../../common/CsvDataSource";
 import { CsvWriterDataSource } from "../../common/CsvWriterCsvDataSource";
 import { downloadFile } from "../../common/utils/download-file";
 import { promiseMap } from "../../../utils/promises";
-import { AuditAnalyticsData } from "../../../domain/common/entities/AuditAnalyticsResponse";
+import { AuditAnalyticsData, AuditAnalyticsResponse } from "../../../domain/common/entities/AuditAnalyticsResponse";
 
-interface RowValue {
+type RowValue = {
     scoringSystem: string;
     severity: string;
     mortalityCount: string;
     mortalityPercent: string;
     totalCount: string;
     totalPercent: string;
-}
+};
+
+type Indicator = {
+    id: string;
+    shortName: string;
+};
 
 export class SummaryItemD2Repository implements SummaryItemRepository {
     constructor(private api: D2Api) {}
 
-    async get(options: SummaryItemOptions): Promise<PaginatedObjects<SummaryItem>> {
+    async get(options: SummaryOptions): Promise<PaginatedObjects<SummaryItem>> {
         const { paging, year, orgUnitPaths, quarter, summaryType } = options;
 
         const period = !quarter ? year : `${year}${quarter}`;
         const orgUnitIds = getOrgUnitIdsFromPaths(orgUnitPaths);
+        if (_.isEmpty(orgUnitIds)) return emptyPage;
 
-        try {
-            const objects = await this.getSummaryItems(summaryType, orgUnitIds, period);
-            const pager: Pager = {
-                page: paging.page,
-                pageSize: paging.pageSize,
-                pageCount: 1,
-                total: 1,
-            };
+        const objects = await this.getSummaryItems(summaryType, orgUnitIds, period);
+        const pager: Pager = {
+            page: paging.page,
+            pageSize: paging.pageSize,
+            pageCount: 1,
+            total: 1,
+        };
 
-            return { pager: pager, objects: objects };
-        } catch (error) {
-            console.debug(error);
-            return { pager: { page: 1, pageCount: 1, pageSize: 20, total: 1 }, objects: [] };
-        }
+        return { pager: pager, objects: objects };
     }
 
     private async getSummaryItems(
@@ -54,61 +55,29 @@ export class SummaryItemD2Repository implements SummaryItemRepository {
     ): Promise<SummaryItem[]> {
         const queryStrings = indicatorGroups[summaryType];
 
-        const rows = _(
+        const rows = _.flatten(
             await promiseMap(queryStrings, async indicatorGroup => {
-                return await promiseMap(orgUnitIds, async orgUnitId => {
-                    const analyticsResponse = await this.api.analytics
-                        .get({
-                            dimension: [`pe:${period}`, `dx:IN_GROUP-${indicatorGroup}`],
-                            filter: [`ou:${orgUnitId}`],
-                            skipMeta: true,
-                            includeNumDen: false,
-                        })
-                        .getData();
+                const analyticsResponse = await this.getAnalyticsResponse(period, indicatorGroup, orgUnitIds);
+                const analyticsData = new AuditAnalyticsData(analyticsResponse);
+                const cellValues = analyticsData.getColumnValues("value");
 
-                    const analyticsData = new AuditAnalyticsData(analyticsResponse);
-                    const cellValues = analyticsData.getColumnValues("value");
-                    const indicators = await this.getIndicators(indicatorGroup);
-
-                    const rows: RowValue[] = indicators.map((indicator, index) => {
-                        const { shortName: indicatorName } = indicator;
-
-                        const scoringSystem = _.first(indicatorName.split(" ")) ?? "";
-                        const severityLevel = indicatorName.match(/\((.*?)\)/)?.[1] || "";
-                        const severityString: string = _.get(severity, [scoringSystem, severityLevel.toLowerCase()]);
-                        const isMortality = _.includes(indicatorName, "Mortality");
-                        const isCount = _.includes(indicatorName, "Count");
-
-                        const cellValue: string = cellValues[index] ?? "";
-
-                        return {
-                            scoringSystem: scoringSystem,
-                            severity: `${severityLevel} (${severityString})`,
-                            mortalityCount: isMortality && isCount ? cellValue : "",
-                            mortalityPercent: isMortality && !isCount ? cellValue : "",
-                            totalCount: !isMortality && isCount ? cellValue : "",
-                            totalPercent: !isMortality && !isCount ? cellValue : "",
-                        };
-                    });
-
-                    return rows;
-                });
+                return await this.getRowValues(indicatorGroup, cellValues);
             })
-        )
-            .flattenDeep()
-            .value();
+        );
 
         const objects: SummaryItem[] = _(rows)
             .groupBy(row => `${row.scoringSystem}-${row.severity}`)
             .map(groupedRows => {
-                const combinedMortalityCount = _.sumBy(groupedRows, row => parseFloat(row.mortalityCount) || 0);
-                const combinedMortalityPercent = _.sumBy(groupedRows, row => parseFloat(row.mortalityPercent) || 0);
-                const combinedTotalCount = _.sumBy(groupedRows, row => parseFloat(row.totalCount) || 0);
-                const combinedTotalPercent = _.sumBy(groupedRows, row => parseFloat(row.totalPercent) || 0);
+                const groupedRow = groupedRows[0];
+
+                const combinedMortalityCount = combineRowValues(groupedRows, "mortalityCount");
+                const combinedMortalityPercent = combineRowValues(groupedRows, "mortalityPercent");
+                const combinedTotalCount = combineRowValues(groupedRows, "totalCount");
+                const combinedTotalPercent = combineRowValues(groupedRows, "totalPercent");
 
                 return {
-                    scoringSystem: groupedRows[0].scoringSystem,
-                    severity: groupedRows[0].severity,
+                    scoringSystem: groupedRow.scoringSystem,
+                    severity: groupedRow.severity,
                     mortality: `${combinedMortalityCount} (${combinedMortalityPercent}%)`,
                     total: `${combinedTotalCount} (${combinedTotalPercent}%)`,
                 };
@@ -121,7 +90,22 @@ export class SummaryItemD2Repository implements SummaryItemRepository {
         ]);
     }
 
-    private async getIndicators(indicatorGroupId: string): Promise<{ id: string; shortName: string }[]> {
+    private async getAnalyticsResponse(
+        period: string,
+        indicatorGroup: string,
+        orgUnitIds: string[]
+    ): Promise<AuditAnalyticsResponse> {
+        return await this.api.analytics
+            .get({
+                dimension: [`pe:${period}`, `dx:IN_GROUP-${indicatorGroup}`],
+                filter: [`ou:${orgUnitIds.join(";")}`],
+                skipMeta: true,
+                includeNumDen: false,
+            })
+            .getData();
+    }
+
+    private async getIndicators(indicatorGroupId: string): Promise<Indicator[]> {
         const { indicatorGroups } = await this.api.metadata
             .get({
                 indicatorGroups: {
@@ -143,6 +127,31 @@ export class SummaryItemD2Repository implements SummaryItemRepository {
         return _.first(indicatorGroups)?.indicators ?? [];
     }
 
+    private async getRowValues(indicatorGroup: string, cellValues: string[]): Promise<RowValue[]> {
+        const indicators = await this.getIndicators(indicatorGroup);
+
+        return indicators.map((indicator, index) => {
+            const { shortName: indicatorName } = indicator;
+
+            const scoringSystem = _.first(indicatorName.split(" ")) ?? "";
+            const severityLevel = indicatorName.match(/\((.*?)\)/)?.[1] || "";
+            const severityString: string = _.get(severity, [scoringSystem, severityLevel.toLowerCase()]);
+            const isMortality = _.includes(indicatorName, "Mortality");
+            const isCount = _.includes(indicatorName, "Count");
+
+            const cellValue: string = cellValues[index] ?? "";
+
+            return {
+                scoringSystem: scoringSystem,
+                severity: `${severityLevel} (${severityString})`,
+                mortalityCount: isMortality && isCount ? cellValue : "",
+                mortalityPercent: isMortality && !isCount ? cellValue : "",
+                totalCount: !isMortality && isCount ? cellValue : "",
+                totalPercent: !isMortality && !isCount ? cellValue : "",
+            };
+        });
+    }
+
     async save(filename: string, items: SummaryItem[]): Promise<void> {
         const headers = csvFields.map(field => ({ id: field, text: field }));
         const rows = items.map(
@@ -162,18 +171,9 @@ export class SummaryItemD2Repository implements SummaryItemRepository {
     }
 }
 
-const indicatorGroups = {
-    "mortality-injury-severity": [
-        "wwFwazs6FwA",
-        "stkqbeOxGOd",
-        "ZKBM3iVefSr",
-        "pCaxljXcHYr",
-        "gYBciVYuJAV",
-        "IGxgJpoAwbE",
-        "S9cU3cNqmCV",
-        "zQpmXtnkBOL",
-    ],
-};
+function combineRowValues(groupedRows: RowValue[], rowValue: keyof RowValue): number {
+    return _.sumBy(groupedRows, row => parseFloat(row[rowValue]) || 0);
+}
 
 const metadata = {
     indicatorGroups: {
@@ -186,6 +186,19 @@ const metadata = {
         rtsScoreCountId: "S9cU3cNqmCV",
         rtsScorePercentageId: "zQpmXtnkBOL",
     },
+};
+
+const indicatorGroups = {
+    mortalityInjurySeverity: [
+        metadata.indicatorGroups.gapScoreCountId,
+        metadata.indicatorGroups.gapScorePercentageId,
+        metadata.indicatorGroups.ktsScoreCountId,
+        metadata.indicatorGroups.ktsScorePercentageId,
+        metadata.indicatorGroups.mgapScoreCountId,
+        metadata.indicatorGroups.mgapScorePercentageId,
+        metadata.indicatorGroups.rtsScoreCountId,
+        metadata.indicatorGroups.rtsScorePercentageId,
+    ],
 };
 
 const scoringSystem = ["GAP", "MGAP", "KTS", "RTS"];

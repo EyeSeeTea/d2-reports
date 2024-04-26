@@ -1,4 +1,3 @@
-import { Config } from "../../../domain/common/entities/Config";
 import { SummaryItem } from "../../../domain/reports/csy-summary-mortality/entities/SummaryItem";
 
 export interface SummaryViewModel {
@@ -9,10 +8,10 @@ export interface SummaryViewModel {
     total: string;
 }
 
-export function getSummaryViews(_config: Config, items: SummaryItem[]): SummaryViewModel[] {
-    return items.map((item, i) => {
+export function getSummaryViews(items: SummaryItem[]): SummaryViewModel[] {
+    return items.map(item => {
         return {
-            id: String(i),
+            id: `${item.scoringSystem}-${item.severity}`,
             scoringSystem: item.scoringSystem,
             severity: item.severity,
             mortality: item.mortality,

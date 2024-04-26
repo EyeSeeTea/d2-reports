@@ -1,14 +1,12 @@
-import { Config } from "../../../common/entities/Config";
 import { PaginatedObjects, Paging, Sorting } from "../../../common/entities/PaginatedObjects";
 import { SummaryItem, SummaryType } from "../entities/SummaryItem";
 
 export interface SummaryItemRepository {
-    get(options: SummaryItemOptions): Promise<PaginatedObjects<SummaryItem>>;
+    get(options: SummaryOptions): Promise<PaginatedObjects<SummaryItem>>;
     save(filename: string, items: SummaryItem[]): Promise<void>;
 }
 
-export interface SummaryItemOptions {
-    config: Config;
+export interface SummaryOptions {
     paging: Paging;
     sorting: Sorting<SummaryItem>;
     year: string;

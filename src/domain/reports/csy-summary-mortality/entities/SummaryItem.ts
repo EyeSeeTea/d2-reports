@@ -5,4 +5,4 @@ export interface SummaryItem {
     total: string;
 }
 
-export type SummaryType = "mortality-injury-severity";
+export type SummaryType = "mortalityInjurySeverity";

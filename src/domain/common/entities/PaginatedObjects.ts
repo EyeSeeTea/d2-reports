@@ -22,6 +22,8 @@ export interface Sorting<T> {
     direction: "asc" | "desc";
 }
 
+export const emptyPage = { pager: { page: 1, pageCount: 1, pageSize: 20, total: 1 }, objects: [] };
+
 export function getPaginatedObjects<T>(rows: T[], sorting: Sorting<T>, paging: Paging): T[] {
     return _(rows)
         .orderBy([row => row[sorting.field]], [sorting.direction])
