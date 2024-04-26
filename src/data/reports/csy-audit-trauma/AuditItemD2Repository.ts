@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
+import { emptyPage, PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
 import { AuditItem, AuditType } from "../../../domain/reports/csy-audit-trauma/entities/AuditItem";
 import { D2Api, Pager } from "../../../types/d2-api";
 import { getOrgUnitIdsFromPaths } from "../../../domain/common/entities/OrgUnit";
@@ -28,53 +28,40 @@ export class AuditItemD2Repository implements AuditItemRepository {
         const period = !quarter ? year : `${year}${quarter}`;
         const orgUnitIds = getOrgUnitIdsFromPaths(orgUnitPaths);
 
-        try {
-            const auditItems = await this.getAuditItems(auditType, orgUnitIds, period);
+        if (_.isEmpty(orgUnitIds)) return emptyPage;
+        const auditItems = await this.getAuditItems(auditType, orgUnitIds, period);
 
-            const rowsInPage = _(auditItems)
-                .drop((paging.page - 1) * paging.pageSize)
-                .take(paging.pageSize)
-                .value();
+        const rowsInPage = _(auditItems)
+            .drop((paging.page - 1) * paging.pageSize)
+            .take(paging.pageSize)
+            .value();
 
-            const pager: Pager = {
-                page: paging.page,
-                pageSize: paging.pageSize,
-                pageCount: Math.ceil(auditItems.length / paging.pageSize),
-                total: auditItems.length,
-            };
+        const pager: Pager = {
+            page: paging.page,
+            pageSize: paging.pageSize,
+            pageCount: Math.ceil(auditItems.length / paging.pageSize),
+            total: auditItems.length,
+        };
 
-            return { pager, objects: rowsInPage };
-        } catch (error) {
-            console.debug(error);
-            return { pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 }, objects: [] };
-        }
+        return { pager, objects: rowsInPage };
     }
 
     private async getAuditItems(auditType: AuditType, orgUnitIds: string[], period: string): Promise<AuditItem[]> {
         const queryStrings = auditQueryStrings[auditType];
-        const analyticsResponse = _(
-            await promiseMap(
-                queryStrings,
-                async queryString =>
-                    await promiseMap(orgUnitIds, async orgUnitId => {
-                        const eventQueryString = getEventQueryString(
-                            metadata.programs.traumaCareProgramId,
-                            metadata.programStages.traumaCareProgramStageId,
-                            orgUnitId,
-                            period,
-                            queryString
-                        );
 
-                        const analyticsResponse = await this.api
-                            .get<AuditAnalyticsResponse>(eventQueryString)
-                            .getData();
+        const analyticsResponse = await promiseMap(queryStrings, async queryString => {
+            const eventQueryString = getEventQueryString(
+                metadata.programs.traumaCareProgramId,
+                metadata.programStages.traumaCareProgramStageId,
+                orgUnitIds.join(";"),
+                period,
+                queryString
+            );
 
-                        return new AuditAnalyticsData(analyticsResponse);
-                    })
-            )
-        )
-            .flatten()
-            .value();
+            const analyticsResponse = await this.api.get<AuditAnalyticsResponse>(eventQueryString).getData();
+
+            return new AuditAnalyticsData(analyticsResponse);
+        });
 
         return this.getAuditItemsByAuditType(auditType, analyticsResponse);
     }
@@ -130,7 +117,7 @@ export class AuditItemD2Repository implements AuditItemRepository {
                 const facilityDispoIds = this.getRegisterIds(facilityDispoData, etaRegistryId);
                 const mortality = _.union(euDispoIds, facilityDispoIds);
 
-                return _.compact(_.intersection(mortality, scoreIds));
+                return _.intersection(mortality, scoreIds);
             }
             case "hypoxia": {
                 const [euProcedureData, oxygenMethData, oxygenSaturationData] = data;
@@ -173,7 +160,7 @@ export class AuditItemD2Repository implements AuditItemRepository {
 
                 return gcsAndAvpuIds.filter(item => !euProcedureIds.includes(item));
             }
-            case "all-mortality": {
+            case "allMortality": {
                 const [euDispoData, facilityDispoData] = data;
 
                 const euMortIds = this.getRegisterIds(euDispoData, etaRegistryId);
@@ -181,118 +168,46 @@ export class AuditItemD2Repository implements AuditItemRepository {
 
                 return _.union(euMortIds, facilityMortIds);
             }
-            case "emergency-unit": {
+            case "emergencyUnit": {
                 const [euDispoData] = data;
 
                 return this.getRegisterIds(euDispoData, etaRegistryId);
             }
-            case "hospital-mortality": {
+            case "hospitalMortality": {
                 const [facilityDispoData] = data;
 
                 return this.getRegisterIds(facilityDispoData, etaRegistryId);
             }
-            case "severe-injuries": {
-                // audit definition = (KTS<11) OR (MGAP=3-17) OR (GAP=3-10) OR (RTS≤3)
+            case "severeInjuries": {
                 const [gapData, rtsData, ktsInjuriesData, ktsIccData, mgapDetailsData, mgapIccData] = data;
 
+                // audit definition = (KTS<11) OR (MGAP=3-17) OR (GAP=3-10) OR (RTS≤3)
                 const gapIds = this.getRegisterIds(gapData, etaRegistryId);
                 const rtsIds = this.getRegisterIds(rtsData, etaRegistryId);
-
-                const ktsInjuries = this.getRegisterIds(ktsInjuriesData, etaRegistryId);
-                const ktsIcc = this.getRegisterIds(ktsIccData, etaRegistryId);
-                const ktsIds = this.combineScores(
-                    etaRegistryId,
-                    ktsEvents,
-                    ktsInjuriesData,
-                    ktsIccData,
-                    ktsInjuries,
-                    ktsIcc,
-                    0,
-                    10
-                );
-
-                const mgapDetails = this.getRegisterIds(mgapDetailsData, etaRegistryId);
-                const mgapIcc = this.getRegisterIds(mgapIccData, etaRegistryId);
-                const mgapIds = this.combineScores(
-                    etaRegistryId,
-                    mgapEvents,
-                    mgapDetailsData,
-                    mgapIccData,
-                    mgapDetails,
-                    mgapIcc,
-                    3,
-                    17
-                );
+                const ktsIds = this.combineScores(etaRegistryId, ktsEvents, ktsInjuriesData, ktsIccData, 0, 10);
+                const mgapIds = this.combineScores(etaRegistryId, mgapEvents, mgapDetailsData, mgapIccData, 3, 17);
 
                 return _.intersection(..._.filter([gapIds, rtsIds, ktsIds, mgapIds], ids => !_.isEmpty(ids)));
             }
-            case "moderate-severe-injuries": {
+            case "moderateSevereInjuries": {
                 const [gapData, rtsData, ktsInjuriesData, ktsIccData, mgapDetailsData, mgapIccData] = data;
 
                 // audit definition = (KTS≤13) OR (MGAP≤22) OR (GAP≤18) OR (RTS≤10)
                 const gapIds = this.getRegisterIds(gapData, etaRegistryId);
                 const rtsIds = this.getRegisterIds(rtsData, etaRegistryId);
-
-                const ktsInjuries = this.getRegisterIds(ktsInjuriesData, etaRegistryId);
-                const ktsIcc = this.getRegisterIds(ktsIccData, etaRegistryId);
-                const ktsIds = this.combineScores(
-                    etaRegistryId,
-                    ktsEvents,
-                    ktsInjuriesData,
-                    ktsIccData,
-                    ktsInjuries,
-                    ktsIcc,
-                    0,
-                    13
-                );
-
-                const mgapDetails = this.getRegisterIds(mgapDetailsData, etaRegistryId);
-                const mgapIcc = this.getRegisterIds(mgapIccData, etaRegistryId);
-                const mgapIds = this.combineScores(
-                    etaRegistryId,
-                    mgapEvents,
-                    mgapDetailsData,
-                    mgapIccData,
-                    mgapDetails,
-                    mgapIcc,
-                    3,
-                    22
-                );
+                const ktsIds = this.combineScores(etaRegistryId, ktsEvents, ktsInjuriesData, ktsIccData, 0, 13);
+                const mgapIds = this.combineScores(etaRegistryId, mgapEvents, mgapDetailsData, mgapIccData, 3, 22);
 
                 return _.intersection(..._.filter([gapIds, rtsIds, ktsIds, mgapIds], ids => !_.isEmpty(ids)));
             }
-            case "moderate-injuries": {
+            case "moderateInjuries": {
                 const [gapData, rtsData, ktsInjuriesData, ktsIccData, mgapDetailsData, mgapIccData] = data;
 
                 // audit definition = (KTS=11-13) OR (MGAP=18-22) OR (GAP=11-18) OR (RTS=4-10)
                 const gapIds = this.getRegisterIds(gapData, etaRegistryId);
                 const rtsIds = this.getRegisterIds(rtsData, etaRegistryId);
-
-                const ktsInjuries = this.getRegisterIds(ktsInjuriesData, etaRegistryId);
-                const ktsIcc = this.getRegisterIds(ktsIccData, etaRegistryId);
-                const ktsIds = this.combineScores(
-                    etaRegistryId,
-                    ktsEvents,
-                    ktsInjuriesData,
-                    ktsIccData,
-                    ktsInjuries,
-                    ktsIcc,
-                    11,
-                    13
-                );
-
-                const mgapDetails = this.getRegisterIds(mgapDetailsData, etaRegistryId);
-                const mgapIcc = this.getRegisterIds(mgapIccData, etaRegistryId);
-                const mgapIds = this.combineScores(
-                    etaRegistryId,
-                    mgapEvents,
-                    mgapDetailsData,
-                    mgapIccData,
-                    mgapDetails,
-                    mgapIcc,
-                    18,
-                    22
-                );
+                const ktsIds = this.combineScores(etaRegistryId, ktsEvents, ktsInjuriesData, ktsIccData, 11, 13);
+                const mgapIds = this.combineScores(etaRegistryId, mgapEvents, mgapDetailsData, mgapIccData, 18, 22);
 
                 return _.intersection(..._.filter([gapIds, rtsIds, ktsIds, mgapIds], ids => !_.isEmpty(ids)));
             }
@@ -304,44 +219,46 @@ export class AuditItemD2Repository implements AuditItemRepository {
     private combineScores(
         sharedUid: string,
         columnUid: string,
-        scores1: Maybe<AuditAnalyticsData>,
-        scores2: Maybe<AuditAnalyticsData>,
-        columnValues1: string[],
-        columnValues2: string[],
+        scores1Data: Maybe<AuditAnalyticsData>,
+        scores2Data: Maybe<AuditAnalyticsData>,
         minValue: number,
         maxValue: number
     ): string[] {
-        if (!scores1 || !scores2) return [];
+        if (!scores1Data || !scores2Data) return [];
 
-        const score1Shared = scores1.getColumnIndex(sharedUid);
-        const score2Shared = scores2.getColumnIndex(sharedUid);
-        const sharedIds = _.compact(_.intersection(columnValues1, columnValues2));
+        const column1Ids = this.getRegisterIds(scores1Data, sharedUid);
+        const column2Ids = this.getRegisterIds(scores2Data, sharedUid);
+        const sharedIds = _.intersection(column1Ids, column2Ids);
 
-        const ids: Record<string, any> = {};
+        const ids: Record<string, string> = {};
+        this.getScoreIds(columnUid, sharedUid, scores1Data, sharedIds, ids);
+        this.getScoreIds(columnUid, sharedUid, scores2Data, sharedIds, ids);
 
-        const ind1 = scores1.getColumnIndex(columnUid);
-        scores1.rows.map(row => {
-            if (sharedIds.includes(row[score1Shared] ?? "")) {
-                ids[row[score1Shared] ?? ""] = row[ind1];
+        return _(ids)
+            .omitBy((value: string) => parseInt(value) >= minValue && parseInt(value) <= maxValue)
+            .values()
+            .compact()
+            .value();
+    }
+
+    private getScoreIds(
+        columnUid: string,
+        sharedUid: string,
+        scoresData: AuditAnalyticsData,
+        sharedIds: string[],
+        ids: Record<string, string>
+    ) {
+        const columnIndex = scoresData.getColumnIndex(columnUid);
+        const sharedColumnIndex = scoresData.getColumnIndex(sharedUid);
+
+        _.forEach(scoresData.rows, row => {
+            const rowValue = row[columnIndex] ?? "";
+            const rowValueShared = row[sharedColumnIndex] ?? "";
+
+            if (sharedIds.includes(rowValueShared)) {
+                ids[rowValueShared] = rowValue;
             }
-            return ids;
         });
-
-        const ind2 = scores2.getColumnIndex(columnUid);
-        scores2.rows.map(row => {
-            if (sharedIds.includes(row[score2Shared] ?? "")) {
-                ids[row[score2Shared] ?? ""] += row[ind2];
-            }
-            return ids;
-        });
-
-        for (const val in ids) {
-            if (!(ids[val] >= minValue && ids[val] <= maxValue)) {
-                delete ids[val];
-            }
-        }
-
-        return Object.keys(ids);
     }
 
     async save(filename: string, items: AuditItem[]): Promise<void> {
@@ -391,6 +308,7 @@ const metadata = {
         rtsFilter: "fg1VDHZ2QkJ",
         gapFilter: "F8UsnxWi9XM",
     },
+    // option set codes
     optionSets: {
         euDispoMortuaryOrDied: "7",
         facilityDispoMortuaryOrDied: "5",
@@ -408,120 +326,56 @@ type AuditItemRow = Record<CsvField, string>;
 
 const auditQueryStrings = {
     mortality: [
-        `&dimension=${metadata.dataElements.euDispositionId}:IN:
-            ${metadata.optionSets.euDispoMortuaryOrDied}
-        &dimension=${metadata.dataElements.etaRegistryId}`,
-        `&dimension=${metadata.dataElements.facilityDispositionId}:IN:
-            ${metadata.optionSets.facilityDispoMortuaryOrDied}
-        &dimension=${metadata.dataElements.etaRegistryId}`,
-        `&dimension=${metadata.programIndicators.ktsEvents}
-            &dimension=${metadata.programIndicators.mgapEvents}
-            &dimension=${metadata.programIndicators.rtsEvents}
-            &dimension=${metadata.programIndicators.gapEvents}
-            &dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.dataElements.euDispositionId}:IN:${metadata.optionSets.euDispoMortuaryOrDied}&dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.dataElements.facilityDispositionId}:IN:${metadata.optionSets.facilityDispoMortuaryOrDied}&dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.programIndicators.ktsEvents}&dimension=${metadata.programIndicators.mgapEvents}&dimension=${metadata.programIndicators.rtsEvents}&dimension=${metadata.programIndicators.gapEvents}&dimension=${metadata.dataElements.etaRegistryId}`,
     ],
     hypoxia: [
-        `&dimension=${metadata.dataElements.euProceduresId}:IN:
-            ${metadata.optionSets.euProceduresSurgicalAirway}`,
-        `&dimension=${metadata.dataElements.oxygenAdminId}:IN:
-            ${metadata.optionSets.supplementalOxygen}
-        &dimension=${metadata.dataElements.etaRegistryId}`,
-        `&filter=${metadata.dataElements.initialOxygenSaturationId}:LT:92
-            &dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.dataElements.euProceduresId}:IN:${metadata.optionSets.euProceduresSurgicalAirway}`,
+        `&dimension=${metadata.dataElements.oxygenAdminId}:IN:${metadata.optionSets.supplementalOxygen}&dimension=${metadata.dataElements.etaRegistryId}`,
+        `&filter=${metadata.dataElements.initialOxygenSaturationId}:LT:92&dimension=${metadata.dataElements.etaRegistryId}`,
     ],
     tachypnea: [
         `&dimension=${metadata.dataElements.euProceduresId}:IN:${metadata.optionSets.euProceduresSurgicalAirway}`,
-        `&dimension=${metadata.dataElements.initialSpontaneousRRId}:GT:30
-            &dimension=${metadata.dataElements.etaRegistryId}`,
-        `&dimension=${metadata.dataElements.initialSpontaneousRRId}:LT:12
-            &dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.dataElements.initialSpontaneousRRId}:GT:30&dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.dataElements.initialSpontaneousRRId}:LT:12&dimension=${metadata.dataElements.etaRegistryId}`,
     ],
     mental: [
-        `&dimension=${metadata.dataElements.euProceduresId}:IN:
-            ${metadata.optionSets.euProceduresBasicAirway};
-            ${metadata.optionSets.euProceduresEndotrachealIntubation};
-            ${metadata.optionSets.euProceduresOxygen};
-        &dimension=${metadata.dataElements.etaRegistryId}`,
-        `&dimension=${metadata.dataElements.initialGCSId}
-            &dimension=${metadata.dataElements.initialAVPUId}
-            &dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.dataElements.euProceduresId}:IN:${metadata.optionSets.euProceduresBasicAirway};${metadata.optionSets.euProceduresEndotrachealIntubation};${metadata.optionSets.euProceduresOxygen};&dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.dataElements.initialGCSId}&dimension=${metadata.dataElements.initialAVPUId}&dimension=${metadata.dataElements.etaRegistryId}`,
     ],
-    "all-mortality": [
-        `&dimension=${metadata.dataElements.euDispositionId}:IN:
-            ${metadata.optionSets.euDispoMortuaryOrDied}
-        &dimension=${metadata.dataElements.etaRegistryId}`,
-        `&dimension=${metadata.dataElements.facilityDispositionId}:IN:
-            ${metadata.optionSets.facilityDispoMortuaryOrDied}
-        &dimension=${metadata.dataElements.etaRegistryId}`,
+    allMortality: [
+        `&dimension=${metadata.dataElements.euDispositionId}:IN:${metadata.optionSets.euDispoMortuaryOrDied}&dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.dataElements.facilityDispositionId}:IN:${metadata.optionSets.facilityDispoMortuaryOrDied}&dimension=${metadata.dataElements.etaRegistryId}`,
     ],
-    "emergency-unit": [
-        `&dimension=${metadata.dataElements.euDispositionId}:IN:
-            ${metadata.optionSets.euDispoMortuaryOrDied}
-        &dimension=${metadata.dataElements.etaRegistryId}`,
+    emergencyUnit: [
+        `&dimension=${metadata.dataElements.euDispositionId}:IN:${metadata.optionSets.euDispoMortuaryOrDied}&dimension=${metadata.dataElements.etaRegistryId}`,
     ],
-    "hospital-mortality": [
-        `&dimension=${metadata.dataElements.facilityDispositionId}:IN:
-            ${metadata.optionSets.facilityDispoMortuaryOrDied}
-        &dimension=${metadata.dataElements.etaRegistryId}`,
+    hospitalMortality: [
+        `&dimension=${metadata.dataElements.facilityDispositionId}:IN:${metadata.optionSets.facilityDispoMortuaryOrDied}&dimension=${metadata.dataElements.etaRegistryId}`,
     ],
-    "severe-injuries": [
-        `&dimension=${metadata.programIndicators.gapFilter}:GE:1
-            &dimension=${metadata.programIndicators.gapEvents}:GE:3:LE:10
-            &dimension=${metadata.dataElements.etaRegistryId}`,
-        `&dimension=${metadata.programIndicators.rtsEvents}:GE:1
-            &dimension=${metadata.programIndicators.rtsFilter}:GE:0:LE:3
-            &dimension=${metadata.dataElements.etaRegistryId}`,
-        `&dimension=${metadata.programIndicators.ktsEvents}
-            &dimension=${metadata.programIndicators.ktsFilterSevereInjuries}:GE:1
-            &dimension=${metadata.dataElements.etaRegistryId}`,
-        `&dimension=${metadata.programIndicators.ktsEvents}
-            &dimension=${metadata.programIndicators.ktsFilterInitialConditions}:GE:1
-            &dimension=${metadata.dataElements.etaRegistryId}`,
-        `&dimension=${metadata.programIndicators.mgapEvents}
-            &dimension=${metadata.programIndicators.mgapFilterInjuryDetails}:GE:1
-            &dimension=${metadata.dataElements.etaRegistryId}`,
-        `&dimension=${metadata.programIndicators.mgapEvents}
-            &dimension=${metadata.programIndicators.mgapFilterInitialConditions}:GE:1
-            &dimension=${metadata.dataElements.etaRegistryId}`,
+    severeInjuries: [
+        `&dimension=${metadata.programIndicators.gapFilter}:GE:1&dimension=${metadata.programIndicators.gapEvents}:GE:3:LE:10&dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.programIndicators.rtsEvents}:GE:1&dimension=${metadata.programIndicators.rtsFilter}:GE:0:LE:3&dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.programIndicators.ktsEvents}&dimension=${metadata.programIndicators.ktsFilterSevereInjuries}:GE:1&dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.programIndicators.ktsEvents}&dimension=${metadata.programIndicators.ktsFilterInitialConditions}:GE:1&dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.programIndicators.mgapEvents}&dimension=${metadata.programIndicators.mgapFilterInjuryDetails}:GE:1&dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.programIndicators.mgapEvents}&dimension=${metadata.programIndicators.mgapFilterInitialConditions}:GE:1&dimension=${metadata.dataElements.etaRegistryId}`,
     ],
-    "moderate-severe-injuries": [
-        `&dimension=${metadata.programIndicators.gapFilter}:GE:1
-            &dimension=${metadata.programIndicators.gapEvents}:GE:3:LE:18
-            &dimension=${metadata.dataElements.etaRegistryId}`,
-        `&dimension=${metadata.programIndicators.rtsEvents}:GE:1
-            &dimension=${metadata.programIndicators.rtsFilter}:GE:0:LE:10
-            &dimension=${metadata.dataElements.etaRegistryId}`,
-        `&dimension=${metadata.programIndicators.ktsEvents}
-            &dimension=${metadata.programIndicators.ktsFilterSevereInjuries}:GE:1
-            &dimension=${metadata.dataElements.etaRegistryId}`,
-        `&dimension=${metadata.programIndicators.ktsEvents}
-            &dimension=${metadata.programIndicators.ktsFilterInitialConditions}:GE:1
-            &dimension=${metadata.dataElements.etaRegistryId}`,
-        `&dimension=${metadata.programIndicators.mgapEvents}
-            &dimension=${metadata.programIndicators.mgapFilterInjuryDetails}:GE:1
-            &dimension=${metadata.dataElements.etaRegistryId}`,
-        `&dimension=${metadata.programIndicators.mgapEvents}
-            &dimension=${metadata.programIndicators.mgapFilterInitialConditions}:GE:1
-            &dimension=${metadata.dataElements.etaRegistryId}`,
+    moderateSevereInjuries: [
+        `&dimension=${metadata.programIndicators.gapFilter}:GE:1&dimension=${metadata.programIndicators.gapEvents}:GE:3:LE:18&dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.programIndicators.rtsEvents}:GE:1&dimension=${metadata.programIndicators.rtsFilter}:GE:0:LE:10&dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.programIndicators.ktsEvents}&dimension=${metadata.programIndicators.ktsFilterSevereInjuries}:GE:1&dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.programIndicators.ktsEvents}&dimension=${metadata.programIndicators.ktsFilterInitialConditions}:GE:1&dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.programIndicators.mgapEvents}&dimension=${metadata.programIndicators.mgapFilterInjuryDetails}:GE:1&dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.programIndicators.mgapEvents}&dimension=${metadata.programIndicators.mgapFilterInitialConditions}:GE:1&dimension=${metadata.dataElements.etaRegistryId}`,
     ],
-    "moderate-injuries": [
-        `&dimension=${metadata.programIndicators.gapFilter}:GE:1
-            &dimension=${metadata.programIndicators.gapEvents}:GE:11:LE:18
-            &dimension=${metadata.dataElements.etaRegistryId}`,
-        `&dimension=${metadata.programIndicators.rtsEvents}:GE:1
-            &dimension=${metadata.programIndicators.rtsFilter}:GE:4:LE:10
-            &dimension=${metadata.dataElements.etaRegistryId}`,
-        `&dimension=${metadata.programIndicators.ktsEvents}
-            &dimension=${metadata.programIndicators.ktsFilterSevereInjuries}:GE:1
-            &dimension=${metadata.dataElements.etaRegistryId}`,
-        `&dimension=${metadata.programIndicators.ktsEvents}
-            &dimension=${metadata.programIndicators.ktsFilterInitialConditions}:GE:1
-            &dimension=${metadata.dataElements.etaRegistryId}`,
-        `&dimension=${metadata.programIndicators.mgapEvents}
-            &dimension=${metadata.programIndicators.mgapFilterInjuryDetails}:GE:1
-            &dimension=${metadata.dataElements.etaRegistryId}`,
-        `&dimension=${metadata.programIndicators.mgapEvents}
-            &dimension=${metadata.programIndicators.mgapFilterInitialConditions}:GE:1
-            &dimension=${metadata.dataElements.etaRegistryId}`,
+    moderateInjuries: [
+        `&dimension=${metadata.programIndicators.gapFilter}:GE:1&dimension=${metadata.programIndicators.gapEvents}:GE:11:LE:18&dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.programIndicators.rtsEvents}:GE:1&dimension=${metadata.programIndicators.rtsFilter}:GE:4:LE:10&dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.programIndicators.ktsEvents}&dimension=${metadata.programIndicators.ktsFilterSevereInjuries}:GE:1&dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.programIndicators.ktsEvents}&dimension=${metadata.programIndicators.ktsFilterInitialConditions}:GE:1&dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.programIndicators.mgapEvents}&dimension=${metadata.programIndicators.mgapFilterInjuryDetails}:GE:1&dimension=${metadata.dataElements.etaRegistryId}`,
+        `&dimension=${metadata.programIndicators.mgapEvents}&dimension=${metadata.programIndicators.mgapFilterInitialConditions}:GE:1&dimension=${metadata.dataElements.etaRegistryId}`,
     ],
 };

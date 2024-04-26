@@ -1,4 +1,3 @@
-import { Config } from "../../../common/entities/Config";
 import { PaginatedObjects, Paging, Sorting } from "../../../common/entities/PaginatedObjects";
 import { AuditItem, AuditType } from "../entities/AuditItem";
 
@@ -8,7 +7,6 @@ export interface AuditItemRepository {
 }
 
 export interface AuditOptions {
-    config: Config;
     paging: Paging;
     sorting: Sorting<AuditItem>;
     year: string;

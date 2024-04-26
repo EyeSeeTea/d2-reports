@@ -7,9 +7,9 @@ export type AuditType =
     | "hypoxia"
     | "tachypnea"
     | "mental"
-    | "all-mortality"
-    | "emergency-unit"
-    | "hospital-mortality"
-    | "severe-injuries"
-    | "moderate-injuries"
-    | "moderate-severe-injuries";
+    | "allMortality"
+    | "emergencyUnit"
+    | "hospitalMortality"
+    | "severeInjuries"
+    | "moderateInjuries"
+    | "moderateSevereInjuries";
