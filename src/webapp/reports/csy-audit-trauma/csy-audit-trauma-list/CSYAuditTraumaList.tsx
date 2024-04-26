@@ -39,7 +39,7 @@ function getEmptyDataValuesFilter(): Filter {
     return {
         auditType: "mortality",
         orgUnitPaths: [],
-        year: "2020",
+        year: (new Date().getFullYear() - 1).toString(),
         periodType: "yearly",
         quarter: undefined,
     };

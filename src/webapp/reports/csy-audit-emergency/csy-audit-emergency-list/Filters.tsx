@@ -22,39 +22,9 @@ export interface Filter {
     quarter?: string;
 }
 
-interface FilterOptions {
+export type FilterOptions = {
     periods: string[];
-}
-
-export const auditTypeItems = [
-    {
-        value: "overall-mortality",
-        text: i18n.t("Overall Mortality in EU"),
-        auditDefinition: "ETA_EU Dispo = Morgue or Died or ETA_Facility Dispo = Morgue or Died",
-    },
-    {
-        value: "low-acuity",
-        text: i18n.t("Low acuity triage with EU disposition ICU"),
-        auditDefinition: "EU dispo = ICU AND Triage category = lowest acuity triage category",
-    },
-    {
-        value: "highest-triage",
-        text: i18n.t("Highest triage category and time to first provider >30min​"),
-        auditDefinition:
-            "Triage category = highest category AND time between EU arrival date and time  to Date and time seen by a  first treating provider > 30 min",
-    },
-    {
-        value: "initial-rbg",
-        text: i18n.t("Initial RBG low and Glucose not given"),
-        auditDefinition: "Initial RBG = Low AND Glucose not given at EU",
-    },
-    {
-        value: "shock-ivf",
-        text: i18n.t("Shock and IVF including Blood"),
-        auditDefinition:
-            "(Age>=16 OR Age category = adult - age unknown) AND Initial SBP<90mmHg AND  (Section: Emergency Unit Interventions > Medications and Fluids) IV Fluids = not done",
-    },
-];
+};
 
 export const Filters: React.FC<FiltersProps> = React.memo(props => {
     const { config, api } = useAppContext();
@@ -166,6 +136,36 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
         </Container>
     );
 });
+
+export const auditTypeItems = [
+    {
+        value: "overallMortality",
+        text: i18n.t("Overall Mortality in EU"),
+        auditDefinition: "ETA_EU Dispo = Morgue or Died or ETA_Facility Dispo = Morgue or Died",
+    },
+    {
+        value: "lowAcuity",
+        text: i18n.t("Low acuity triage with EU disposition ICU"),
+        auditDefinition: "EU dispo = ICU AND Triage category = lowest acuity triage category",
+    },
+    {
+        value: "highestTriage",
+        text: i18n.t("Highest triage category and time to first provider >30min​"),
+        auditDefinition:
+            "Triage category = highest category AND time between EU arrival date and time  to Date and time seen by a  first treating provider > 30 min",
+    },
+    {
+        value: "initialRbg",
+        text: i18n.t("Initial RBG low and Glucose not given"),
+        auditDefinition: "Initial RBG = Low AND Glucose not given at EU",
+    },
+    {
+        value: "shockIvf",
+        text: i18n.t("Shock and IVF including Blood"),
+        auditDefinition:
+            "(Age>=16 OR Age category = adult - age unknown) AND Initial SBP<90mmHg AND  (Section: Emergency Unit Interventions > Medications and Fluids) IV Fluids = not done",
+    },
+];
 
 function useMemoOptionsFromStrings(options: string[]) {
     return useMemo(() => {

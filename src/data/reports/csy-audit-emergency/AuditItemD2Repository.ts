@@ -1,8 +1,8 @@
 import _ from "lodash";
-import { PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
+import { emptyPage, PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
 import { AuditItem, AuditType } from "../../../domain/reports/csy-audit-emergency/entities/AuditItem";
 import {
-    CSYAuditEmergencyOptions as GetAuditOptions,
+    AuditOptions,
     AuditItemRepository,
 } from "../../../domain/reports/csy-audit-emergency/repositories/AuditRepository";
 import { D2Api, Pager } from "../../../types/d2-api";
@@ -18,68 +18,50 @@ import {
     buildRefs,
     getEventQueryString,
 } from "../../../domain/common/entities/AuditAnalyticsResponse";
-import { isValueInUnionType, Maybe, UnionFromValues } from "../../../types/utils";
-
-const auditTypes = ["overall-mortality", "low-acuity", "highest-triage", "initial-rbg", "shock-ivf"] as const;
-type AuditTyp = UnionFromValues<typeof auditTypes>;
-if (isValueInUnionType("overall-mortality", auditTypes)) {
-    const ab = "overall-mortality";
-}
+import { Maybe } from "../../../types/utils";
 
 export class AuditItemD2Repository implements AuditItemRepository {
     constructor(private api: D2Api) {}
 
-    async get(options: GetAuditOptions): Promise<PaginatedObjects<AuditItem>> {
+    async get(options: AuditOptions): Promise<PaginatedObjects<AuditItem>> {
         const { paging, year, orgUnitPaths, quarter, auditType } = options;
         const period = !quarter ? year : `${year}${quarter}`;
         const orgUnitIds = getOrgUnitIdsFromPaths(orgUnitPaths);
 
-        try {
-            const auditItems = await this.getAuditItems(auditType, orgUnitIds, period);
+        if (_.isEmpty(orgUnitIds)) return emptyPage;
 
-            const rowsInPage = _(auditItems)
-                .drop((paging.page - 1) * paging.pageSize)
-                .take(paging.pageSize)
-                .value();
+        const auditItems = await this.getAuditItems(auditType, orgUnitIds, period);
+        const rowsInPage = _(auditItems)
+            .drop((paging.page - 1) * paging.pageSize)
+            .take(paging.pageSize)
+            .value();
 
-            const pager: Pager = {
-                page: paging.page,
-                pageSize: paging.pageSize,
-                pageCount: Math.ceil(auditItems.length / paging.pageSize),
-                total: auditItems.length,
-            };
+        const pager: Pager = {
+            page: paging.page,
+            pageSize: paging.pageSize,
+            pageCount: Math.ceil(auditItems.length / paging.pageSize),
+            total: auditItems.length,
+        };
 
-            return { pager, objects: rowsInPage };
-        } catch (error) {
-            console.debug(error);
-            return { pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 }, objects: [] };
-        }
+        return { pager, objects: rowsInPage };
     }
 
     private async getAuditItems(auditType: AuditType, orgUnitIds: string[], period: string): Promise<AuditItem[]> {
         const queryStrings = auditQueryStrings[auditType];
-        const analyticsResponse = _(
-            await promiseMap(
-                queryStrings,
-                async queryString =>
-                    await promiseMap(orgUnitIds, async orgUnitId => {
-                        const eventQueryString = getEventQueryString(
-                            metadata.programs.emergencyCareProgramId,
-                            metadata.programStages.emergencyCareProgramStageId,
-                            orgUnitId,
-                            period,
-                            queryString
-                        );
-                        const analyticsResponse = await this.api
-                            .get<AuditAnalyticsResponse>(eventQueryString)
-                            .getData();
 
-                        return new AuditAnalyticsData(analyticsResponse);
-                    })
-            )
-        )
-            .flatten()
-            .value();
+        const analyticsResponse = await promiseMap(queryStrings, async queryString => {
+            const eventQueryString = getEventQueryString(
+                metadata.programs.emergencyCareProgramId,
+                metadata.programStages.emergencyCareProgramStageId,
+                orgUnitIds.join(";"),
+                period,
+                queryString
+            );
+
+            const analyticsResponse = await this.api.get<AuditAnalyticsResponse>(eventQueryString).getData();
+
+            return new AuditAnalyticsData(analyticsResponse);
+        });
 
         return this.getAuditItemsByAuditType(auditType, analyticsResponse);
     }
@@ -96,15 +78,15 @@ export class AuditItemD2Repository implements AuditItemRepository {
         const { arrivalDateId, etaRegistryId, firstProviderDateId, glucoseId, ivfId } = metadata.dataElements;
 
         switch (auditType) {
-            case "overall-mortality": {
+            case "overallMortality": {
                 const [euMortalityData, facilityMortalityData] = data;
 
                 const euMortalityIds = this.getRegisterIds(euMortalityData, etaRegistryId);
                 const facilityMortalityIds = this.getRegisterIds(facilityMortalityData, etaRegistryId);
 
-                return _.compact(_.union(euMortalityIds, facilityMortalityIds));
+                return _.union(euMortalityIds, facilityMortalityIds);
             }
-            case "low-acuity": {
+            case "lowAcuity": {
                 const [triageCategoryData, euDispoICUData] = data;
 
                 const triageCategoryIds = this.getRegisterIds(triageCategoryData, etaRegistryId);
@@ -112,7 +94,7 @@ export class AuditItemD2Repository implements AuditItemRepository {
 
                 return _.intersection(triageCategoryIds, euDispoICUIds);
             }
-            case "highest-triage": {
+            case "highestTriage": {
                 const [triageCategoryData, arrivalDateData, firstProviderDateData] = data;
 
                 const triageCategoryIds = this.getRegisterIds(triageCategoryData, etaRegistryId);
@@ -123,27 +105,34 @@ export class AuditItemD2Repository implements AuditItemRepository {
                 const arrivalDates = _.map(arrivalDateIds, arrivalDate => new Date(arrivalDate));
                 const providerDates = _.map(providerDateIds, providerDate => new Date(providerDate));
 
-                const timeDiffIds = _.filter(dateIds, (_, index) => {
-                    const arrivalDate = arrivalDates[index]?.getTime() ?? 0;
-                    const providerDate = providerDates[index]?.getTime() ?? 0;
+                const timeDiffIds = _.compact(
+                    _.filter(_.zip(dateIds, arrivalDates, providerDates), ([, arrivalDate, providerDate]) => {
+                        const arrivalTime = arrivalDate?.getTime() ?? 0;
+                        const providerTime = providerDate?.getTime() ?? 0;
 
-                    return providerDate - arrivalDate > 1800000;
-                });
+                        return providerTime - arrivalTime > 1800000;
+                    }).map(([id]) => id)
+                );
 
                 return _.intersection(triageCategoryIds, timeDiffIds);
             }
-            case "initial-rbg": {
+            case "initialRbg": {
                 const [initialRBGData, glucoseData] = data;
 
                 const initialRBGIds = this.getRegisterIds(initialRBGData, etaRegistryId);
                 const glucoseInEUIds = this.getRegisterIds(glucoseData, etaRegistryId);
                 const glucoseEventIds = this.getRegisterIds(glucoseData, glucoseId);
 
-                const glucoseNotTickedIds = _.filter(glucoseInEUIds, (_, index) => glucoseEventIds[index] !== "1");
+                const glucoseNotTickedIds = _.compact(
+                    _.filter(
+                        _.zip(glucoseInEUIds, glucoseEventIds),
+                        ([, glucoseEventId]) => glucoseEventId !== "1"
+                    ).map(([glucoseInEUId]) => glucoseInEUId)
+                );
 
                 return _.intersection(initialRBGIds, glucoseNotTickedIds);
             }
-            case "shock-ivf": {
+            case "shockIvf": {
                 const [ageGreaterThan16Data, ageCategoryAdultUnknownData, initialSBPData, ivfData] = data;
 
                 const ageGreaterThan16Ids = this.getRegisterIds(ageGreaterThan16Data, etaRegistryId);
@@ -153,7 +142,11 @@ export class AuditItemD2Repository implements AuditItemRepository {
                 const ivfEventIds = this.getRegisterIds(ivfData, ivfId);
 
                 const ageAdultIds = _.union(ageGreaterThan16Ids, ageCategoryAdultUnknownIds);
-                const ivfNotTickedIds = _.filter(ivfInEUIds, (_, index) => ivfEventIds[index] !== "1");
+                const ivfNotTickedIds = _.compact(
+                    _.filter(_.zip(ivfInEUIds, ivfEventIds), ([, ivfEventId]) => ivfEventId !== "1").map(
+                        ([glucoseInEUId]) => glucoseInEUId
+                    )
+                );
 
                 return _.intersection(ageAdultIds, initialSBPIds, ivfNotTickedIds);
             }
@@ -199,6 +192,7 @@ const metadata = {
         initialSBPId: "hWdpU2Wqfvy",
         ivfId: "neKXuzIRaFm",
     },
+    // option set codes
     optionSets: {
         euDispoICU: "6",
         euDispoMortuaryOrDied: "7",
@@ -232,44 +226,24 @@ type CsvField = typeof csvFields[number];
 type AuditItemRow = Record<CsvField, string>;
 
 const auditQueryStrings = {
-    "overall-mortality": [
+    overallMortality: [
         `&dimension=${metadata.dataElements.euDispositionId}:IN:${metadata.optionSets.euDispoMortuaryOrDied}`,
         `&dimension=${metadata.dataElements.facilityDispositionId}:IN:${metadata.optionSets.facilityDispoMortuaryOrDied}`,
     ],
-    "low-acuity": [
-        `&dimension=${metadata.dataElements.triageCategoryId}:IN:
-            ${metadata.optionSets.triageGreen};
-            ${metadata.optionSets.triageCategory4};
-            ${metadata.optionSets.triageCategory5};
-            ${metadata.optionSets.triageCategoryLevelIV};
-            ${metadata.optionSets.triageCategoryLevelV};
-            ${metadata.optionSets.triageStandardGreen4};
-            ${metadata.optionSets.triageNonUrgentBlue5};
-            ${metadata.optionSets.triageLevel4};
-            ${metadata.optionSets.triageLevel5};
-            ${metadata.optionSets.triageMinorGreen};
-            ${metadata.optionSets.triagePriority3}`,
+    lowAcuity: [
+        `&dimension=${metadata.dataElements.triageCategoryId}:IN:${metadata.optionSets.triageGreen};${metadata.optionSets.triageCategory4};${metadata.optionSets.triageCategory5};${metadata.optionSets.triageCategoryLevelIV};${metadata.optionSets.triageCategoryLevelV};${metadata.optionSets.triageStandardGreen4};${metadata.optionSets.triageNonUrgentBlue5};${metadata.optionSets.triageLevel4};${metadata.optionSets.triageLevel5};${metadata.optionSets.triageMinorGreen};${metadata.optionSets.triagePriority3}`,
         `&dimension=${metadata.dataElements.euDispositionId}:IN:${metadata.optionSets.euDispoICU}`,
     ],
-    "highest-triage": [
-        `&dimension=${metadata.dataElements.triageCategoryId}:IN:
-            ${metadata.optionSets.triageRed};
-            ${metadata.optionSets.triageCategory1};
-            ${metadata.optionSets.triageLevelI};
-            ${metadata.optionSets.triageLevelII};
-            ${metadata.optionSets.triageImmediateRed1};
-            ${metadata.optionSets.triageLevel1};
-            ${metadata.optionSets.triageLevel2};
-            ${metadata.optionSets.triageImmediateRed};
-            ${metadata.optionSets.triagePriority1}`,
+    highestTriage: [
+        `&dimension=${metadata.dataElements.triageCategoryId}:IN:${metadata.optionSets.triageRed};${metadata.optionSets.triageCategory1};${metadata.optionSets.triageLevelI};${metadata.optionSets.triageLevelII};${metadata.optionSets.triageImmediateRed1};${metadata.optionSets.triageLevel1};${metadata.optionSets.triageLevel2};${metadata.optionSets.triageImmediateRed};${metadata.optionSets.triagePriority1}`,
         `&dimension=${metadata.dataElements.arrivalDateId}`,
         `&dimension=${metadata.dataElements.firstProviderDateId}`,
     ],
-    "initial-rbg": [
+    initialRbg: [
         `&dimension=${metadata.dataElements.initialRBGId}:IN:${metadata.optionSets.rbgLow}`,
         `&dimension=${metadata.dataElements.glucoseId}`,
     ],
-    "shock-ivf": [
+    shockIvf: [
         `&dimension=${metadata.dataElements.ageInYearsId}:GE:16`,
         `&dimension=${metadata.dataElements.ageCategoryId}:IN:3`,
         `&dimension=${metadata.dataElements.initialSBPId}:LT:90`,
