@@ -2,7 +2,7 @@ import { Typography, makeStyles } from "@material-ui/core";
 import i18n from "../../../locales";
 import { TwoFactorMonitorList } from "./two-factor-list/TwoFactorList";
 
-export const TwoFactorMonitorReport: React.FC = () => {
+export const TwoFactorMonitoringReport: React.FC = () => {
     const classes = useStyles();
 
     return (
