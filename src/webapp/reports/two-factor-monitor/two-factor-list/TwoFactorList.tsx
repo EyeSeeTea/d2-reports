@@ -37,14 +37,19 @@ export const TwoFactorMonitorList: React.FC = React.memo(() => {
     const baseConfig: TableConfig<TwoFactorViewModel> = useMemo(
         () => ({
             columns: [
-                { name: "id", text: i18n.t("uid"), sortable: true },
-                { name: "name", text: i18n.t("Name"), sortable: true },
+                { name: "id", text: i18n.t("Id"), sortable: true },
                 { name: "username", text: i18n.t("Username"), sortable: true },
+                { name: "name", text: i18n.t("Name"), sortable: true },
                 { name: "externalAuth", text: i18n.t("External auth"), sortable: true },
                 { name: "twoFA", text: i18n.t("TwoFA"), sortable: true },
                 { name: "email", text: i18n.t("Email"), sortable: true, hidden: true },
                 { name: "disabled", text: i18n.t("Disabled"), sortable: true, hidden: true },
+                { name: "lastLogin", text: i18n.t("Last login"), sortable: true, hidden: true },
+                { name: "lastUpdated", text: i18n.t("Last updated"), sortable: true, hidden: true },
+                { name: "userGroups", text: i18n.t("User groups"), sortable: true, hidden: true },
+                { name: "openId", text: i18n.t("Open ID"), sortable: true, hidden: true },
             ],
+
             actions: [],
             initialSorting: {
                 field: "id" as const,
@@ -54,6 +59,7 @@ export const TwoFactorMonitorList: React.FC = React.memo(() => {
                 pageSizeOptions: [10, 20, 50],
                 pageSizeInitialValue: 10,
             },
+            searchBoxLabel: i18n.t("Search by username..."),
         }),
         []
     );
@@ -68,6 +74,7 @@ export const TwoFactorMonitorList: React.FC = React.memo(() => {
 
             setSorting(sorting);
             setGroups(groups);
+            console.debug("Reloading", reloadKey);
             return { pager, objects: getTwoFactorMonitoringViews(objects) };
         },
         [compositionRoot.twoFactorUserMonitoring, filters, reloadKey]

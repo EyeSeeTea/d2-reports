@@ -8,8 +8,8 @@ export interface MonitoringTwoFactorUser {
     lastUpdated: string;
     externalAuth: string;
     email: string;
-    disabled: boolean;
+    disabled: string;
     twoFA: string;
-    userRoles: NamedRef[];
     userGroups: NamedRef[];
+    openId: string;
 }
