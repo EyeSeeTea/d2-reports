@@ -8,7 +8,7 @@ export const TwoFactorMonitoringReport: React.FC = () => {
     return (
         <div className={classes.wrapper}>
             <Typography variant="h5" gutterBottom>
-                {i18n.t("Uset 2FA info")}
+                {i18n.t("User Two Factor Monitoring")}
             </Typography>
 
             <TwoFactorMonitorList />
