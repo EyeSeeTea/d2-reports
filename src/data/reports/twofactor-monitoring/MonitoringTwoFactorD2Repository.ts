@@ -1,8 +1,7 @@
 import _ from "lodash";
-import { User } from "../../../domain/common/entities/User";
-import { D2Api, PaginatedObjects } from "../../../types/d2-api";
+import { D2Api } from "../../../types/d2-api";
 import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
-import { Namespaces } from "../../common/clients/storage/Namespaces";
+import { d2ToolsNamespace } from "../../common/clients/storage/Namespaces";
 import { StorageClient } from "../../common/clients/storage/StorageClient";
 import { CsvData } from "../../common/CsvDataSource";
 import { CsvWriterDataSource } from "../../common/CsvWriterCsvDataSource";
@@ -11,8 +10,10 @@ import { downloadFile } from "../../common/utils/download-file";
 import { Pagination } from "../mal-data-approval/MalDataApprovalDefaultRepository";
 import { MonitoringTwoFactorOptions } from "../../../domain/reports/twofactor-monitoring/entities/MonitoringTwoFactorOptions";
 import { MonitoringTwoFactorRepository } from "../../../domain/reports/twofactor-monitoring/repositories/MonitoringTwoFactorRepository";
-import { PaginatedObjects as domainPaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
 import { MonitoringTwoFactorUser } from "../../../domain/reports/twofactor-monitoring/entities/MonitoringTwoFactorUser";
+import { paginate } from "../../../domain/common/entities/PaginatedObjects";
+import { MonitoringTwoFactorPaginatedObjects } from "../../../domain/reports/twofactor-monitoring/entities/MonitoringTwoFactorPaginatedObjects";
+import { NamedRef } from "../../../domain/common/entities/Ref";
 
 export class MonitoringTwoFactorD2Repository implements MonitoringTwoFactorRepository {
     private storageClient: StorageClient;
@@ -22,19 +23,42 @@ export class MonitoringTwoFactorD2Repository implements MonitoringTwoFactorRepos
         this.storageClient = new DataStoreStorageClient("user", instance);
     }
 
-    get(namespace: string, options: MonitoringTwoFactorOptions): Promise<MonitoringTwoFactorUser[]> {
+    async get(
+        namespace: string,
+        options: MonitoringTwoFactorOptions
+    ): Promise<MonitoringTwoFactorPaginatedObjects<MonitoringTwoFactorUser>> {
         const { paging, sorting } = options;
+        const groupId = await this.getTwoFactorUserGroup(namespace);
+        const objects = await this.getInvalidUsers(groupId.id);
 
-        const groupId = "id";
-        const objects = this.getInvalidUsers(groupId);
-        const filteredRows = await this.getFilteredRows(objects, options);
+        const { pager, objects: rowsInPage } = paginate(objects, sorting, paging);
 
-        const { pager, objects: rowsInPage } = paginate(filteredRows, sorting, paging);
-        return;
+        const userGroups = _(objects)
+            .flatMap(object => object.userGroups)
+            .uniqBy("id")
+            .value();
+
+        return {
+            pager: pager,
+            objects: rowsInPage,
+            users: objects,
+            groups: userGroups,
+        };
+    }
+
+    private async getTwoFactorUserGroup(namespace: string): Promise<NamedRef> {
+        const { TWO_FACTOR_GROUP_ID: group } = (await this.api
+            .dataStore(d2ToolsNamespace)
+            .get<{
+                TWO_FACTOR_GROUP_ID: NamedRef;
+            }>(namespace)
+            .getData()) ?? { TWO_FACTOR_GROUP_ID: { id: "", name: "" } };
+
+        return group;
     }
 
     private async getInvalidUsers(userGroupId: string): Promise<MonitoringTwoFactorUser[]> {
-        let users: MonitoringTwoFactorUser[] = [];
+        const users: MonitoringTwoFactorUser[] = [];
         let currentPage = 1;
         let response;
         const pageSize = 250;
@@ -51,13 +75,10 @@ export class MonitoringTwoFactorD2Repository implements MonitoringTwoFactorRepos
                                 username: true,
                                 lastLogin: true,
                                 lastUpdated: true,
-                                userRoles: {
-                                    id: true,
-                                    name: true,
-                                    authorities: true,
-                                },
+                                externalAuth: true,
+                                twoFA: true,
                             },
-                            userGroups: true,
+                            userGroups: { id: true, name: true },
                         },
                         filter: {
                             "userGroups.id": {
@@ -112,7 +133,7 @@ export class MonitoringTwoFactorD2Repository implements MonitoringTwoFactorRepos
         return { pager: pager, objects: paginatedObjects };
     }
 
-    async save(filename: string, users: User[]): Promise<void> {
+    async save(filename: string, users: MonitoringTwoFactorUser[]): Promise<void> {
         const headers = csvFields.map(field => ({ id: field, text: field }));
         const rows = users.map(user => ({
             id: user.id,
@@ -131,8 +152,14 @@ export class MonitoringTwoFactorD2Repository implements MonitoringTwoFactorRepos
         return await downloadFile(csvContents, filename, "text/csv");
     }
 
-    async saveColumns(columns: string[]): Promise<void> {
-        return this.storageClient.saveObject<string[]>(Namespaces.NHWA_APPROVAL_STATUS_USER_COLUMNS, columns);
+    async getColumns(namespace: string): Promise<string[]> {
+        const columns = await this.storageClient.getObject<string[]>(namespace);
+
+        return columns ?? [];
+    }
+
+    async saveColumns(namespace: string, columns: string[]): Promise<void> {
+        return this.storageClient.saveObject<string[]>(namespace, columns);
     }
 }
 const csvFields = ["id", "name", "username", "email", "disabled", "externalAuth", "twoFA"] as const;
