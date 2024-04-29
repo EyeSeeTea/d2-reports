@@ -54,12 +54,8 @@ export class MonitoringTwoFactorD2Repository implements MonitoringTwoFactorRepos
         const { groups, usernameQuery } = options;
 
         return objects.filter(row => {
-            const isInGroup = !!(_.isEmpty(groups) || !row.userGroups
-                ? row
-                : _.intersection(
-                      groups,
-                      row.userGroups.map(group => group.name)
-                  ).length);
+            const isInGroup = groups.length === 0 || row.userGroups.some(group => groups.includes(group.id));
+
             const isInSearchQuery = _.includes(row.username, usernameQuery);
 
             return isInGroup && isInSearchQuery;

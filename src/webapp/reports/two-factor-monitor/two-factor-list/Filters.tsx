@@ -29,8 +29,11 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const [isDialogOpen, { enable: openDialog, disable: closeDialog }] = useBooleanState(false);
 
     const groupItems = useMemoOptionsFromNamedRef(filterOptions.groups);
-    const setGroups = React.useCallback(groupItems => onChange(prev => ({ ...prev, groupItems })), [onChange]);
-
+    const setGroups = React.useCallback(newGroups => onChange(prev => ({ ...prev, groups: newGroups })), [onChange]);
+    const selectedUserGroups = filterOptions.groups
+        .filter(group => filter.groups.includes(group.id))
+        .map(group => group.name)
+        .join(", ");
     return (
         <Container>
             <IconButton onClick={openDialog}>
@@ -46,7 +49,8 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 fullWidth
             >
                 <MultiSelectorFilterButton
-                    title="Filter by template group"
+                    title="Filter by group"
+                    value={selectedUserGroups}
                     selectedItems={filter.groups}
                     options={groupItems}
                     onChange={setGroups}
