@@ -25,7 +25,7 @@ import _ from "lodash";
 import { Config } from "../../../domain/common/entities/Config";
 import { Id } from "../../../domain/common/entities/Base";
 import { paginate } from "../../../domain/common/entities/PaginatedObjects";
-import { GlassAtcData } from "../../../domain/reports/glass-admin/entities/GlassAtcData";
+import { GlassAtcVersionData } from "../../../domain/reports/glass-admin/entities/GlassAtcVersionData";
 
 const START_YEAR_PERIOD = 2016;
 
@@ -100,7 +100,7 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
 
     async uploadATC(
         namespace: string,
-        atcData: GlassAtcData,
+        glassAtcVersionData: GlassAtcVersionData,
         year: string,
         selectedItems?: ATCItemIdentifier[]
     ): Promise<void> {
@@ -109,11 +109,14 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         if (selectedItems) {
             const updatedVersion = this.updateVersion(atcItems, selectedItems);
             const updatedATCItems = this.patchATCVersion(atcItems, selectedItems);
-            await this.globalStorageClient.saveObject<GlassAtcData>(`ATC-${updatedVersion}`, atcData);
+            await this.globalStorageClient.saveObject<GlassAtcVersionData>(
+                `ATC-${updatedVersion}`,
+                glassAtcVersionData
+            );
             await this.globalStorageClient.saveObject<ATCItem[]>(Namespaces.ATCS, updatedATCItems);
         } else {
             const updatedATCItems = this.uploadNewATC(year, atcItems);
-            await this.globalStorageClient.saveObject<GlassAtcData>(`ATC-${year}-v1`, atcData);
+            await this.globalStorageClient.saveObject<GlassAtcVersionData>(`ATC-${year}-v1`, glassAtcVersionData);
             await this.globalStorageClient.saveObject<ATCItem[]>(Namespaces.ATCS, updatedATCItems);
         }
     }

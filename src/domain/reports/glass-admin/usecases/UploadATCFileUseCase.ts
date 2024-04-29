@@ -1,5 +1,5 @@
 import { ATCItemIdentifier } from "../entities/GLASSDataMaintenanceItem";
-import { GlassAtcData } from "../entities/GlassAtcData";
+import { GlassAtcVersionData } from "../entities/GlassAtcVersionData";
 import { GLASSDataMaintenanceRepository } from "../repositories/GLASSDataMaintenanceRepository";
 
 export class UploadATCFileUseCase {
@@ -7,10 +7,10 @@ export class UploadATCFileUseCase {
 
     execute(
         namespace: string,
-        atcData: GlassAtcData,
+        glassAtcVersionData: GlassAtcVersionData,
         year: string,
         selectedItems?: ATCItemIdentifier[]
     ): Promise<void> {
-        return this.maintenanceRepository.uploadATC(namespace, atcData, year, selectedItems);
+        return this.maintenanceRepository.uploadATC(namespace, glassAtcVersionData, year, selectedItems);
     }
 }

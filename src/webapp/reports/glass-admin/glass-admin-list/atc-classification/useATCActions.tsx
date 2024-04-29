@@ -4,7 +4,10 @@ import { useAppContext } from "../../../../contexts/app-context";
 import { Namespaces } from "../../../../../data/common/clients/storage/Namespaces";
 import { useSnackbar } from "@eyeseetea/d2-ui-components";
 import i18n from "../../../../../locales";
-import { GlassAtcData, getGlassAtcData } from "../../../../../domain/reports/glass-admin/entities/GlassAtcData";
+import {
+    GlassAtcVersionData,
+    getGlassAtcVersionData,
+} from "../../../../../domain/reports/glass-admin/entities/GlassAtcVersionData";
 import { extractJsonDataFromZIP } from "./utils";
 
 export function useATCActions(
@@ -38,8 +41,14 @@ export function useATCActions(
             try {
                 setIsPatchingNewVersion(true);
                 if (selectedFile) {
-                    const data = await getDataToUpload(selectedFile);
-                    await compositionRoot.glassAdmin.uploadFile(Namespaces.ATCS, data, period, selectedItems);
+                    const glassAtcVersionData = await getGlassAtcVersionDataToUpload(selectedFile);
+
+                    await compositionRoot.glassAdmin.uploadFile(
+                        Namespaces.ATCS,
+                        glassAtcVersionData,
+                        period,
+                        selectedItems
+                    );
                     snackbar.success(i18n.t("Version has been successfully patched"));
                 }
             } catch (error) {
@@ -58,8 +67,9 @@ export function useATCActions(
             try {
                 setIsUploadingNewATC(true);
                 if (selectedFile) {
-                    const data = await getDataToUpload(selectedFile);
-                    await compositionRoot.glassAdmin.uploadFile(Namespaces.ATCS, data, period);
+                    const glassAtcVersionData = await getGlassAtcVersionDataToUpload(selectedFile);
+
+                    await compositionRoot.glassAdmin.uploadFile(Namespaces.ATCS, glassAtcVersionData, period);
                     snackbar.success(i18n.t("Upload finished"));
                 }
             } catch (error) {
@@ -112,7 +122,7 @@ export function useATCActions(
     };
 }
 
-async function getDataToUpload(file: File): Promise<GlassAtcData> {
+async function getGlassAtcVersionDataToUpload(file: File): Promise<GlassAtcVersionData> {
     const jsonData = await extractJsonDataFromZIP(file);
-    return getGlassAtcData(jsonData);
+    return getGlassAtcVersionData(jsonData);
 }
