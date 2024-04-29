@@ -10,6 +10,7 @@ type RouteOfAdministrationCode = string;
 type RouteOfAdministrationName = string;
 
 type UnitCode = string;
+type UnitName = string;
 type UnitFamilyName = string;
 
 type SaltCode = string;
@@ -109,6 +110,7 @@ export type RoasData = {
 export type UnitsData = {
     BASE_CONV: number;
     UNIT: UnitCode;
+    NAME: UnitName;
     UNIT_FAMILY: UnitFamilyName;
     USE_STRENGTH: boolean;
     USE_VOLUME: boolean;

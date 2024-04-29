@@ -111,6 +111,7 @@ const RoasDataModel: Codec<RoasData> = Schema.object({
 const UnitsDataModel: Codec<UnitsData> = Schema.object({
     BASE_CONV: Schema.number,
     UNIT: Schema.string,
+    NAME: Schema.string,
     UNIT_FAMILY: Schema.string,
     USE_STRENGTH: Schema.boolean,
     USE_VOLUME: Schema.boolean,
