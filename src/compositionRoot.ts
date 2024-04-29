@@ -98,7 +98,11 @@ import { CancelRecalculationUseCase } from "./domain/reports/glass-admin/usecase
 import { GetGLASSDataSubmissionModulesUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSDataSubmissionModulesUseCase";
 import { SaveAuthoritiesMonitoringUseCase } from "./domain/reports/authorities-monitoring/usecases/SaveAuthoritiesMonitoringUseCase";
 import { GetAutoCompleteComputeSettingsUseCase } from "./domain/reports/nhwa-auto-complete-compute/usecases/GetAutoCompleteComputeSettingsUseCase";
-import { RunMonitoringTwoFactorUseCase } from "./domain/reports/twofactor-monitoring/usecases/RunMonitoringTwoFactorUseCase";
+import { GetMonitoringTwoFactorUseCase } from "./domain/reports/twofactor-monitoring/usecases/GetMonitoringTwoFactorUseCase";
+import { SaveMonitoringTwoFactorColumnsUseCase } from "./domain/reports/twofactor-monitoring/usecases/SaveMonitoringTwoFactorColumnsUseCase";
+import { GetMonitoringTwoFactorColumnsUseCase } from "./domain/reports/twofactor-monitoring/usecases/GetMonitoringTwoFactorColumnsUseCase";
+import { SaveMonitoringTwoFactorUseCase } from "./domain/reports/twofactor-monitoring/usecases/SaveMonitoringTwoFactorUseCase";
+import { MonitoringTwoFactorD2Repository } from "./data/reports/twofactor-monitoring/MonitoringTwoFactorD2Repository";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -123,7 +127,7 @@ export function getCompositionRoot(api: D2Api) {
     const subnationalCorrectSettingsRepository = new SubnationalCorrectD2SettingsRepository(api);
     const authoritiesMonitoringRepository = new AuthoritiesMonitoringDefaultRepository(api);
     const monitoringTwoFactorD2Repository = new MonitoringTwoFactorD2Repository(api);
-    MonitoringTwoFactorUseCase;
+
     return {
         admin: getExecute({
             get: new GetWIDPAdminDefaultUseCase(widpAdminDefaultRepository),
@@ -246,8 +250,9 @@ export function getCompositionRoot(api: D2Api) {
             getColumns: new GetAuthoritiesMonitoringColumnsUseCase(authoritiesMonitoringRepository),
             saveColumns: new SaveAuthoritiesMonitoringColumnsUseCase(authoritiesMonitoringRepository),
         }),
-        user2fa: getExecute({
-            get: new RunMonitoringTwoFactorUseCase(monitoringTwoFactorD2Repository),
+        twoFactorUserMonitoring: getExecute({
+            get: new GetMonitoringTwoFactorUseCase(monitoringTwoFactorD2Repository),
+            save: new SaveMonitoringTwoFactorUseCase(monitoringTwoFactorD2Repository),
             getColumns: new GetMonitoringTwoFactorColumnsUseCase(monitoringTwoFactorD2Repository),
             saveColumns: new SaveMonitoringTwoFactorColumnsUseCase(monitoringTwoFactorD2Repository),
         }),
