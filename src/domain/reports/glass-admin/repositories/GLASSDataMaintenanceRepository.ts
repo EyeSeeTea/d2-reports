@@ -11,7 +11,7 @@ import {
     GLASSModule,
     Module,
 } from "../entities/GLASSDataMaintenanceItem";
-import { GlassAtcData } from "../entities/GlassAtcData";
+import { GlassAtcVersionData } from "../entities/GlassAtcVersionData";
 
 export interface GLASSDataMaintenanceOptions {
     paging: Paging;
@@ -37,7 +37,7 @@ export interface GLASSDataMaintenanceRepository {
     delete(namespace: string, items: Id[]): Promise<void>;
     uploadATC(
         namespace: string,
-        atcData: GlassAtcData,
+        glassAtcVersionData: GlassAtcVersionData,
         year: string,
         selectedItems?: ATCItemIdentifier[]
     ): Promise<void>;
