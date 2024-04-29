@@ -31,13 +31,14 @@ export class MonitoringTwoFactorD2Repository implements MonitoringTwoFactorRepos
         const groupId = await this.getTwoFactorUserGroup(namespace);
         const objects = await this.getInvalidUsers(groupId.id);
 
-        const { pager, objects: rowsInPage } = paginate(objects, sorting, paging);
-
         const userGroups = _(objects)
             .flatMap(object => object.userGroups)
             .uniqBy("id")
             .value();
 
+        const filteredRows = await this.getFilteredRows(objects, options);
+
+        const { pager, objects: rowsInPage } = paginate(filteredRows, sorting, paging);
         return {
             pager: pager,
             objects: rowsInPage,
@@ -46,6 +47,24 @@ export class MonitoringTwoFactorD2Repository implements MonitoringTwoFactorRepos
         };
     }
 
+    private async getFilteredRows(
+        objects: MonitoringTwoFactorUser[],
+        options: MonitoringTwoFactorOptions
+    ): Promise<MonitoringTwoFactorUser[]> {
+        const { groups, usernameQuery } = options;
+
+        return objects.filter(row => {
+            const isInGroup = !!(_.isEmpty(groups) || !row.userGroups
+                ? row
+                : _.intersection(
+                      groups,
+                      row.userGroups.map(group => group.name)
+                  ).length);
+            const isInSearchQuery = _.includes(row.username, usernameQuery);
+
+            return isInGroup && isInSearchQuery;
+        });
+    }
     private async getTwoFactorUserGroup(namespace: string): Promise<NamedRef> {
         const { TWO_FACTOR_GROUP_ID: group } = (await this.api
             .dataStore(d2ToolsNamespace)
@@ -58,7 +77,7 @@ export class MonitoringTwoFactorD2Repository implements MonitoringTwoFactorRepos
     }
 
     private async getInvalidUsers(userGroupId: string): Promise<MonitoringTwoFactorUser[]> {
-        const users: MonitoringTwoFactorUser[] = [];
+        let users: MonitoringTwoFactorUser[] = [];
         let currentPage = 1;
         let response;
         const pageSize = 250;
@@ -70,13 +89,17 @@ export class MonitoringTwoFactorD2Repository implements MonitoringTwoFactorRepos
                         fields: {
                             id: true,
                             name: true,
+                            email: true,
+                            lastUpdated: true,
                             userCredentials: {
                                 id: true,
                                 username: true,
                                 lastLogin: true,
-                                lastUpdated: true,
                                 externalAuth: true,
+                                email: true,
+                                disabled: true,
                                 twoFA: true,
+                                openId: true,
                             },
                             userGroups: { id: true, name: true },
                         },
@@ -97,17 +120,17 @@ export class MonitoringTwoFactorD2Repository implements MonitoringTwoFactorRepos
                             name: user.name,
                             username: user.userCredentials.username,
                             lastLogin: user.userCredentials.lastLogin,
-                            lastUpdated: user.userCredentials.lastUpdated,
+                            lastUpdated: user.lastUpdated,
                             externalAuth: user.userCredentials.externalAuth,
-                            email: user.userCredentials.email,
+                            email: user.email ?? "-",
+                            openId: user.openId ?? "-",
                             disabled: user.userCredentials.disabled,
                             twoFA: user.userCredentials.twoFA,
-                            userRoles: user.userCredentials.userRoles,
                             userGroups: user.userGroups,
                         };
                     })
                     .filter(user => user.twoFA === false);
-                users.concat(responseUsers);
+                users = users.concat(responseUsers);
                 currentPage++;
             } while (response.pager.page < Math.ceil(response.pager.total / pageSize));
             return users;
@@ -142,7 +165,11 @@ export class MonitoringTwoFactorD2Repository implements MonitoringTwoFactorRepos
             externalAuth: String(user.externalAuth),
             disabled: String(user.disabled),
             email: user.email,
+            openId: user.openId,
+            lastLogin: user.lastLogin,
+            lastUpdated: user.lastUpdated,
             twoFA: String(user.twoFA),
+            userGroups: user.userGroups.map(group => group.name).join(", "),
         }));
 
         const csvDataSource = new CsvWriterDataSource();
@@ -162,6 +189,18 @@ export class MonitoringTwoFactorD2Repository implements MonitoringTwoFactorRepos
         return this.storageClient.saveObject<string[]>(namespace, columns);
     }
 }
-const csvFields = ["id", "name", "username", "email", "disabled", "externalAuth", "twoFA"] as const;
+const csvFields = [
+    "id",
+    "name",
+    "username",
+    "email",
+    "disabled",
+    "externalAuth",
+    "twoFA",
+    "openId",
+    "lastLogin",
+    "lastUpdated",
+    "userGroups",
+] as const;
 
 type CsvField = typeof csvFields[number];
