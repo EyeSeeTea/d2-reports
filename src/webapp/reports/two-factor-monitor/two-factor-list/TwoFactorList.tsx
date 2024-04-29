@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
+import StorageIcon from "@material-ui/icons/Storage";
 import { useReload } from "../../../utils/use-reload";
 import { getTwoFactorMonitoringViews, TwoFactorViewModel } from "./TwoFactorViewModel";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
@@ -16,12 +17,23 @@ import {
     TableSorting,
     useObjectsTable,
 } from "@eyeseetea/d2-ui-components";
+import { Filter, Filters } from "./Filters";
+import { NamedRef } from "../../../../domain/common/entities/Ref";
 
 export const TwoFactorMonitorList: React.FC = React.memo(() => {
-    const { compositionRoot, config } = useAppContext();
-    const [visibleColumns, setVisibleColumns] = useState<string[]>();
+    const { compositionRoot } = useAppContext();
+    const [filters, setFilters] = useState(() => getEmptyFilter());
     const [sorting, setSorting] = React.useState<TableSorting<TwoFactorViewModel>>();
-    useReload();
+    const [userGroups, setGroups] = useState<NamedRef[]>([]);
+    const [usernameQuery, setUsernameQuery] = useState<string>("");
+    const [visibleColumns, setVisibleColumns] = useState<string[]>();
+    const [reloadKey, _reload] = useReload();
+    useEffect(() => {
+        compositionRoot.twoFactorUserMonitoring.getColumns(Namespaces.USER_2FA_USER_COLUMNS).then(columns => {
+            setVisibleColumns(columns);
+        });
+    }, [compositionRoot.twoFactorUserMonitoring]);
+
     const baseConfig: TableConfig<TwoFactorViewModel> = useMemo(
         () => ({
             columns: [
@@ -45,37 +57,39 @@ export const TwoFactorMonitorList: React.FC = React.memo(() => {
         }),
         []
     );
+
     const getRowsList = React.useMemo(
         () => async (_search: string, paging: TablePagination, sorting: TableSorting<TwoFactorViewModel>) => {
-            const { pager, objects } = await compositionRoot.user2fa.get(Namespaces.USER_2FA, {
+            const { pager, objects, groups } = await compositionRoot.twoFactorUserMonitoring.get(Namespaces.USER_2FA, {
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
                 ...filters,
             });
 
             setSorting(sorting);
+            setGroups(groups);
             return { pager, objects: getTwoFactorMonitoringViews(objects) };
         },
-        [compositionRoot.user2fa, filters, reloadKey]
+        [compositionRoot.twoFactorUserMonitoring, filters, reloadKey]
     );
-
-    const tableProps = useObjectsTable<TwoFactorViewModel>(baseConfig, getRowsList);
-
-    function getSortingFromTableSorting(sorting: TableSorting<TwoFactorViewModel>): Sorting<MonitoringTwoFactorUser> {
-        return {
-            field: sorting.field === "id" ? "username" : sorting.field,
-            direction: sorting.order,
-        };
-    }
 
     const saveReorderedColumns = useCallback(
         async (columnKeys: Array<keyof TwoFactorViewModel>) => {
             if (!visibleColumns) return;
 
-            await compositionRoot.user2fa.saveColumns(columnKeys);
+            await compositionRoot.twoFactorUserMonitoring.saveColumns(Namespaces.USER_2FA_USER_COLUMNS, columnKeys);
         },
         [compositionRoot, visibleColumns]
     );
+
+    const tableProps = useObjectsTable<TwoFactorViewModel>(baseConfig, getRowsList);
+
+    const filterOptions = useMemo(() => {
+        return {
+            usernameQuery: usernameQuery,
+            groups: userGroups,
+        };
+    }, [userGroups, usernameQuery]);
 
     const columnsToShow = useMemo<TableColumn<TwoFactorViewModel>[]>(() => {
         if (!visibleColumns || _.isEmpty(visibleColumns)) return tableProps.columns;
@@ -91,9 +105,21 @@ export const TwoFactorMonitorList: React.FC = React.memo(() => {
             .value();
     }, [tableProps.columns, visibleColumns]);
 
-    useEffect(() => {
-        compositionRoot.dataApproval.getColumns().then(columns => setVisibleColumns(columns));
-    }, [compositionRoot]);
+    const downloadCsv: TableGlobalAction = {
+        name: "downloadCsv",
+        text: "Download CSV",
+        icon: <StorageIcon />,
+        onClick: async () => {
+            if (!sorting) return;
+            const { objects: user2fa } = await compositionRoot.twoFactorUserMonitoring.get(Namespaces.USER_2FA, {
+                paging: { page: 1, pageSize: 100000 },
+                sorting: getSortingFromTableSorting(sorting),
+                ...filters,
+            });
+
+            compositionRoot.twoFactorUserMonitoring.save("monitoring-twofactor-report.csv", user2fa);
+        },
+    };
 
     return (
         <ObjectsList<TwoFactorViewModel>
@@ -110,3 +136,17 @@ export const TwoFactorMonitorList: React.FC = React.memo(() => {
         </ObjectsList>
     );
 });
+
+function getSortingFromTableSorting(sorting: TableSorting<TwoFactorViewModel>): Sorting<MonitoringTwoFactorUser> {
+    return {
+        field: sorting.field === "id" ? "username" : sorting.field,
+        direction: sorting.order,
+    };
+}
+
+function getEmptyFilter(): Filter {
+    return {
+        groups: [],
+        usernameQuery: "",
+    };
+}
