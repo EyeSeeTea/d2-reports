@@ -24,6 +24,8 @@ export function getReportType(): ReportType {
             return "authMonitoring";
         case report === "data-quality":
             return "data-quality";
+        case report === "two-factor-monitoring":
+            return "twoFactorUserMonitoring";
         default:
             return "nhwa";
     }
