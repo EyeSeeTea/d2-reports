@@ -10,6 +10,8 @@ export interface TwoFactorViewModel {
     disabled: string;
     email: string;
     twoFA: string;
+    openId: string;
+    userGroups: string;
 }
 
 export function getTwoFactorMonitoringViews(items: MonitoringTwoFactorUser[]): TwoFactorViewModel[] {
@@ -18,12 +20,14 @@ export function getTwoFactorMonitoringViews(items: MonitoringTwoFactorUser[]): T
             id: item.id,
             name: item.name,
             username: item.username,
-            lastLogin: item.lastLogin !== undefined ? String(item.disabled) : "-",
-            lastUpdated: item.lastUpdated,
+            lastLogin: item.lastLogin !== undefined ? item.lastLogin : "-",
+            lastUpdated: item.lastUpdated !== undefined ? item.lastUpdated : "-",
             externalAuth: item.externalAuth !== undefined ? String(item.externalAuth) : "-",
             disabled: item.disabled !== undefined ? String(item.disabled) : "-",
-            email: item.email !== undefined ? String(item.email) : "-",
+            email: item.email !== undefined ? item.email : "-",
             twoFA: item.twoFA !== undefined ? String(item.twoFA) : "-",
+            openId: item.openId !== undefined ? item.openId : "-",
+            userGroups: item.userGroups.map(ug => ug.name).join(", "),
         };
     });
 }
