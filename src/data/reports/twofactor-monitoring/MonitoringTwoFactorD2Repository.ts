@@ -103,6 +103,7 @@ export class MonitoringTwoFactorD2Repository implements MonitoringTwoFactorRepos
                             "userGroups.id": {
                                 eq: userGroupId,
                             },
+                            disabled: { eq: "false" },
                         },
                         page: currentPage,
                         pageSize: pageSize,
