@@ -84,7 +84,7 @@ const Component: React.FC = () => {
             return (
                 <NHWAAutoCompleteCompute
                     countryLevel="4"
-                    settingsKey="nhwa-auto-complete-compute-subnational"
+                    settingsKey="nhwa-subn-auto-complete-compute"
                     title={i18n.t(
                         "Module 1 (Subnational single entry) totals with missing sum or sum that does not match the auto-calculated"
                     )}
