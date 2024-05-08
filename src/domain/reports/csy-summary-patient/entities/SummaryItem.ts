@@ -14,4 +14,4 @@ export interface SummaryItem {
     total: string;
 }
 
-export type SummaryType = "patient-characteristics";
+export type SummaryType = "patientCharacteristics";

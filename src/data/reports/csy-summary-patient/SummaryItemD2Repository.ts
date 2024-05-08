@@ -1,17 +1,24 @@
 import _ from "lodash";
 import { getOrgUnitIdsFromPaths } from "../../../domain/common/entities/OrgUnit";
-import { PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
+import { emptyPage, PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
 import { SummaryItem, SummaryType } from "../../../domain/reports/csy-summary-patient/entities/SummaryItem";
-import {
-    SummaryOptions,
-    SummaryItemRepository,
-} from "../../../domain/reports/csy-summary-patient/repositories/SummaryItemRepository";
 import { D2Api, Pager } from "../../../types/d2-api";
 import { promiseMap } from "../../../utils/promises";
 import { CsvData } from "../../common/CsvDataSource";
 import { CsvWriterDataSource } from "../../common/CsvWriterCsvDataSource";
 import { downloadFile } from "../../common/utils/download-file";
+import { NamedRef } from "../../../domain/common/entities/Base";
+import {
+    SummaryItemRepository,
+    SummaryOptions,
+} from "../../../domain/reports/csy-summary-patient/repositories/SummaryItemRepository";
 import { AuditAnalyticsData } from "../../../domain/common/entities/AuditAnalyticsResponse";
+import { Maybe } from "../../../types/utils";
+
+type IndicatorGroup = {
+    displayName: string;
+    indicators: NamedRef[];
+};
 
 export class SummaryItemD2Repository implements SummaryItemRepository {
     constructor(private api: D2Api) {}
@@ -22,185 +29,81 @@ export class SummaryItemD2Repository implements SummaryItemRepository {
         const period = !quarter ? year : `${year}${quarter}`;
         const orgUnitIds = getOrgUnitIdsFromPaths(orgUnitPaths);
 
-        try {
-            const rows = await this.getSummaryItems(summaryType, orgUnitIds, period);
-            const pager: Pager = {
-                page: paging.page,
-                pageSize: paging.pageSize,
-                pageCount: 1,
-                total: 1,
-            };
+        if (_.isEmpty(orgUnitIds)) return emptyPage;
 
-            return { pager, objects: rows };
-        } catch (error) {
-            console.debug(error);
-            return { pager: { page: 1, pageCount: 1, pageSize: 20, total: 1 }, objects: [] };
-        }
+        const rows = await this.getSummaryItems(summaryType, period, orgUnitIds);
+        const pager: Pager = {
+            page: paging.page,
+            pageSize: paging.pageSize,
+            pageCount: 1,
+            total: 1,
+        };
+
+        return { pager, objects: rows };
     }
 
     private async getSummaryItems(
         summaryType: SummaryType,
-        orgUnitIds: string[],
-        period: string
+        period: string,
+        orgUnitIds: string[]
     ): Promise<SummaryItem[]> {
-        const queryStrings = indicatorGroups[summaryType];
+        return _.flatten(
+            await promiseMap(summaryQueryStrings[summaryType], async queryString => {
+                const analyticsResponse = await this.getAnalyticsResponse(period, queryString, orgUnitIds);
+                const analyticsData = new AuditAnalyticsData(analyticsResponse);
 
-        return _(
-            await promiseMap(queryStrings, async queryString => {
-                return await promiseMap(orgUnitIds, async orgUnitId => {
-                    const analyticsReponse = await this.api.analytics
-                        .get({
-                            dimension: [`pe:${period}`, `dx:IN_GROUP-${queryString}`],
-                            filter: [`ou:${orgUnitId}`],
-                            skipMeta: true,
-                            includeNumDen: true,
-                        })
-                        .getData();
+                const indicatorGroup = (await this.getIndicatorGroup(queryString)) ?? {
+                    displayName: "",
+                    indicators: [],
+                };
 
-                    const analyticsData = new AuditAnalyticsData(analyticsReponse);
-
-                    const dataColumnValues = analyticsData.getColumnValues("dx");
-                    const percentageColumnValues = analyticsData.getColumnValues("value");
-                    const numeratorColumnValues = analyticsData.getColumnValues("numerator");
-
-                    const { indicators, displayName } = (await this.getIndicatorGroup(queryString)) ?? {
-                        displayName: "",
-                        indicators: [],
-                    };
-                    const indicatorsInGroup = indicators.filter(indicator => dataColumnValues.includes(indicator.id));
-
-                    const groupName = _(displayName)
-                        .split(" ")
-                        .filter(
-                            word =>
-                                word !== "ETA" &&
-                                word !== "Patient" &&
-                                !_.endsWith(word, "%") &&
-                                !_.startsWith(word, "(")
-                        )
-                        .join(" ")
-                        .valueOf();
-
-                    const rows = indicatorsInGroup.map((indicator, index) => {
-                        const { name } = indicator;
-                        const groupNameIndex = name.indexOf(groupName);
-
-                        let firstLetter = 0;
-                        for (let i = groupNameIndex + groupName.length; i < name.length; i++) {
-                            if (name[i] === " " || name[i] === "-") {
-                                continue;
-                            }
-                            firstLetter = i;
-                            break;
-                        }
-
-                        const skipLetters = [" ", "<", "-"];
-                        let lastLetter = 0;
-                        let realLastLetter = 0;
-                        for (let i = name.length; i > firstLetter; i--) {
-                            // @ts-ignore
-                            if (lastLetter === 0 && indicator[i] >= "0" && indicator[i] <= "9") {
-                                lastLetter = i;
-                                continue;
-                            }
-                            if (
-                                lastLetter !== 0 &&
-                                // @ts-ignore
-                                !skipLetters.includes(indicator[i]) &&
-                                // @ts-ignore
-                                (indicator[i] < "0" || indicator[i] > "9")
-                            ) {
-                                realLastLetter = i;
-                                break;
-                            }
-                        }
-
-                        const subGroup = name.slice(firstLetter, realLastLetter + 1);
-                        const year = name.includes("Total")
-                            ? "Total"
-                            : (name.slice(realLastLetter + 1, lastLetter + 1) + " yr").trim();
-                        const value = `${numeratorColumnValues[index]} (${percentageColumnValues[index]}%)`;
-
-                        return {
-                            group: groupName,
-                            subGroup,
-                            yearLessThan1: year === "< 1 yr" ? value : "0 (0%)",
-                            year1To4: year === "1 - 4yr" ? value : "0 (0%)",
-                            year5To9: year === "5 - 9 yr" ? value : "0 (0%)",
-                            year10To14: year === "10 - 14 yr" ? value : "0 (0%)",
-                            year15To19: year === "15 - 19 yr" ? value : "0 (0%)",
-                            year20To40: year === "20 - 40 yr" ? value : "0 (0%)",
-                            year40To60: year === "40 - 60 yr" ? value : "0 (0%)",
-                            year60To80: year === "60 - 80 yr" ? value : "0 (0%)",
-                            yearGreaterThan80: year === "80+ yr" ? value : "0 (0%)",
-                            unknown: year === "Unknown" ? value : "0 (0%)",
-                            total: year === "Total" ? value : "0 (0%)",
-                        };
-                    });
-
-                    const result: SummaryItem[] = _(rows)
-                        .groupBy(row => `${row.group}-${row.subGroup}`)
-                        .map(groupedRows => {
-                            return {
-                                group: groupedRows[0].group,
-                                subGroup: groupedRows[0].subGroup === "" ? "Other" : groupedRows[0].subGroup,
-                                yearLessThan1: groupedRows.reduce(
-                                    (acc, obj) => (obj.yearLessThan1 !== "0 (0%)" ? obj.yearLessThan1 : acc),
-                                    "0 (0%)"
-                                ),
-                                year1To4: groupedRows.reduce(
-                                    (acc, obj) => (obj.year1To4 !== "0 (0%)" ? obj.year1To4 : acc),
-                                    "0 (0%)"
-                                ),
-                                year5To9: groupedRows.reduce(
-                                    (acc, obj) => (obj.year5To9 !== "0 (0%)" ? obj.year5To9 : acc),
-                                    "0 (0%)"
-                                ),
-                                year10To14: groupedRows.reduce(
-                                    (acc, obj) => (obj.year10To14 !== "0 (0%)" ? obj.year10To14 : acc),
-                                    "0 (0%)"
-                                ),
-                                year15To19: groupedRows.reduce(
-                                    (acc, obj) => (obj.year15To19 !== "0 (0%)" ? obj.year15To19 : acc),
-                                    "0 (0%)"
-                                ),
-                                year20To40: groupedRows.reduce(
-                                    (acc, obj) => (obj.year20To40 !== "0 (0%)" ? obj.year20To40 : acc),
-                                    "0 (0%)"
-                                ),
-                                year40To60: groupedRows.reduce(
-                                    (acc, obj) => (obj.year40To60 !== "0 (0%)" ? obj.year40To60 : acc),
-                                    "0 (0%)"
-                                ),
-                                year60To80: groupedRows.reduce(
-                                    (acc, obj) => (obj.year60To80 !== "0 (0%)" ? obj.year60To80 : acc),
-                                    "0 (0%)"
-                                ),
-                                yearGreaterThan80: groupedRows.reduce(
-                                    (acc, obj) => (obj.yearGreaterThan80 !== "0 (0%)" ? obj.yearGreaterThan80 : acc),
-                                    "0 (0%)"
-                                ),
-                                unknown: groupedRows.reduce(
-                                    (acc, obj) => (obj.unknown !== "0 (0%)" ? obj.unknown : acc),
-                                    "0 (0%)"
-                                ),
-                                total: groupedRows.reduce(
-                                    (acc, obj) => (obj.total !== "0 (0%)" ? obj.total : acc),
-                                    "0 (0%)"
-                                ),
-                            };
-                        })
-                        .value();
-
-                    return result;
-                });
+                return this.getSummaryRows(analyticsData, indicatorGroup);
             })
-        )
-            .flattenDeep()
-            .value();
+        );
     }
 
-    private async getIndicatorGroup(indicatorGroupId: string) {
+    private getSummaryRows(analyticsData: AuditAnalyticsData, indicatorGroup: IndicatorGroup): SummaryItem[] {
+        const dataColumnValues = analyticsData.getColumnValues("dx");
+        const percentageColumnValues = analyticsData.getColumnValues("value");
+        const numeratorColumnValues = analyticsData.getColumnValues("numerator");
+
+        const { indicators, displayName } = indicatorGroup;
+        const indicatorsInGroup = indicators.filter(indicator => dataColumnValues.includes(indicator.id));
+        const groupName = getIndicatorGroupName(displayName);
+
+        const rows = _.map(
+            _.zip(indicatorsInGroup, numeratorColumnValues, percentageColumnValues),
+            ([indicator, numeratorColumnValue, percentageColumnValue]) => {
+                const { name: indicatorName } = indicator ?? { name: "" };
+                const { subGroup, yearType } = processName(indicatorName, groupName);
+                const value = `${numeratorColumnValue} (${percentageColumnValue}%)`;
+
+                return {
+                    group: groupName,
+                    subGroup: subGroup,
+                    yearLessThan1: this.getSummaryItemValue(yearType, "< 1 yr", value),
+                    year1To4: this.getSummaryItemValue(yearType, "1 - 4 yr", value),
+                    year5To9: this.getSummaryItemValue(yearType, "5 - 9 yr", value),
+                    year10To14: this.getSummaryItemValue(yearType, "10 - 14 yr", value),
+                    year15To19: this.getSummaryItemValue(yearType, "15 - 19 yr", value),
+                    year20To40: this.getSummaryItemValue(yearType, "20 - 40 yr", value),
+                    year40To60: this.getSummaryItemValue(yearType, "40 - 60 yr", value),
+                    year60To80: this.getSummaryItemValue(yearType, "60 - 80 yr", value),
+                    yearGreaterThan80: this.getSummaryItemValue(yearType, "80+ yr", value),
+                    unknown: this.getSummaryItemValue(yearType, "Unknown", value),
+                    total: this.getSummaryItemValue(yearType, "Total", value),
+                };
+            }
+        );
+
+        return buildSummaryRows(rows);
+    }
+
+    private getSummaryItemValue(yearType: string, yearTypeValue: string, value: string) {
+        return yearType === yearTypeValue ? value : "0 (0%)";
+    }
+
+    private async getIndicatorGroup(indicatorGroupId: string): Promise<Maybe<IndicatorGroup>> {
         const { indicatorGroups } = await this.api.metadata
             .get({
                 indicatorGroups: {
@@ -221,6 +124,17 @@ export class SummaryItemD2Repository implements SummaryItemRepository {
             .getData();
 
         return _.first(indicatorGroups);
+    }
+
+    private async getAnalyticsResponse(period: string, queryString: string, orgUnitIds: string[]) {
+        return await this.api.analytics
+            .get({
+                dimension: [`pe:${period}`, `dx:IN_GROUP-${queryString}`],
+                filter: [`ou:${orgUnitIds.join(";")}`],
+                skipMeta: true,
+                includeNumDen: true,
+            })
+            .getData();
     }
 
     async save(filename: string, items: SummaryItem[]): Promise<void> {
@@ -251,19 +165,48 @@ export class SummaryItemD2Repository implements SummaryItemRepository {
     }
 }
 
-const indicatorGroups = {
-    "patient-characteristics": [
-        "yrtwRP26Q35",
-        "IY9sVVwtt1Z",
-        "Sdw6iy0I7Bv",
-        "LWwKbbP7YgC",
-        "dYXNSdQFH3X",
-        "fZKMM7uw3Ud",
-        "yEg8gT6e7DC",
-        "u5uO6aSPFbv",
-        "MoBX2wbZ4Db",
-        "Hd7fLgnzPQ8",
+const metadata = {
+    indicatorGroups: {
+        sexPatientId: "yrtwRP26Q35",
+        medicalComorbiditiesId: "IY9sVVwtt1Z",
+        injuryMechanismId: "Sdw6iy0I7Bv",
+        injuryTypeId: "LWwKbbP7YgC",
+        injuryLocationId: "dYXNSdQFH3X",
+        arrivalModeId: "fZKMM7uw3Ud",
+        otUtilizationId: "yEg8gT6e7DC",
+        lengthOfStayId: "u5uO6aSPFbv",
+        dispositionId: "MoBX2wbZ4Db",
+        mortalityId: "Hd7fLgnzPQ8",
+    },
+};
+
+const summaryQueryStrings = {
+    patientCharacteristics: [
+        metadata.indicatorGroups.sexPatientId,
+        metadata.indicatorGroups.medicalComorbiditiesId,
+        metadata.indicatorGroups.injuryMechanismId,
+        metadata.indicatorGroups.injuryTypeId,
+        metadata.indicatorGroups.injuryLocationId,
+        metadata.indicatorGroups.arrivalModeId,
+        metadata.indicatorGroups.otUtilizationId,
+        metadata.indicatorGroups.lengthOfStayId,
+        metadata.indicatorGroups.dispositionId,
+        metadata.indicatorGroups.mortalityId,
     ],
+};
+
+const yearTypes = {
+    yearLessThan1: "< 1 yr",
+    year1To4: "1 - 4 yr",
+    year5To9: "5 - 9 yr",
+    year10To14: "10 - 14 yr",
+    year15To19: "15 - 19 yr",
+    year20To40: "20 - 40 yr",
+    year40To60: "40 - 60 yr",
+    year60To80: "60 - 80 yr",
+    yearGreaterThan80: "80+ yr",
+    total: "Total",
+    unknown: "Unknown",
 };
 
 const csvFields = [
@@ -285,3 +228,63 @@ const csvFields = [
 type CsvField = typeof csvFields[number];
 
 type SummaryItemRow = Record<CsvField, string>;
+
+function getIndicatorGroupName(displayName: string) {
+    return _(displayName)
+        .split(" ")
+        .filter(word => word !== "ETA" && word !== "Patient" && !_.endsWith(word, "%") && !_.startsWith(word, "("))
+        .join(" ")
+        .valueOf();
+}
+
+function cleanIndicatorName(indicatorName: string): string {
+    const cleanedString = _.flow([
+        (name: string) => _.replace(name, /^ETA\s*/, ""), // Remove "ETA"
+        (name: string) => _.replace(name, /\s*Patient\s*%\s*\((events)\)\s*$/gi, ""), // Remove "Patient %(events)"
+        (name: string) => _.replace(name, /(\(%\)\(events\)|""\(%\) \(events\)|%\s*\(events\))/gi, ""), // Remove "(%)(events)"
+        (name: string) => _.replace(name, /\(avg\)\(events\)|""\(avg\) \(events\)|\(avg\)|\(events\)/gi, ""), // Remove "(avg)(events)"
+        (name: string) => _.replace(name, /\(sd\)\(events\)|""\(sd\) \(events\)|\(sd\)|\(events\)/gi, ""), // Remove "(SD)(events)"
+    ])(indicatorName);
+
+    return cleanedString;
+}
+
+function processName(indicatorName: string, groupName: string): { subGroup: string; yearType: string } {
+    const cleanedString = cleanIndicatorName(indicatorName);
+
+    const cleanedFromGroupName = _.replace(cleanedString, groupName, ""); // Remove groupName
+    const matchedYear = _.values(yearTypes).find(type => cleanedString.includes(type)) ?? "Unknown";
+    const subGroup = _.replace(cleanedFromGroupName, matchedYear, "").trim() || "Other"; // Remove matchedYearType
+
+    return {
+        subGroup: _.trimStart(subGroup, "-").trim(),
+        yearType: matchedYear,
+    };
+}
+
+function buildSummaryRows(rows: SummaryItemRow[]): SummaryItem[] {
+    return _(rows)
+        .groupBy(row => `${row.group}-${row.subGroup}`)
+        .map(groupedRows => {
+            return {
+                group: groupedRows[0].group,
+                subGroup: groupedRows[0].subGroup,
+                yearLessThan1: groupedRows.reduce((acc, obj) => getRowValue(obj.yearLessThan1, acc), "0 (0%)"),
+                year1To4: groupedRows.reduce((acc, obj) => getRowValue(obj.year1To4, acc), "0 (0%)"),
+                year5To9: groupedRows.reduce((acc, obj) => getRowValue(obj.year5To9, acc), "0 (0%)"),
+                year10To14: groupedRows.reduce((acc, obj) => getRowValue(obj.year10To14, acc), "0 (0%)"),
+                year15To19: groupedRows.reduce((acc, obj) => getRowValue(obj.year15To19, acc), "0 (0%)"),
+                year20To40: groupedRows.reduce((acc, obj) => getRowValue(obj.year20To40, acc), "0 (0%)"),
+                year40To60: groupedRows.reduce((acc, obj) => getRowValue(obj.year40To60, acc), "0 (0%)"),
+                year60To80: groupedRows.reduce((acc, obj) => getRowValue(obj.year60To80, acc), "0 (0%)"),
+                yearGreaterThan80: groupedRows.reduce((acc, obj) => getRowValue(obj.yearGreaterThan80, acc), "0 (0%)"),
+                unknown: groupedRows.reduce((acc, obj) => getRowValue(obj.unknown, acc), "0 (0%)"),
+                total: groupedRows.reduce((acc, obj) => getRowValue(obj.total, acc), "0 (0%)"),
+            };
+        })
+        .value();
+}
+
+function getRowValue(obj: string, acc: string): string {
+    return obj !== "0 (0%)" ? obj : acc;
+}

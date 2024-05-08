@@ -1,4 +1,3 @@
-import { Config } from "../../../common/entities/Config";
 import { PaginatedObjects, Paging, Sorting } from "../../../common/entities/PaginatedObjects";
 import { SummaryItem, SummaryType } from "../entities/SummaryItem";
 
@@ -8,7 +7,6 @@ export interface SummaryItemRepository {
 }
 
 export interface SummaryOptions {
-    config: Config;
     paging: Paging;
     sorting: Sorting<SummaryItem>;
     year: string;
