@@ -9,4 +9,5 @@ export type ReportType =
     | "summary-patient"
     | "summary-mortality"
     | "authMonitoring"
-    | "data-quality";
+    | "data-quality"
+    | "twoFactorUserMonitoring";
