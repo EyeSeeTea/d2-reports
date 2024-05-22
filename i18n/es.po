@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2024-09-17T13:12:46.387Z\n"
+"POT-Creation-Date: 2024-09-17T14:37:32.167Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -451,16 +451,13 @@ msgstr ""
 msgid "Continue"
 msgstr ""
 
+msgid "Select File"
+msgstr ""
+
 msgid "Version has been successfully patched"
 msgstr ""
 
-msgid "Error encountered when parsing version"
-msgstr ""
-
 msgid "Upload finished"
-msgstr ""
-
-msgid "Error parsing the file"
 msgstr ""
 
 msgid "Recalculation has been cancelled successfully"
@@ -834,6 +831,27 @@ msgid "Dismiss"
 msgstr ""
 
 msgid "Module 1 (subnational) with fixes for organisation unit name"
+msgstr ""
+
+msgid "User Two Factor Monitoring"
+msgstr ""
+
+msgid "External auth"
+msgstr ""
+
+msgid "TwoFA"
+msgstr ""
+
+msgid "Email"
+msgstr ""
+
+msgid "Disabled"
+msgstr ""
+
+msgid "User groups"
+msgstr ""
+
+msgid "Open ID"
 msgstr ""
 
 msgctxt "Facility Dispo = Morgue or Died"

@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2024-09-17T13:12:46.387Z\n"
-"PO-Revision-Date: 2024-09-17T13:12:46.387Z\n"
+"POT-Creation-Date: 2024-09-17T14:37:32.167Z\n"
+"PO-Revision-Date: 2024-09-17T14:37:32.167Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -450,16 +450,13 @@ msgstr ""
 msgid "Continue"
 msgstr ""
 
+msgid "Select File"
+msgstr ""
+
 msgid "Version has been successfully patched"
 msgstr ""
 
-msgid "Error encountered when parsing version"
-msgstr ""
-
 msgid "Upload finished"
-msgstr ""
-
-msgid "Error parsing the file"
 msgstr ""
 
 msgid "Recalculation has been cancelled successfully"
@@ -833,6 +830,27 @@ msgid "Dismiss"
 msgstr ""
 
 msgid "Module 1 (subnational) with fixes for organisation unit name"
+msgstr ""
+
+msgid "User Two Factor Monitoring"
+msgstr ""
+
+msgid "External auth"
+msgstr ""
+
+msgid "TwoFA"
+msgstr ""
+
+msgid "Email"
+msgstr ""
+
+msgid "Disabled"
+msgstr ""
+
+msgid "User groups"
+msgstr ""
+
+msgid "Open ID"
 msgstr ""
 
 msgctxt "Facility Dispo = Morgue or Died"

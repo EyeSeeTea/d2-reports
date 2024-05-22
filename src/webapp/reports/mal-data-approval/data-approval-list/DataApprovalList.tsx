@@ -39,7 +39,8 @@ import { Notifications, NotificationsOff, PlaylistAddCheck, ThumbUp } from "@mat
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
 import { MAL_WMR_FORM } from "../../../../data/reports/mal-data-approval/MalDataApprovalDefaultRepository";
 
-export const DataApprovalList: React.FC = React.memo(() => {
+export const DataApprovalList: React.FC<{ dataSetCode?: string }> = React.memo(props => {
+    const { dataSetCode } = props;
     const { compositionRoot, config, api } = useAppContext();
     const { currentUser } = config;
     const [isDialogOpen, { enable: openDialog, disable: closeDialog }] = useBooleanState(false);
@@ -454,8 +455,14 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
     const getRows = useMemo(
         () => async (_search: string, paging: TablePagination, sorting: TableSorting<DataApprovalViewModel>) => {
+            const filteredDataSets = dataSetCode
+                ? _(config.dataSets)
+                      .pickBy(value => value.code === dataSetCode)
+                      .value()
+                : config.dataSets;
+
             const { pager, objects } = await compositionRoot.malDataApproval.get({
-                config,
+                config: { ...config, dataSets: filteredDataSets },
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),
                 useOldPeriods: oldPeriods,
@@ -466,7 +473,16 @@ export const DataApprovalList: React.FC = React.memo(() => {
             console.debug("Reloading", reloadKey);
             return { pager, objects: getDataApprovalViews(config, objects, monitoring) };
         },
-        [compositionRoot.malDataApproval, config, oldPeriods, filters, selectablePeriods, reloadKey, getMonitoringValue]
+        [
+            dataSetCode,
+            compositionRoot.malDataApproval,
+            config,
+            oldPeriods,
+            filters,
+            selectablePeriods,
+            reloadKey,
+            getMonitoringValue,
+        ]
     );
 
     function getUseCaseOptions(filter: DataSetsFilter, selectablePeriods: string[]) {
@@ -549,7 +565,12 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 onChangeSearch={undefined}
                 onReorderColumns={saveReorderedColumns}
             >
-                <Filters values={filters} options={filterOptions} onChange={setFilters} />
+                <Filters
+                    hideDataSets={Boolean(dataSetCode)}
+                    values={filters}
+                    options={filterOptions}
+                    onChange={setFilters}
+                />
             </ObjectsList>
             <ConfirmationDialog
                 isOpen={isDialogOpen}
