@@ -147,6 +147,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             dataSets: {
                 fields: {
                     id: true,
+                    code: true,
                     displayName: toName,
                     dataSetElements: {
                         dataElement: { id: true, name: true },
