@@ -55,7 +55,7 @@ export function getDataApprovalViews(
             modificationCount: item.modificationCount,
             monitoring: getDataDuplicationItemMonitoringValue(
                 item,
-                config.dataSets["PWCUb3Se1Ie"]?.name ?? "",
+                config.dataSets["CWuqJ3dtQC4"]?.name ?? "",
                 monitoring
             ),
             approved: item.approved,

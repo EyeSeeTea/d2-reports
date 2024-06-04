@@ -24,7 +24,7 @@ const base = {
         approvalWorkflows: { namePrefix: "NHWA" },
     },
     mal: {
-        dataSets: { namePrefix: "MAL - WMR Form", nameExcluded: /-APVD$/ },
+        dataSets: { namePrefix: "MAL - WMR Form", nameExcluded: /(?: - OLD|-APVD)$/ },
         sqlViewNames: [
             SQL_VIEW_DATA_DUPLICATION_NAME,
             SQL_VIEW_MAL_METADATA_NAME,
