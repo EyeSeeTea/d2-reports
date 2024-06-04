@@ -321,7 +321,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                                 monitoring,
                                 monitoringValues,
                                 "dataSets",
-                                config.dataSets["PWCUb3Se1Ie"]?.name ?? "",
+                                config.dataSets["CWuqJ3dtQC4"]?.name ?? "",
                                 [dataNotificationsUserGroup]
                             )
                         );
@@ -357,7 +357,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                                 monitoring,
                                 monitoringValues,
                                 "dataSets",
-                                config.dataSets["PWCUb3Se1Ie"]?.name ?? "",
+                                config.dataSets["CWuqJ3dtQC4"]?.name ?? "",
                                 [dataNotificationsUserGroup]
                             )
                         );
@@ -390,7 +390,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                                 monitoring,
                                 monitoringValues,
                                 "dataSets",
-                                config.dataSets["PWCUb3Se1Ie"]?.name ?? "",
+                                config.dataSets["CWuqJ3dtQC4"]?.name ?? "",
                                 [dataNotificationsUserGroup]
                             )
                         );
