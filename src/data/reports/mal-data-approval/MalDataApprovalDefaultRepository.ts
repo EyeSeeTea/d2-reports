@@ -685,7 +685,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                 dataSetElements: dataSetElementsType[];
                 sections: { id: string }[];
             } = await this.api
-                .get<any>(`/dataSets/CWuqJ3dtQC4`, { fields: "sections,dataSetElements[dataElement[id,name]]" })
+                .get<any>(`/dataSets/${MAL_WMR_FORM}`, { fields: "sections,dataSetElements[dataElement[id,name]]" })
                 .getData();
 
             if (_.isEmpty(dataSetData.sections) || _.isEmpty(dataSetData.dataSetElements)) {
@@ -805,3 +805,5 @@ function mergeHeadersAndData(
     });
     return paginate(rowsFiltered, paging);
 }
+
+export const MAL_WMR_FORM = "CWuqJ3dtQC4";
