@@ -37,6 +37,7 @@ import { DataSetsFilter, Filters } from "./Filters";
 import { DataDifferencesList } from "../DataDifferencesList";
 import { Notifications, NotificationsOff, PlaylistAddCheck, ThumbUp } from "@material-ui/icons";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
+import { MAL_WMR_FORM } from "../../../../data/reports/mal-data-approval/MalDataApprovalDefaultRepository";
 
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config, api } = useAppContext();
@@ -321,7 +322,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                                 monitoring,
                                 monitoringValues,
                                 "dataSets",
-                                config.dataSets["CWuqJ3dtQC4"]?.name ?? "",
+                                config.dataSets[MAL_WMR_FORM]?.name ?? "",
                                 [dataNotificationsUserGroup]
                             )
                         );
@@ -357,7 +358,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                                 monitoring,
                                 monitoringValues,
                                 "dataSets",
-                                config.dataSets["CWuqJ3dtQC4"]?.name ?? "",
+                                config.dataSets[MAL_WMR_FORM]?.name ?? "",
                                 [dataNotificationsUserGroup]
                             )
                         );
@@ -390,7 +391,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                                 monitoring,
                                 monitoringValues,
                                 "dataSets",
-                                config.dataSets["CWuqJ3dtQC4"]?.name ?? "",
+                                config.dataSets[MAL_WMR_FORM]?.name ?? "",
                                 [dataNotificationsUserGroup]
                             )
                         );

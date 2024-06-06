@@ -1,3 +1,4 @@
+import { MAL_WMR_FORM } from "../../../data/reports/mal-data-approval/MalDataApprovalDefaultRepository";
 import { Config } from "../../../domain/common/entities/Config";
 import {
     MalDataApprovalItem,
@@ -55,7 +56,7 @@ export function getDataApprovalViews(
             modificationCount: item.modificationCount,
             monitoring: getDataDuplicationItemMonitoringValue(
                 item,
-                config.dataSets["CWuqJ3dtQC4"]?.name ?? "",
+                config.dataSets[MAL_WMR_FORM]?.name ?? "",
                 monitoring
             ),
             approved: item.approved,
