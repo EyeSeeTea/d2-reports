@@ -7,6 +7,7 @@ import styled from "styled-components";
 import { Dropdown, DropdownProps } from "@eyeseetea/d2-ui-components";
 import i18n from "../../../../locales";
 import _ from "lodash";
+import { SummaryType } from "../../../../domain/reports/csy-summary-mortality/entities/SummaryItem";
 
 export interface FiltersProps {
     values: Filter;
@@ -15,20 +16,20 @@ export interface FiltersProps {
 }
 
 export interface Filter {
-    summaryType: string;
+    summaryType: SummaryType;
     orgUnitPaths: Id[];
     periodType: string;
     year: string;
     quarter?: string;
 }
 
-interface FilterOptions {
+export interface FilterOptions {
     periods: string[];
 }
 
-export const summaryTypeItems = [
+const summaryTypeItems = [
     {
-        value: "mortality-injury-severity",
+        value: "mortalityInjurySeverity",
         text: i18n.t("Mortality Injury Severity"),
     },
 ];
@@ -67,7 +68,7 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
 
     const setSummaryType = React.useCallback<SingleDropdownHandler>(
         summaryType => {
-            onChange(filter => ({ ...filter, summaryType: summaryType ?? "" }));
+            onChange(filter => ({ ...filter, summaryType: summaryType as SummaryType }));
         },
         [onChange]
     );

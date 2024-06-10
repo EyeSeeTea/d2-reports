@@ -1,4 +1,3 @@
-import { Config } from "../../../domain/common/entities/Config";
 import { AuditItem } from "../../../domain/reports/csy-audit-emergency/entities/AuditItem";
 
 export interface AuditViewModel {
@@ -6,10 +5,10 @@ export interface AuditViewModel {
     registerId: string;
 }
 
-export function getAuditViews(_config: Config, items: AuditItem[]): AuditViewModel[] {
+export function getAuditViews(items: AuditItem[]): AuditViewModel[] {
     return items.map((item, i) => {
         return {
-            id: String(i),
+            id: i.toString(),
             registerId: item.registerId,
         };
     });
