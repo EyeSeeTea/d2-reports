@@ -131,13 +131,15 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
 
                 const excludedRoles = user.getExcludedRoles(
                     excludedRolesByRole,
+                    excludedRolesByUser,
                     userMonitoring.excludedRoles,
                     allowedUserRoles
                 );
                 const excludedAuthorities = user.getExcludedAuthorities(
                     allowedUserRoles,
                     userMonitoring.excludedRoles,
-                    excludedRolesByRole
+                    excludedRolesByRole,
+                    excludedRolesByUser
                 );
 
                 const templateGroups = rolesByUserGroup
@@ -163,7 +165,7 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
                 const hasExcludedRole = !user.hasExcludedRole(excludedRoles) || !_.isEmpty(userDetail.roles);
                 const isTemplateUser = user.isTemplateUser(userTemplateIds);
                 const isExcludedByRolesByGroup = user.isExcludedByRolesByGroup(excludedRolesByGroup);
-                const isExcludedByRolesByUsers = user.isExcludedByRolesByUsers(excludedRolesByUser);
+                const isExcludedByRolesByUsers = user.isExcludedByRolesByUsers(excludedRolesByUser, userDetail.roles);
 
                 return (
                     hasExcludedAuthorities &&
