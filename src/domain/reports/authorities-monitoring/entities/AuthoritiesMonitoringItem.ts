@@ -1,5 +1,5 @@
 import { PaginatedObjects } from "../../../../types/d2-api";
-import { UserRole } from "./User";
+import { UserRole } from "./UserPermissions";
 
 export interface AuthoritiesMonitoringItem {
     id: string;
