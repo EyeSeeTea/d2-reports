@@ -129,8 +129,13 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
                     .filter(templateGroupRole => userTemplateGroups.includes(templateGroupRole.userGroup.id))
                     .flatMap(templateGroupRole => templateGroupRole.roles);
 
-                const excludedAuthorities = user.getExcludedAuthorities(allowedUserRoles);
-                const excludedRoles = user.getExcludedRoles(excludedRolesByRole, allowedUserRoles);
+                const excludedRoles = user.getExcludedRoles(
+                    excludedRolesByRole,
+                    userMonitoring.excludedRoles,
+                    allowedUserRoles
+                );
+                const excludedAuthorities = user.getExcludedAuthorities(allowedUserRoles, userMonitoring.excludedRoles);
+
                 const templateGroups = rolesByUserGroup
                     .filter(userGroupRole => userGroupIds.includes(userGroupRole.userGroup.id))
                     .map(templateGroup => templateGroup.userGroup.name);
@@ -151,7 +156,7 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
 
                 const hasExcludedAuthorities = !_.isEmpty(userDetail.authorities);
                 const isExcludedUser = user.isExcludedUser(excludedUsers);
-                const isExcludedRole = user.isExcludedRole(excludedRoles);
+                const hasExcludedRole = !user.hasExcludedRole(excludedRoles) || !_.isEmpty(userDetail.roles);
                 const isTemplateUser = user.isTemplateUser(userTemplateIds);
                 const isExcludedByRolesByGroup = user.isExcludedByRolesByGroup(excludedRolesByGroup);
                 const isExcludedByRolesByUsers = user.isExcludedByRolesByUsers(excludedRolesByUser);
@@ -159,7 +164,7 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
                 return (
                     hasExcludedAuthorities &&
                     !isTemplateUser &&
-                    !isExcludedRole &&
+                    hasExcludedRole &&
                     !isExcludedUser &&
                     !isExcludedByRolesByGroup &&
                     !isExcludedByRolesByUsers

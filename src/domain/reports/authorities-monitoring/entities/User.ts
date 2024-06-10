@@ -59,7 +59,7 @@ export class User {
         return excludeUsers.some(excludedUser => this.id === excludedUser.id);
     }
 
-    public isExcludedRole(excludeRoles: NamedRef[]): boolean {
+    public hasExcludedRole(excludeRoles: NamedRef[]): boolean {
         const excludedRoleIds = excludeRoles.map(role => role.id);
         const userRoleIds = this.userCredentials.userRoles.map(role => role.id);
 
@@ -94,24 +94,35 @@ export class User {
         });
     }
 
-    public getExcludedRoles(excludeRolesByRoles: ExcludeRolesByRole[], allowedUserRoles: UserRole[]): UserRole[] {
+    public getExcludedRoles(
+        excludeRolesByRoles: ExcludeRolesByRole[],
+        excludedRoles: NamedRef[],
+        allowedUserRoles: UserRole[]
+    ): UserRole[] {
         const currentUserRoles = this.userCredentials.userRoles;
-        const excludedAuthorities = this.getExcludedAuthorities(allowedUserRoles);
+        const excludedAuthorities = this.getExcludedAuthorities(allowedUserRoles, excludedRoles);
 
-        const excludedRoles = currentUserRoles
-            .filter(role => role.authorities.some(authority => excludedAuthorities.includes(authority)))
+        return currentUserRoles
+            .filter(role => {
+                const hasExcludedAuthority = role.authorities.some(authority =>
+                    excludedAuthorities.includes(authority)
+                );
+                const hasExcludedRole = excludedRoles.some(excludedRole => role.id === excludedRole.id);
+
+                return hasExcludedAuthority && !hasExcludedRole;
+            })
             .filter(
                 excludedRole =>
                     !excludeRolesByRoles.some(
                         excludedRolesByRole => excludedRolesByRole.ignore_role.id === excludedRole.id
                     )
             );
-
-        return excludedRoles;
     }
 
-    public getExcludedAuthorities(allowedUserRoles: UserRole[]): string[] {
-        const currentUserRoles = this.userCredentials.userRoles;
+    public getExcludedAuthorities(allowedUserRoles: UserRole[], excludedRoles: NamedRef[]): string[] {
+        const currentUserRoles = this.userCredentials.userRoles.filter(
+            userRole => !excludedRoles.map(excludedRole => excludedRole.id).includes(userRole.id)
+        );
         const currentUserAuthorities = currentUserRoles.flatMap(userRole => userRole.authorities);
         const allowedUserAuthorities = allowedUserRoles.flatMap(userRole => userRole.authorities);
 
