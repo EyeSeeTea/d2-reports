@@ -23,11 +23,13 @@ import {
     ExcludeRolesByRole,
     ExcludeRolesByUser,
     TemplateGroup,
+    UserPermissions,
     User,
     UserDetails,
-} from "../../../domain/reports/authorities-monitoring/entities/User";
+    UserRole,
+} from "../../../domain/reports/authorities-monitoring/entities/UserPermissions";
 
-type UserMonitoring = {
+export type UserMonitoring = {
     templates: TemplateGroup[];
     excludedRoles: NamedRef[];
     excludedUsers: NamedRef[];
@@ -95,15 +97,7 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
     }
 
     private async getAuthoritiesMonitoringObject(userMonitoring: UserMonitoring): Promise<AuthoritiesMonitoringItem[]> {
-        const {
-            excludedRoles,
-            excludedUsers,
-            excludedRolesByGroup,
-            excludedRolesByRole,
-            excludedRolesByUser,
-            templates,
-        } = userMonitoring;
-        const userTemplateIds = templates.map(template => template.template.id);
+        const { templates } = userMonitoring;
         const templateGroupUserGroups = templates.map(template => template.group.id);
         const userDetails = await this.getUserDetails(templateGroupUserGroups);
 
@@ -118,29 +112,16 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
 
         return _(userDetails)
             .map(userDetail => {
-                const user = new User(userDetail);
-
                 const userGroupIds = userDetail.userGroups.map(userGroup => userGroup.id);
                 const userTemplateGroups = userGroupIds.filter(userGroup =>
                     templateGroupUserGroups.includes(userGroup)
                 );
-
                 const allowedUserRoles = rolesByUserGroup
                     .filter(templateGroupRole => userTemplateGroups.includes(templateGroupRole.userGroup.id))
                     .flatMap(templateGroupRole => templateGroupRole.roles);
 
-                const excludedRoles = user.getExcludedRoles(
-                    excludedRolesByRole,
-                    excludedRolesByUser,
-                    userMonitoring.excludedRoles,
-                    allowedUserRoles
-                );
-                const excludedAuthorities = user.getExcludedAuthorities(
-                    allowedUserRoles,
-                    userMonitoring.excludedRoles,
-                    excludedRolesByRole,
-                    excludedRolesByUser
-                );
+                const excludedRoles = this.getExcludedRoles(userDetail, userMonitoring, allowedUserRoles);
+                const excludedAuthorities = this.getExcludedAuthorities(userDetail, userMonitoring, allowedUserRoles);
 
                 const templateGroups = rolesByUserGroup
                     .filter(userGroupRole => userGroupIds.includes(userGroupRole.userGroup.id))
@@ -157,15 +138,15 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
                     roles: excludedRoles,
                 };
             })
-            .filter(userDetail => {
-                const user = new User(userDetail);
+            .filter((userDetail: UserDetails) => {
+                const user = new UserPermissions(userDetail, userMonitoring);
 
                 const hasExcludedAuthorities = !_.isEmpty(userDetail.authorities);
-                const isExcludedUser = user.isExcludedUser(excludedUsers);
-                const hasExcludedRole = !user.hasExcludedRole(excludedRoles) || !_.isEmpty(userDetail.roles);
-                const isTemplateUser = user.isTemplateUser(userTemplateIds);
-                const isExcludedByRolesByGroup = user.isExcludedByRolesByGroup(excludedRolesByGroup);
-                const isExcludedByRolesByUsers = user.isExcludedByRolesByUsers(excludedRolesByUser, userDetail.roles);
+                const hasExcludedRole = !user.hasExcludedRole() || !_.isEmpty(userDetail.roles);
+                const isExcludedUser = user.isExcludedUser();
+                const isTemplateUser = user.isTemplateUser();
+                const isExcludedByRolesByGroup = user.isExcludedByRolesByGroup();
+                const isExcludedByRolesByUsers = user.isExcludedByRolesByUsers();
 
                 return (
                     hasExcludedAuthorities &&
@@ -196,6 +177,46 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
 
             return isInTemplateGroup && hasUserRole && isInSearchQuery;
         });
+    }
+
+    private getExcludedRoles(user: User, userMonitoring: UserMonitoring, allowedUserRoles: UserRole[]): UserRole[] {
+        const { excludedRolesByRole, excludedRolesByUser, excludedRoles } = userMonitoring;
+
+        const currentUserRoles = user.userCredentials.userRoles;
+        const excludedAuthorities = this.getExcludedAuthorities(user, userMonitoring, allowedUserRoles);
+
+        return currentUserRoles.filter(role => {
+            const hasExcludedAuthority = role.authorities.some(authority => excludedAuthorities.includes(authority));
+            const hasExcludedRole = excludedRoles.some(excludedRole => role.id === excludedRole.id);
+            const isExcludedByRoleByRole = excludedRolesByRole.some(
+                excludedRolesByRole => excludedRolesByRole.ignore_role.id === role.id
+            );
+            const isExcludedByRoleByUser = excludedRolesByUser.some(
+                excludedRolesByUser => excludedRolesByUser.role.id === role.id
+            );
+
+            return hasExcludedAuthority && !hasExcludedRole && !isExcludedByRoleByRole && !isExcludedByRoleByUser;
+        });
+    }
+
+    private getExcludedAuthorities(user: User, userMonitoring: UserMonitoring, allowedUserRoles: UserRole[]): string[] {
+        const { excludedRolesByRole, excludedRolesByUser, excludedRoles } = userMonitoring;
+
+        const currentUserRoles = user.userCredentials.userRoles.filter(userRole => {
+            const isRoleExcluded = excludedRoles.map(excludedRole => excludedRole.id).includes(userRole.id);
+            const isRoleExcludedByRoles = excludedRolesByRole.some(
+                excludedRolesByRole => excludedRolesByRole.ignore_role.id === userRole.id
+            );
+            const isRoleExcludedByUsers = excludedRolesByUser.some(
+                excludeRolesByUser => excludeRolesByUser.role.id === userRole.id
+            );
+
+            return !isRoleExcluded && !isRoleExcludedByRoles && !isRoleExcludedByUsers;
+        });
+        const currentUserAuthorities = currentUserRoles.flatMap(userRole => userRole.authorities);
+        const allowedUserAuthorities = allowedUserRoles.flatMap(userRole => userRole.authorities);
+
+        return _.difference(currentUserAuthorities, allowedUserAuthorities);
     }
 
     async save(filename: string, items: AuthoritiesMonitoringItem[]): Promise<void> {
@@ -229,8 +250,8 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
         return this.storageClient.saveObject<string[]>(namespace, columns);
     }
 
-    private async getUserDetails(userGroupIds: string[]): Promise<UserDetails[]> {
-        let users: UserDetails[] = [];
+    private async getUserDetails(userGroupIds: string[]): Promise<User[]> {
+        let users: User[] = [];
         let currentPage = 1;
         let response;
         const pageSize = 250;
@@ -273,9 +294,9 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
         }
     }
 
-    private async getUserTemplate(userId: string): Promise<UserDetails> {
+    private async getUserTemplate(userId: string): Promise<User> {
         return await this.api
-            .get<UserDetails>(`/users/${userId}`, {
+            .get<User>(`/users/${userId}`, {
                 fields: "id,name,userCredentials[username,lastLogin,userRoles[id,name,authorities]]",
             })
             .getData();

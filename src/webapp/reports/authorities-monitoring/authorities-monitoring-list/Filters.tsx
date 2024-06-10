@@ -8,7 +8,7 @@ import { FilterList } from "@material-ui/icons";
 import { useBooleanState } from "../../../utils/use-boolean";
 import { MultiSelectorFilterButton } from "../../../components/multi-selector/MultiSelectorFilterButton";
 import { NamedRef } from "../../../../domain/common/entities/Ref";
-import { UserRole } from "../../../../domain/reports/authorities-monitoring/entities/User";
+import { UserRole } from "../../../../domain/reports/authorities-monitoring/entities/UserPermissions";
 
 export interface DataSetsFiltersProps {
     values: Filter;

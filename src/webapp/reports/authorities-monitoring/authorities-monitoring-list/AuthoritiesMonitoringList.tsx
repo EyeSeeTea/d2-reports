@@ -18,7 +18,7 @@ import { Filter, Filters } from "./Filters";
 import _ from "lodash";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
 import { AuthoritiesMonitoringItem } from "../../../../domain/reports/authorities-monitoring/entities/AuthoritiesMonitoringItem";
-import { UserRole } from "../../../../domain/reports/authorities-monitoring/entities/User";
+import { UserRole } from "../../../../domain/reports/authorities-monitoring/entities/UserPermissions";
 
 export const AuthoritiesMonitoringList: React.FC = React.memo(() => {
     const { compositionRoot } = useAppContext();
