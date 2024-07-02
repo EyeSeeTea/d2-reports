@@ -201,7 +201,7 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
 
     private getUniqueWorkFlows(dataSets: DataApprovalItemIdentifier[]): DataApprovalItemIdentifier[] {
         return _(dataSets)
-            .uniqBy(ds => ds.workflow)
+            .uniqBy(ds => `${ds.workflow}.${ds.period}.${ds.orgUnit}`)
             .value();
     }
 
