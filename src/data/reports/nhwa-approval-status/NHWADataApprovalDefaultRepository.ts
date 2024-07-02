@@ -150,7 +150,8 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
 
     async approve(dataSets: DataApprovalItemIdentifier[]): Promise<boolean> {
         try {
-            const response = await promiseMap(dataSets, async approval =>
+            const uniqueDataSets = this.getUniqueWorkFlows(dataSets);
+            const response = await promiseMap(uniqueDataSets, async approval =>
                 this.api
                     .post<any>(
                         "/dataApprovals",
@@ -159,7 +160,6 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
                     )
                     .getData()
             );
-
             return _.every(response, item => item === "");
         } catch (error: any) {
             return false;
@@ -186,7 +186,8 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
 
     async unapprove(dataSets: DataApprovalItemIdentifier[]): Promise<boolean> {
         try {
-            const response = await promiseMap(dataSets, async approval =>
+            const uniqueDataSets = this.getUniqueWorkFlows(dataSets);
+            const response = await promiseMap(uniqueDataSets, async approval =>
                 this.api
                     .delete<any>("/dataApprovals", { wf: approval.workflow, pe: approval.period, ou: approval.orgUnit })
                     .getData()
@@ -196,6 +197,12 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
         } catch (error: any) {
             return false;
         }
+    }
+
+    private getUniqueWorkFlows(dataSets: DataApprovalItemIdentifier[]): DataApprovalItemIdentifier[] {
+        return _(dataSets)
+            .uniqBy(ds => ds.workflow)
+            .value();
     }
 
     async getColumns(): Promise<string[]> {
