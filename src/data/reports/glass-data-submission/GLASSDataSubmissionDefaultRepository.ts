@@ -1274,7 +1274,7 @@ type OrgUnitNode = {
 
 function getDataSubmissionPeriods(): number[] {
     const currentYear = new Date().getFullYear();
-    const dataSubmissionPeriods = _.range(currentYear - 7, currentYear);
+    const dataSubmissionPeriods = _.range(currentYear - 7, currentYear + 1);
 
     return dataSubmissionPeriods;
 }
