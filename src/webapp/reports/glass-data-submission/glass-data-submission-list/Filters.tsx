@@ -24,6 +24,7 @@ import {
     Status,
 } from "../../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 import { useDataSubmissionList } from "./useDataSubmissionList";
+import { Button } from "@material-ui/core";
 
 export interface DataSetsFiltersProps {
     values: Filter;
@@ -91,6 +92,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     }, []);
 
     const [orgUnits, setOrgUnits] = useState<OrgUnit[]>([]);
+    const [filterValues, setFilterValues] = useState(emptySubmissionFilter);
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
 
     const moduleItems = useMemoOptionsFromNamedRef(userModules);
@@ -141,12 +143,9 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { orgUnitPaths } = filter;
     const orgUnitsByPath = React.useMemo(() => _.keyBy(orgUnits, ou => ou.path), [orgUnits]);
 
-    const setModule = useCallback<SingleDropdownHandler>(
-        module => {
-            onChange(filter => ({ ...filter, module: module as Module }));
-        },
-        [onChange]
-    );
+    const setModule = useCallback<SingleDropdownHandler>(module => {
+        setFilterValues(filter => ({ ...filter, module: module as Module }));
+    }, []);
 
     const setOrgUnitPaths = React.useCallback<OrgUnitsFilterButtonProps["setSelected"]>(
         newSelectedPaths => {
@@ -179,111 +178,134 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 .uniq()
                 .value();
 
-            onChange(prev => ({ ...prev, orgUnitPaths: newSelectedPathsWithChildren }));
+            setFilterValues(prev => ({ ...prev, orgUnitPaths: newSelectedPathsWithChildren }));
         },
-        [onChange, orgUnitPaths, orgUnitsByPath]
+        [orgUnitPaths, orgUnitsByPath]
     );
 
     const setPeriods = React.useCallback<DropdownHandler>(
-        periods => onChange(prev => ({ ...prev, periods })),
-        [onChange]
+        periods => setFilterValues(prev => ({ ...prev, periods })),
+        []
     );
 
-    const setStartDate = React.useCallback<DatePickerHandler>(
-        from => onChange(prev => ({ ...prev, from })),
-        [onChange]
-    );
+    const setStartDate = React.useCallback<DatePickerHandler>(from => setFilterValues(prev => ({ ...prev, from })), []);
 
-    const setEndDate = React.useCallback<DatePickerHandler>(to => onChange(prev => ({ ...prev, to })), [onChange]);
+    const setEndDate = React.useCallback<DatePickerHandler>(to => setFilterValues(prev => ({ ...prev, to })), []);
 
     const setQuarters = React.useCallback<DropdownHandler>(
-        quarters => onChange(prev => ({ ...prev, quarters })),
-        [onChange]
+        quarters => setFilterValues(prev => ({ ...prev, quarters })),
+        []
     );
 
-    const setCompletionStatus = React.useCallback<SingleDropdownHandler>(
-        completionStatus => {
-            onChange(filter => ({ ...filter, completionStatus: toBool(completionStatus) }));
-        },
-        [onChange]
-    );
+    const setCompletionStatus = React.useCallback<SingleDropdownHandler>(completionStatus => {
+        setFilterValues(filter => ({ ...filter, completionStatus: toBool(completionStatus) }));
+    }, []);
 
-    const setSubmissionStatus = React.useCallback<SingleDropdownHandler>(
-        submissionStatus => {
-            onChange(filter => ({ ...filter, submissionStatus: submissionStatus as Status }));
-        },
-        [onChange]
-    );
+    const setSubmissionStatus = React.useCallback<SingleDropdownHandler>(submissionStatus => {
+        setFilterValues(filter => ({ ...filter, submissionStatus: submissionStatus as Status }));
+    }, []);
+
+    const applyFilters = useCallback(() => {
+        onChange(filterValues);
+    }, [filterValues, onChange]);
+
+    const clearFilters = useCallback(() => {
+        onChange(emptySubmissionFilter);
+        setFilterValues(emptySubmissionFilter);
+    }, [onChange]);
 
     return (
-        <Container>
-            <SingleDropdownStyled
-                items={moduleItems}
-                value={filter.module}
-                onChange={setModule}
-                label={i18n.t("Module")}
-            />
-
-            <OrgUnitsFilterButton
-                api={api}
-                rootIds={rootIds}
-                selected={filter.orgUnitPaths}
-                setSelected={setOrgUnitPaths}
-                selectableLevels={[1, 2, 3]}
-            />
-
-            {!isEARModule ? (
-                <DropdownStyled
-                    items={periodItems}
-                    values={filter.periods}
-                    onChange={setPeriods}
-                    label={i18n.t("Years")}
-                />
-            ) : (
-                <>
-                    <DatePickerStyled
-                        label="From"
-                        value={filter.from ?? null}
-                        maxDate={filter.to}
-                        onChange={setStartDate}
-                    />
-                    <DatePickerStyled
-                        label="To"
-                        value={filter.to ?? null}
-                        minDate={filter.from}
-                        maxDate={new Date()}
-                        onChange={setEndDate}
-                    />
-                </>
-            )}
-
-            {dataSubmissionPeriod === "QUARTERLY" && (
-                <DropdownStyled
-                    items={quarterItems}
-                    values={filter.quarters}
-                    onChange={setQuarters}
-                    label={i18n.t("Quarters")}
-                />
-            )}
-
-            {!isEARModule && (
+        <>
+            <Container>
                 <SingleDropdownStyled
-                    items={completionStatusItems}
-                    value={fromBool(filter.completionStatus)}
-                    onChange={setCompletionStatus}
-                    label={i18n.t("Questionnaire completed")}
+                    items={moduleItems}
+                    value={filterValues.module}
+                    onChange={setModule}
+                    label={i18n.t("Module")}
                 />
-            )}
 
-            <SingleDropdownStyled
-                items={isEARModule ? earSubmissionStatusItems : submissionStatusItems}
-                value={filter.submissionStatus}
-                onChange={setSubmissionStatus}
-                label={i18n.t("Status")}
-            />
-        </Container>
+                <OrgUnitsFilterButton
+                    api={api}
+                    rootIds={rootIds}
+                    selected={filterValues.orgUnitPaths}
+                    setSelected={setOrgUnitPaths}
+                    selectableLevels={[1, 2, 3]}
+                />
+
+                {!isEARModule ? (
+                    <DropdownStyled
+                        items={periodItems}
+                        values={filterValues.periods}
+                        onChange={setPeriods}
+                        label={i18n.t("Years")}
+                    />
+                ) : (
+                    <>
+                        <DatePickerStyled
+                            label="From"
+                            value={filterValues.from ?? null}
+                            maxDate={filterValues.to}
+                            onChange={setStartDate}
+                        />
+                        <DatePickerStyled
+                            label="To"
+                            value={filterValues.to ?? null}
+                            minDate={filterValues.from}
+                            maxDate={new Date()}
+                            onChange={setEndDate}
+                        />
+                    </>
+                )}
+
+                {dataSubmissionPeriod === "QUARTERLY" && (
+                    <DropdownStyled
+                        items={quarterItems}
+                        values={filterValues.quarters}
+                        onChange={setQuarters}
+                        label={i18n.t("Quarters")}
+                    />
+                )}
+
+                {!isEARModule && (
+                    <SingleDropdownStyled
+                        items={completionStatusItems}
+                        value={fromBool(filterValues.completionStatus)}
+                        onChange={setCompletionStatus}
+                        label={i18n.t("Questionnaire completed")}
+                    />
+                )}
+
+                <SingleDropdownStyled
+                    items={isEARModule ? earSubmissionStatusItems : submissionStatusItems}
+                    value={filterValues.submissionStatus}
+                    onChange={setSubmissionStatus}
+                    label={i18n.t("Status")}
+                />
+            </Container>
+
+            <FilterButtonContainer>
+                <Button onClick={applyFilters} variant="contained" color="primary">
+                    {i18n.t("Apply filters")}
+                </Button>
+
+                <Button onClick={clearFilters} variant="contained">
+                    {i18n.t("Clear filters")}
+                </Button>
+            </FilterButtonContainer>
+        </>
     );
 });
+
+export const emptySubmissionFilter: Filter = {
+    module: undefined,
+    orgUnitPaths: [],
+    periods: [],
+    quarters: ["Q1"],
+    from: undefined,
+    to: undefined,
+    completionStatus: undefined,
+    submissionStatus: undefined,
+};
 
 function useMemoOptionsFromStrings(options: string[]) {
     return useMemo(() => {
@@ -301,6 +323,13 @@ const Container = styled.div`
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
+`;
+
+const FilterButtonContainer = styled.div`
+    display: flex;
+    gap: 1rem;
+    justify-content: end;
+    width: 100%;
 `;
 
 const DropdownStyled = styled(MultipleDropdown)`

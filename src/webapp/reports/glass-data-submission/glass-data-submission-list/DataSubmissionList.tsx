@@ -22,18 +22,17 @@ import {
 } from "../../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
 import _ from "lodash";
-import { Filter, Filters } from "./Filters";
-import { Config } from "../../../../domain/common/entities/Config";
+import { emptySubmissionFilter, Filters } from "./Filters";
 import { Check, Dashboard, LockOpen, ThumbDown, ThumbUp } from "@material-ui/icons";
 import { useBooleanState } from "../../../utils/use-boolean";
 import { goToDhis2Url } from "../../../../utils/utils";
 import { useDataSubmissionList } from "./useDataSubmissionList";
 
 export const DataSubmissionList: React.FC = React.memo(() => {
-    const { api, compositionRoot, config } = useAppContext();
+    const { api, compositionRoot } = useAppContext();
 
     const snackbar = useSnackbar();
-    const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
+    const [filters, setFilters] = useState(emptySubmissionFilter);
     const [rejectionReason, setRejectionReason] = useState<string>("");
     const [rejectedItems, setRejectedItems] = useState<GLASSDataSubmissionItemIdentifier[]>([]);
     const [rejectedSignals, setRejectedSignals] = useState<EARSubmissionItemIdentifier[]>([]);
@@ -458,16 +457,3 @@ export const DataSubmissionList: React.FC = React.memo(() => {
         </ObjectsList>
     );
 });
-
-function getEmptyDataValuesFilter(_config: Config): Filter {
-    return {
-        module: undefined,
-        orgUnitPaths: [],
-        periods: [],
-        quarters: ["Q1"],
-        from: undefined,
-        to: undefined,
-        completionStatus: undefined,
-        submissionStatus: undefined,
-    };
-}
