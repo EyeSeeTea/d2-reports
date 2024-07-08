@@ -55,6 +55,7 @@ export function useDataSubmissionActions(isDatasetUpdate: boolean, reload: () =>
         },
         [openRejectionDialog]
     );
+
     const closeRejectionDialog = useCallback(() => {
         closeDialog();
         setRejectionReason("");
@@ -70,7 +71,9 @@ export function useDataSubmissionActions(isDatasetUpdate: boolean, reload: () =>
                 await compositionRoot.glassDataSubmission.updateStatus(namespace, action, items)?.then(() => {
                     setSnackbarMessage({
                         type: "success",
-                        message: i18n.t("Data submissions have been successfully {{action}}d", { action: action }),
+                        message: i18n.t("Data submissions have been successfully {{action}}", {
+                            action: actionsPastMap[action] || action,
+                        }),
                     });
                 });
             } catch (error) {
@@ -176,3 +179,10 @@ export function useDataSubmissionActions(isDatasetUpdate: boolean, reload: () =>
         updateDataSubmissionStatus,
     };
 }
+
+const actionsPastMap: { [key: string]: string } = {
+    approve: "approved",
+    reject: "rejected",
+    accept: "accepted",
+    reopen: "reopened",
+};
