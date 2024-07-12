@@ -29,6 +29,7 @@ import { Namespaces } from "../../common/clients/storage/Namespaces";
 import { Config } from "../../../domain/common/entities/Config";
 import { Event } from "@eyeseetea/d2-api/api/events";
 import { generateUid } from "../../../utils/uid";
+import { OrgUnitWithChildren } from "../../../domain/reports/glass-data-submission/entities/OrgUnit";
 
 interface CompleteDataSetRegistrationsResponse {
     completeDataSetRegistrations: Registration[] | undefined;
@@ -1110,6 +1111,35 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const glassUnapvdDashboardId = modules.find(module => module.name === "AMR")?.dashboards.validationReport ?? "";
 
         return glassUnapvdDashboardId;
+    }
+
+    async getOrganisationUnitsWithChildren(): Promise<OrgUnitWithChildren[]> {
+        const { organisationUnits } = await this.api.metadata
+            .get({
+                organisationUnits: {
+                    fields: {
+                        id: true,
+                        name: true,
+                        level: true,
+                        path: true,
+                        children: {
+                            id: true,
+                            name: true,
+                            level: true,
+                            path: true,
+                            children: { id: true, name: true, level: true, path: true },
+                        },
+                    },
+                    filter: { level: { eq: "1" } },
+                },
+            })
+            .getData();
+
+        const regionalLevelOUs = organisationUnits.flatMap(ou => ou.children);
+        const countryLevelOUs = regionalLevelOUs.flatMap(ou => ou.children);
+        const allOrgUnits = _.union(organisationUnits, regionalLevelOUs, countryLevelOUs);
+
+        return _.orderBy(allOrgUnits, "level", "asc");
     }
 
     private async postDataSetRegistration(items: GLASSDataSubmissionItemIdentifier[], completed: boolean) {

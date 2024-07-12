@@ -1,23 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import styled from "styled-components";
-import {
-    OrgUnitsFilterButton,
-    OrgUnitsFilterButtonProps,
-} from "../../../components/org-units-filter/OrgUnitsFilterButton";
-import { Id, NamedRef } from "../../../../domain/common/entities/Base";
+import { OrgUnitsFilterButton } from "../../../components/org-units-filter/OrgUnitsFilterButton";
+import { Id } from "../../../../domain/common/entities/Base";
 import { useAppContext } from "../../../contexts/app-context";
-import _ from "lodash";
-import { getRootIds } from "../../../../domain/common/entities/OrgUnit";
-import { D2Api } from "../../../../types/d2-api";
 import i18n from "../../../../locales";
 import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
-import {
-    Dropdown,
-    DropdownProps,
-    MultipleDropdownProps,
-    DatePicker,
-    DatePickerProps,
-} from "@eyeseetea/d2-ui-components";
+import { Dropdown, DatePicker } from "@eyeseetea/d2-ui-components";
 import {
     DataSubmissionPeriod,
     Module,
@@ -25,8 +13,10 @@ import {
 } from "../../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 import { useDataSubmissionList } from "./useDataSubmissionList";
 import { Button } from "@material-ui/core";
+import useDataSubmissionFilters from "./useDataSubmissionFilters";
+import { NamedRef } from "../../../../domain/common/entities/Ref";
 
-export interface DataSetsFiltersProps {
+export interface DataSubmissionFilterProps {
     values: Filter;
     options: FilterOptions;
     onChange: React.Dispatch<React.SetStateAction<Filter>>;
@@ -49,14 +39,6 @@ interface FilterOptions {
     periods: string[];
 }
 
-type OrgUnit = {
-    id: string;
-    name: string;
-    level: number;
-    path: string;
-    children?: OrgUnit[];
-};
-
 export const statusItems = [
     { value: "NOT_COMPLETED", text: i18n.t("Not Completed") },
     { value: "COMPLETE", text: i18n.t("Data to be approved by country") },
@@ -74,15 +56,17 @@ export const earStatusItems = [
     { value: "APPROVED", text: i18n.t("Approved") },
 ];
 
-export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
-    const { config, api } = useAppContext();
-    const { values: filter, options: filterOptions, onChange } = props;
+export const Filters: React.FC<DataSubmissionFilterProps> = React.memo(props => {
+    const { api } = useAppContext();
+    const { values: filter, options: filterOptions } = props;
 
     const { dataSubmissionPeriod, isEARModule, userModules } = useDataSubmissionList(filter);
+    const { applyFilters, clearFilters, rootIds, filterValues, setFilterValues } = useDataSubmissionFilters(props);
 
+    const moduleItems = useMemoOptionsFromNamedRef(userModules);
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
 
-    const quarterItems = React.useMemo(() => {
+    const quarterItems = useMemo(() => {
         return [
             { value: "Q1", text: i18n.t("January-March") },
             { value: "Q2", text: i18n.t("April-June") },
@@ -91,128 +75,15 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         ];
     }, []);
 
-    const [orgUnits, setOrgUnits] = useState<OrgUnit[]>([]);
-    const [filterValues, setFilterValues] = useState(emptySubmissionFilter);
-    const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
-
-    const moduleItems = useMemoOptionsFromNamedRef(userModules);
-
-    const completionStatusItems = React.useMemo(() => {
+    const completionStatusItems = useMemo(() => {
         return [
             { value: "true", text: i18n.t("Completed") },
             { value: "false", text: i18n.t("Not completed") },
         ];
     }, []);
 
-    const submissionStatusItems = React.useMemo(() => statusItems, []);
-    const earSubmissionStatusItems = React.useMemo(() => earStatusItems, []);
-
-    useEffect(() => {
-        async function getOrganisationUnits(api: D2Api): Promise<OrgUnit[]> {
-            const { organisationUnits } = await api.metadata
-                .get({
-                    organisationUnits: {
-                        fields: {
-                            id: true,
-                            name: true,
-                            level: true,
-                            path: true,
-                            children: {
-                                id: true,
-                                name: true,
-                                level: true,
-                                path: true,
-                                children: { id: true, name: true, level: true, path: true },
-                            },
-                        },
-                        filter: { level: { eq: "1" } },
-                    },
-                })
-                .getData();
-
-            const ou2 = organisationUnits.flatMap(ou => ou.children);
-            const ou3 = ou2.flatMap(ou => ou.children);
-            const all = _.union(organisationUnits, ou2, ou3);
-
-            return _.orderBy(all, "level", "asc");
-        }
-
-        getOrganisationUnits(api).then(value => setOrgUnits(value));
-    }, [api]);
-
-    const { orgUnitPaths } = filter;
-    const orgUnitsByPath = React.useMemo(() => _.keyBy(orgUnits, ou => ou.path), [orgUnits]);
-
-    const setModule = useCallback<SingleDropdownHandler>(module => {
-        setFilterValues(filter => ({ ...filter, module: module as Module }));
-    }, []);
-
-    const setOrgUnitPaths = React.useCallback<OrgUnitsFilterButtonProps["setSelected"]>(
-        newSelectedPaths => {
-            const prevSelectedPaths = orgUnitPaths;
-            const addedPaths = _.difference(newSelectedPaths, prevSelectedPaths);
-            const removedPaths = _.difference(prevSelectedPaths, newSelectedPaths);
-
-            const pathsToAdd = _.flatMap(addedPaths, addedPath => {
-                const orgUnit = orgUnitsByPath[addedPath];
-                if (orgUnit && orgUnit.level < countryLevel) {
-                    return _.compact(
-                        _.union(
-                            [orgUnit],
-                            orgUnit.children,
-                            orgUnit.children?.flatMap(child => child.children)
-                        )
-                    ).map(ou => ou.path);
-                } else {
-                    return [addedPath];
-                }
-            });
-
-            const pathsToRemove = _.flatMap(removedPaths, pathToRemove => {
-                return prevSelectedPaths.filter(path => path.startsWith(pathToRemove));
-            });
-
-            const newSelectedPathsWithChildren = _(prevSelectedPaths)
-                .union(pathsToAdd)
-                .difference(pathsToRemove)
-                .uniq()
-                .value();
-
-            setFilterValues(prev => ({ ...prev, orgUnitPaths: newSelectedPathsWithChildren }));
-        },
-        [orgUnitPaths, orgUnitsByPath]
-    );
-
-    const setPeriods = React.useCallback<DropdownHandler>(
-        periods => setFilterValues(prev => ({ ...prev, periods })),
-        []
-    );
-
-    const setStartDate = React.useCallback<DatePickerHandler>(from => setFilterValues(prev => ({ ...prev, from })), []);
-
-    const setEndDate = React.useCallback<DatePickerHandler>(to => setFilterValues(prev => ({ ...prev, to })), []);
-
-    const setQuarters = React.useCallback<DropdownHandler>(
-        quarters => setFilterValues(prev => ({ ...prev, quarters })),
-        []
-    );
-
-    const setCompletionStatus = React.useCallback<SingleDropdownHandler>(completionStatus => {
-        setFilterValues(filter => ({ ...filter, completionStatus: toBool(completionStatus) }));
-    }, []);
-
-    const setSubmissionStatus = React.useCallback<SingleDropdownHandler>(submissionStatus => {
-        setFilterValues(filter => ({ ...filter, submissionStatus: submissionStatus as Status }));
-    }, []);
-
-    const applyFilters = useCallback(() => {
-        onChange(filterValues);
-    }, [filterValues, onChange]);
-
-    const clearFilters = useCallback(() => {
-        onChange(emptySubmissionFilter);
-        setFilterValues(emptySubmissionFilter);
-    }, [onChange]);
+    const submissionStatusItems = useMemo(() => statusItems, []);
+    const earSubmissionStatusItems = useMemo(() => earStatusItems, []);
 
     return (
         <>
@@ -220,7 +91,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 <SingleDropdownStyled
                     items={moduleItems}
                     value={filterValues.module}
-                    onChange={setModule}
+                    onChange={setFilterValues.module}
                     label={i18n.t("Module")}
                 />
 
@@ -228,7 +99,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                     api={api}
                     rootIds={rootIds}
                     selected={filterValues.orgUnitPaths}
-                    setSelected={setOrgUnitPaths}
+                    setSelected={setFilterValues.orgUnitPaths}
                     selectableLevels={[1, 2, 3]}
                 />
 
@@ -236,7 +107,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                     <DropdownStyled
                         items={periodItems}
                         values={filterValues.periods}
-                        onChange={setPeriods}
+                        onChange={setFilterValues.periods}
                         label={i18n.t("Years")}
                     />
                 ) : (
@@ -245,14 +116,14 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                             label="From"
                             value={filterValues.from ?? null}
                             maxDate={filterValues.to}
-                            onChange={setStartDate}
+                            onChange={setFilterValues.startDate}
                         />
                         <DatePickerStyled
                             label="To"
                             value={filterValues.to ?? null}
                             minDate={filterValues.from}
                             maxDate={new Date()}
-                            onChange={setEndDate}
+                            onChange={setFilterValues.endDate}
                         />
                     </>
                 )}
@@ -261,7 +132,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                     <DropdownStyled
                         items={quarterItems}
                         values={filterValues.quarters}
-                        onChange={setQuarters}
+                        onChange={setFilterValues.quarters}
                         label={i18n.t("Quarters")}
                     />
                 )}
@@ -270,7 +141,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                     <SingleDropdownStyled
                         items={completionStatusItems}
                         value={fromBool(filterValues.completionStatus)}
-                        onChange={setCompletionStatus}
+                        onChange={setFilterValues.completionStatus}
                         label={i18n.t("Questionnaire completed")}
                     />
                 )}
@@ -278,7 +149,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 <SingleDropdownStyled
                     items={isEARModule ? earSubmissionStatusItems : submissionStatusItems}
                     value={filterValues.submissionStatus}
-                    onChange={setSubmissionStatus}
+                    onChange={setFilterValues.submissionStatus}
                     label={i18n.t("Status")}
                 />
             </Container>
@@ -345,16 +216,6 @@ const DatePickerStyled = styled(DatePicker)`
     margin-top: -8px;
 `;
 
-function toBool(s: string | undefined): boolean | undefined {
-    return s === undefined ? undefined : s === "true";
-}
-
 function fromBool(value: boolean | undefined): string | undefined {
     return value === undefined ? undefined : value.toString();
 }
-
-type DropdownHandler = MultipleDropdownProps["onChange"];
-type SingleDropdownHandler = DropdownProps["onChange"];
-type DatePickerHandler = DatePickerProps["onChange"];
-
-const countryLevel = 3;
