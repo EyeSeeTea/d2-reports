@@ -284,7 +284,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
             </Container>
 
             <FilterButtonContainer>
-                <Button onClick={applyFilters} variant="contained" color="primary">
+                <Button disabled={!filterValues.module} onClick={applyFilters} variant="contained" color="primary">
                     {i18n.t("Apply filters")}
                 </Button>
 
