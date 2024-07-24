@@ -59,4 +59,8 @@ export const styles = _theme => ({
         fontWeight: "bold",
         color: "#ffffff",
     },
+    iconButton: {
+        all: "unset",
+        cursor: "pointer",
+    },
 });
