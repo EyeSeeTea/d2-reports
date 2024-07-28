@@ -486,22 +486,13 @@ msgstr ""
 msgid "Approve"
 msgstr ""
 
-msgid "Error when trying to approve submission"
-msgstr ""
-
 msgid "Accept"
-msgstr ""
-
-msgid "Error when trying to accept submission"
 msgstr ""
 
 msgid "Reject"
 msgstr ""
 
 msgid "Reopen Submission"
-msgstr ""
-
-msgid "Error when trying to reopen submission"
 msgstr ""
 
 msgid "Creation Date"
@@ -513,25 +504,10 @@ msgstr ""
 msgid "Go to Signal"
 msgstr ""
 
-msgid "Error when trying to approve signal"
-msgstr ""
-
 msgid "Reject Signal"
 msgstr ""
 
-msgid "Signals have been successfully rejected"
-msgstr ""
-
-msgid "Error when trying to reject signal"
-msgstr ""
-
 msgid "Reject Data Submission"
-msgstr ""
-
-msgid "Data submissions have been successfully rejected"
-msgstr ""
-
-msgid "Error when trying to reject submission"
 msgstr ""
 
 msgid "Not Completed"
@@ -580,6 +556,36 @@ msgid "Years"
 msgstr ""
 
 msgid "Quarters"
+msgstr ""
+
+msgid "Apply filters"
+msgstr ""
+
+msgid "Clear filters"
+msgstr ""
+
+msgid "Data submissions have been successfully {{action}}"
+msgstr ""
+
+msgid "Error when trying to {{action}} submission"
+msgstr ""
+
+msgid "Signals have been successfully approved"
+msgstr ""
+
+msgid "Error when trying to approve signal"
+msgstr ""
+
+msgid "Data submissions have been successfully rejected"
+msgstr ""
+
+msgid "Error when trying to reject submission"
+msgstr ""
+
+msgid "Signals have been successfully rejected"
+msgstr ""
+
+msgid "Error when trying to reject signal"
 msgstr ""
 
 msgid "Data Element"
