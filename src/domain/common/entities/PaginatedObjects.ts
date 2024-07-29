@@ -24,12 +24,14 @@ export interface Sorting<T> {
 
 export const emptyPage = { pager: { page: 1, pageCount: 1, pageSize: 20, total: 1 }, objects: [] };
 
-export function getPaginatedObjects<T>(rows: T[], sorting: Sorting<T>, paging: Paging): T[] {
-    return _(rows)
-        .orderBy([row => row[sorting.field]], [sorting.direction])
+export function getPaginatedObjects<T>(rows: T[], paging: Paging, sorting: Sorting<T> | undefined): T[] {
+    const rowsInPage = _(rows)
         .drop((paging.page - 1) * paging.pageSize)
         .take(paging.pageSize)
         .value();
+
+    if (!sorting) return rowsInPage;
+    return _.orderBy(rowsInPage, sorting.field, sorting.direction);
 }
 
 export function getPager<T>(rows: T[], paging: Paging): Pager {
@@ -41,9 +43,9 @@ export function getPager<T>(rows: T[], paging: Paging): Pager {
     };
 }
 
-export function paginate<T>(objects: T[], sorting: Sorting<T>, paging: Paging) {
+export function paginate<T>(objects: T[], paging: Paging, sorting?: Sorting<T>) {
     const pager = getPager(objects, paging);
-    const paginatedObjects = getPaginatedObjects(objects, sorting, paging);
+    const paginatedObjects = getPaginatedObjects(objects, paging, sorting);
 
     return { pager, objects: paginatedObjects };
 }

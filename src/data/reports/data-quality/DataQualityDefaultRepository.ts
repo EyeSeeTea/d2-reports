@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
+import { paginate, PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
 import {
     DataQualityConfig,
     IndicatorItem,
@@ -12,7 +12,7 @@ import {
     IndicatorOptions,
     ProgramIndicatorOptions,
 } from "../../../domain/reports/data-quality/repositories/DataQualityRepository";
-import { D2Api, Pager } from "../../../types/d2-api";
+import { D2Api } from "../../../types/d2-api";
 import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
 import { StorageClient } from "../../common/clients/storage/StorageClient";
 import { Instance } from "../../common/entities/Instance";
@@ -98,20 +98,7 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
                 r => isIndicatorItem(r) && (!r.denominatorResult || !r.numeratorResult)
             ) as IndicatorItem[]) ?? [];
 
-        const dataQualityIndicatorErrorsInPage = _(dataQualityIndicatorErrors)
-            .orderBy([row => row[sorting.field]], [sorting.direction])
-            .drop((paging.page - 1) * paging.pageSize)
-            .take(paging.pageSize)
-            .value();
-
-        const pager: Pager = {
-            page: paging.page,
-            pageSize: paging.pageSize,
-            pageCount: Math.ceil(dataQualityIndicatorErrors.length / paging.pageSize),
-            total: dataQualityIndicatorErrors.length,
-        };
-
-        return { pager: pager, objects: dataQualityIndicatorErrorsInPage };
+        return paginate(dataQualityIndicatorErrors, paging, sorting);
     }
 
     async getProgramIndicators(
@@ -126,19 +113,7 @@ export class DataQualityDefaultRepository implements DataQualityRepository {
                 r => isProgramIndicatorItem(r) && (!r.expressionResult || !r.filterResult)
             ) as ProgramIndicatorItem[]) ?? [];
 
-        const dataQualityIndicatorErrorsInPage = _(dataQualityProgramIndicatorErrors)
-            .orderBy([row => row[sorting.field]], [sorting.direction])
-            .drop((paging.page - 1) * paging.pageSize)
-            .take(paging.pageSize)
-            .value();
-
-        const pager: Pager = {
-            page: paging.page,
-            pageSize: paging.pageSize,
-            pageCount: Math.ceil(dataQualityProgramIndicatorErrors.length / paging.pageSize),
-            total: dataQualityProgramIndicatorErrors.length,
-        };
-        return { pager: pager, objects: dataQualityIndicatorErrorsInPage };
+        return paginate(dataQualityProgramIndicatorErrors, paging, sorting);
     }
 
     private makeNewDataQualityConfig(validationResults: DataQualityItemType[]): DataQualityConfig {

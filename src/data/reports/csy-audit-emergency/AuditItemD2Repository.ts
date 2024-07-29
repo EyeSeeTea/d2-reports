@@ -1,11 +1,11 @@
 import _ from "lodash";
-import { emptyPage, PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
+import { emptyPage, paginate, PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
 import { AuditItem, AuditType } from "../../../domain/reports/csy-audit-emergency/entities/AuditItem";
 import {
     AuditOptions,
     AuditItemRepository,
 } from "../../../domain/reports/csy-audit-emergency/repositories/AuditRepository";
-import { D2Api, Pager } from "../../../types/d2-api";
+import { D2Api } from "../../../types/d2-api";
 import { getOrgUnitIdsFromPaths } from "../../../domain/common/entities/OrgUnit";
 import { CsvWriterDataSource } from "../../common/CsvWriterCsvDataSource";
 import { CsvData } from "../../common/CsvDataSource";
@@ -31,19 +31,8 @@ export class AuditItemD2Repository implements AuditItemRepository {
         if (_.isEmpty(orgUnitIds)) return emptyPage;
 
         const auditItems = await this.getAuditItems(auditType, orgUnitIds, period);
-        const rowsInPage = _(auditItems)
-            .drop((paging.page - 1) * paging.pageSize)
-            .take(paging.pageSize)
-            .value();
 
-        const pager: Pager = {
-            page: paging.page,
-            pageSize: paging.pageSize,
-            pageCount: Math.ceil(auditItems.length / paging.pageSize),
-            total: auditItems.length,
-        };
-
-        return { pager, objects: rowsInPage };
+        return paginate(auditItems, paging);
     }
 
     private async getAuditItems(auditType: AuditType, orgUnitIds: string[], period: string): Promise<AuditItem[]> {

@@ -60,7 +60,7 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
 
         const filteredRows = await this.getFilteredRows(objects, options);
 
-        const { pager, objects: rowsInPage } = paginate(filteredRows, sorting, paging);
+        const { pager, objects: rowsInPage } = paginate(filteredRows, paging, sorting);
 
         return {
             pager: pager,

@@ -1,8 +1,8 @@
 import _ from "lodash";
 import { getOrgUnitIdsFromPaths } from "../../../domain/common/entities/OrgUnit";
-import { emptyPage, PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
+import { emptyPage, paginate, PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
 import { SummaryItem, SummaryType } from "../../../domain/reports/csy-summary-patient/entities/SummaryItem";
-import { D2Api, Pager } from "../../../types/d2-api";
+import { D2Api } from "../../../types/d2-api";
 import { promiseMap } from "../../../utils/promises";
 import { CsvData } from "../../common/CsvDataSource";
 import { CsvWriterDataSource } from "../../common/CsvWriterCsvDataSource";
@@ -32,14 +32,8 @@ export class SummaryItemD2Repository implements SummaryItemRepository {
         if (_.isEmpty(orgUnitIds)) return emptyPage;
 
         const rows = await this.getSummaryItems(summaryType, period, orgUnitIds);
-        const pager: Pager = {
-            page: paging.page,
-            pageSize: paging.pageSize,
-            pageCount: 1,
-            total: 1,
-        };
 
-        return { pager, objects: rows };
+        return paginate(rows, paging);
     }
 
     private async getSummaryItems(
