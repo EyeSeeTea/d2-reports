@@ -72,20 +72,22 @@ export class SummaryItemD2Repository implements SummaryItemRepository {
                 const { subGroup, yearType } = processName(indicatorName, groupName);
                 const value = `${numeratorColumnValue} (${percentageColumnValue}%)`;
 
+                const get = (yearTypeValue: string) => this.getSummaryItemValue(yearType, yearTypeValue, value);
+
                 return {
                     group: groupName,
                     subGroup: subGroup,
-                    yearLessThan1: this.getSummaryItemValue(yearType, "< 1 yr", value),
-                    year1To4: this.getSummaryItemValue(yearType, "1 - 4 yr", value),
-                    year5To9: this.getSummaryItemValue(yearType, "5 - 9 yr", value),
-                    year10To14: this.getSummaryItemValue(yearType, "10 - 14 yr", value),
-                    year15To19: this.getSummaryItemValue(yearType, "15 - 19 yr", value),
-                    year20To40: this.getSummaryItemValue(yearType, "20 - 40 yr", value),
-                    year40To60: this.getSummaryItemValue(yearType, "40 - 60 yr", value),
-                    year60To80: this.getSummaryItemValue(yearType, "60 - 80 yr", value),
-                    yearGreaterThan80: this.getSummaryItemValue(yearType, "80+ yr", value),
-                    unknown: this.getSummaryItemValue(yearType, "Unknown", value),
-                    total: this.getSummaryItemValue(yearType, "Total", value),
+                    yearLessThan1: get("< 1 yr"),
+                    year1To4: get("1 - 4 yr"),
+                    year5To9: get("5 - 9 yr"),
+                    year10To14: get("10 - 14 yr"),
+                    year15To19: get("15 - 19 yr"),
+                    year20To40: get("20 - 40 yr"),
+                    year40To60: get("40 - 60 yr"),
+                    year60To80: get("60 - 80 yr"),
+                    yearGreaterThan80: get("80+ yr"),
+                    unknown: get("Unknown"),
+                    total: get("Total"),
                 };
             }
         );
@@ -131,25 +133,8 @@ export class SummaryItemD2Repository implements SummaryItemRepository {
             .getData();
     }
 
-    async save(filename: string, items: SummaryItem[]): Promise<void> {
+    async save(filename: string, rows: SummaryItemRow[]): Promise<void> {
         const headers = csvFields.map(field => ({ id: field, text: field }));
-        const rows = items.map(
-            (dataValue): SummaryItemRow => ({
-                group: dataValue.group,
-                subGroup: dataValue.subGroup,
-                yearLessThan1: dataValue.yearLessThan1,
-                year1To4: dataValue.year1To4,
-                year5To9: dataValue.year5To9,
-                year10To14: dataValue.year15To19,
-                year15To19: dataValue.year15To19,
-                year20To40: dataValue.year20To40,
-                year40To60: dataValue.year40To60,
-                year60To80: dataValue.year60To80,
-                yearGreaterThan80: dataValue.yearGreaterThan80,
-                unknown: dataValue.unknown,
-                total: dataValue.total,
-            })
-        );
 
         const csvDataSource = new CsvWriterDataSource();
         const csvData: CsvData<CsvField> = { headers, rows };
@@ -260,20 +245,22 @@ function buildSummaryRows(rows: SummaryItemRow[]): SummaryItem[] {
     return _(rows)
         .groupBy(row => `${row.group}-${row.subGroup}`)
         .map(groupedRows => {
+            const [firstRow] = groupedRows;
+
             return {
-                group: groupedRows[0].group,
-                subGroup: groupedRows[0].subGroup,
-                yearLessThan1: groupedRows.reduce((acc, obj) => getRowValue(obj.yearLessThan1, acc), "0 (0%)"),
-                year1To4: groupedRows.reduce((acc, obj) => getRowValue(obj.year1To4, acc), "0 (0%)"),
-                year5To9: groupedRows.reduce((acc, obj) => getRowValue(obj.year5To9, acc), "0 (0%)"),
-                year10To14: groupedRows.reduce((acc, obj) => getRowValue(obj.year10To14, acc), "0 (0%)"),
-                year15To19: groupedRows.reduce((acc, obj) => getRowValue(obj.year15To19, acc), "0 (0%)"),
-                year20To40: groupedRows.reduce((acc, obj) => getRowValue(obj.year20To40, acc), "0 (0%)"),
-                year40To60: groupedRows.reduce((acc, obj) => getRowValue(obj.year40To60, acc), "0 (0%)"),
-                year60To80: groupedRows.reduce((acc, obj) => getRowValue(obj.year60To80, acc), "0 (0%)"),
-                yearGreaterThan80: groupedRows.reduce((acc, obj) => getRowValue(obj.yearGreaterThan80, acc), "0 (0%)"),
-                unknown: groupedRows.reduce((acc, obj) => getRowValue(obj.unknown, acc), "0 (0%)"),
-                total: groupedRows.reduce((acc, obj) => getRowValue(obj.total, acc), "0 (0%)"),
+                group: firstRow.group,
+                subGroup: firstRow.subGroup,
+                yearLessThan1: reduceAgeGroupValues(groupedRows, "yearLessThan1"),
+                year1To4: reduceAgeGroupValues(groupedRows, "year1To4"),
+                year5To9: reduceAgeGroupValues(groupedRows, "year5To9"),
+                year10To14: reduceAgeGroupValues(groupedRows, "year10To14"),
+                year15To19: reduceAgeGroupValues(groupedRows, "year15To19"),
+                year20To40: reduceAgeGroupValues(groupedRows, "year20To40"),
+                year40To60: reduceAgeGroupValues(groupedRows, "year40To60"),
+                year60To80: reduceAgeGroupValues(groupedRows, "year60To80"),
+                yearGreaterThan80: reduceAgeGroupValues(groupedRows, "yearGreaterThan80"),
+                unknown: reduceAgeGroupValues(groupedRows, "unknown"),
+                total: reduceAgeGroupValues(groupedRows, "total"),
             };
         })
         .value();
@@ -281,4 +268,8 @@ function buildSummaryRows(rows: SummaryItemRow[]): SummaryItem[] {
 
 function getRowValue(obj: string, acc: string): string {
     return obj !== "0 (0%)" ? obj : acc;
+}
+
+function reduceAgeGroupValues(rows: SummaryItemRow[], key: keyof SummaryItemRow): string {
+    return rows.reduce((acc, obj) => getRowValue(obj[key], acc), "0 (0%)");
 }

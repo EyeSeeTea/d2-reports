@@ -16,9 +16,9 @@ import {
     AuditAnalyticsData,
     AuditAnalyticsResponse,
     buildRefs,
-    getEventQueryString,
 } from "../../../domain/common/entities/AuditAnalyticsResponse";
 import { Maybe } from "../../../types/utils";
+import { getEventQueryString } from "../../common/entities/AuditAnalytics";
 
 export class AuditItemD2Repository implements AuditItemRepository {
     constructor(private api: D2Api) {}
@@ -39,9 +39,10 @@ export class AuditItemD2Repository implements AuditItemRepository {
         const queryStrings = auditQueryStrings[auditType];
 
         const analyticsResponse = await promiseMap(queryStrings, async queryString => {
+            const { programs, programStages } = metadata;
             const eventQueryString = getEventQueryString(
-                metadata.programs.emergencyCareProgramId,
-                metadata.programStages.emergencyCareProgramStageId,
+                programs.emergencyCareProgramId,
+                programStages.emergencyCareProgramStageId,
                 orgUnitIds.join(";"),
                 period,
                 queryString
@@ -96,10 +97,11 @@ export class AuditItemD2Repository implements AuditItemRepository {
 
                 const timeDiffIds = _.compact(
                     _.filter(_.zip(dateIds, arrivalDates, providerDates), ([, arrivalDate, providerDate]) => {
+                        const timeDifferenceInMinutes = 30;
                         const arrivalTime = arrivalDate?.getTime() ?? 0;
                         const providerTime = providerDate?.getTime() ?? 0;
 
-                        return providerTime - arrivalTime > 1800000;
+                        return providerTime - arrivalTime > convertMinutesToMilliseconds(timeDifferenceInMinutes);
                     }).map(([id]) => id)
                 );
 
@@ -115,7 +117,7 @@ export class AuditItemD2Repository implements AuditItemRepository {
                 const glucoseNotTickedIds = _.compact(
                     _.filter(
                         _.zip(glucoseInEUIds, glucoseEventIds),
-                        ([, glucoseEventId]) => glucoseEventId !== "1"
+                        ([, glucoseEventId]) => glucoseEventId !== metadata.optionSets.trueOnly
                     ).map(([glucoseInEUId]) => glucoseInEUId)
                 );
 
@@ -132,9 +134,10 @@ export class AuditItemD2Repository implements AuditItemRepository {
 
                 const ageAdultIds = _.union(ageGreaterThan16Ids, ageCategoryAdultUnknownIds);
                 const ivfNotTickedIds = _.compact(
-                    _.filter(_.zip(ivfInEUIds, ivfEventIds), ([, ivfEventId]) => ivfEventId !== "1").map(
-                        ([glucoseInEUId]) => glucoseInEUId
-                    )
+                    _.filter(
+                        _.zip(ivfInEUIds, ivfEventIds),
+                        ([, ivfEventId]) => ivfEventId !== metadata.optionSets.trueOnly
+                    ).map(([glucoseInEUId]) => glucoseInEUId)
                 );
 
                 return _.intersection(ageAdultIds, initialSBPIds, ivfNotTickedIds);
@@ -207,6 +210,7 @@ const metadata = {
         triagePriority1: "32",
         triagePriority3: "34",
         rbgLow: "3",
+        trueOnly: "1",
     },
 };
 
@@ -214,28 +218,33 @@ const csvFields = ["registerId"] as const;
 type CsvField = typeof csvFields[number];
 type AuditItemRow = Record<CsvField, string>;
 
+const { dataElements, optionSets } = metadata;
 const auditQueryStrings = {
     overallMortality: [
-        `&dimension=${metadata.dataElements.euDispositionId}:IN:${metadata.optionSets.euDispoMortuaryOrDied}`,
-        `&dimension=${metadata.dataElements.facilityDispositionId}:IN:${metadata.optionSets.facilityDispoMortuaryOrDied}`,
+        `&dimension=${dataElements.euDispositionId}:IN:${optionSets.euDispoMortuaryOrDied}`,
+        `&dimension=${dataElements.facilityDispositionId}:IN:${optionSets.facilityDispoMortuaryOrDied}`,
     ],
     lowAcuity: [
-        `&dimension=${metadata.dataElements.triageCategoryId}:IN:${metadata.optionSets.triageGreen};${metadata.optionSets.triageCategory4};${metadata.optionSets.triageCategory5};${metadata.optionSets.triageCategoryLevelIV};${metadata.optionSets.triageCategoryLevelV};${metadata.optionSets.triageStandardGreen4};${metadata.optionSets.triageNonUrgentBlue5};${metadata.optionSets.triageLevel4};${metadata.optionSets.triageLevel5};${metadata.optionSets.triageMinorGreen};${metadata.optionSets.triagePriority3}`,
-        `&dimension=${metadata.dataElements.euDispositionId}:IN:${metadata.optionSets.euDispoICU}`,
+        `&dimension=${dataElements.triageCategoryId}:IN:${optionSets.triageGreen};${optionSets.triageCategory4};${optionSets.triageCategory5};${optionSets.triageCategoryLevelIV};${optionSets.triageCategoryLevelV};${optionSets.triageStandardGreen4};${optionSets.triageNonUrgentBlue5};${optionSets.triageLevel4};${optionSets.triageLevel5};${optionSets.triageMinorGreen};${optionSets.triagePriority3}`,
+        `&dimension=${dataElements.euDispositionId}:IN:${optionSets.euDispoICU}`,
     ],
     highestTriage: [
-        `&dimension=${metadata.dataElements.triageCategoryId}:IN:${metadata.optionSets.triageRed};${metadata.optionSets.triageCategory1};${metadata.optionSets.triageLevelI};${metadata.optionSets.triageLevelII};${metadata.optionSets.triageImmediateRed1};${metadata.optionSets.triageLevel1};${metadata.optionSets.triageLevel2};${metadata.optionSets.triageImmediateRed};${metadata.optionSets.triagePriority1}`,
-        `&dimension=${metadata.dataElements.arrivalDateId}`,
-        `&dimension=${metadata.dataElements.firstProviderDateId}`,
+        `&dimension=${dataElements.triageCategoryId}:IN:${optionSets.triageRed};${optionSets.triageCategory1};${optionSets.triageLevelI};${optionSets.triageLevelII};${optionSets.triageImmediateRed1};${optionSets.triageLevel1};${optionSets.triageLevel2};${optionSets.triageImmediateRed};${optionSets.triagePriority1}`,
+        `&dimension=${dataElements.arrivalDateId}`,
+        `&dimension=${dataElements.firstProviderDateId}`,
     ],
     initialRbg: [
-        `&dimension=${metadata.dataElements.initialRBGId}:IN:${metadata.optionSets.rbgLow}`,
-        `&dimension=${metadata.dataElements.glucoseId}`,
+        `&dimension=${dataElements.initialRBGId}:IN:${optionSets.rbgLow}`,
+        `&dimension=${dataElements.glucoseId}`,
     ],
     shockIvf: [
-        `&dimension=${metadata.dataElements.ageInYearsId}:GE:16`,
-        `&dimension=${metadata.dataElements.ageCategoryId}:IN:3`,
-        `&dimension=${metadata.dataElements.initialSBPId}:LT:90`,
-        `&dimension=${metadata.dataElements.ivfId}`,
+        `&dimension=${dataElements.ageInYearsId}:GE:16`,
+        `&dimension=${dataElements.ageCategoryId}:IN:3`,
+        `&dimension=${dataElements.initialSBPId}:LT:90`,
+        `&dimension=${dataElements.ivfId}`,
     ],
 };
+
+function convertMinutesToMilliseconds(minutes: number): number {
+    return minutes * 60 * 1000;
+}

@@ -78,10 +78,18 @@ export class SummaryItemD2Repository implements SummaryItemRepository {
             })
             .value();
 
-        return _.orderBy(objects, [
-            row => scoringSystem.indexOf(row.scoringSystem),
-            row => _.map(Object.keys(severity.GAP), _.capitalize).indexOf(row.severity.replace(/\(.+?\)/g, "").trim()),
-        ]);
+        return this.sortSummaryItems(objects);
+    }
+
+    private sortSummaryItems(objects: SummaryItem[]): SummaryItem[] {
+        const severityLevels = _.map(Object.keys(severity.GAP), _.capitalize);
+        const getScoringSystemIndex = (row: SummaryItem): number => scoringSystem.indexOf(row.scoringSystem);
+        const getSeverityIndex = (row: SummaryItem): number => {
+            const severityLevel = row.severity.replace(/\(.+?\)/g, "").trim();
+            return severityLevels.indexOf(severityLevel);
+        };
+
+        return _.orderBy(objects, [getScoringSystemIndex, getSeverityIndex]);
     }
 
     private async getAnalyticsResponse(
@@ -146,16 +154,8 @@ export class SummaryItemD2Repository implements SummaryItemRepository {
         });
     }
 
-    async save(filename: string, items: SummaryItem[]): Promise<void> {
+    async save(filename: string, rows: SummaryItemRow[]): Promise<void> {
         const headers = csvFields.map(field => ({ id: field, text: field }));
-        const rows = items.map(
-            (dataValue): SummaryItemRow => ({
-                scoringSystem: dataValue.scoringSystem,
-                severity: dataValue.severity,
-                mortality: dataValue.mortality,
-                total: dataValue.total,
-            })
-        );
 
         const csvDataSource = new CsvWriterDataSource();
         const csvData: CsvData<CsvField> = { headers, rows };
