@@ -29,7 +29,7 @@ export function useDataSubmissionList(filters: Filter) {
         filters
     );
 
-    const questionnaireDataSets = useMemo(() => {
+    const moduleQuestionnaires = useMemo(() => {
         return _.compact(
             userModules
                 .find(userModule => userModule.id === filters.module)
@@ -43,7 +43,7 @@ export function useDataSubmissionList(filters: Filter) {
         isEARModule,
         isEGASPUser,
         pagination,
-        questionnaireDataSets,
+        moduleQuestionnaires,
         selectablePeriods,
         userModules,
         visibleColumns,

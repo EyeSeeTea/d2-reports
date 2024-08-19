@@ -150,12 +150,12 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             modules
         );
 
-        const questionnaireDataSets =
+        const moduleQuestionnaires =
             modules
                 .find(module => module.id === selectedModule)
                 ?.questionnaires.map(questionnaire => questionnaire.id) ?? [];
 
-        const registrations = await this.getRegistrations(dataSubmissionItems, questionnaireDataSets);
+        const registrations = await this.getRegistrations(dataSubmissionItems, moduleQuestionnaires);
 
         const dataSubmissions: GLASSDataSubmissionItem[] = dataSubmissionItems.map(dataSubmissionItem => {
             const dataSubmission = objects.find(
@@ -398,16 +398,16 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
     private async getRegistrations(
         items: GLASSDataSubmissionItemIdentifier[],
-        questionnaireDataSets: Id[]
+        moduleQuestionnaires: Id[]
     ): Promise<Record<RegistrationKey, RegistrationItemBase>> {
         const orgUnitIds = _.uniq(items.map(obj => obj.orgUnit));
         const periods = _.uniq(items.map(obj => obj.period));
         const orgUnitsById = await this.getOrgUnits(orgUnitIds);
-        const apiRegistrations = !_(questionnaireDataSets).compact().isEmpty()
+        const apiRegistrations = !_(moduleQuestionnaires).compact().isEmpty()
             ? await this.getApiRegistrations({
                   orgUnitIds,
                   periods,
-                  questionnaireDataSets,
+                  moduleQuestionnaires,
               })
             : [];
 
@@ -435,9 +435,9 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
     private async getApiRegistrations(options: {
         orgUnitIds: Id[];
         periods: string[];
-        questionnaireDataSets: Id[];
+        moduleQuestionnaires: Id[];
     }): Promise<Registration[]> {
-        const responses = options.questionnaireDataSets.flatMap(dataSet =>
+        const responses = options.moduleQuestionnaires.flatMap(dataSet =>
             _.chunk(options.orgUnitIds, 300).map(orgUnitIdsGroups =>
                 this.api.get<CompleteDataSetRegistrationsResponse>("/completeDataSetRegistrations", {
                     dataSet: dataSet,
@@ -1169,13 +1169,13 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         completed: boolean
     ) {
         const selectedModule = items[0]?.module;
-        const questionnaireDataSets =
+        const moduleQuestionnaires =
             modules
                 .find(module => module.id === selectedModule)
                 ?.questionnaires.map(questionnaire => questionnaire.id) ?? [];
 
         const dataSetRegistrations = items.flatMap(item =>
-            questionnaireDataSets.map(dataSet => ({
+            moduleQuestionnaires.map(dataSet => ({
                 dataSet: dataSet,
                 period: item.period,
                 organisationUnit: item.orgUnit,
@@ -1183,7 +1183,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             }))
         );
 
-        if (!_(questionnaireDataSets).compact().isEmpty()) {
+        if (!_(moduleQuestionnaires).compact().isEmpty()) {
             await this.api
                 .post<CompleteDataSetRegistrationsResponse>(
                     "/completeDataSetRegistrations",
