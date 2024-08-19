@@ -39,7 +39,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
         isEARModule,
         isEGASPUser,
         pagination,
-        questionnaireDataSets,
+        moduleQuestionnaires,
         selectablePeriods,
         visibleColumns,
         visibleEARColumns,
@@ -101,7 +101,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
     const baseConfig: TableConfig<DataSubmissionViewModel> = useMemo(
         () => ({
             columns:
-                !_.isEmpty(questionnaireDataSets) || !filters.module
+                !_.isEmpty(moduleQuestionnaires) || !filters.module
                     ? baseTableColumns
                     : baseTableColumns.filter(column => column.name !== "questionnaireCompleted"),
             actions: [
@@ -144,9 +144,9 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     multiple: true,
                     onClick: async (selectedIds: string[]) =>
                         updateDataSubmissionStatus("accept", selectedIds, Namespaces.DATA_SUBMISSSIONS),
-                    // isActive: (rows: DataSubmissionViewModel[]) => {
-                    //     return _.every(rows, row => row.status === "PENDING_UPDATE_APPROVAL");
-                    // },
+                    isActive: (rows: DataSubmissionViewModel[]) => {
+                        return _.every(rows, row => row.status === "PENDING_UPDATE_APPROVAL");
+                    },
                 },
                 {
                     name: "reject",
@@ -185,7 +185,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
             initialSorting,
             openDataSubmissionRejectionDialog,
             pagination,
-            questionnaireDataSets,
+            moduleQuestionnaires,
             updateDataSubmissionStatus,
         ]
     );
