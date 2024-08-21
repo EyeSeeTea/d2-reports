@@ -39,6 +39,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
         isEARModule,
         isEGASPUser,
         pagination,
+        moduleQuestionnaires,
         selectablePeriods,
         visibleColumns,
         visibleEARColumns,
@@ -72,28 +73,37 @@ export const DataSubmissionList: React.FC = React.memo(() => {
         }
     }, [snackbar, snackbarMessage]);
 
+    const baseTableColumns: TableColumn<DataSubmissionViewModel>[] = useMemo(
+        () => [
+            { name: "orgUnitName", text: i18n.t("Country"), sortable: true },
+            { name: "period", text: i18n.t(isEGASPUser ? "Period" : "Year"), sortable: true },
+            {
+                name: "questionnaireCompleted",
+                text: i18n.t("Questionnaire completed"),
+                sortable: true,
+                getValue: (row: DataSubmissionViewModel) =>
+                    row.questionnaireCompleted ? "Completed" : "Not completed",
+            },
+            {
+                name: "dataSetsUploaded",
+                text: i18n.t("DataSets uploaded"),
+                sortable: true,
+            },
+            {
+                name: "submissionStatus",
+                text: i18n.t("Status"),
+                sortable: true,
+            },
+        ],
+        [isEGASPUser]
+    );
+
     const baseConfig: TableConfig<DataSubmissionViewModel> = useMemo(
         () => ({
-            columns: [
-                { name: "orgUnitName", text: i18n.t("Country"), sortable: true },
-                { name: "period", text: i18n.t(isEGASPUser ? "Period" : "Year"), sortable: true },
-                {
-                    name: "questionnaireCompleted",
-                    text: i18n.t("Questionnaire completed"),
-                    sortable: true,
-                    getValue: row => (row.questionnaireCompleted ? "Completed" : "Not completed"),
-                },
-                {
-                    name: "dataSetsUploaded",
-                    text: i18n.t("DataSets uploaded"),
-                    sortable: true,
-                },
-                {
-                    name: "submissionStatus",
-                    text: i18n.t("Status"),
-                    sortable: true,
-                },
-            ],
+            columns:
+                !_.isEmpty(moduleQuestionnaires) || !filters.module
+                    ? baseTableColumns
+                    : baseTableColumns.filter(column => column.name !== "questionnaireCompleted"),
             actions: [
                 {
                     name: "unapvdDashboard",
@@ -169,11 +179,13 @@ export const DataSubmissionList: React.FC = React.memo(() => {
         }),
         [
             api.baseUrl,
+            baseTableColumns,
             compositionRoot.glassDataSubmission,
+            filters.module,
             initialSorting,
-            isEGASPUser,
             openDataSubmissionRejectionDialog,
             pagination,
+            moduleQuestionnaires,
             updateDataSubmissionStatus,
         ]
     );

@@ -9,6 +9,7 @@ import {
     EARSubmissionItemIdentifier,
     getUserModules,
     Status,
+    Module,
 } from "../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 import {
     EARDataSubmissionOptions,
@@ -106,14 +107,14 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         options: GLASSDataSubmissionOptions,
         namespace: string
     ): Promise<PaginatedObjects<GLASSDataSubmissionItem>> {
-        const { paging, sorting, module } = options;
-        if (!module) return emptyPage;
+        const { paging, sorting, module: selectedModule } = options;
+        if (!selectedModule) return emptyPage;
 
         const modules = await this.getModules();
         const objects = await this.getDataSubmissionObjects(namespace);
         const uploads = await this.getUploads();
 
-        const dataSubmissions = await this.getDataSubmissions(objects, modules, uploads);
+        const dataSubmissions = await this.getDataSubmissions(objects, modules, uploads, selectedModule);
         const filteredRows = this.getFilteredRows(dataSubmissions, options);
         const { pager, objects: rowsInPage } = paginate(filteredRows, sorting, paging);
 
@@ -138,7 +139,8 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
     private async getDataSubmissions(
         objects: GLASSDataSubmissionItem[],
         modules: GLASSDataSubmissionModule[],
-        uploads: GLASSDataSubmissionItemUpload[]
+        uploads: GLASSDataSubmissionItemUpload[],
+        selectedModule: Module
     ): Promise<GLASSDataSubmissionItem[]> {
         const enrolledCountries = await this.getEnrolledCountries();
         const amrFocalPointProgramId = await this.getAMRFocalPointProgramId();
@@ -147,7 +149,13 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             enrolledCountries.join(";"),
             modules
         );
-        const registrations = await this.getRegistrations(dataSubmissionItems);
+
+        const moduleQuestionnaires =
+            modules
+                .find(module => module.id === selectedModule)
+                ?.questionnaires.map(questionnaire => questionnaire.id) ?? [];
+
+        const registrations = await this.getRegistrations(dataSubmissionItems, moduleQuestionnaires);
 
         const dataSubmissions: GLASSDataSubmissionItem[] = dataSubmissionItems.map(dataSubmissionItem => {
             const dataSubmission = objects.find(
@@ -405,12 +413,19 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
     }
 
     private async getRegistrations(
-        items: GLASSDataSubmissionItemIdentifier[]
+        items: GLASSDataSubmissionItemIdentifier[],
+        moduleQuestionnaires: Id[]
     ): Promise<Record<RegistrationKey, RegistrationItemBase>> {
         const orgUnitIds = _.uniq(items.map(obj => obj.orgUnit));
         const periods = _.uniq(items.map(obj => obj.period));
         const orgUnitsById = await this.getOrgUnits(orgUnitIds);
-        const apiRegistrations = await this.getApiRegistrations({ orgUnitIds, periods });
+        const apiRegistrations = !_(moduleQuestionnaires).compact().isEmpty()
+            ? await this.getApiRegistrations({
+                  orgUnitIds,
+                  periods,
+                  moduleQuestionnaires,
+              })
+            : [];
 
         const registrationsByOrgUnitPeriod = _.keyBy(apiRegistrations, apiReg =>
             getRegistrationKey({ orgUnitId: apiReg.organisationUnit, period: apiReg.period })
@@ -433,13 +448,19 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             .value();
     }
 
-    private async getApiRegistrations(options: { orgUnitIds: Id[]; periods: string[] }): Promise<Registration[]> {
-        const responses = _.chunk(options.orgUnitIds, 300).map(orgUnitIdsGroups =>
-            this.api.get<CompleteDataSetRegistrationsResponse>("/completeDataSetRegistrations", {
-                dataSet: "OYc0CihXiSn",
-                orgUnit: orgUnitIdsGroups,
-                period: options.periods,
-            })
+    private async getApiRegistrations(options: {
+        orgUnitIds: Id[];
+        periods: string[];
+        moduleQuestionnaires: Id[];
+    }): Promise<Registration[]> {
+        const responses = options.moduleQuestionnaires.flatMap(dataSet =>
+            _.chunk(options.orgUnitIds, 300).map(orgUnitIdsGroups =>
+                this.api.get<CompleteDataSetRegistrationsResponse>("/completeDataSetRegistrations", {
+                    dataSet: dataSet,
+                    orgUnit: orgUnitIdsGroups,
+                    period: options.periods,
+                })
+            )
         );
 
         return _(await promiseMap(responses, response => response.getData()))
@@ -1074,7 +1095,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
             this.sendNotifications("Rejected by WHO", body, [], recipients);
 
-            await this.postDataSetRegistration(items, false);
+            await this.postDataSetRegistration(items, modules, false);
 
             return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
         } else if (signals) {
@@ -1102,7 +1123,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         this.sendNotifications(message, message, [], recipients);
 
-        await this.postDataSetRegistration(items, false);
+        await this.postDataSetRegistration(items, modules, false);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
@@ -1117,7 +1138,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const message = await this.getNotificationText(items, modules, "update request accepted");
         this.sendNotifications(message, message, [], recipients);
 
-        await this.postDataSetRegistration(items, false);
+        await this.postDataSetRegistration(items, modules, false);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
@@ -1158,21 +1179,35 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         return _.orderBy(allOrgUnits, "level", "asc");
     }
 
-    private async postDataSetRegistration(items: GLASSDataSubmissionItemIdentifier[], completed: boolean) {
-        const dataSetRegistrations = items.map(item => ({
-            dataSet: "OYc0CihXiSn",
-            period: item.period,
-            organisationUnit: item.orgUnit,
-            completed,
-        }));
+    private async postDataSetRegistration(
+        items: GLASSDataSubmissionItemIdentifier[],
+        modules: GLASSDataSubmissionModule[],
+        completed: boolean
+    ) {
+        const selectedModule = items[0]?.module;
+        const moduleQuestionnaires =
+            modules
+                .find(module => module.id === selectedModule)
+                ?.questionnaires.map(questionnaire => questionnaire.id) ?? [];
 
-        await this.api
-            .post<CompleteDataSetRegistrationsResponse>(
-                "/completeDataSetRegistrations",
-                {},
-                { completeDataSetRegistrations: dataSetRegistrations }
-            )
-            .getData();
+        const dataSetRegistrations = items.flatMap(item =>
+            moduleQuestionnaires.map(dataSet => ({
+                dataSet: dataSet,
+                period: item.period,
+                organisationUnit: item.orgUnit,
+                completed,
+            }))
+        );
+
+        if (!_(moduleQuestionnaires).compact().isEmpty()) {
+            await this.api
+                .post<CompleteDataSetRegistrationsResponse>(
+                    "/completeDataSetRegistrations",
+                    {},
+                    { completeDataSetRegistrations: dataSetRegistrations }
+                )
+                .getData();
+        }
     }
 
     private async sendNotifications(subject: string, text: string, userGroups: Ref[], users?: Ref[]): Promise<void> {
