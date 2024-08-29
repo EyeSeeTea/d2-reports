@@ -11,6 +11,7 @@ import {
     Module,
     Status,
 } from "../entities/GLASSDataSubmissionItem";
+import { OrgUnitWithChildren } from "../entities/OrgUnit";
 
 export interface GLASSDataSubmissionRepository {
     get(options: GLASSDataSubmissionOptions, namespace: string): Promise<PaginatedObjects<GLASSDataSubmissionItem>>;
@@ -33,7 +34,8 @@ export interface GLASSDataSubmissionRepository {
     ): Promise<void>;
     reopen(namespace: string, items: GLASSDataSubmissionItemIdentifier[]): Promise<void>;
     accept(namespace: string, items: GLASSDataSubmissionItemIdentifier[]): Promise<void>;
-    getGLASSDashboardId(namespace: string, items: GLASSDataSubmissionItemIdentifier[]): Promise<string>;
+    getGLASSDashboardId(): Promise<string>;
+    getOrganisationUnitsWithChildren(): Promise<OrgUnitWithChildren[]>;
 }
 
 export interface GLASSDataSubmissionOptions {

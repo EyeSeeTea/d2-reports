@@ -18,6 +18,7 @@ export interface DataValuesSelector {
     periods?: string[];
     startDate?: string;
     endDate?: string;
+    children?: boolean;
 }
 
 export type DataValueToPost = Omit<

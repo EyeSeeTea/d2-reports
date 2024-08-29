@@ -3,6 +3,8 @@ import useListColumns from "./useListColumns";
 import { Filter } from "./Filters";
 import { useGetDataSubmissions } from "./useGetDataSubmissions";
 import { useGetUserPermissions } from "./useGetUserPermissions";
+import { useMemo } from "react";
+import _ from "lodash";
 
 const initialSorting = {
     field: "orgUnitName" as const,
@@ -27,12 +29,21 @@ export function useDataSubmissionList(filters: Filter) {
         filters
     );
 
+    const moduleQuestionnaires = useMemo(() => {
+        return _.compact(
+            userModules
+                .find(userModule => userModule.id === filters.module)
+                ?.questionnaires.map(questionnaire => questionnaire.id)
+        );
+    }, [filters.module, userModules]);
+
     return {
         dataSubmissionPeriod,
         initialSorting,
         isEARModule,
         isEGASPUser,
         pagination,
+        moduleQuestionnaires,
         selectablePeriods,
         userModules,
         visibleColumns,

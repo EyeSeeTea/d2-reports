@@ -1,3 +1,4 @@
+import _ from "lodash";
 import React from "react";
 import { Typography, makeStyles } from "@material-ui/core";
 import {
@@ -18,6 +19,8 @@ import { DataElement } from "../../../domain/common/entities/DataSet";
 import { countryLevel } from "../common/nhwa-settings";
 import { useReload } from "../../utils/use-reload";
 import { Filters } from "../common/Filters";
+import { AlertStatsErrors } from "../../components/alert-stats-errors/AlertStatsErrors";
+import { Stats } from "../../../domain/common/entities/Stats";
 
 export type FixTotalsWithPaging = {
     page: number;
@@ -54,6 +57,7 @@ export const NHWAFixTotals: React.FC = () => {
     const [selectedPeriods, setSelectedPeriods] = React.useState<string[]>([]);
     const [selectedOrgUnits, setSelectedOrgUnits] = React.useState<string[]>([]);
     const [orgUnits, setOrgUnits] = React.useState<OrgUnit[]>([]);
+    const [errors, setErrors] = React.useState<Stats["errorMessages"]>();
     const classes = useStyles();
 
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
@@ -85,11 +89,15 @@ export const NHWAFixTotals: React.FC = () => {
                 compositionRoot.nhwa.fixTotalValues
                     .execute(onlyRowsSelected)
                     .then(stats => {
-                        snackbar.openSnackbar("success", JSON.stringify(stats, null, 4), {
+                        const statsWithoutErrorMessages = _(stats).omit("errorMessages").value();
+                        snackbar.openSnackbar("success", JSON.stringify(statsWithoutErrorMessages, null, 4), {
                             autoHideDuration: 20 * 1000,
                         });
                         reload();
                         loading.hide();
+                        if (stats.errorMessages.length > 0) {
+                            setErrors(stats.errorMessages);
+                        }
                     })
                     .catch(err => {
                         snackbar.error(err.message);
@@ -217,6 +225,8 @@ export const NHWAFixTotals: React.FC = () => {
             <Typography variant="h5" gutterBottom>
                 {i18n.t("Module 1 totals by Activity Label with missing value that does not match the auto-calculated")}
             </Typography>
+
+            <AlertStatsErrors errors={errors} onCleanError={() => setErrors(undefined)} orgUnits={orgUnits} />
 
             <ObjectsList<FixTotalsViewModel> {...tableProps} onChangeSearch={undefined}>
                 <Filters

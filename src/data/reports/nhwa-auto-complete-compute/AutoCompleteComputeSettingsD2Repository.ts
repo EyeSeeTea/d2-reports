@@ -6,8 +6,7 @@ import { d2ReportsDataStoreNamespace } from "../../common/clients/storage/Namesp
 export class AutoCompleteComputeSettingsD2Repository implements AutoCompleteComputeSettingsRepository {
     constructor(private api: D2Api) {}
 
-    async get(): Promise<AutoCompleteComputeSettings> {
-        const key = "nhwa-auto-complete-compute";
+    async get(key: string): Promise<AutoCompleteComputeSettings> {
         const dataStore = this.api.dataStore(d2ReportsDataStoreNamespace);
         const config = await dataStore.get<AutoCompleteComputeSettings>(key).getData();
         if (!config) {

@@ -14,6 +14,7 @@ export interface DataSetsFiltersProps {
     values: DataSetsFilter;
     options: FilterOptions;
     onChange: React.Dispatch<React.SetStateAction<DataSetsFilter>>;
+    hideDataSets?: boolean;
 }
 
 export interface DataSetsFilter {
@@ -31,7 +32,7 @@ interface FilterOptions {
 
 export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { config, api } = useAppContext();
-    const { values: filter, options: filterOptions, onChange } = props;
+    const { hideDataSets, values: filter, options: filterOptions, onChange } = props;
 
     const dataSetItems = useMemoOptionsFromNamedRef(filterOptions.dataSets);
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
@@ -119,12 +120,14 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 selectableLevels={[1, 2, 3]}
             />
 
-            <DropdownStyled
-                items={dataSetItems}
-                values={filter.dataSetIds}
-                onChange={setDataSetIds}
-                label={i18n.t("Data sets")}
-            />
+            {!hideDataSets && (
+                <DropdownStyled
+                    items={dataSetItems}
+                    values={filter.dataSetIds}
+                    onChange={setDataSetIds}
+                    label={i18n.t("Data sets")}
+                />
+            )}
 
             <DropdownStyled
                 items={periodItems}

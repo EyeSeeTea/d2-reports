@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { MultipleDropdown } from "@eyeseetea/d2-ui-components";
 import { OrgUnit } from "../../../domain/common/entities/OrgUnit";
-import { countryLevel, defaultPeriods } from "./nhwa-settings";
+import { defaultPeriods } from "./nhwa-settings";
 import { OrgUnitsFilterButton } from "../../components/org-units-filter/OrgUnitsFilterButton";
 import { D2Api } from "./../../../types/d2-api";
 import i18n from "../../../locales";
@@ -35,7 +35,7 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
                 rootIds={rootIds}
                 selected={selectedOrgUnits}
                 setSelected={setSelectedOrgUnits}
-                selectableLevels={[countryLevel]}
+                // selectableLevels={[countryLevel]}
                 selectableIds={orgUnits.map(ou => ou.id)}
             />
 

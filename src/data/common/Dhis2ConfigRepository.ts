@@ -24,7 +24,7 @@ const base = {
         approvalWorkflows: { namePrefix: "NHWA" },
     },
     mal: {
-        dataSets: { namePrefix: "MAL - WMR Form", nameExcluded: /-APVD$/ },
+        dataSets: { namePrefix: "MAL - WMR Form", nameExcluded: /(?: - OLD|-APVD)$/ },
         sqlViewNames: [
             SQL_VIEW_DATA_DUPLICATION_NAME,
             SQL_VIEW_MAL_METADATA_NAME,
@@ -88,6 +88,12 @@ const base = {
         constantCode: "",
         approvalWorkflows: { namePrefix: "" },
     },
+    twoFactorUserMonitoring: {
+        dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
+        sqlViewNames: [],
+        constantCode: "",
+        approvalWorkflows: { namePrefix: "" },
+    },
 };
 
 export class Dhis2ConfigRepository implements ConfigRepository {
@@ -141,6 +147,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             dataSets: {
                 fields: {
                     id: true,
+                    code: true,
                     displayName: toName,
                     dataSetElements: {
                         dataElement: { id: true, name: true },

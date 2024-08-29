@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2024-04-05T06:42:58.086Z\n"
-"PO-Revision-Date: 2024-04-05T06:42:58.086Z\n"
+"POT-Creation-Date: 2024-05-22T17:13:09.045Z\n"
+"PO-Revision-Date: 2024-05-22T17:13:09.045Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -56,6 +56,16 @@ msgid "This will take a long time."
 msgstr ""
 
 msgid "Are you sure?"
+msgstr ""
+
+msgid ""
+"Module 1 totals with missing sum or sum that does not match the "
+"auto-calculated"
+msgstr ""
+
+msgid ""
+"Module 1 (Subnational single entry) totals with missing sum or sum that "
+"does not match the auto-calculated"
 msgstr ""
 
 msgid "Metadata Admin Report"
@@ -385,16 +395,13 @@ msgstr ""
 msgid "Continue"
 msgstr ""
 
+msgid "Select File"
+msgstr ""
+
 msgid "Version has been successfully patched"
 msgstr ""
 
-msgid "Error encountered when parsing version"
-msgstr ""
-
 msgid "Upload finished"
-msgstr ""
-
-msgid "Error parsing the file"
 msgstr ""
 
 msgid "Recalculation has been cancelled successfully"
@@ -708,11 +715,6 @@ msgstr ""
 msgid "Updating values..."
 msgstr ""
 
-msgid ""
-"Module 1 totals with missing sum or sum that does not match the "
-"auto-calculated"
-msgstr ""
-
 msgid "NHWA Comments Report"
 msgstr ""
 
@@ -773,4 +775,25 @@ msgid "Dismiss"
 msgstr ""
 
 msgid "Module 1 (subnational) with fixes for organisation unit name"
+msgstr ""
+
+msgid "User Two Factor Monitoring"
+msgstr ""
+
+msgid "External auth"
+msgstr ""
+
+msgid "TwoFA"
+msgstr ""
+
+msgid "Email"
+msgstr ""
+
+msgid "Disabled"
+msgstr ""
+
+msgid "User groups"
+msgstr ""
+
+msgid "Open ID"
 msgstr ""

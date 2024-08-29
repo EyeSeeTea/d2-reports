@@ -1,5 +1,5 @@
 import { ConfirmationDialog, ConfirmationDialogProps } from "@eyeseetea/d2-ui-components";
-import React, { useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import i18n from "../../../../../locales";
 import styled from "styled-components";
 import {
@@ -24,19 +24,18 @@ export const GLASSAdminDialog: React.FC<DialogProps> = React.memo(props => {
     const [period, setPeriod] = useState<string>("");
     const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
 
-    const isYearUploaded = !!uploadedYears?.includes(period);
-    const disableModalSave =
-        disableSave !== undefined ? disableSave || !selectedFile || isYearUploaded : !selectedFile || isYearUploaded;
+    const disableModalSave = useMemo(() => {
+        return !!disableSave || !selectedFile || !!uploadedYears?.includes(period);
+    }, [disableSave, period, uploadedYears, selectedFile]);
 
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
-
         if (files && files.length > 0) {
             setSelectedFile(files[0]);
         } else {
             setSelectedFile(undefined);
         }
-    };
+    }, []);
 
     return (
         <ConfirmationDialog
@@ -66,7 +65,7 @@ export const GLASSAdminDialog: React.FC<DialogProps> = React.memo(props => {
 
             <FileInputWrapper>
                 <FileInputLabel htmlFor="upload">
-                    <span>Select File</span>
+                    <span>{i18n.t("Select File")}</span>
                     <CloudUpload />
                 </FileInputLabel>
                 <FileInput id="upload" type="file" accept=".zip,.rar,.7zip" onChange={handleFileChange} />

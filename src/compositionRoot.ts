@@ -97,6 +97,13 @@ import { GetATCRecalculationLogicUseCase } from "./domain/reports/glass-admin/us
 import { CancelRecalculationUseCase } from "./domain/reports/glass-admin/usecases/CancelRecalculationUseCase";
 import { GetGLASSDataSubmissionModulesUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSDataSubmissionModulesUseCase";
 import { SaveAuthoritiesMonitoringUseCase } from "./domain/reports/authorities-monitoring/usecases/SaveAuthoritiesMonitoringUseCase";
+import { GetAutoCompleteComputeSettingsUseCase } from "./domain/reports/nhwa-auto-complete-compute/usecases/GetAutoCompleteComputeSettingsUseCase";
+import { GetMonitoringTwoFactorUseCase } from "./domain/reports/twofactor-monitoring/usecases/GetMonitoringTwoFactorUseCase";
+import { SaveMonitoringTwoFactorColumnsUseCase } from "./domain/reports/twofactor-monitoring/usecases/SaveMonitoringTwoFactorColumnsUseCase";
+import { GetMonitoringTwoFactorColumnsUseCase } from "./domain/reports/twofactor-monitoring/usecases/GetMonitoringTwoFactorColumnsUseCase";
+import { SaveMonitoringTwoFactorUseCase } from "./domain/reports/twofactor-monitoring/usecases/SaveMonitoringTwoFactorUseCase";
+import { MonitoringTwoFactorD2Repository } from "./data/reports/twofactor-monitoring/MonitoringTwoFactorD2Repository";
+import { GetOrgUnitsWithChildrenUseCase } from "./domain/reports/glass-data-submission/usecases/GetOrgUnitsWithChildrenUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -120,6 +127,7 @@ export function getCompositionRoot(api: D2Api) {
     const subnationalCorrectRepository = new SubnationalCorrectD2Repository(api);
     const subnationalCorrectSettingsRepository = new SubnationalCorrectD2SettingsRepository(api);
     const authoritiesMonitoringRepository = new AuthoritiesMonitoringDefaultRepository(api);
+    const monitoringTwoFactorD2Repository = new MonitoringTwoFactorD2Repository(api);
 
     return {
         admin: getExecute({
@@ -191,6 +199,7 @@ export function getCompositionRoot(api: D2Api) {
             saveColumns: new SaveGLASSDataSubmissionColumnsUseCase(glassDataRepository),
             dhis2MessageCount: new DHIS2MessageCountUseCase(glassDataRepository),
             updateStatus: new UpdateGLASSSubmissionUseCase(glassDataRepository),
+            getOrgUnitsWithChildren: new GetOrgUnitsWithChildrenUseCase(glassDataRepository),
         }),
         summary: getExecute({
             get: new GetSummaryUseCase(csySummaryRepository),
@@ -217,10 +226,12 @@ export function getCompositionRoot(api: D2Api) {
             get: new GetConfig(configRepository),
         }),
         nhwa: {
+            getAutoCompleteComputeSettings: new GetAutoCompleteComputeSettingsUseCase(
+                autoCompleteComputeSettingsRepository
+            ),
             getAutoCompleteComputeValues: new GetAutoCompleteComputeValuesUseCase(
                 dataSetRepository,
-                dataValuesRepository,
-                autoCompleteComputeSettingsRepository
+                dataValuesRepository
             ),
             fixAutoCompleteComputeValues: new FixAutoCompleteComputeValuesUseCase(dataValuesRepository),
             getTotalsByActivityLevel: new GetTotalsByActivityLevelUseCase(
@@ -240,6 +251,12 @@ export function getCompositionRoot(api: D2Api) {
             save: new SaveAuthoritiesMonitoringUseCase(authoritiesMonitoringRepository),
             getColumns: new GetAuthoritiesMonitoringColumnsUseCase(authoritiesMonitoringRepository),
             saveColumns: new SaveAuthoritiesMonitoringColumnsUseCase(authoritiesMonitoringRepository),
+        }),
+        twoFactorUserMonitoring: getExecute({
+            get: new GetMonitoringTwoFactorUseCase(monitoringTwoFactorD2Repository),
+            save: new SaveMonitoringTwoFactorUseCase(monitoringTwoFactorD2Repository),
+            getColumns: new GetMonitoringTwoFactorColumnsUseCase(monitoringTwoFactorD2Repository),
+            saveColumns: new SaveMonitoringTwoFactorColumnsUseCase(monitoringTwoFactorD2Repository),
         }),
     };
 }
