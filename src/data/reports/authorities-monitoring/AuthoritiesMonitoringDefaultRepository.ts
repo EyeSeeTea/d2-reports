@@ -169,19 +169,20 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
     ): Promise<AuthoritiesMonitoringItem[]> {
         const { templateGroups, usernameQuery, userRoles } = options;
 
+        // eslint-disable-next-line
+        debugger;
         return objects.filter(row => {
             const isInTemplateGroup = !!(_.isEmpty(templateGroups) || !row.templateGroups
                 ? row
-                : _.intersection(templateGroups, row.templateGroups));
+                : templateGroups.some(group => row.templateGroups.includes(group)));
             const hasUserRole = !!(_.isEmpty(userRoles) || !row.roles
                 ? row
-                : _.some(userRoles.map(r => row.roles.map(role => role.id).includes(r))));
+                : userRoles.some(r => row.roles.some(role => role.id === r)));
             const isInSearchQuery = _.includes(row.username, usernameQuery);
 
             return isInTemplateGroup && hasUserRole && isInSearchQuery;
         });
     }
-
     private getExcludedRoles(user: User, userMonitoring: UserMonitoring, allowedUserRoles: UserRole[]): UserRole[] {
         const currentUserRoles = user.userCredentials.userRoles;
         const excludedAuthorities = this.getExcludedAuthorities(user, userMonitoring, allowedUserRoles);
