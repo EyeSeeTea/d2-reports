@@ -169,8 +169,6 @@ export class AuthoritiesMonitoringDefaultRepository implements AuthoritiesMonito
     ): Promise<AuthoritiesMonitoringItem[]> {
         const { templateGroups, usernameQuery, userRoles } = options;
 
-        // eslint-disable-next-line
-        debugger;
         return objects.filter(row => {
             const isInTemplateGroup = !!(_.isEmpty(templateGroups) || !row.templateGroups
                 ? row
