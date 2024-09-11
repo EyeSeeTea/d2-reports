@@ -27,7 +27,9 @@ const GLASSHeader = ({ classes }) => {
             <div className={classes.titleContainer}>
                 <Home className={classes.title} fontSize="large" onClick={actionLandingPage} />
                 <img className={classes.logo} alt={"glass-logo"} src="img/glass.png" />
-                <img className={classes.logo} alt={"who-logo"} src="img/who-logo.png" />
+                <button className={classes.iconButton} onClick={actionLandingPage}>
+                    <img className={classes.logo} alt={"who-logo"} src="img/who-logo.png" />
+                </button>
             </div>
             <div className={classes.titleContainer}>
                 <div className={classes.messages}>
