@@ -1,21 +1,5 @@
 import { PaginatedObjects } from "../../../../types/d2-api";
-import { NamedRef, Ref } from "../../../common/entities/Ref";
-
-export interface UserRole {
-    id: string;
-    name: string;
-    authorities: string[];
-}
-
-export interface UserDetails extends NamedRef {
-    userGroups: Ref[];
-    userCredentials: {
-        id: string;
-        username: string;
-        lastLogin: string;
-        userRoles: UserRole[];
-    };
-}
+import { UserRole } from "./UserPermissions";
 
 export interface AuthoritiesMonitoringItem {
     id: string;
