@@ -68,6 +68,16 @@ msgid ""
 "does not match the auto-calculated"
 msgstr ""
 
+msgid ""
+"Module 1 totals with missing sum or sum that does not match the "
+"auto-calculated"
+msgstr ""
+
+msgid ""
+"Module 1 (Subnational single entry) totals with missing sum or sum that "
+"does not match the auto-calculated"
+msgstr ""
+
 msgid "Metadata Admin Report"
 msgstr ""
 
@@ -122,6 +132,7 @@ msgstr ""
 msgid "Username"
 msgstr ""
 
+msgid "Template Groups"
 msgid "Template Groups"
 msgstr ""
 
@@ -448,6 +459,9 @@ msgid "There is no UNDO for this action"
 msgstr ""
 
 msgid "Continue"
+msgstr ""
+
+msgid "Select File"
 msgstr ""
 
 msgid "Select File"
