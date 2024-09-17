@@ -138,7 +138,7 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
             .uniqBy("id")
             .value();
 
-        const { objects, pager } = paginate(rows, sorting, paging);
+        const { objects, pager } = paginate(rows, paging, sorting);
 
         return { pager, objects, sections, dataElementGroups, totalRows: rows };
     }
@@ -183,7 +183,7 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                 .map(dashboard => getRows(dashboard, dataElementsInDashboard, subscriptionValues))
                 .filter(row => (!subscriptionStatus ? row : subscriptionStatus === row.subscription));
 
-            const { objects, pager } = paginate(rows, dashboardSorting, paging);
+            const { objects, pager } = paginate(rows, paging, dashboardSorting);
 
             return { pager, objects, totalRows: rows };
         } else if (elementType === "visualizations") {
@@ -201,7 +201,7 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
                 .map(visualization => getRows(visualization, dataElementsInVisualization, subscriptionValues))
                 .filter(row => (!subscriptionStatus ? row : subscriptionStatus === row.subscription));
 
-            const { objects, pager } = paginate(rows, dashboardSorting, paging);
+            const { objects, pager } = paginate(rows, paging, dashboardSorting);
 
             return { pager, objects, totalRows: rows };
         } else {

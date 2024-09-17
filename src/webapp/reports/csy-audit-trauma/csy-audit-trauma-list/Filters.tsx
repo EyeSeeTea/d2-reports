@@ -6,6 +6,7 @@ import styled from "styled-components";
 import { Dropdown, DropdownProps } from "@eyeseetea/d2-ui-components";
 import i18n from "../../../../locales";
 import _ from "lodash";
+import { AuditType } from "../../../../domain/reports/csy-audit-trauma/entities/AuditItem";
 
 export interface FiltersProps {
     values: Filter;
@@ -14,67 +15,16 @@ export interface FiltersProps {
 }
 
 export interface Filter {
-    auditType: string;
+    auditType: AuditType;
     orgUnitPaths: Id[];
     periodType: string;
     year: string;
     quarter?: string;
 }
 
-interface FilterOptions {
+export type FilterOptions = {
     periods: string[];
-}
-
-export const auditTypeItems = [
-    {
-        value: "mortality",
-        text: i18n.t("Mortality with low injury severity score"),
-        auditDefinition:
-            "(EU Disposition = Death) OR (Hospital Disposition = Death) AND (KTS=14-16) OR (MGAP=23-29) OR (GAP=19-24) OR (RTS=11-12)",
-    },
-    {
-        value: "hypoxia",
-        text: i18n.t("Oxygen not administered for patients with hypoxia"),
-        auditDefinition: "Initial Oxygen Sat < 92 AND EU Procedures != Supplemental Oxygen Administration",
-    },
-    {
-        value: "tachypnea",
-        text: i18n.t("Oxygen not administered for patients with tachypnea"),
-        auditDefinition: "Initial Spontaneous RR <12 OR >30 AND EU Procedures != Supplemental Oxygen Administration",
-    },
-    {
-        value: "mental",
-        text: i18n.t("Mental status-dependent airway maneuver"),
-        auditDefinition:
-            "GCS total < 8 OR AVPU=(P OR U) AND EU Procedures ≠ Endotracheal intubation, Surgical airway, OR Assisted Ventilation",
-    },
-    {
-        value: "all-mortality",
-        text: i18n.t("All mortality"),
-        auditDefinition: "EU Disposition = Mortuary or Died OR Hospital Disposition = Morgue or Died",
-    },
-    { value: "emergency-unit", text: i18n.t("Emergency Unit"), auditDefinition: "EU Disposition = Mortuary or Died" },
-    {
-        value: "hospital-mortality",
-        text: i18n.t("Hospital Mortality"),
-        auditDefinition: "Hospital Disposition = Morgue or Died",
-    },
-    {
-        value: "severe-injuries",
-        text: i18n.t("Severe injuries by any scoring system"),
-        auditDefinition: "(KTS<11) OR (MGAP=3-17) OR (GAP=3-10) OR (RTS≤3)",
-    },
-    {
-        value: "moderate-severe-injuries",
-        text: i18n.t("Moderate or severe injuries by any scoring system"),
-        auditDefinition: "(KTS≤13) OR (MGAP≤22) OR (GAP≤18) OR (RTS≤10)",
-    },
-    {
-        value: "moderate-injuries",
-        text: i18n.t("Moderate injuries by any scoring system"),
-        auditDefinition: "(KTS=11-13) OR (MGAP=18-22) OR (GAP=11-18) OR (RTS=4-10)",
-    },
-];
+};
 
 export const Filters: React.FC<FiltersProps> = React.memo(props => {
     const { config, api } = useAppContext();
@@ -110,7 +60,7 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
 
     const setAuditType = React.useCallback<SingleDropdownHandler>(
         auditType => {
-            onChange(filter => ({ ...filter, auditType: auditType ?? "" }));
+            onChange(filter => ({ ...filter, auditType: auditType as AuditType }));
         },
         [onChange]
     );
@@ -211,3 +161,62 @@ const SingleDropdownStyled = styled(Dropdown)`
 `;
 
 type SingleDropdownHandler = DropdownProps["onChange"];
+
+export const auditTypeItems = [
+    {
+        value: "mortality",
+        text: i18n.t("Mortality with low injury severity score"),
+        auditDefinition: i18n.t(
+            "(EU Disposition = Death) OR (Hospital Disposition = Death) AND (KTS=14-16) OR (MGAP=23-29) OR (GAP=19-24) OR (RTS=11-12)"
+        ),
+    },
+    {
+        value: "hypoxia",
+        text: i18n.t("Oxygen not administered for patients with hypoxia"),
+        auditDefinition: i18n.t("Initial Oxygen Sat < 92 AND EU Procedures != Supplemental Oxygen Administration"),
+    },
+    {
+        value: "tachypnea",
+        text: i18n.t("Oxygen not administered for patients with tachypnea"),
+        auditDefinition: i18n.t(
+            "Initial Spontaneous RR <12 OR >30 AND EU Procedures != Supplemental Oxygen Administration"
+        ),
+    },
+    {
+        value: "mental",
+        text: i18n.t("Mental status-dependent airway maneuver"),
+        auditDefinition: i18n.t(
+            "GCS total < 8 OR AVPU=(P OR U) AND EU Procedures ≠ Endotracheal intubation, Surgical airway, OR Assisted Ventilation"
+        ),
+    },
+    {
+        value: "allMortality",
+        text: i18n.t("All mortality"),
+        auditDefinition: i18n.t("EU Disposition = Mortuary or Died OR Hospital Disposition = Morgue or Died"),
+    },
+    {
+        value: "emergencyUnit",
+        text: i18n.t("Emergency Unit"),
+        auditDefinition: i18n.t("EU Disposition = Mortuary or Died"),
+    },
+    {
+        value: "hospitalMortality",
+        text: i18n.t("Hospital Mortality"),
+        auditDefinition: i18n.t("Hospital Disposition = Morgue or Died"),
+    },
+    {
+        value: "severeInjuries",
+        text: i18n.t("Severe injuries by any scoring system"),
+        auditDefinition: i18n.t("(KTS<11) OR (MGAP=3-17) OR (GAP=3-10) OR (RTS≤3)"),
+    },
+    {
+        value: "moderateSevereInjuries",
+        text: i18n.t("Moderate or severe injuries by any scoring system"),
+        auditDefinition: i18n.t("(KTS≤13) OR (MGAP≤22) OR (GAP≤18) OR (RTS≤10)"),
+    },
+    {
+        value: "moderateInjuries",
+        text: i18n.t("Moderate injuries by any scoring system"),
+        auditDefinition: i18n.t("(KTS=11-13) OR (MGAP=18-22) OR (GAP=11-18) OR (RTS=4-10)"),
+    },
+];

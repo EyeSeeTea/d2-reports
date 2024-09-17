@@ -6,6 +6,7 @@ import styled from "styled-components";
 import { Dropdown, DropdownProps } from "@eyeseetea/d2-ui-components";
 import i18n from "../../../../locales";
 import _ from "lodash";
+import { AuditType } from "../../../../domain/reports/csy-audit-emergency/entities/AuditItem";
 
 export interface FiltersProps {
     values: Filter;
@@ -14,46 +15,16 @@ export interface FiltersProps {
 }
 
 export interface Filter {
-    auditType: string;
+    auditType: AuditType;
     orgUnitPaths: Id[];
     periodType: string;
     year: string;
     quarter?: string;
 }
 
-interface FilterOptions {
+export type FilterOptions = {
     periods: string[];
-}
-
-export const auditTypeItems = [
-    {
-        value: "overall-mortality",
-        text: i18n.t("Overall Mortality in EU"),
-        auditDefinition: "ETA_EU Dispo = Morgue or Died or ETA_Facility Dispo = Morgue or Died",
-    },
-    {
-        value: "low-acuity",
-        text: i18n.t("Low acuity triage with EU disposition ICU"),
-        auditDefinition: "EU dispo = ICU AND Triage category = lowest acuity triage category",
-    },
-    {
-        value: "highest-triage",
-        text: i18n.t("Highest triage category and time to first provider >30min​"),
-        auditDefinition:
-            "Triage category = highest category AND time between EU arrival date and time  to Date and time seen by a  first treating provider > 30 min",
-    },
-    {
-        value: "initial-rbg",
-        text: i18n.t("Initial RBG low and Glucose not given"),
-        auditDefinition: "Initial RBG = Low AND Glucose not given at EU",
-    },
-    {
-        value: "shock-ivf",
-        text: i18n.t("Shock and IVF including Blood"),
-        auditDefinition:
-            "(Age>=16 OR Age category = adult - age unknown) AND Initial SBP<90mmHg AND  (Section: Emergency Unit Interventions > Medications and Fluids) IV Fluids = not done",
-    },
-];
+};
 
 export const Filters: React.FC<FiltersProps> = React.memo(props => {
     const { config, api } = useAppContext();
@@ -88,7 +59,7 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
 
     const setAuditType = React.useCallback<SingleDropdownHandler>(
         auditType => {
-            onChange(filter => ({ ...filter, auditType: auditType ?? "" }));
+            onChange(filter => ({ ...filter, auditType: auditType as AuditType }));
         },
         [onChange]
     );
@@ -165,6 +136,39 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
         </Container>
     );
 });
+
+export const auditTypeItems = [
+    {
+        value: "overallMortality",
+        text: i18n.t("Overall Mortality in EU"),
+        auditDefinition: i18n.t("ETA_EU Dispo = Morgue or Died or ETA_Facility Dispo = Morgue or Died"),
+    },
+    {
+        value: "lowAcuity",
+        text: i18n.t("Low acuity triage with EU disposition ICU"),
+        auditDefinition: i18n.t("EU dispo = ICU AND Triage category = lowest acuity triage category"),
+    },
+    {
+        value: "highestTriage",
+        text: i18n.t("Highest triage category and time to first provider >30min​"),
+        auditDefinition: i18n.t(
+            "Triage category = highest category AND time between EU arrival date and time  to Date and time seen by a  first treating provider > 30 min"
+        ),
+    },
+    {
+        value: "initialRbg",
+        text: i18n.t("Initial RBG low and Glucose not given"),
+        auditDefinition: i18n.t("Initial RBG = Low AND Glucose not given at EU"),
+    },
+    {
+        value: "shockIvf",
+        text: i18n.t("Shock and IVF including Blood"),
+        auditDefinition: i18n.t(
+            "(Age>=16 OR Age category = adult - age unknown) AND Initial SBP<90mmHg AND  (Section: Emergency Unit Interventions > Medications and Fluids) IV Fluids = not done",
+            { nsSeparator: false }
+        ),
+    },
+];
 
 function useMemoOptionsFromStrings(options: string[]) {
     return useMemo(() => {

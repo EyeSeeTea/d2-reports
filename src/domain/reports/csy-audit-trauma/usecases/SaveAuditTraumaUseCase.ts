@@ -1,8 +1,8 @@
 import { AuditItem } from "../entities/AuditItem";
-import { CSYAuditTraumaRepository } from "../repositories/CSYAuditTraumaRepository";
+import { AuditItemRepository } from "../repositories/AuditItemRepository";
 
 export class SaveAuditTraumaUseCase {
-    constructor(private auditRepository: CSYAuditTraumaRepository) {}
+    constructor(private auditRepository: AuditItemRepository) {}
 
     async execute(filename: string, items: AuditItem[]): Promise<void> {
         this.auditRepository.save(filename, items);

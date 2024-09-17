@@ -1,4 +1,3 @@
-import { Config } from "../../../domain/common/entities/Config";
 import { SummaryItem } from "../../../domain/reports/csy-summary-patient/entities/SummaryItem";
 
 export interface SummaryViewModel {
@@ -18,10 +17,10 @@ export interface SummaryViewModel {
     total: string;
 }
 
-export function getSummaryViews(_config: Config, items: SummaryItem[]): SummaryViewModel[] {
+export function getSummaryViews(items: SummaryItem[]): SummaryViewModel[] {
     return items.map((item, i) => {
         return {
-            id: String(i),
+            id: i.toString(),
             group: item.group,
             subGroup: item.subGroup,
             yearLessThan1: item.yearLessThan1,
@@ -34,7 +33,7 @@ export function getSummaryViews(_config: Config, items: SummaryItem[]): SummaryV
             year60To80: item.year60To80,
             yearGreaterThan80: item.yearGreaterThan80,
             unknown: item.unknown,
-            total: item.unknown,
+            total: item.total,
         };
     });
 }

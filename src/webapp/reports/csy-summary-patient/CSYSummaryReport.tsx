@@ -9,7 +9,7 @@ const CSYSummaryReport: React.FC = () => {
     return (
         <div className={classes.wrapper}>
             <Typography variant="h5" gutterBottom>
-                {i18n.t("CSY Summary Table Report - Patient Characteristics")}
+                {i18n.t("CSY Summary Report - Patient Characteristics")}
             </Typography>
 
             <CSYSummaryList />

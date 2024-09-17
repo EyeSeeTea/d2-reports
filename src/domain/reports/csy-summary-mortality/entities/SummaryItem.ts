@@ -4,3 +4,5 @@ export interface SummaryItem {
     mortality: string;
     total: string;
 }
+
+export type SummaryType = "mortalityInjurySeverity";
