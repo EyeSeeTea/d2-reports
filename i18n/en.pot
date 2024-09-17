@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2024-07-28T20:59:54.563Z\n"
-"PO-Revision-Date: 2024-07-28T20:59:54.563Z\n"
+"POT-Creation-Date: 2024-09-17T13:12:46.387Z\n"
+"PO-Revision-Date: 2024-09-17T13:12:46.387Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -193,6 +193,12 @@ msgid "Initial RBG = Low AND Glucose not given at EU"
 msgstr ""
 
 msgid "Shock and IVF including Blood"
+msgstr ""
+
+msgid ""
+"(Age>=16 OR Age category = adult - age unknown) AND Initial SBP<90mmHg AND  "
+"(Section: Emergency Unit Interventions > Medications and Fluids) IV Fluids "
+"= not done"
 msgstr ""
 
 msgid "CSY Audit Filters - Trauma Care"

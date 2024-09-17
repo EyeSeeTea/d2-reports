@@ -164,7 +164,8 @@ export const auditTypeItems = [
         value: "shockIvf",
         text: i18n.t("Shock and IVF including Blood"),
         auditDefinition: i18n.t(
-            "(Age>=16 OR Age category = adult - age unknown) AND Initial SBP<90mmHg AND  (Section: Emergency Unit Interventions > Medications and Fluids) IV Fluids = not done"
+            "(Age>=16 OR Age category = adult - age unknown) AND Initial SBP<90mmHg AND  (Section: Emergency Unit Interventions > Medications and Fluids) IV Fluids = not done",
+            { nsSeparator: false }
         ),
     },
 ];
