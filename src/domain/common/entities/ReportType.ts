@@ -5,6 +5,7 @@ export type ReportType =
     | "glass"
     | "glass-admin"
     | "auditEmergency"
+    | "auditOperative"
     | "auditTrauma"
     | "summary-patient"
     | "summary-mortality"

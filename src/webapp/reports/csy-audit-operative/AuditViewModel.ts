@@ -1,4 +1,4 @@
-import { AuditItem } from "../../../domain/reports/csy-audit-emergency/entities/AuditItem";
+import { AuditItem } from "../../../domain/reports/csy-audit-operative/entities/AuditItem";
 
 export interface AuditViewModel {
     id: string;
