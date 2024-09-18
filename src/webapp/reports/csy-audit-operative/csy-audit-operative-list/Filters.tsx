@@ -156,7 +156,7 @@ export const auditTypeItems = [
         value: "cSectionMortality",
         text: i18n.t("Mortality (operative and 24hr) in patients who undergo C-section ​"),
         auditDefinition: i18n.t(
-            "(CSY_OP_Disposition on Leaving Operating Theatre == Deceased || CSY_OP_Disposition 24 Hours After Surgery == Deceased) && (CSY_OP_SurgicalIntervention == Caesarean Section || CSY_OP_SurgicalIntervention 2 == Caesarean Section || | CSY_OP_SurgicalIntervention 3 == Caesarean Section || CSY_OP_SurgicalIntervention 4 == Caesarean Section || CSY_OP_SurgicalIntervention 5 == Caesarean Section )"
+            "(CSY_OP_Disposition on Leaving Operating Theatre == Deceased || CSY_OP_Disposition 24 Hours After Surgery == Deceased) && (CSY_OP_SurgicalIntervention == Caesarean Section || CSY_OP_SurgicalIntervention 2 == Caesarean Section || CSY_OP_SurgicalIntervention 3 == Caesarean Section || CSY_OP_SurgicalIntervention 4 == Caesarean Section || CSY_OP_SurgicalIntervention 5 == Caesarean Section )"
         ),
     },
     {
@@ -174,7 +174,7 @@ export const auditTypeItems = [
     {
         value: "otMortality",
         text: i18n.t("All cases of OR/OT mortality"),
-        auditDefinition: i18n.t("CSY_OP_Disposition on Leaving Operating Theatre == Deceased "),
+        auditDefinition: i18n.t("CSY_OP_Disposition on Leaving Operating Theatre == Deceased"),
     },
     {
         value: "acuteEmergentCase",
@@ -189,7 +189,7 @@ export const auditTypeItems = [
             "All cases of mortality where the category of surgical or anesthesia provider is not a specialist"
         ),
         auditDefinition: i18n.t(
-            "(CSY_OP_Disposition on Leaving Operating Theatre  == Deceased || CSY_OP_Disposition 24 Hours After Surgery == Deceased) && ((CSY_OP_Category of Surgical Provider ≠ Surgeon with Specialty in Surgery Performed  or Primary Anaesthesia type ≠ Specialist Anaesthesia Physician) || (CSY_OP_Category of Surgical Provider 2 ≠ Surgeon with Specialty in Surgery Performed  or Primary Anaesthesia type ≠ Specialist Anaesthesia Physician) || (CSY_OP_Category of Surgical Provider 3 ≠ Surgeon with Specialty in Surgery Performed  or Primary Anaesthesia type ≠ Specialist Anaesthesia Physician) )"
+            "(CSY_OP_Disposition on Leaving Operating Theatre  == Deceased || CSY_OP_Disposition 24 Hours After Surgery == Deceased) && ((CSY_OP_Category of Surgical Provider ≠ Surgeon with Specialty in Surgery Performed or Primary Anaesthesia type ≠ Specialist Anaesthesia Physician) || (CSY_OP_Category of Surgical Provider 2 ≠ Surgeon with Specialty in Surgery Performed or Primary Anaesthesia type ≠ Specialist Anaesthesia Physician) || (CSY_OP_Category of Surgical Provider 3 ≠ Surgeon with Specialty in Surgery Performed or Primary Anaesthesia type ≠ Specialist Anaesthesia Physician))"
         ),
     },
     {
@@ -202,7 +202,9 @@ export const auditTypeItems = [
     {
         value: "intraOperativeComplications",
         text: i18n.t("Any intra-operative complications in patients with ASA 1-2 or 0 co-morbidities"),
-        auditDefinition: i18n.t("Age"),
+        auditDefinition: i18n.t(
+            "If CSY_OP_Intra-operative complication has value && (CSY_OP_ASA Functional Status Score == ASA 1 or ASA 2 || ETA_Major Medical Comorbidities == 0)"
+        ),
     },
 ];
 
