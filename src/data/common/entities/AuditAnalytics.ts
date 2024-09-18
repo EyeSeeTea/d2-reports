@@ -5,7 +5,8 @@ export function getEventQueryString(
     period: string,
     query: string
 ) {
-    const eventQueryString = `/analytics/events/query/${programId}.json?dimension=pe:${period}&dimension=ou:${orgUnitIds}&stage=${programStageId}${query}&pageSize=100000`;
+    const pageSize = 1000;
+    const eventQueryString = `/analytics/events/query/${programId}.json?dimension=pe:${period}&dimension=ou:${orgUnitIds}&stage=${programStageId}&${query}&pageSize=${pageSize}`;
 
     return eventQueryString;
 }

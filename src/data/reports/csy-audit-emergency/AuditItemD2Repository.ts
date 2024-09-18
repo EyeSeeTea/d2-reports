@@ -40,12 +40,14 @@ export class AuditItemD2Repository implements AuditItemRepository {
 
         const analyticsResponse = await promiseMap(queryStrings, async queryString => {
             const { programs, programStages } = metadata;
+            const query = `${queryString}&dimension=${metadata.dataElements.etaRegistryId}`;
+
             const eventQueryString = getEventQueryString(
                 programs.emergencyCareProgramId,
                 programStages.emergencyCareProgramStageId,
                 orgUnitIds.join(";"),
                 period,
-                queryString
+                query
             );
 
             const analyticsResponse = await this.api.get<AuditAnalyticsResponse>(eventQueryString).getData();
@@ -221,27 +223,27 @@ type AuditItemRow = Record<CsvField, string>;
 const { dataElements, optionSets } = metadata;
 const auditQueryStrings = {
     overallMortality: [
-        `&dimension=${dataElements.euDispositionId}:IN:${optionSets.euDispoMortuaryOrDied}`,
-        `&dimension=${dataElements.facilityDispositionId}:IN:${optionSets.facilityDispoMortuaryOrDied}`,
+        `dimension=${dataElements.euDispositionId}:IN:${optionSets.euDispoMortuaryOrDied}`,
+        `dimension=${dataElements.facilityDispositionId}:IN:${optionSets.facilityDispoMortuaryOrDied}`,
     ],
     lowAcuity: [
-        `&dimension=${dataElements.triageCategoryId}:IN:${optionSets.triageGreen};${optionSets.triageCategory4};${optionSets.triageCategory5};${optionSets.triageCategoryLevelIV};${optionSets.triageCategoryLevelV};${optionSets.triageStandardGreen4};${optionSets.triageNonUrgentBlue5};${optionSets.triageLevel4};${optionSets.triageLevel5};${optionSets.triageMinorGreen};${optionSets.triagePriority3}`,
-        `&dimension=${dataElements.euDispositionId}:IN:${optionSets.euDispoICU}`,
+        `dimension=${dataElements.triageCategoryId}:IN:${optionSets.triageGreen};${optionSets.triageCategory4};${optionSets.triageCategory5};${optionSets.triageCategoryLevelIV};${optionSets.triageCategoryLevelV};${optionSets.triageStandardGreen4};${optionSets.triageNonUrgentBlue5};${optionSets.triageLevel4};${optionSets.triageLevel5};${optionSets.triageMinorGreen};${optionSets.triagePriority3}`,
+        `dimension=${dataElements.euDispositionId}:IN:${optionSets.euDispoICU}`,
     ],
     highestTriage: [
-        `&dimension=${dataElements.triageCategoryId}:IN:${optionSets.triageRed};${optionSets.triageCategory1};${optionSets.triageLevelI};${optionSets.triageLevelII};${optionSets.triageImmediateRed1};${optionSets.triageLevel1};${optionSets.triageLevel2};${optionSets.triageImmediateRed};${optionSets.triagePriority1}`,
-        `&dimension=${dataElements.arrivalDateId}`,
-        `&dimension=${dataElements.firstProviderDateId}`,
+        `dimension=${dataElements.triageCategoryId}:IN:${optionSets.triageRed};${optionSets.triageCategory1};${optionSets.triageLevelI};${optionSets.triageLevelII};${optionSets.triageImmediateRed1};${optionSets.triageLevel1};${optionSets.triageLevel2};${optionSets.triageImmediateRed};${optionSets.triagePriority1}`,
+        `dimension=${dataElements.arrivalDateId}`,
+        `dimension=${dataElements.firstProviderDateId}`,
     ],
     initialRbg: [
-        `&dimension=${dataElements.initialRBGId}:IN:${optionSets.rbgLow}`,
-        `&dimension=${dataElements.glucoseId}`,
+        `dimension=${dataElements.initialRBGId}:IN:${optionSets.rbgLow}`,
+        `dimension=${dataElements.glucoseId}`,
     ],
     shockIvf: [
-        `&dimension=${dataElements.ageInYearsId}:GE:16`,
-        `&dimension=${dataElements.ageCategoryId}:IN:3`,
-        `&dimension=${dataElements.initialSBPId}:LT:90`,
-        `&dimension=${dataElements.ivfId}`,
+        `dimension=${dataElements.ageInYearsId}:GE:16`,
+        `dimension=${dataElements.ageCategoryId}:IN:3`,
+        `dimension=${dataElements.initialSBPId}:LT:90`,
+        `dimension=${dataElements.ivfId}`,
     ],
 };
 
