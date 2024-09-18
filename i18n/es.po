@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2024-05-22T17:13:09.045Z\n"
+"POT-Creation-Date: 2024-09-18T22:43:31.144Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -430,22 +430,13 @@ msgstr ""
 msgid "Approve"
 msgstr ""
 
-msgid "Error when trying to approve submission"
-msgstr ""
-
 msgid "Accept"
-msgstr ""
-
-msgid "Error when trying to accept submission"
 msgstr ""
 
 msgid "Reject"
 msgstr ""
 
 msgid "Reopen Submission"
-msgstr ""
-
-msgid "Error when trying to reopen submission"
 msgstr ""
 
 msgid "Creation Date"
@@ -457,25 +448,10 @@ msgstr ""
 msgid "Go to Signal"
 msgstr ""
 
-msgid "Error when trying to approve signal"
-msgstr ""
-
 msgid "Reject Signal"
 msgstr ""
 
-msgid "Signals have been successfully rejected"
-msgstr ""
-
-msgid "Error when trying to reject signal"
-msgstr ""
-
 msgid "Reject Data Submission"
-msgstr ""
-
-msgid "Data submissions have been successfully rejected"
-msgstr ""
-
-msgid "Error when trying to reject submission"
 msgstr ""
 
 msgid "Not Completed"
@@ -526,6 +502,36 @@ msgstr ""
 msgid "Quarters"
 msgstr ""
 
+msgid "Apply filters"
+msgstr ""
+
+msgid "Clear filters"
+msgstr ""
+
+msgid "Data submissions have been successfully {{action}}"
+msgstr ""
+
+msgid "Error when trying to {{action}} submission"
+msgstr ""
+
+msgid "Signals have been successfully approved"
+msgstr ""
+
+msgid "Error when trying to approve signal"
+msgstr ""
+
+msgid "Data submissions have been successfully rejected"
+msgstr ""
+
+msgid "Error when trying to reject submission"
+msgstr ""
+
+msgid "Signals have been successfully rejected"
+msgstr ""
+
+msgid "Error when trying to reject signal"
+msgstr ""
+
 msgid "Data Element"
 msgstr ""
 
@@ -542,6 +548,9 @@ msgid "Approved value comment"
 msgstr ""
 
 msgid "Approve value"
+msgstr ""
+
+msgid "Approving data values"
 msgstr ""
 
 msgid "Error when trying to approve data values"
