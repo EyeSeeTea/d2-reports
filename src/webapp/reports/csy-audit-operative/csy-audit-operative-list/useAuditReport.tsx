@@ -8,6 +8,9 @@ import StorageIcon from "@material-ui/icons/Storage";
 import { AuditItem } from "../../../../domain/reports/csy-audit-operative/entities/AuditItem";
 import { AuditViewModel, getAuditViews } from "../AuditViewModel";
 import { auditTypeItems, Filter, FilterOptions } from "./Filters";
+import { CsvWriterDataSource } from "../../../../data/common/CsvWriterCsvDataSource";
+import { CsvData } from "../../../../data/common/CsvDataSource";
+import { downloadFile } from "../../../../data/common/utils/download-file";
 
 interface AuditReportState {
     auditDefinition: string;
@@ -83,7 +86,7 @@ export function useAuditReport(filters: Filter): AuditReportState {
                 ...filters,
             });
 
-            compositionRoot.auditOperative.save("audit-report.csv", auditItems);
+            downloadAuditReport("audit-report.csv", auditItems);
         },
     };
 
@@ -103,6 +106,25 @@ export function getSortingFromTableSorting(sorting: TableSorting<AuditViewModel>
         direction: sorting.order,
     };
 }
+
+async function downloadAuditReport(filename: string, items: AuditItem[]): Promise<void> {
+    const headers = csvFields.map(field => ({ id: field, text: field }));
+    const rows = items.map(
+        (dataValue): AuditItemRow => ({
+            registerId: dataValue.registerId,
+        })
+    );
+    const timestamp = new Date().toISOString();
+    const csvDataSource = new CsvWriterDataSource();
+    const csvData: CsvData<CsvField> = { headers, rows };
+    const csvContents = `Time: ${timestamp}\n` + csvDataSource.toString(csvData);
+
+    await downloadFile(csvContents, filename, "text/csv");
+}
+
+const csvFields = ["registerId"] as const;
+type CsvField = typeof csvFields[number];
+type AuditItemRow = Record<CsvField, string>;
 
 function getFilterOptions(selectablePeriods: string[]): FilterOptions {
     return {

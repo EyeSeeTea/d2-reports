@@ -106,7 +106,6 @@ import { SaveMonitoringTwoFactorUseCase } from "./domain/reports/twofactor-monit
 import { MonitoringTwoFactorD2Repository } from "./data/reports/twofactor-monitoring/MonitoringTwoFactorD2Repository";
 import { GetOrgUnitsWithChildrenUseCase } from "./domain/reports/glass-data-submission/usecases/GetOrgUnitsWithChildrenUseCase";
 import { GetAuditOperativeUseCase } from "./domain/reports/csy-audit-operative/usecases/GetAuditOperativeUseCase";
-import { SaveAuditOperativeUseCase } from "./domain/reports/csy-audit-operative/usecases/SaveAuditOperativeUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -180,7 +179,6 @@ export function getCompositionRoot(api: D2Api) {
         }),
         auditOperative: getExecute({
             get: new GetAuditOperativeUseCase(csyAuditOperativeRepository),
-            save: new SaveAuditOperativeUseCase(csyAuditOperativeRepository),
         }),
         auditTrauma: getExecute({
             get: new GetAuditTraumaUseCase(csyAuditTraumaRepository),

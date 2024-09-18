@@ -3,7 +3,6 @@ import { AuditItem, AuditType } from "../entities/AuditItem";
 
 export interface AuditItemRepository {
     get(options: AuditOptions): Promise<PaginatedObjects<AuditItem>>;
-    save(filename: string, items: AuditItem[]): Promise<void>;
 }
 
 export interface AuditOptions {
