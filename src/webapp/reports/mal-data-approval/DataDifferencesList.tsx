@@ -4,6 +4,7 @@ import {
     TableConfig,
     TablePagination,
     TableSorting,
+    useLoading,
     useObjectsTable,
     useSnackbar,
 } from "@eyeseetea/d2-ui-components";
@@ -34,6 +35,7 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({
     isUpdated,
 }) => {
     const { compositionRoot, config } = useAppContext();
+    const loading = useLoading();
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const snackbar = useSnackbar();
 
@@ -53,15 +55,17 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({
                     icon: <ThumbUp />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
+                        loading.show(true, i18n.t("Approving data values"));
                         const items = _.compact(selectedIds.map(item => parseDataDiffItemId(item)));
                         if (items.length === 0) return;
 
                         const result = await compositionRoot.malDataApproval.duplicateValue(items, revoke);
+                        loading.hide();
                         if (!result) snackbar.error(i18n.t("Error when trying to approve data values"));
 
                         isUpdated();
                     },
-                    isActive: () => isMalAdmin,
+                    isActive: item => isMalAdmin && item.filter(item => item.value).length > 0,
                 },
             ],
             initialSorting: {
@@ -73,7 +77,7 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot.malDataApproval, isMalAdmin, isUpdated, revoke, snackbar]
+        [compositionRoot.malDataApproval, isMalAdmin, isUpdated, revoke, snackbar, loading]
     );
 
     const getRows = useMemo(
