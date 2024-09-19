@@ -146,7 +146,7 @@ export function getCompositionRoot(api: D2Api) {
             updateStatus: new UpdateStatusUseCase(dataApprovalRepository),
         }),
         malDataApproval: getExecute({
-            get: new GetMalDataSetsUseCase(dataDuplicationRepository),
+            get: new GetMalDataSetsUseCase(dataDuplicationRepository, dataValuesRepository, dataSetRepository),
             getDiff: new GetMalDataDiffUseCase(dataValuesRepository, dataSetRepository),
             getCountryCodes: new GetMalCountryCodesUseCase(dataDuplicationRepository),
             save: new SaveMalDataSetsUseCase(dataDuplicationRepository),
