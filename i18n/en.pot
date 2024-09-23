@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2024-05-22T17:13:09.045Z\n"
-"PO-Revision-Date: 2024-05-22T17:13:09.045Z\n"
+"POT-Creation-Date: 2024-09-23T20:58:08.019Z\n"
+"PO-Revision-Date: 2024-09-23T20:58:08.019Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -688,10 +688,16 @@ msgstr ""
 msgid "Last updated value"
 msgstr ""
 
+msgid "Approving data sets..."
+msgstr ""
+
 msgid "Error when trying to approve data set"
 msgstr ""
 
 msgid "Unapprove"
+msgstr ""
+
+msgid "Unapproving data sets..."
 msgstr ""
 
 msgid "Error when trying to unapprove data set"
