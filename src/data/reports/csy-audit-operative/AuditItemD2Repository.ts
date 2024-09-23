@@ -55,7 +55,7 @@ export class AuditItemD2Repository implements AuditItemRepository {
         return this.getAuditItemsByAuditType(auditType, analyticsResponse);
     }
 
-    private getRegisterIds(data: Maybe<AuditAnalyticsData>, id: Id): string[] {
+    private getColumnValues(data: Maybe<AuditAnalyticsData>, id: Id): string[] {
         return data ? data.getColumnValues(id) : [];
     }
 
@@ -70,9 +70,9 @@ export class AuditItemD2Repository implements AuditItemRepository {
             case "lowRiskMortality": {
                 const [deceasedDispoData, postSurgeryDispoData, asaScoreData] = data;
 
-                const deceasedDispoIds = this.getRegisterIds(deceasedDispoData, etaRegistryId);
-                const postSurgeryDispoIds = this.getRegisterIds(postSurgeryDispoData, etaRegistryId);
-                const asaScoreIds = this.getRegisterIds(asaScoreData, etaRegistryId);
+                const deceasedDispoIds = this.getColumnValues(deceasedDispoData, etaRegistryId);
+                const postSurgeryDispoIds = this.getColumnValues(postSurgeryDispoData, etaRegistryId);
+                const asaScoreIds = this.getColumnValues(asaScoreData, etaRegistryId);
 
                 const matchedDispoIds = _.union(deceasedDispoIds, postSurgeryDispoIds);
 
@@ -81,9 +81,9 @@ export class AuditItemD2Repository implements AuditItemRepository {
             case "zeroComorbidityMortality": {
                 const [deceasedDispoData, postSurgeryDispoData, medicalComorbiditiesData] = data;
 
-                const deceasedDispoIds = this.getRegisterIds(deceasedDispoData, etaRegistryId);
-                const postSurgeryDispoIds = this.getRegisterIds(postSurgeryDispoData, etaRegistryId);
-                const medicalComorbiditiesIds = this.getRegisterIds(medicalComorbiditiesData, etaRegistryId);
+                const deceasedDispoIds = this.getColumnValues(deceasedDispoData, etaRegistryId);
+                const postSurgeryDispoIds = this.getColumnValues(postSurgeryDispoData, etaRegistryId);
+                const medicalComorbiditiesIds = this.getColumnValues(medicalComorbiditiesData, etaRegistryId);
 
                 const matchedDispoIds = _.union(deceasedDispoIds, postSurgeryDispoIds);
 
@@ -100,15 +100,15 @@ export class AuditItemD2Repository implements AuditItemRepository {
                     surgicalIntervention5Data,
                 ] = data;
 
-                const deceasedDispoIds = this.getRegisterIds(deceasedDispoData, etaRegistryId);
-                const postSurgeryDispoIds = this.getRegisterIds(postSurgeryDispoData, etaRegistryId);
+                const deceasedDispoIds = this.getColumnValues(deceasedDispoData, etaRegistryId);
+                const postSurgeryDispoIds = this.getColumnValues(postSurgeryDispoData, etaRegistryId);
                 const matchedDispoIds = _.union(deceasedDispoIds, postSurgeryDispoIds);
 
-                const surgicalInterventionIds = this.getRegisterIds(surgicalInterventionData, etaRegistryId);
-                const surgicalIntervention2Ids = this.getRegisterIds(surgicalIntervention2Data, etaRegistryId);
-                const surgicalIntervention3Ids = this.getRegisterIds(surgicalIntervention3Data, etaRegistryId);
-                const surgicalIntervention4Ids = this.getRegisterIds(surgicalIntervention4Data, etaRegistryId);
-                const surgicalIntervention5Ids = this.getRegisterIds(surgicalIntervention5Data, etaRegistryId);
+                const surgicalInterventionIds = this.getColumnValues(surgicalInterventionData, etaRegistryId);
+                const surgicalIntervention2Ids = this.getColumnValues(surgicalIntervention2Data, etaRegistryId);
+                const surgicalIntervention3Ids = this.getColumnValues(surgicalIntervention3Data, etaRegistryId);
+                const surgicalIntervention4Ids = this.getColumnValues(surgicalIntervention4Data, etaRegistryId);
+                const surgicalIntervention5Ids = this.getColumnValues(surgicalIntervention5Data, etaRegistryId);
                 const matchedSurgicalInterventionIds = _.union(
                     surgicalInterventionIds,
                     surgicalIntervention2Ids,
@@ -122,39 +122,40 @@ export class AuditItemD2Repository implements AuditItemRepository {
             case "emergentCase": {
                 const [etaFacilityTransfersData, urgencyOfSurgeryData] = data;
 
-                const etaFacilityTransfersIds = this.getRegisterIds(etaFacilityTransfersData, etaRegistryId);
-                const urgencyOfSurgeryIds = this.getRegisterIds(urgencyOfSurgeryData, etaRegistryId);
+                const etaFacilityTransfersIds = this.getColumnValues(etaFacilityTransfersData, etaRegistryId);
+                const urgencyOfSurgeryIds = this.getColumnValues(urgencyOfSurgeryData, etaRegistryId);
 
                 return _.intersection(etaFacilityTransfersIds, urgencyOfSurgeryIds);
             }
             case "surgeryChecklist": {
                 const [surgeryChecklistData] = data;
-                const surgeryChecklistIds = this.getRegisterIds(surgeryChecklistData, etaRegistryId);
+                const surgeryChecklistIds = this.getColumnValues(surgeryChecklistData, etaRegistryId);
 
                 return surgeryChecklistIds;
             }
             case "otMortality": {
                 const [deceasedDispoData] = data;
-                const deceasedDispoIds = this.getRegisterIds(deceasedDispoData, etaRegistryId);
+                const deceasedDispoIds = this.getColumnValues(deceasedDispoData, etaRegistryId);
 
                 return deceasedDispoIds;
             }
             case "acuteEmergentCase": {
                 const [urgencyOfSurgeryData, arrivalDateData, firstOTDateData] = data;
+                if (!arrivalDateData || !firstOTDateData) return [];
 
-                const urgencyOfSurgeryIds = this.getRegisterIds(urgencyOfSurgeryData, etaRegistryId);
+                const urgencyOfSurgeryIds = this.getColumnValues(urgencyOfSurgeryData, etaRegistryId);
 
-                const dateIds = this.getRegisterIds(arrivalDateData, etaRegistryId);
-                const arrivalDateIds = this.getRegisterIds(arrivalDateData, arrivalDateId);
-                const firstOTDateIds = this.getRegisterIds(firstOTDateData, firstOTDateId);
-                const arrivalDates = _.map(arrivalDateIds, arrivalDate => new Date(arrivalDate));
-                const firstOTDates = _.map(firstOTDateIds, firstOTDate => new Date(firstOTDate));
+                const dateIds = this.getColumnValues(arrivalDateData, etaRegistryId);
+                const arrivalDateIds = this.getColumnValues(arrivalDateData, arrivalDateId);
+                const firstOTDateIds = this.getColumnValues(firstOTDateData, firstOTDateId);
+                const arrivalDates = _.map(arrivalDateIds, arrivalDate => new Date(arrivalDate).getTime());
+                const firstOTDates = _.map(firstOTDateIds, firstOTDate => new Date(firstOTDate).getTime());
 
                 const timeDiffIds = _.compact(
                     _.filter(_.zip(dateIds, arrivalDates, firstOTDates), ([, arrivalDate, firstOTDate]) => {
                         const timeDifferenceInHours = 6;
-                        const arrivalTime = arrivalDate?.getTime() ?? 0;
-                        const firstOTTime = firstOTDate?.getTime() ?? 0;
+                        const arrivalTime = arrivalDate ?? 0;
+                        const firstOTTime = firstOTDate ?? 0;
 
                         return firstOTTime - arrivalTime > convertHoursToMilliseconds(timeDifferenceInHours);
                     }).map(([id]) => id)
@@ -172,14 +173,14 @@ export class AuditItemD2Repository implements AuditItemRepository {
                     surgicalProviderCategory3Data,
                 ] = data;
 
-                const deceasedDispoIds = this.getRegisterIds(deceasedDispoData, etaRegistryId);
-                const postSurgeryDispoIds = this.getRegisterIds(postSurgeryDispoData, etaRegistryId);
+                const deceasedDispoIds = this.getColumnValues(deceasedDispoData, etaRegistryId);
+                const postSurgeryDispoIds = this.getColumnValues(postSurgeryDispoData, etaRegistryId);
                 const matchedDispoIds = _.union(deceasedDispoIds, postSurgeryDispoIds);
 
-                const anaesthesiaProviderIds = this.getRegisterIds(anaesthesiaProviderData, etaRegistryId);
-                const surgicalProviderCategoryIds = this.getRegisterIds(surgicalProviderCategoryData, etaRegistryId);
-                const surgicalProviderCategory2Ids = this.getRegisterIds(surgicalProviderCategory2Data, etaRegistryId);
-                const surgicalProviderCategory3Ids = this.getRegisterIds(surgicalProviderCategory3Data, etaRegistryId);
+                const anaesthesiaProviderIds = this.getColumnValues(anaesthesiaProviderData, etaRegistryId);
+                const surgicalProviderCategoryIds = this.getColumnValues(surgicalProviderCategoryData, etaRegistryId);
+                const surgicalProviderCategory2Ids = this.getColumnValues(surgicalProviderCategory2Data, etaRegistryId);
+                const surgicalProviderCategory3Ids = this.getColumnValues(surgicalProviderCategory3Data, etaRegistryId);
                 const matchedNonSpecialistSurgicalCategoryIds = _.union(
                     anaesthesiaProviderIds,
                     surgicalProviderCategoryIds,
@@ -190,19 +191,72 @@ export class AuditItemD2Repository implements AuditItemRepository {
                 return _.intersection(matchedDispoIds, matchedNonSpecialistSurgicalCategoryIds);
             }
             case "pulseOximetry": {
-                const [intraOperativeData] = data;
-                const intraOperativeIds = this.getRegisterIds(intraOperativeData, etaRegistryId);
+                const [
+                    intraOperativeData,
+                    intraOperative2Data,
+                    intraOperative3Data,
+                    intraOperative4Data,
+                    intraOperative5Data,
+                ] = data;
 
-                return intraOperativeIds;
+                const intraOperativeIds = this.getColumnValues(intraOperativeData, etaRegistryId);
+                const intraOperative2Ids = this.getColumnValues(intraOperative2Data, etaRegistryId);
+                const intraOperative3Ids = this.getColumnValues(intraOperative3Data, etaRegistryId);
+                const intraOperative4Ids = this.getColumnValues(intraOperative4Data, etaRegistryId);
+                const intraOperative5Ids = this.getColumnValues(intraOperative5Data, etaRegistryId);
+
+                return _.intersection(
+                    intraOperativeIds,
+                    intraOperative2Ids,
+                    intraOperative3Ids,
+                    intraOperative4Ids,
+                    intraOperative5Ids
+                );
             }
             case "intraOperativeComplications": {
-                const [asaScoreData, medicalComorbiditiesData] = data;
+                const [
+                    intraOperativeComplicationData,
+                    intraOperativeComplication2Data,
+                    intraOperativeComplication3Data,
+                    intraOperativeComplication4Data,
+                    intraOperativeComplication5Data,
+                    asaScoreData,
+                    medicalComorbiditiesData,
+                ] = data;
 
-                const asaScoreIds = this.getRegisterIds(asaScoreData, etaRegistryId);
-                const medicalComorbiditiesIds = this.getRegisterIds(medicalComorbiditiesData, etaRegistryId);
+                const intraOperativeComplicationIds = this.getColumnValues(
+                    intraOperativeComplicationData,
+                    etaRegistryId
+                );
+                const intraOperativeComplication2Ids = this.getColumnValues(
+                    intraOperativeComplication2Data,
+                    etaRegistryId
+                );
+                const intraOperativeComplication3Ids = this.getColumnValues(
+                    intraOperativeComplication3Data,
+                    etaRegistryId
+                );
+                const intraOperativeComplication4Ids = this.getColumnValues(
+                    intraOperativeComplication4Data,
+                    etaRegistryId
+                );
+                const intraOperativeComplication5Ids = this.getColumnValues(
+                    intraOperativeComplication5Data,
+                    etaRegistryId
+                );
+                const intraOperativeComplicationsMatchedIds = _.union(
+                    intraOperativeComplicationIds,
+                    intraOperativeComplication2Ids,
+                    intraOperativeComplication3Ids,
+                    intraOperativeComplication4Ids,
+                    intraOperativeComplication5Ids
+                );
+
+                const asaScoreIds = this.getColumnValues(asaScoreData, etaRegistryId);
+                const medicalComorbiditiesIds = this.getColumnValues(medicalComorbiditiesData, etaRegistryId);
                 const matchedIds = _.union(asaScoreIds, medicalComorbiditiesIds);
 
-                return _.intersection(matchedIds);
+                return _.intersection(intraOperativeComplicationsMatchedIds, matchedIds);
             }
             default:
                 return [];
@@ -238,6 +292,15 @@ const metadata = {
         surgicalProviderCategory3Id: "Oj0rFoQJysS",
         anaesthesiaProviderId: "piS3HyOQpZo",
         intraOperativeId: "B07nT1jiYrt",
+        intraOperative2Id: "IFzupi1AWLu",
+        intraOperative3Id: "ttLGITjPyS5",
+        intraOperative4Id: "RYBoWWsrVWi",
+        intraOperative5Id: "C2RIUnwcfy7",
+        intraOperativeComplication: "iWPQ5idqXeS",
+        intraOperativeComplication2: "DSxubU0ucPo",
+        intraOperativeComplication3: "xvVSTJgbG78",
+        intraOperativeComplication4: "r2CDCnH86zY",
+        intraOperativeComplication5: "RscNs7nxlwM",
     },
     // option set codes
     optionSets: {
@@ -250,6 +313,7 @@ const metadata = {
         noSafeSurgery: "0",
         surgeonSpecialist: "1",
         anaestheticPhysicianSpecialist: "1",
+        pulseOximiterMonitoring: "1",
     },
 };
 
@@ -294,8 +358,19 @@ const auditQueryStrings: Record<AuditType, string[]> = {
         `dimension=${dataElements.surgicalProviderCategory2Id}:NE:${optionSets.surgeonSpecialist}`,
         `dimension=${dataElements.surgicalProviderCategory3Id}:NE:${optionSets.surgeonSpecialist}`,
     ],
-    pulseOximetry: [`dimension=${dataElements.intraOperativeId}:EQ:0`],
+    pulseOximetry: [
+        `dimension=${dataElements.intraOperativeId}:NE:${optionSets.pulseOximiterMonitoring}`,
+        `dimension=${dataElements.intraOperative2Id}:NE:${optionSets.pulseOximiterMonitoring}`,
+        `dimension=${dataElements.intraOperative3Id}:NE:${optionSets.pulseOximiterMonitoring}`,
+        `dimension=${dataElements.intraOperative4Id}:NE:${optionSets.pulseOximiterMonitoring}`,
+        `dimension=${dataElements.intraOperative5Id}:NE:${optionSets.pulseOximiterMonitoring}`,
+    ],
     intraOperativeComplications: [
+        `dimension=${dataElements.intraOperativeComplication}:NE:NV`,
+        `dimension=${dataElements.intraOperativeComplication2}:NE:NV`,
+        `dimension=${dataElements.intraOperativeComplication3}:NE:NV`,
+        `dimension=${dataElements.intraOperativeComplication4}:NE:NV`,
+        `dimension=${dataElements.intraOperativeComplication5}:NE:NV`,
         `dimension=${dataElements.functionalStatusScoreId}:IN:${optionSets.asa1FunctionalStatusScore};${optionSets.asa2FunctionalStatusScore}`,
         `dimension=${dataElements.majorMedicalComorbiditiesId}:EQ:0`,
     ],

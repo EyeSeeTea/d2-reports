@@ -17,9 +17,12 @@ export class AuditAnalyticsData {
 
     public getColumnValues(columnId: string): string[] {
         const columnIndex = this.getColumnIndex(columnId);
-        const values = _(this.rows)
-            .map(row => row[columnIndex])
-            .compact()
+
+        const values: string[] = _(this.rows)
+            .map(row => {
+                const cellValue = row[columnIndex];
+                return cellValue ? cellValue : "";
+            })
             .value();
 
         return values;
