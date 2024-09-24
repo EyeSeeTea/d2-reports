@@ -7,7 +7,7 @@ import { emptyPage, PaginatedObjects, Sorting } from "../../../../domain/common/
 import { SummaryItem } from "../../../../domain/reports/csy-summary-mortality/entities/SummaryItem";
 import { Filter, FilterOptions } from "./Filters";
 import StorageIcon from "@material-ui/icons/Storage";
-import _ from "lodash";
+import { useSelectablePeriods } from "../../../utils/selectablePeriods";
 
 interface SummaryReportState {
     downloadCsv: TableGlobalAction;
@@ -41,10 +41,7 @@ export function useSummaryReport(filters: Filter): SummaryReportState {
     const snackbar = useSnackbar();
     const [sorting, setSorting] = useState<TableSorting<SummaryViewModel>>();
 
-    const selectablePeriods = useMemo(() => {
-        const currentYear = new Date().getFullYear();
-        return _.range(currentYear - 10, currentYear + 1).map(year => year.toString());
-    }, []);
+    const selectablePeriods = useSelectablePeriods(startYear);
     const filterOptions = useMemo(() => getFilterOptions(selectablePeriods), [selectablePeriods]);
 
     const getRows = useMemo(
@@ -104,3 +101,5 @@ function getFilterOptions(selectablePeriods: string[]): FilterOptions {
         periods: selectablePeriods,
     };
 }
+
+const startYear = 2014;
