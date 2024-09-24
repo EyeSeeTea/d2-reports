@@ -150,16 +150,22 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
 
     async approve(dataSets: DataApprovalItemIdentifier[]): Promise<boolean> {
         try {
-            const response = await promiseMap(dataSets, async approval =>
-                this.api
-                    .post<any>(
-                        "/dataApprovals",
-                        { wf: approval.workflow, pe: approval.period, ou: approval.orgUnit },
-                        {}
-                    )
-                    .getData()
-            );
+            const uniqueDataSets = this.getUniqueWorkFlows(dataSets);
 
+            const response = await promiseMap(uniqueDataSets, async approval => {
+                const approvalResponse = await this.getWorkFlowStatus(approval);
+                if (approvalResponse.mayApprove) {
+                    return this.api
+                        .post<any>(
+                            "/dataApprovals",
+                            { wf: approval.workflow, pe: approval.period, ou: approval.orgUnit },
+                            {}
+                        )
+                        .getData();
+                } else {
+                    return true;
+                }
+            });
             return _.every(response, item => item === "");
         } catch (error: any) {
             return false;
@@ -186,16 +192,50 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
 
     async unapprove(dataSets: DataApprovalItemIdentifier[]): Promise<boolean> {
         try {
-            const response = await promiseMap(dataSets, async approval =>
-                this.api
-                    .delete<any>("/dataApprovals", { wf: approval.workflow, pe: approval.period, ou: approval.orgUnit })
-                    .getData()
-            );
+            const uniqueDataSets = this.getUniqueWorkFlows(dataSets);
+            const response = await promiseMap(uniqueDataSets, async approval => {
+                const approvalResponse = await this.getWorkFlowStatus(approval);
+                if (approvalResponse.mayUnapprove) {
+                    return this.api
+                        .delete<any>("/dataApprovals", {
+                            wf: approval.workflow,
+                            pe: approval.period,
+                            ou: approval.orgUnit,
+                        })
+                        .getData();
+                } else {
+                    return true;
+                }
+            });
 
             return _.every(response, item => item === "");
         } catch (error: any) {
             return false;
         }
+    }
+
+    private async getWorkFlowStatus(approval: DataApprovalItemIdentifier): Promise<DataApproval> {
+        try {
+            const approvalResponse = await this.api
+                .request<DataApproval>({
+                    url: "/dataApprovals",
+                    method: "get",
+                    params: { wf: approval.workflow, pe: approval.period, ou: approval.orgUnit },
+                })
+                .getData();
+
+            return approvalResponse;
+        } catch (error) {
+            throw new Error(
+                `Error getting workflow status: ${approval.workflow}-${approval.dataSet}-${approval.period}-${approval.orgUnit}`
+            );
+        }
+    }
+
+    private getUniqueWorkFlows(dataSets: DataApprovalItemIdentifier[]): DataApprovalItemIdentifier[] {
+        return _(dataSets)
+            .uniqBy(ds => `${ds.workflow}.${ds.period}.${ds.orgUnit}`)
+            .value();
     }
 
     async getColumns(): Promise<string[]> {
@@ -225,3 +265,11 @@ function sqlViewJoinIds(ids: Id[]): string {
 function toBoolean(str: string): boolean {
     return str === "true";
 }
+
+type DataApproval = {
+    mayApprove: boolean;
+    mayUnapprove: boolean;
+    mayAccept: boolean;
+    mayUnaccept: boolean;
+    mayReadData: boolean;
+};

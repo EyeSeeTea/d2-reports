@@ -4,6 +4,7 @@ import {
     TableConfig,
     TablePagination,
     TableSorting,
+    useLoading,
     useObjectsTable,
     useSnackbar,
 } from "@eyeseetea/d2-ui-components";
@@ -30,6 +31,7 @@ import { DataSetsFilter, Filters } from "./Filters";
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
     const snackbar = useSnackbar();
+    const loading = useLoading();
 
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
@@ -95,12 +97,15 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     icon: <DoneAllIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
+                        loading.show(true, i18n.t("Approving data sets..."));
                         const items = _.compact(selectedIds.map(item => parseDataApprovalItemId(item)));
                         if (items.length === 0) return;
 
-                        const result = await compositionRoot.dataApproval.updateStatus(items, "approve");
+                        const result = await compositionRoot.dataApproval
+                            .updateStatus(items, "approve")
+                            .catch(() => loading.hide());
                         if (!result) snackbar.error(i18n.t("Error when trying to approve data set"));
-
+                        loading.hide();
                         reload();
                     },
                     isActive: rows => _.every(rows, row => row.validated === false),
@@ -111,12 +116,15 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     icon: <ClearAllIcon />,
                     multiple: true,
                     onClick: async (selectedIds: string[]) => {
+                        loading.show(true, i18n.t("Unapproving data sets..."));
                         const items = _.compact(selectedIds.map(item => parseDataApprovalItemId(item)));
                         if (items.length === 0) return;
 
-                        const result = await compositionRoot.dataApproval.updateStatus(items, "unapprove");
+                        const result = await compositionRoot.dataApproval
+                            .updateStatus(items, "unapprove")
+                            .catch(() => loading.hide());
                         if (!result) snackbar.error(i18n.t("Error when trying to unapprove data set"));
-
+                        loading.hide();
                         reload();
                     },
                     isActive: rows => _.every(rows, row => row.validated === true),
@@ -131,7 +139,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot, reload, snackbar]
+        [loading, compositionRoot, reload, snackbar]
     );
 
     const getRows = useMemo(
