@@ -103,6 +103,7 @@ import { SaveMonitoringTwoFactorColumnsUseCase } from "./domain/reports/twofacto
 import { GetMonitoringTwoFactorColumnsUseCase } from "./domain/reports/twofactor-monitoring/usecases/GetMonitoringTwoFactorColumnsUseCase";
 import { SaveMonitoringTwoFactorUseCase } from "./domain/reports/twofactor-monitoring/usecases/SaveMonitoringTwoFactorUseCase";
 import { MonitoringTwoFactorD2Repository } from "./data/reports/twofactor-monitoring/MonitoringTwoFactorD2Repository";
+import { GetOrgUnitsWithChildrenUseCase } from "./domain/reports/glass-data-submission/usecases/GetOrgUnitsWithChildrenUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -145,8 +146,8 @@ export function getCompositionRoot(api: D2Api) {
             updateStatus: new UpdateStatusUseCase(dataApprovalRepository),
         }),
         malDataApproval: getExecute({
-            get: new GetMalDataSetsUseCase(dataDuplicationRepository),
-            getDiff: new GetMalDataDiffUseCase(dataDuplicationRepository),
+            get: new GetMalDataSetsUseCase(dataDuplicationRepository, dataValuesRepository, dataSetRepository),
+            getDiff: new GetMalDataDiffUseCase(dataValuesRepository, dataSetRepository),
             getCountryCodes: new GetMalCountryCodesUseCase(dataDuplicationRepository),
             save: new SaveMalDataSetsUseCase(dataDuplicationRepository),
             getColumns: new GetMalDataApprovalColumnsUseCase(dataDuplicationRepository),
@@ -198,6 +199,7 @@ export function getCompositionRoot(api: D2Api) {
             saveColumns: new SaveGLASSDataSubmissionColumnsUseCase(glassDataRepository),
             dhis2MessageCount: new DHIS2MessageCountUseCase(glassDataRepository),
             updateStatus: new UpdateGLASSSubmissionUseCase(glassDataRepository),
+            getOrgUnitsWithChildren: new GetOrgUnitsWithChildrenUseCase(glassDataRepository),
         }),
         summary: getExecute({
             get: new GetSummaryUseCase(csySummaryRepository),

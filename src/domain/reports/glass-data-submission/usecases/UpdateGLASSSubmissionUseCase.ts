@@ -1,7 +1,12 @@
 import { UseCase } from "../../../../compositionRoot";
-import { EARSubmissionItemIdentifier, GLASSDataSubmissionItemIdentifier } from "../entities/GLASSDataSubmissionItem";
+import {
+    EARSubmissionItemIdentifier,
+    GLASSDataSubmissionItemIdentifier,
+    UpdateAction,
+} from "../entities/GLASSDataSubmissionItem";
 import { GLASSDataSubmissionRepository } from "../repositories/GLASSDataSubmissionRepository";
 
+// To-do: create separate use cases for each action
 export class UpdateGLASSSubmissionUseCase implements UseCase {
     constructor(private submissionRepository: GLASSDataSubmissionRepository) {}
 
@@ -23,11 +28,9 @@ export class UpdateGLASSSubmissionUseCase implements UseCase {
             case "accept":
                 return this.submissionRepository.accept(namespace, items);
             case "unapvdDashboard":
-                return this.submissionRepository.getGLASSDashboardId(namespace, items);
+                return this.submissionRepository.getGLASSDashboardId();
             default:
                 return;
         }
     }
 }
-
-type UpdateAction = "approve" | "reject" | "reopen" | "accept" | "unapvdDashboard";

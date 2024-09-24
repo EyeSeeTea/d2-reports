@@ -11,6 +11,7 @@ export type DataSet = {
 export type DataElement = {
     id: Id;
     name: string;
+    originalName: string;
     code: string;
     categoryCombo: CategoryCombo;
 };
