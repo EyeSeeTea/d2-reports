@@ -18,6 +18,8 @@ export function getReportType(): ReportType {
             return "summary-mortality";
         case report === "csy-audit-emergency":
             return "auditEmergency";
+        case report === "csy-audit-operative":
+            return "auditOperative";
         case report === "csy-audit-trauma":
             return "auditTrauma";
         case report === "authorities-monitoring":

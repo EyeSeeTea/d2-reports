@@ -18,6 +18,7 @@ import AuthoritiesMonitoringReport from "./authorities-monitoring/AuthoritiesMon
 import GLASSAdminReport from "./glass-admin/GLASSAdminReport";
 import { TwoFactorMonitoringReport } from "./two-factor-monitor/TwoFactorMonitoringReport";
 import i18n from "../../locales";
+import CSYAuditOperativeReport from "./csy-audit-operative/CSYAuditOperativeReport";
 
 const widget = process.env.REACT_APP_REPORT_VARIANT || "";
 
@@ -46,6 +47,9 @@ const Component: React.FC = () => {
         }
         case "csy-audit-trauma": {
             return <CSYAuditTraumaReport />;
+        }
+        case "csy-audit-operative": {
+            return <CSYAuditOperativeReport />;
         }
         case "csy-summary-patient": {
             return <CSYSummaryReport />;

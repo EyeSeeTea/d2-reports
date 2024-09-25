@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from "react";
 import { Filter, Filters } from "./Filters";
-import { AuditViewModel } from "../AuditViewModel";
 import { ObjectsList, TableConfig, useObjectsTable } from "@eyeseetea/d2-ui-components";
-import i18n from "../../../../locales";
+import { AuditViewModel } from "../AuditViewModel";
 import { useAuditReport } from "./useAuditReport";
+import i18n from "@eyeseetea/d2-ui-components/locales";
 
-export const CSYAuditEmergencyList: React.FC = React.memo(() => {
+export const CSYAuditOperativeList: React.FC = React.memo(() => {
     const [filters, setFilters] = useState(() => getEmptyDataValuesFilter());
     const { auditDefinition, downloadCsv, filterOptions, initialSorting, paginationOptions, getRows } =
         useAuditReport(filters);
@@ -38,7 +38,7 @@ export const CSYAuditEmergencyList: React.FC = React.memo(() => {
 
 function getEmptyDataValuesFilter(): Filter {
     return {
-        auditType: "overallMortality",
+        auditType: "lowRiskMortality",
         orgUnitPaths: [],
         year: (new Date().getFullYear() - 1).toString(),
         periodType: "yearly",

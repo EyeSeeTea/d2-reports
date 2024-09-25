@@ -37,6 +37,7 @@ import { GetSubscriptionUseCase } from "./domain/reports/mal-data-subscription/u
 import { GetMonitoringUseCase as GetSubscriptionMonitoringUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMonitoringUseCase";
 import { SaveMonitoringUseCase as SaveSubscriptionMonitoringUseCase } from "./domain/reports/mal-data-subscription/usecases/SaveMonitoringUseCase";
 import { AuditItemD2Repository as CSYAuditEmergencyD2Repository } from "./data/reports/csy-audit-emergency/AuditItemD2Repository";
+import { AuditItemD2Repository as CSYAuditOperativeD2Repository } from "./data/reports/csy-audit-operative/AuditItemD2Repository";
 import { GetAuditEmergencyUseCase } from "./domain/reports/csy-audit-emergency/usecases/GetAuditEmergencyUseCase";
 import { SaveAuditEmergencyUseCase } from "./domain/reports/csy-audit-emergency/usecases/SaveAuditEmergencyUseCase";
 import { GetAuditTraumaUseCase } from "./domain/reports/csy-audit-trauma/usecases/GetAuditTraumaUseCase";
@@ -104,10 +105,12 @@ import { GetMonitoringTwoFactorColumnsUseCase } from "./domain/reports/twofactor
 import { SaveMonitoringTwoFactorUseCase } from "./domain/reports/twofactor-monitoring/usecases/SaveMonitoringTwoFactorUseCase";
 import { MonitoringTwoFactorD2Repository } from "./data/reports/twofactor-monitoring/MonitoringTwoFactorD2Repository";
 import { GetOrgUnitsWithChildrenUseCase } from "./domain/reports/glass-data-submission/usecases/GetOrgUnitsWithChildrenUseCase";
+import { GetAuditOperativeUseCase } from "./domain/reports/csy-audit-operative/usecases/GetAuditOperativeUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
     const csyAuditEmergencyRepository = new CSYAuditEmergencyD2Repository(api);
+    const csyAuditOperativeRepository = new CSYAuditOperativeD2Repository(api);
     const csyAuditTraumaRepository = new CSYAuditTraumaD2Repository(api);
     const dataCommentsRepository = new NHWADataCommentsDefaultRepository(api);
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
@@ -173,6 +176,9 @@ export function getCompositionRoot(api: D2Api) {
         auditEmergency: getExecute({
             get: new GetAuditEmergencyUseCase(csyAuditEmergencyRepository),
             save: new SaveAuditEmergencyUseCase(csyAuditEmergencyRepository),
+        }),
+        auditOperative: getExecute({
+            get: new GetAuditOperativeUseCase(csyAuditOperativeRepository),
         }),
         auditTrauma: getExecute({
             get: new GetAuditTraumaUseCase(csyAuditTraumaRepository),

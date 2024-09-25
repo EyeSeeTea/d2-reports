@@ -1,5 +1,4 @@
 import { useSnackbar, TableSorting, TablePagination, TableGlobalAction } from "@eyeseetea/d2-ui-components";
-import _ from "lodash";
 import { useState, useMemo } from "react";
 import { useAppContext } from "../../../contexts/app-context";
 import { useReload } from "../../../utils/use-reload";
@@ -8,6 +7,7 @@ import { auditTypeItems, Filter, FilterOptions } from "./Filters";
 import { emptyPage, PaginatedObjects, Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import StorageIcon from "@material-ui/icons/Storage";
 import { AuditItem } from "../../../../domain/reports/csy-audit-emergency/entities/AuditItem";
+import { useSelectablePeriods } from "../../../utils/selectablePeriods";
 
 interface AuditReportState {
     auditDefinition: string;
@@ -42,10 +42,7 @@ export function useAuditReport(filters: Filter): AuditReportState {
     const snackbar = useSnackbar();
     const [sorting, setSorting] = useState<TableSorting<AuditViewModel>>();
 
-    const selectablePeriods = useMemo(() => {
-        const currentYear = new Date().getFullYear();
-        return _.range(currentYear - 10, currentYear + 1).map(year => year.toString());
-    }, []);
+    const selectablePeriods = useSelectablePeriods(startYear);
     const filterOptions = useMemo(() => getFilterOptions(selectablePeriods), [selectablePeriods]);
 
     const auditDefinition =
@@ -109,3 +106,5 @@ function getFilterOptions(selectablePeriods: string[]): FilterOptions {
         periods: selectablePeriods,
     };
 }
+
+const startYear = 2014;

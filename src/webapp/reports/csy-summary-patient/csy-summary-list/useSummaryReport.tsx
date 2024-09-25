@@ -7,7 +7,7 @@ import { SummaryItem } from "../../../../domain/reports/csy-summary-patient/enti
 import { emptyPage, PaginatedObjects, Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import { getSummaryViews, SummaryViewModel } from "../SummaryViewModel";
 import StorageIcon from "@material-ui/icons/Storage";
-import _ from "lodash";
+import { useSelectablePeriods } from "../../../utils/selectablePeriods";
 
 interface SummaryReportState {
     downloadCsv: TableGlobalAction;
@@ -40,11 +40,7 @@ export function useSummaryReport(filters: Filter): SummaryReportState {
     const [reloadKey, _reload] = useReload();
 
     const [sorting, setSorting] = useState<TableSorting<SummaryViewModel>>();
-
-    const selectablePeriods = useMemo(() => {
-        const currentYear = new Date().getFullYear();
-        return _.range(currentYear - 10, currentYear + 1).map(n => n.toString());
-    }, []);
+    const selectablePeriods = useSelectablePeriods(startYear);
 
     const getRows = useMemo(
         () => async (_search: string, paging: TablePagination, sorting: TableSorting<SummaryViewModel>) => {
@@ -105,3 +101,5 @@ function getFilterOptions(selectablePeriods: string[]) {
         periods: selectablePeriods,
     };
 }
+
+const startYear = 2014;
