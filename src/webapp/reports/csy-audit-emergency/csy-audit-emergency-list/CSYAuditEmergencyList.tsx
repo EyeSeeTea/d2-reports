@@ -28,7 +28,7 @@ export const CSYAuditEmergencyList: React.FC = React.memo(() => {
                 <div>
                     <Filters values={filters} options={filterOptions} onChange={setFilters} />
                     <p>
-                        Audit Definition: <strong>{auditDefinition}</strong>
+                        {i18n.t("Audit Definition:")} <strong>{auditDefinition}</strong>
                     </p>
                 </div>
             </ObjectsList>

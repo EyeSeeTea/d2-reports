@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2024-09-17T14:21:36.444Z\n"
-"PO-Revision-Date: 2024-09-17T14:21:36.444Z\n"
+"POT-Creation-Date: 2024-09-25T12:32:54.534Z\n"
+"PO-Revision-Date: 2024-09-25T12:32:54.534Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -56,16 +56,6 @@ msgid "This will take a long time."
 msgstr ""
 
 msgid "Are you sure?"
-msgstr ""
-
-msgid ""
-"Module 1 totals with missing sum or sum that does not match the "
-"auto-calculated"
-msgstr ""
-
-msgid ""
-"Module 1 (Subnational single entry) totals with missing sum or sum that "
-"does not match the auto-calculated"
 msgstr ""
 
 msgid ""
@@ -132,7 +122,6 @@ msgstr ""
 msgid "Username"
 msgstr ""
 
-msgid "Template Groups"
 msgid "Template Groups"
 msgstr ""
 
@@ -220,6 +209,43 @@ msgid ""
 "(Age>=16 OR Age category = adult - age unknown) AND Initial SBP<90mmHg AND  "
 "(Section: Emergency Unit Interventions > Medications and Fluids) IV Fluids "
 "= not done"
+msgstr ""
+
+msgid "CSY Audit Filters - Operative Care"
+msgstr ""
+
+msgid "Mortality (operative and 24hr) among low-risk patients (ASA score 1-2) "
+msgstr ""
+
+msgid "Mortality (operative and 24hr) in patients with 0 comorbidities "
+msgstr ""
+
+msgid "Mortality (operative and 24hr) in patients who undergo C-section ​"
+msgstr ""
+
+msgid "Number of prior facilities is >1 and case urgency is Emergent"
+msgstr ""
+
+msgid "All cases where the Safe Surgery checklist was not performed"
+msgstr ""
+
+msgid "All cases of OR/OT mortality"
+msgstr ""
+
+msgid "Emergent case and time to OR/OT > 6 hours (admission time-operative time)"
+msgstr ""
+
+msgid ""
+"All cases of mortality where the category of surgical or anesthesia "
+"provider is not a specialist"
+msgstr ""
+
+msgid "All cases without pulse oximetry used"
+msgstr ""
+
+msgid ""
+"Any intra-operative complications in patients with ASA 1-2 or 0 "
+"co-morbidities"
 msgstr ""
 
 msgid "CSY Audit Filters - Trauma Care"
@@ -459,9 +485,6 @@ msgid "There is no UNDO for this action"
 msgstr ""
 
 msgid "Continue"
-msgstr ""
-
-msgid "Select File"
 msgstr ""
 
 msgid "Select File"
@@ -875,4 +898,72 @@ msgstr ""
 
 msgctxt "Facility Dispo = Morgue or Died"
 msgid "ETA_EU Dispo = Morgue or Died or ETA"
+msgstr ""
+
+msgctxt "ASA Functional Status Score == ASA 1 or ASA 2"
+msgid ""
+"(CSY_OP_Disposition on Leaving Operating Theatre == Deceased || "
+"CSY_OP_Disposition 24 Hours After Surgery == Deceased) && CSY_OP"
+msgstr ""
+
+msgctxt ""
+"Disposition 24 Hours After Surgery == Deceased) && Number of Major Medical "
+"Comorbidities == 0"
+msgid "(CSY_OP_Disposition on Leaving Operating Theatre == Deceased || CSY_OP"
+msgstr ""
+
+msgctxt "SurgicalIntervention 5 == Caesarean Section )"
+msgid ""
+"(CSY_OP_Disposition on Leaving Operating Theatre == Deceased || "
+"CSY_OP_Disposition 24 Hours After Surgery == Deceased) && "
+"(CSY_OP_SurgicalIntervention == Caesarean Section || "
+"CSY_OP_SurgicalIntervention 2 == Caesarean Section || "
+"CSY_OP_SurgicalIntervention 3 == Caesarean Section || "
+"CSY_OP_SurgicalIntervention 4 == Caesarean Section || CSY_OP"
+msgstr ""
+
+msgctxt "Urgency of Surgery == Acute emergency, needed within 6 hours (Emergent)"
+msgid "ETA_Facility Transfers > 1 && CSY_OP"
+msgstr ""
+
+msgctxt "Safe Surgery Check List Used == No"
+msgid "CSY_OP"
+msgstr ""
+
+msgctxt "Disposition on Leaving Operating Theatre == Deceased"
+msgid "CSY_OP"
+msgstr ""
+
+msgctxt ""
+"Urgency of Surgery == Acute emergency, needed within 6 hours (Emergent) && "
+"(Arrival Date and Time - Date and Time of Operating Theatre Arrival > 6 "
+"hours)"
+msgid "CSY_OP"
+msgstr ""
+
+msgctxt ""
+"Category of Surgical Provider 3 ≠ Surgeon with Specialty in Surgery "
+"Performed or Primary Anaesthesia type ≠ Specialist Anaesthesia Physician))"
+msgid ""
+"(CSY_OP_Disposition on Leaving Operating Theatre  == Deceased || "
+"CSY_OP_Disposition 24 Hours After Surgery == Deceased) && ((CSY_OP_Category "
+"of Surgical Provider ≠ Surgeon with Specialty in Surgery Performed or "
+"Primary Anaesthesia type ≠ Specialist Anaesthesia Physician) || "
+"(CSY_OP_Category of Surgical Provider 2 ≠ Surgeon with Specialty in Surgery "
+"Performed or Primary Anaesthesia type ≠ Specialist Anaesthesia Physician) "
+"|| (CSY_OP"
+msgstr ""
+
+msgctxt "Monitoring Used Intra-operatively 5 ≠ Pulse oximeter "
+msgid ""
+"CSY_OP_Monitoring Used Intra-operatively ≠ Pulse oximeter && "
+"CSY_OP_Monitoring Used Intra-operatively 2 ≠ Pulse oximeter && "
+"CSY_OP_Monitoring Used Intra-operatively 3 ≠ Pulse oximeter && "
+"CSY_OP_Monitoring Used Intra-operatively 4 ≠ Pulse oximeter && CSY_OP"
+msgstr ""
+
+msgctxt "Major Medical Comorbidities == 0)"
+msgid ""
+"If CSY_OP_Intra-operative complication has value && (CSY_OP_ASA Functional "
+"Status Score == ASA 1 or ASA 2 || ETA"
 msgstr ""
