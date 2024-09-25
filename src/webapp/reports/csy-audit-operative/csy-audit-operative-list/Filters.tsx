@@ -39,23 +39,7 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
         [config]
     );
 
-    const periodTypeItems = React.useMemo(() => {
-        return [
-            { value: "yearly", text: i18n.t("Yearly") },
-            { value: "quarterly", text: i18n.t("Quarterly") },
-        ];
-    }, []);
-
     const yearItems = useMemoOptionsFromStrings(filterOptions.periods);
-
-    const quarterPeriodItems = React.useMemo(() => {
-        return [
-            { value: "Q1", text: i18n.t("Jan - March") },
-            { value: "Q2", text: i18n.t("April - June") },
-            { value: "Q3", text: i18n.t("July - September") },
-            { value: "Q4", text: i18n.t("October - December") },
-        ];
-    }, []);
 
     const setAuditType = React.useCallback<SingleDropdownHandler>(
         auditType => {
@@ -136,6 +120,18 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
         </Container>
     );
 });
+
+const quarterPeriodItems = [
+    { value: "Q1", text: i18n.t("Jan - March") },
+    { value: "Q2", text: i18n.t("April - June") },
+    { value: "Q3", text: i18n.t("July - September") },
+    { value: "Q4", text: i18n.t("October - December") },
+];
+
+const periodTypeItems = [
+    { value: "yearly", text: i18n.t("Yearly") },
+    { value: "quarterly", text: i18n.t("Quarterly") },
+];
 
 export const auditTypeItems = [
     {
