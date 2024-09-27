@@ -19,7 +19,7 @@ import { Filter } from "./Filters";
 import _ from "lodash";
 import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
-import { useSelectablePeriods } from "../../../utils/selectablePeriods";
+import { useSelectablePeriods } from "../../../hooks/useSelectablePeriods";
 
 export function useGetDataSubmissions(compositionRoot: CompositionRoot, config: Config, filters: Filter) {
     const [reloadKey, reload] = useReload();
