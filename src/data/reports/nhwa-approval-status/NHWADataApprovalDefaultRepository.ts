@@ -139,10 +139,10 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
 
         try {
             const response = await this.api
-                .post<any>("/completeDataSetRegistrations", {}, { completeDataSetRegistrations })
+                .post<{ status: "OK" | "ERROR" }>("/completeDataSetRegistrations", {}, { completeDataSetRegistrations })
                 .getData();
 
-            return response.status === "SUCCESS";
+            return response.status === "OK";
         } catch (error: any) {
             return false;
         }
@@ -176,7 +176,7 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
         try {
             const response = await promiseMap(dataSets, item =>
                 this.api
-                    .delete<any>("/completeDataSetRegistrations", {
+                    .delete<string>("/completeDataSetRegistrations", {
                         ds: item.dataSet,
                         pe: item.period,
                         ou: item.orgUnit,
