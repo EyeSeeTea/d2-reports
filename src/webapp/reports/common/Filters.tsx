@@ -21,7 +21,6 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
     const {
         api,
         rootIds,
-        orgUnits,
         selectedOrgUnits,
         selectedPeriod,
         setSelectedOrgUnits,
@@ -35,8 +34,8 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
                 rootIds={rootIds}
                 selected={selectedOrgUnits}
                 setSelected={setSelectedOrgUnits}
-                // selectableLevels={[countryLevel]}
-                selectableIds={orgUnits.map(ou => ou.id)}
+                selectableLevels={[1, 2, 3]}
+                // selectableIds={orgUnits.map(ou => ou.id)}
             />
 
             <MultipleDropdown

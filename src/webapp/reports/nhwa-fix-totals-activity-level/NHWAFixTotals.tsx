@@ -191,19 +191,14 @@ export const NHWAFixTotals: React.FC = () => {
 
     const getRows = React.useMemo(
         () => async (_search: string, paging: TablePagination, sorting: TableSorting<FixTotalsViewModel>) => {
-            loading.show(true, i18n.t("Loading..."));
             const results = await compositionRoot.nhwa.getTotalsByActivityLevel.execute({
                 cacheKey: reloadKey,
                 page: paging.page,
                 pageSize: paging.pageSize,
                 sortingField: sorting.field,
                 sortingOrder: sorting.order,
-                filters: {
-                    orgUnits: getOrgUnitIdsFromPaths(selectedOrgUnits),
-                    periods: selectedPeriods,
-                },
+                filters: { orgUnits: getOrgUnitIdsFromPaths(selectedOrgUnits), periods: selectedPeriods },
             });
-            loading.hide();
 
             return {
                 pager: {
@@ -215,7 +210,7 @@ export const NHWAFixTotals: React.FC = () => {
                 objects: results.rows,
             };
         },
-        [compositionRoot, reloadKey, selectedOrgUnits, selectedPeriods, loading]
+        [compositionRoot, reloadKey, selectedOrgUnits, selectedPeriods]
     );
 
     const tableProps = useObjectsTable(baseConfig, getRows);

@@ -74,6 +74,7 @@ export class GetTotalsByActivityLevelUseCase {
                 dataSetIds: [dataSet.id],
                 orgUnitIds: orgUnits,
                 periods: filters.periods.length ? filters.periods : defaultPeriods.map(x => x.value),
+                children: true,
             });
             return dataValuesPerOrgUnit;
         });
