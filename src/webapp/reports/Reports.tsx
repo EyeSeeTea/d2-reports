@@ -22,6 +22,8 @@ import i18n from "../../locales";
 const widget = process.env.REACT_APP_REPORT_VARIANT || "";
 
 const Component: React.FC = () => {
+    // return <MalDataApprovalStatusReport />;
+    return <NHWAFixTotals />;
     switch (widget) {
         case "nhwa-comments": {
             return <NHWACommentsReport />;

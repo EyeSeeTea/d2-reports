@@ -52,6 +52,7 @@ export class DataSetD2Repository implements DataSetRepository {
                                 name: d2OrgUnit.displayName,
                                 level: d2OrgUnit.level,
                                 path: "",
+                                children: [],
                             };
                         }),
                     };

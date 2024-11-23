@@ -13,20 +13,14 @@ import { DataValue } from "../../common/entities/DataValue";
 import { FixTotalsSettingsRepository } from "./repositories/FixTotalsSettingsRepository";
 
 export type FixTotalsFilter = {
-    cacheKey: string;
     page: number;
     pageSize: number;
     sortingField: string;
     sortingOrder: "asc" | "desc";
-    filters: {
-        periods: string[];
-        orgUnits: string[];
-    };
+    filters: { periods: string[]; orgUnits: string[] };
 };
 
 export class GetTotalsByActivityLevelUseCase {
-    dataCache: { key: string; value: FixTotalsViewModel[] } | undefined;
-
     constructor(
         private dataSetRepository: DataSetRepository,
         private dataValuesRepository: DataValuesRepository,
@@ -49,8 +43,7 @@ export class GetTotalsByActivityLevelUseCase {
     }
 
     private async getAllAutoCompleteValues(options: FixTotalsFilter): Promise<FixTotalsViewModel[]> {
-        const { cacheKey, filters } = options;
-        if (this.dataCache && this.dataCache.key === cacheKey) return this.dataCache.value;
+        const { filters } = options;
 
         const fixTotalSettings = await this.settingsRepository.get();
         const dataSets = await this.dataSetRepository.getById(fixTotalSettings.dataSet);
@@ -74,7 +67,6 @@ export class GetTotalsByActivityLevelUseCase {
                 dataSetIds: [dataSet.id],
                 orgUnitIds: orgUnits,
                 periods: filters.periods.length ? filters.periods : defaultPeriods.map(x => x.value),
-                children: true,
             });
             return dataValuesPerOrgUnit;
         });
@@ -172,12 +164,7 @@ export class GetTotalsByActivityLevelUseCase {
             .flatten()
             .value();
 
-        this.dataCache = {
-            key: cacheKey,
-            value: results,
-        };
-
-        return this.dataCache.value;
+        return results;
     }
 
     private getDataValueComment(

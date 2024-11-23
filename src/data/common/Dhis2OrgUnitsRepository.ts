@@ -17,7 +17,9 @@ export class Dhis2OrgUnitsRepository implements OrgUnitsRepository {
             })
             .getData();
 
-        return organisationUnits;
+        return organisationUnits.map((d2OrgUnit): OrgUnit => {
+            return { ...d2OrgUnit, children: [] };
+        });
     }
 
     async getByLevel(level: string): Promise<OrgUnit[]> {
@@ -25,7 +27,7 @@ export class Dhis2OrgUnitsRepository implements OrgUnitsRepository {
             .get({
                 organisationUnits: {
                     filter: { level: { eq: level } },
-                    fields: { id: true, path: true, name: true, level: true },
+                    fields: { id: true, path: true, name: true, level: true, children: { level: true, path: true } },
                 },
             })
             .getData();

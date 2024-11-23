@@ -197,7 +197,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
         return {
             id: d2User.id,
             name: d2User.displayName,
-            orgUnits: d2User.dataViewOrganisationUnits,
+            orgUnits: d2User.dataViewOrganisationUnits.map(ou => ({ ...ou, children: [] })),
             userGroups: d2User.userGroups,
             ...d2User.userCredentials,
         };
