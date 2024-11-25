@@ -49,6 +49,62 @@ function showHyphenForEmptyValue(value: string) {
 
 const defaultSortField = "orgUnit";
 
+export function useGetTotalsByActivityLevel(props: { orgsUnitsIds: string[]; periods: string[]; reloadKey: string }) {
+    const { orgsUnitsIds, periods, reloadKey } = props;
+    const { compositionRoot } = useAppContext();
+    const [tableFilters, setTableFilters] = React.useState<{
+        paging: TablePagination;
+        sorting: TableSorting<FixTotalsViewModel>;
+    }>({ paging: { page: 1, pageSize: 10, total: 0 }, sorting: { field: defaultSortField, order: "asc" } });
+    const [isLoading, setIsLoading] = React.useState(false);
+    const [rows, setRows] = React.useState<{
+        pager: {
+            page: number;
+            pageCount: number;
+            total: number;
+            pageSize: number;
+        };
+        objects: FixTotalsViewModel[];
+    }>();
+
+    React.useEffect(() => {
+        let didCancel = false;
+
+        async function getTableRecords() {
+            setIsLoading(true);
+            const { paging, sorting } = tableFilters;
+            const results = await compositionRoot.nhwa.getTotalsByActivityLevel.execute({
+                page: paging.page,
+                pageSize: paging.pageSize,
+                sortingField: sorting.field,
+                sortingOrder: sorting.order,
+                filters: { orgUnits: getOrgUnitIdsFromPaths(orgsUnitsIds), periods: periods },
+            });
+
+            if (!didCancel) {
+                setRows({
+                    pager: {
+                        page: results.page,
+                        pageCount: results.pageCount,
+                        total: results.total,
+                        pageSize: results.pageSize,
+                    },
+                    objects: results.rows,
+                });
+                setIsLoading(false);
+            }
+        }
+
+        getTableRecords();
+
+        return () => {
+            didCancel = true;
+        };
+    }, [compositionRoot.nhwa.getTotalsByActivityLevel, orgsUnitsIds, periods, tableFilters, reloadKey]);
+
+    return { rows, isLoading, tableFilters, setTableFilters };
+}
+
 export const NHWAFixTotals: React.FC = () => {
     const { compositionRoot, api, config } = useAppContext();
     const loading = useLoading();
@@ -59,6 +115,12 @@ export const NHWAFixTotals: React.FC = () => {
     const [orgUnits, setOrgUnits] = React.useState<OrgUnit[]>([]);
     const [errors, setErrors] = React.useState<Stats["errorMessages"]>();
     const classes = useStyles();
+
+    const { isLoading, rows, setTableFilters } = useGetTotalsByActivityLevel({
+        orgsUnitsIds: selectedOrgUnits,
+        periods: selectedPeriods,
+        reloadKey,
+    });
 
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
 
@@ -74,7 +136,6 @@ export const NHWAFixTotals: React.FC = () => {
         async (ids: string[]) => {
             loading.show(true, i18n.t("Updating values..."));
             const results = await compositionRoot.nhwa.getTotalsByActivityLevel.execute({
-                cacheKey: reloadKey,
                 page: 1,
                 pageSize: 1e6,
                 sortingField: defaultSortField,
@@ -108,7 +169,7 @@ export const NHWAFixTotals: React.FC = () => {
                 loading.hide();
             }
         },
-        [compositionRoot, loading, snackbar, reload, reloadKey, selectedOrgUnits, selectedPeriods]
+        [compositionRoot, loading, snackbar, reload, selectedOrgUnits, selectedPeriods]
     );
 
     const baseConfig: TableConfig<FixTotalsViewModel> = React.useMemo(
@@ -191,31 +252,10 @@ export const NHWAFixTotals: React.FC = () => {
 
     const getRows = React.useMemo(
         () => async (_search: string, paging: TablePagination, sorting: TableSorting<FixTotalsViewModel>) => {
-            loading.show(true, i18n.t("Loading..."));
-            const results = await compositionRoot.nhwa.getTotalsByActivityLevel.execute({
-                cacheKey: reloadKey,
-                page: paging.page,
-                pageSize: paging.pageSize,
-                sortingField: sorting.field,
-                sortingOrder: sorting.order,
-                filters: {
-                    orgUnits: getOrgUnitIdsFromPaths(selectedOrgUnits),
-                    periods: selectedPeriods,
-                },
-            });
-            loading.hide();
-
-            return {
-                pager: {
-                    page: results.page,
-                    pageCount: results.pageCount,
-                    total: results.total,
-                    pageSize: results.pageSize,
-                },
-                objects: results.rows,
-            };
+            setTableFilters({ paging, sorting });
+            return Promise.resolve({ pager: { page: 1, pageCount: 1, total: 0, pageSize: 10 }, objects: [] });
         },
-        [compositionRoot, reloadKey, selectedOrgUnits, selectedPeriods, loading]
+        [setTableFilters]
     );
 
     const tableProps = useObjectsTable(baseConfig, getRows);
@@ -228,21 +268,25 @@ export const NHWAFixTotals: React.FC = () => {
 
             <AlertStatsErrors errors={errors} onCleanError={() => setErrors(undefined)} orgUnits={orgUnits} />
 
-            <ObjectsList<FixTotalsViewModel> {...tableProps} onChangeSearch={undefined}>
+            <ObjectsList<FixTotalsViewModel>
+                {...tableProps}
+                pagination={{
+                    page: rows?.pager.page || 1,
+                    total: rows?.pager.total || 0,
+                    pageSize: rows?.pager.pageSize || 10,
+                }}
+                rows={rows?.objects || []}
+                onChangeSearch={undefined}
+                loading={isLoading}
+            >
                 <Filters
                     api={api}
                     rootIds={rootIds}
                     orgUnits={orgUnits}
                     selectedOrgUnits={selectedOrgUnits}
-                    setSelectedOrgUnits={orgUnits => {
-                        setSelectedOrgUnits(orgUnits);
-                        reload();
-                    }}
+                    setSelectedOrgUnits={setSelectedOrgUnits}
                     selectedPeriod={selectedPeriods}
-                    setSelectedPeriods={periods => {
-                        setSelectedPeriods(periods);
-                        reload();
-                    }}
+                    setSelectedPeriods={setSelectedPeriods}
                 />
             </ObjectsList>
         </div>
