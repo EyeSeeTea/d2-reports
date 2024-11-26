@@ -187,7 +187,6 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
                     })
                     .getData()
             );
-            console.log("Response:incomplete", response);
 
             return _.every(response, item => item === "");
         } catch (error: any) {
