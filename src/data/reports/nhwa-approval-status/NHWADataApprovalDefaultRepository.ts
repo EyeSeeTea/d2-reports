@@ -139,10 +139,14 @@ export class NHWADataApprovalDefaultRepository implements NHWADataApprovalReposi
 
         try {
             const response = await this.api
-                .post<{ status: "OK" | "ERROR" }>("/completeDataSetRegistrations", {}, { completeDataSetRegistrations })
+                .post<{ status: "OK" | "ERROR"; response: { status: "SUCCESS" | "ERROR" } }>(
+                    "/completeDataSetRegistrations",
+                    {},
+                    { completeDataSetRegistrations }
+                )
                 .getData();
 
-            return response.status === "OK";
+            return response.response.status === "SUCCESS";
         } catch (error: any) {
             return false;
         }
