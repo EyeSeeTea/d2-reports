@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2024-11-26T17:21:02.878Z\n"
+"POT-Creation-Date: 2024-12-27T11:20:28.283Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -339,6 +339,27 @@ msgid "Program Indicators"
 msgstr ""
 
 msgid "Data quality"
+msgstr ""
+
+msgid "File resources Monitoring"
+msgstr ""
+
+msgid "Created"
+msgstr ""
+
+msgid "CreatedBy"
+msgstr ""
+
+msgid "LastUpdated"
+msgstr ""
+
+msgid "LastUpdatedBy"
+msgstr ""
+
+msgid "Size"
+msgstr ""
+
+msgid "Details"
 msgstr ""
 
 msgid "GLASS Admin Maintenance Report"

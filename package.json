@@ -57,6 +57,8 @@
         "authorities-monitoring-build": "REACT_APP_DHIS2_BASE_URL='' REACT_APP_DHIS2_AUTH='' yarn authorities-monitoring-build-folder && rm -f $npm_package_name.zip && cd build && rm -f manifest.json mal-favicon.ico && zip --quiet -r ../$npm_package_name.zip *",
         "two-factor-monitoring-build-folder": "rm -rf build/ && d2-manifest package.json manifest.webapp --manifest.version=$npm_package_reportVersions_twofactor_monitoring && react-scripts build && yarn run two-factor-monitoring-manifest && cp -r i18n icon.png build",
         "two-factor-monitoring-build": "REACT_APP_DHIS2_BASE_URL='' REACT_APP_DHIS2_AUTH='' yarn two-factor-monitoring-build-folder && rm -f $npm_package_name.zip && cd build && rm -f manifest.json mal-favicon.ico && zip --quiet -r ../$npm_package_name.zip *",
+        "file-resources-monitoring-build-folder": "rm -rf build/ && d2-manifest package.json manifest.webapp --manifest.version=$npm_package_reportVersions_file_resources_monitoring && react-scripts build && yarn run file-resources-monitoring-manifest && cp -r i18n icon.png build",
+        "file-resources-monitoring-build": "REACT_APP_DHIS2_BASE_URL='' REACT_APP_DHIS2_AUTH='' yarn file-resources-monitoring-build-folder && rm -f $npm_package_name.zip && cd build && rm -f manifest.json mal-favicon.ico && zip --quiet -r ../$npm_package_name.zip *",
         "csy-audit-emergency-build-folder": "rm -rf build/ && d2-manifest package.json manifest.webapp --manifest.version=$npm_package_reportVersions_csy_audit_emergency && react-scripts build && yarn run csy-audit-emergency-manifest && cp -r i18n icon.png build",
         "csy-audit-emergency-build": "REACT_APP_DHIS2_BASE_URL='' REACT_APP_DHIS2_AUTH='' yarn csy-audit-emergency-build-folder && rm -f $npm_package_name.zip && cd build && rm -f manifest.json mal-favicon.ico && zip --quiet -r ../$npm_package_name.zip *",
         "csy-audit-trauma-build-folder": "rm -rf build/ && d2-manifest package.json manifest.webapp --manifest.version=$npm_package_reportVersions_csy_audit_trauma && react-scripts build && yarn run csy-audit-trauma-manifest && cp -r i18n icon.png build",
@@ -93,6 +95,7 @@
         "manifest": "d2-manifest package.json build/manifest.webapp",
         "authorities-monitoring-manifest": "d2-manifest package.json build/manifest.webapp --manifest.version=$npm_package_reportVersions_authorities_monitoring",
         "two-factor-monitoring-manifest": "d2-manifest package.json build/manifest.webapp --manifest.version=$npm_package_reportVersions_twofactor_monitoring",
+        "file-resources-monitoring-manifest": "d2-manifest package.json build/manifest.webapp --manifest.version=$npm_package_reportVersions_file-resources-monitoring",
         "csy-audit-emergency-manifest": "d2-manifest package.json build/manifest.webapp --manifest.version=$npm_package_reportVersions_csy_audit_emergency",
         "csy-audit-trauma-manifest": "d2-manifest package.json build/manifest.webapp --manifest.version=$npm_package_reportVersions_csy_audit_trauma",
         "csy-summary-mortality-manifest": "d2-manifest package.json build/manifest.webapp --manifest.version=$npm_package_reportVersions_csy_summary_mortality",
@@ -123,6 +126,7 @@
         "nhwa-approval-status-manifest": "d2-manifest package.json build/manifest.webapp --manifest.version=$npm_package_reportVersions_nhwa-approval-status"
     },
     "reportVersions": {
+        "file-resources-monitoring": "1.0.0",
         "two-factor-monitoring": "1.0.0",
         "authorities-monitoring": "1.0.0",
         "csy-audit-emergency": "1.0.0",

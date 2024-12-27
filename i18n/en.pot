@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2024-11-26T17:21:02.878Z\n"
-"PO-Revision-Date: 2024-11-26T17:21:02.878Z\n"
+"POT-Creation-Date: 2024-12-27T11:20:28.283Z\n"
+"PO-Revision-Date: 2024-12-27T11:20:28.284Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -339,6 +339,27 @@ msgid "Program Indicators"
 msgstr ""
 
 msgid "Data quality"
+msgstr ""
+
+msgid "File resources Monitoring"
+msgstr ""
+
+msgid "Created"
+msgstr ""
+
+msgid "CreatedBy"
+msgstr ""
+
+msgid "LastUpdated"
+msgstr ""
+
+msgid "LastUpdatedBy"
+msgstr ""
+
+msgid "Size"
+msgstr ""
+
+msgid "Details"
 msgstr ""
 
 msgid "GLASS Admin Maintenance Report"
