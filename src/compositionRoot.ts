@@ -105,6 +105,11 @@ import { SaveMonitoringTwoFactorUseCase } from "./domain/reports/twofactor-monit
 import { MonitoringTwoFactorD2Repository } from "./data/reports/twofactor-monitoring/MonitoringTwoFactorD2Repository";
 import { GetOrgUnitsWithChildrenUseCase } from "./domain/reports/glass-data-submission/usecases/GetOrgUnitsWithChildrenUseCase";
 import { GetAllOrgUnitsByLevelUseCase } from "./domain/common/usecases/GetAllOrgUnitsByLevelUseCase";
+import { MonitoringFileResourcesD2Repository } from "./data/reports/file-resources-monitoring/MonitoringFileResourcesD2Repository";
+import { GetMonitoringFileResourcesUseCase } from "./domain/reports/file-resources-monitoring/usecases/GetMonitoringFileResourcesUseCase";
+import { SaveMonitoringFileResourcesColumnsUseCase } from "./domain/reports/file-resources-monitoring/usecases/SaveMonitoringFileResourcesColumnsUseCase";
+import { GetMonitoringFileResourcesColumnsUseCase } from "./domain/reports/file-resources-monitoring/usecases/GetMonitoringFileResourcesColumnsUseCase";
+import { SaveMonitoringFileResourcesUseCase } from "./domain/reports/file-resources-monitoring/usecases/SaveMonitoringFileResourcesUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -129,6 +134,7 @@ export function getCompositionRoot(api: D2Api) {
     const subnationalCorrectSettingsRepository = new SubnationalCorrectD2SettingsRepository(api);
     const authoritiesMonitoringRepository = new AuthoritiesMonitoringDefaultRepository(api);
     const monitoringTwoFactorD2Repository = new MonitoringTwoFactorD2Repository(api);
+    const monitoringFileResourcesD2Repository = new MonitoringFileResourcesD2Repository(api);
 
     return {
         admin: getExecute({
@@ -259,6 +265,12 @@ export function getCompositionRoot(api: D2Api) {
             save: new SaveMonitoringTwoFactorUseCase(monitoringTwoFactorD2Repository),
             getColumns: new GetMonitoringTwoFactorColumnsUseCase(monitoringTwoFactorD2Repository),
             saveColumns: new SaveMonitoringTwoFactorColumnsUseCase(monitoringTwoFactorD2Repository),
+        }),
+        fileResourcesMonitoring: getExecute({
+            get: new GetMonitoringFileResourcesUseCase(monitoringFileResourcesD2Repository),
+            save: new SaveMonitoringFileResourcesUseCase(monitoringFileResourcesD2Repository),
+            getColumns: new GetMonitoringFileResourcesColumnsUseCase(monitoringFileResourcesD2Repository),
+            saveColumns: new SaveMonitoringFileResourcesColumnsUseCase(monitoringFileResourcesD2Repository),
         }),
     };
 }

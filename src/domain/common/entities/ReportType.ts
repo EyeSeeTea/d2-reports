@@ -10,4 +10,5 @@ export type ReportType =
     | "summary-mortality"
     | "authMonitoring"
     | "data-quality"
-    | "twoFactorUserMonitoring";
+    | "twoFactorUserMonitoring"
+    | "fileResourcesMonitoring";
