@@ -43,7 +43,7 @@ export const FileResourcesMonitorList: React.FC = React.memo(() => {
                 { name: "createdBy", text: i18n.t("CreatedBy"), sortable: true },
                 { name: "lastUpdated", text: i18n.t("LastUpdated"), sortable: true },
                 { name: "lastUpdatedBy", text: i18n.t("LastUpdatedBy"), sortable: true, hidden: true },
-                { name: "size", text: i18n.t("Size"), sortable: true, hidden: true, sortField: "contentLength" },
+                { name: "size", text: i18n.t("Size"), sortable: true, hidden: true, sortField: "contentLength" }, //this field must be sorted by contentLenght to avoid wrong orders
                 { name: "href", text: i18n.t("Details"), sortable: true, hidden: true },
             ],
 
