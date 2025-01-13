@@ -19,15 +19,13 @@ import { Filter } from "./Filters";
 import _ from "lodash";
 import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
+import { useSelectablePeriods } from "../../../hooks/useSelectablePeriods";
 
 export function useGetDataSubmissions(compositionRoot: CompositionRoot, config: Config, filters: Filter) {
     const [reloadKey, reload] = useReload();
     const [dataSubmissionPeriod, setDataSubmissionPeriod] = useState<DataSubmissionPeriod>("YEARLY");
 
-    const selectablePeriods = useMemo(() => {
-        const currentYear = new Date().getFullYear();
-        return _.range(2016, currentYear + 1).map(n => n.toString());
-    }, []);
+    const selectablePeriods = useSelectablePeriods(startYear);
 
     const getUseCaseOptions = useMemo(
         () => (filter: Filter, selectablePeriods: string[]) => {
@@ -105,3 +103,5 @@ function getEARSortingFromTableSorting(
         direction: sorting.order,
     };
 }
+
+const startYear = 2016;

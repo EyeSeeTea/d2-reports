@@ -8,6 +8,7 @@ export interface OrgUnit {
     path: OrgUnitPath;
     name: string;
     level: number;
+    children: ChildrenOrgUnit[];
 }
 
 export interface FilterOrgUnit {
@@ -15,11 +16,10 @@ export interface FilterOrgUnit {
     path: string;
     name: string;
     level: number;
-    children: {
-        level: number;
-        path: string;
-    }[];
+    children: ChildrenOrgUnit[];
 }
+
+type ChildrenOrgUnit = { level: number; path: string };
 
 const pathSeparator = "/";
 

@@ -151,6 +151,9 @@ msgstr ""
 msgid "Advanced filters"
 msgstr ""
 
+msgid "Failed to load org units"
+msgstr ""
+
 msgid "Period"
 msgstr ""
 
@@ -619,6 +622,9 @@ msgstr ""
 msgid "Approve value"
 msgstr ""
 
+msgid "Approving data values"
+msgstr ""
+
 msgid "Error when trying to approve data values"
 msgstr ""
 
@@ -763,10 +769,16 @@ msgstr ""
 msgid "Last updated value"
 msgstr ""
 
+msgid "Approving data sets..."
+msgstr ""
+
 msgid "Error when trying to approve data set"
 msgstr ""
 
 msgid "Unapprove"
+msgstr ""
+
+msgid "Unapproving data sets..."
 msgstr ""
 
 msgid "Error when trying to unapprove data set"

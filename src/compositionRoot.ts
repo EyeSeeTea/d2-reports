@@ -104,6 +104,7 @@ import { GetMonitoringTwoFactorColumnsUseCase } from "./domain/reports/twofactor
 import { SaveMonitoringTwoFactorUseCase } from "./domain/reports/twofactor-monitoring/usecases/SaveMonitoringTwoFactorUseCase";
 import { MonitoringTwoFactorD2Repository } from "./data/reports/twofactor-monitoring/MonitoringTwoFactorD2Repository";
 import { GetOrgUnitsWithChildrenUseCase } from "./domain/reports/glass-data-submission/usecases/GetOrgUnitsWithChildrenUseCase";
+import { GetAllOrgUnitsByLevelUseCase } from "./domain/common/usecases/GetAllOrgUnitsByLevelUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -146,8 +147,8 @@ export function getCompositionRoot(api: D2Api) {
             updateStatus: new UpdateStatusUseCase(dataApprovalRepository),
         }),
         malDataApproval: getExecute({
-            get: new GetMalDataSetsUseCase(dataDuplicationRepository),
-            getDiff: new GetMalDataDiffUseCase(dataDuplicationRepository),
+            get: new GetMalDataSetsUseCase(dataDuplicationRepository, dataValuesRepository, dataSetRepository),
+            getDiff: new GetMalDataDiffUseCase(dataValuesRepository, dataSetRepository),
             getCountryCodes: new GetMalCountryCodesUseCase(dataDuplicationRepository),
             save: new SaveMalDataSetsUseCase(dataDuplicationRepository),
             getColumns: new GetMalDataApprovalColumnsUseCase(dataDuplicationRepository),
@@ -219,6 +220,7 @@ export function getCompositionRoot(api: D2Api) {
             saveColumns: new SaveDataQualityColumnsUseCase(dataQualityRepository),
         }),
         orgUnits: getExecute({
+            getAllByLevel: new GetAllOrgUnitsByLevelUseCase(orgUnitsRepository),
             get: new GetOrgUnitsUseCase(orgUnitsRepository),
             getByLevel: new GetOrgUnitsByLevelUseCase(orgUnitsRepository),
         }),

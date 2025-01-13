@@ -107,14 +107,14 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         options: GLASSDataSubmissionOptions,
         namespace: string
     ): Promise<PaginatedObjects<GLASSDataSubmissionItem>> {
-        const { paging, sorting, module: selectedModule } = options;
+        const { paging, sorting, module: selectedModule, periods } = options;
         if (!selectedModule) return emptyPage;
 
         const modules = await this.getModules();
         const objects = await this.getDataSubmissionObjects(namespace);
         const uploads = await this.getUploads();
 
-        const dataSubmissions = await this.getDataSubmissions(objects, modules, uploads, selectedModule);
+        const dataSubmissions = await this.getDataSubmissions(objects, modules, uploads, selectedModule, periods);
         const filteredRows = this.getFilteredRows(dataSubmissions, options);
         const { pager, objects: rowsInPage } = paginate(filteredRows, paging, sorting);
 
@@ -140,14 +140,16 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         objects: GLASSDataSubmissionItem[],
         modules: GLASSDataSubmissionModule[],
         uploads: GLASSDataSubmissionItemUpload[],
-        selectedModule: Module
+        selectedModule: Module,
+        periods: string[]
     ): Promise<GLASSDataSubmissionItem[]> {
         const enrolledCountries = await this.getEnrolledCountries();
         const amrFocalPointProgramId = await this.getAMRFocalPointProgramId();
         const dataSubmissionItems = await this.getDataSubmissionIdentifiers(
             amrFocalPointProgramId,
             enrolledCountries.join(";"),
-            modules
+            modules,
+            periods
         );
 
         const moduleQuestionnaires =
@@ -254,11 +256,11 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
     private async getDataSubmissionIdentifiers(
         program: string,
         orgUnit: string,
-        modules: GLASSDataSubmissionModule[]
+        modules: GLASSDataSubmissionModule[],
+        dataSubmissionPeriods: string[]
     ): Promise<GLASSDataSubmissionItemIdentifier[]> {
         const instances = await this.getTrackedEntityInstances(program, orgUnit);
 
-        const dataSubmissionPeriods = getDataSubmissionPeriods();
         const orgUnitModules: { orgUnit: string; module: string }[] = _(instances)
             .map(instance => {
                 const module = instance.attributes.map(attribute => attribute.value)[0] ?? "";
@@ -274,7 +276,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         return orgUnitModules.flatMap(orgUnitModule => {
             return dataSubmissionPeriods.map(dataSubmissionPeriod => ({
                 ...orgUnitModule,
-                period: dataSubmissionPeriod.toString(),
+                period: dataSubmissionPeriod,
                 module: modules.find(module => module.name === orgUnitModule.module)?.id ?? "",
             }));
         });
@@ -1320,10 +1322,3 @@ type OrgUnitNode = {
     id: string;
     children?: OrgUnitNode[];
 };
-
-function getDataSubmissionPeriods(): number[] {
-    const currentYear = new Date().getFullYear();
-    const dataSubmissionPeriods = _.range(currentYear - 7, currentYear + 1);
-
-    return dataSubmissionPeriods;
-}
