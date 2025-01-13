@@ -36,7 +36,7 @@ import { SaveSubscriptionUseCase } from "./domain/reports/mal-data-subscription/
 import { GetSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/GetSubscriptionUseCase";
 import { GetMonitoringUseCase as GetSubscriptionMonitoringUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMonitoringUseCase";
 import { SaveMonitoringUseCase as SaveSubscriptionMonitoringUseCase } from "./domain/reports/mal-data-subscription/usecases/SaveMonitoringUseCase";
-import { CSYAuditEmergencyDefaultRepository } from "./data/reports/csy-audit-emergency/CSYAuditEmergencyDefaultRepository";
+import { AuditItemD2Repository as CSYAuditEmergencyD2Repository } from "./data/reports/csy-audit-emergency/AuditItemD2Repository";
 import { GetAuditEmergencyUseCase } from "./domain/reports/csy-audit-emergency/usecases/GetAuditEmergencyUseCase";
 import { SaveAuditEmergencyUseCase } from "./domain/reports/csy-audit-emergency/usecases/SaveAuditEmergencyUseCase";
 import { GetAuditTraumaUseCase } from "./domain/reports/csy-audit-trauma/usecases/GetAuditTraumaUseCase";
@@ -47,13 +47,13 @@ import { GetGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-dat
 import { SaveGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-data-submission/usecases/SaveGLASSDataSubmissionColumnsUseCase";
 import { UpdateGLASSSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/UpdateGLASSSubmissionUseCase";
 import { DHIS2MessageCountUseCase } from "./domain/reports/glass-data-submission/usecases/DHIS2MessageCountUseCase";
-import { CSYSummaryDefaultRepository } from "./data/reports/csy-summary-patient/CSYSummaryDefaultRepository";
+import { SummaryItemD2Repository as CSYSummaryPatientD2Repository } from "./data/reports/csy-summary-patient/SummaryItemD2Repository";
 import { GetSummaryUseCase } from "./domain/reports/csy-summary-patient/usecases/GetSummaryUseCase";
 import { SaveSummaryUseCase } from "./domain/reports/csy-summary-patient/usecases/SaveSummaryUseCase";
-import { CSYSummaryMortalityDefaultRepository } from "./data/reports/csy-summary-mortality/CSYSummaryDefaultRepository";
+import { SummaryItemD2Repository as CSYSummaryMortalityD2Repository } from "./data/reports/csy-summary-mortality/SummaryItemD2Repository";
 import { GetSummaryMortalityUseCase } from "./domain/reports/csy-summary-mortality/usecases/GetSummaryUseCase";
 import { SaveSummaryMortalityUseCase } from "./domain/reports/csy-summary-mortality/usecases/SaveSummaryUseCase";
-import { CSYAuditTraumaDefaultRepository } from "./data/reports/csy-audit-trauma/CSYAuditTraumaDefaultRepository";
+import { AuditItemD2Repository as CSYAuditTraumaD2Repository } from "./data/reports/csy-audit-trauma/AuditItemD2Repository";
 import { GetMalDashboardsSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalDashboardsSubscriptionUseCase";
 import { GetAutoCompleteComputeValuesUseCase } from "./domain/reports/nhwa-auto-complete-compute/usecases/GetAutoCompleteComputeValuesUseCase";
 import { DataSetD2Repository } from "./data/common/DataSetD2Repository";
@@ -108,8 +108,8 @@ import { GetAllOrgUnitsByLevelUseCase } from "./domain/common/usecases/GetAllOrg
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
-    const csyAuditEmergencyRepository = new CSYAuditEmergencyDefaultRepository(api);
-    const csyAuditTraumaRepository = new CSYAuditTraumaDefaultRepository(api);
+    const csyAuditEmergencyRepository = new CSYAuditEmergencyD2Repository(api);
+    const csyAuditTraumaRepository = new CSYAuditTraumaD2Repository(api);
     const dataCommentsRepository = new NHWADataCommentsDefaultRepository(api);
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
     const dataDuplicationRepository = new MalDataApprovalDefaultRepository(api);
@@ -118,8 +118,8 @@ export function getCompositionRoot(api: D2Api) {
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
     const glassAdminRepository = new GLASSDataMaintenanceDefaultRepository(api);
     const glassDataRepository = new GLASSDataSubmissionDefaultRepository(api);
-    const csySummaryRepository = new CSYSummaryDefaultRepository(api);
-    const csySummaryMortalityRepository = new CSYSummaryMortalityDefaultRepository(api);
+    const csySummaryPatientRepository = new CSYSummaryPatientD2Repository(api);
+    const csySummaryMortalityRepository = new CSYSummaryMortalityD2Repository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
     const dataSetRepository = new DataSetD2Repository(api);
     const dataValuesRepository = new DataValuesD2Repository(api);
@@ -203,8 +203,8 @@ export function getCompositionRoot(api: D2Api) {
             getOrgUnitsWithChildren: new GetOrgUnitsWithChildrenUseCase(glassDataRepository),
         }),
         summary: getExecute({
-            get: new GetSummaryUseCase(csySummaryRepository),
-            save: new SaveSummaryUseCase(csySummaryRepository),
+            get: new GetSummaryUseCase(csySummaryPatientRepository),
+            save: new SaveSummaryUseCase(csySummaryPatientRepository),
         }),
         summaryMortality: getExecute({
             get: new GetSummaryMortalityUseCase(csySummaryMortalityRepository),

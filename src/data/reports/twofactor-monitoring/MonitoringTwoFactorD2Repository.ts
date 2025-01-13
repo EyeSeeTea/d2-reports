@@ -7,7 +7,6 @@ import { CsvData } from "../../common/CsvDataSource";
 import { CsvWriterDataSource } from "../../common/CsvWriterCsvDataSource";
 import { Instance } from "../../common/entities/Instance";
 import { downloadFile } from "../../common/utils/download-file";
-import { Pagination } from "../mal-data-approval/MalDataApprovalDefaultRepository";
 import { MonitoringTwoFactorOptions } from "../../../domain/reports/twofactor-monitoring/entities/MonitoringTwoFactorOptions";
 import { MonitoringTwoFactorRepository } from "../../../domain/reports/twofactor-monitoring/repositories/MonitoringTwoFactorRepository";
 import { MonitoringTwoFactorUser } from "../../../domain/reports/twofactor-monitoring/entities/MonitoringTwoFactorUser";
@@ -38,7 +37,7 @@ export class MonitoringTwoFactorD2Repository implements MonitoringTwoFactorRepos
 
         const filteredRows = await this.getFilteredRows(objects, options);
 
-        const { pager, objects: rowsInPage } = paginate(filteredRows, sorting, paging);
+        const { pager, objects: rowsInPage } = paginate(filteredRows, paging, sorting);
         return {
             pager: pager,
             objects: rowsInPage,
@@ -134,23 +133,6 @@ export class MonitoringTwoFactorD2Repository implements MonitoringTwoFactorRepos
         } catch {
             return [];
         }
-    }
-
-    paginate<Obj>(objects: Obj[], pagination: Pagination) {
-        const pager = {
-            page: pagination.page,
-            pageSize: pagination.pageSize,
-            pageCount: Math.ceil(objects.length / pagination.pageSize),
-            total: objects.length,
-        };
-        const { page, pageSize } = pagination;
-        const start = (page - 1) * pageSize;
-
-        const paginatedObjects = _(objects)
-            .slice(start, start + pageSize)
-            .value();
-
-        return { pager: pager, objects: paginatedObjects };
     }
 
     async save(filename: string, users: MonitoringTwoFactorUser[]): Promise<void> {

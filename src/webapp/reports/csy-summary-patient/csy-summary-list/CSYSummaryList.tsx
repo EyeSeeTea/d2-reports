@@ -1,34 +1,13 @@
-import {
-    ObjectsList,
-    TableConfig,
-    TableGlobalAction,
-    TablePagination,
-    TableSorting,
-    useObjectsTable,
-} from "@eyeseetea/d2-ui-components";
-import StorageIcon from "@material-ui/icons/Storage";
+import { ObjectsList, TableConfig, useObjectsTable } from "@eyeseetea/d2-ui-components";
 import React, { useMemo, useState } from "react";
-import { SummaryViewModel, getSummaryViews } from "../SummaryViewModel";
+import { SummaryViewModel } from "../SummaryViewModel";
 import i18n from "../../../../locales";
-import { useAppContext } from "../../../contexts/app-context";
-import { useReload } from "../../../utils/use-reload";
-import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
-import { SummaryItem } from "../../../../domain/reports/csy-summary-patient/entities/SummaryItem";
 import { Filter, Filters } from "./Filters";
-import { Config } from "../../../../domain/common/entities/Config";
-import _ from "lodash";
+import { useSummaryReport } from "./useSummaryReport";
 
 export const CSYSummaryList: React.FC = React.memo(() => {
-    const { compositionRoot, config } = useAppContext();
-
-    const [reloadKey, _reload] = useReload();
-    const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
-    const [sorting, setSorting] = useState<TableSorting<SummaryViewModel>>();
-
-    const selectablePeriods = React.useMemo(() => {
-        const currentYear = new Date().getFullYear();
-        return _.range(currentYear - 10, currentYear + 1).map(n => n.toString());
-    }, []);
+    const [filters, setFilters] = useState(() => getEmptyDataValuesFilter());
+    const { downloadCsv, filterOptions, initialSorting, paginationOptions, getRows } = useSummaryReport(filters);
 
     const baseConfig: TableConfig<SummaryViewModel> = useMemo(
         () => ({
@@ -48,59 +27,13 @@ export const CSYSummaryList: React.FC = React.memo(() => {
                 { name: "total", text: i18n.t("Total"), sortable: true },
             ],
             actions: [],
-            initialSorting: {
-                field: "group" as const,
-                order: "asc" as const,
-            },
-            paginationOptions: {
-                pageSizeOptions: [10, 20, 50],
-                pageSizeInitialValue: 10,
-            },
+            initialSorting: initialSorting,
+            paginationOptions: paginationOptions,
         }),
-        []
-    );
-
-    const getRows = useMemo(
-        () => async (_search: string, paging: TablePagination, sorting: TableSorting<SummaryViewModel>) => {
-            const { pager, objects } = await compositionRoot.summary.get({
-                config,
-                paging: { page: paging.page, pageSize: paging.pageSize },
-                sorting: getSortingFromTableSorting(sorting),
-                ...filters,
-            });
-
-            setSorting(sorting);
-            console.debug("Reloading", reloadKey);
-            return { pager, objects: getSummaryViews(config, objects) };
-        },
-        [compositionRoot.summary, config, filters, reloadKey]
+        [initialSorting, paginationOptions]
     );
 
     const tableProps = useObjectsTable(baseConfig, getRows);
-
-    function getFilterOptions(selectablePeriods: string[]) {
-        return {
-            periods: selectablePeriods,
-        };
-    }
-    const filterOptions = useMemo(() => getFilterOptions(selectablePeriods), [selectablePeriods]);
-
-    const downloadCsv: TableGlobalAction = {
-        name: "downloadCsv",
-        text: "Download CSV",
-        icon: <StorageIcon />,
-        onClick: async () => {
-            if (!sorting) return;
-            const { objects: summaryItems } = await compositionRoot.summary.get({
-                config,
-                paging: { page: 1, pageSize: 100000 },
-                sorting: getSortingFromTableSorting(sorting),
-                ...filters,
-            });
-
-            compositionRoot.summary.save("summary-table-report.csv", summaryItems);
-        },
-    };
 
     return (
         <ObjectsList<SummaryViewModel> {...tableProps} onChangeSearch={undefined} globalActions={[downloadCsv]}>
@@ -109,18 +42,11 @@ export const CSYSummaryList: React.FC = React.memo(() => {
     );
 });
 
-export function getSortingFromTableSorting(sorting: TableSorting<SummaryViewModel>): Sorting<SummaryItem> {
+function getEmptyDataValuesFilter(): Filter {
     return {
-        field: sorting.field === "id" ? "group" : sorting.field,
-        direction: sorting.order,
-    };
-}
-
-function getEmptyDataValuesFilter(_config: Config): Filter {
-    return {
-        summaryType: "injury-epidemiology",
+        summaryType: "patientCharacteristics",
         orgUnitPaths: [],
-        year: "2020",
+        year: (new Date().getFullYear() - 1).toString(),
         periodType: "yearly",
         quarter: undefined,
     };

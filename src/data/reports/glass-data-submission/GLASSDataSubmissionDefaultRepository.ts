@@ -16,7 +16,7 @@ import {
     GLASSDataSubmissionOptions,
     GLASSDataSubmissionRepository,
 } from "../../../domain/reports/glass-data-submission/repositories/GLASSDataSubmissionRepository";
-import { D2Api, Pager } from "../../../types/d2-api";
+import { D2Api } from "../../../types/d2-api";
 import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
 import { StorageClient } from "../../common/clients/storage/StorageClient";
 import { Instance } from "../../common/entities/Instance";
@@ -116,7 +116,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         const dataSubmissions = await this.getDataSubmissions(objects, modules, uploads, selectedModule, periods);
         const filteredRows = this.getFilteredRows(dataSubmissions, options);
-        const { pager, objects: rowsInPage } = paginate(filteredRows, sorting, paging);
+        const { pager, objects: rowsInPage } = paginate(filteredRows, paging, sorting);
 
         return {
             pager,
@@ -395,23 +395,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 return { ...row, submissionStatus };
             });
 
-        const rowsInPage = _(filteredRows)
-            .orderBy([row => row[sorting.field]], [sorting.direction])
-            .drop((paging.page - 1) * paging.pageSize)
-            .take(paging.pageSize)
-            .value();
-
-        const pager: Pager = {
-            page: paging.page,
-            pageSize: paging.pageSize,
-            pageCount: Math.ceil(filteredRows.length / paging.pageSize),
-            total: filteredRows.length,
-        };
-
-        return {
-            pager,
-            objects: rowsInPage,
-        };
+        return paginate(filteredRows, paging, sorting);
     }
 
     private async getRegistrations(
