@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2024-09-17T14:21:36.444Z\n"
-"PO-Revision-Date: 2024-09-17T14:21:36.444Z\n"
+"POT-Creation-Date: 2025-01-21T08:14:43.180Z\n"
+"PO-Revision-Date: 2025-01-21T08:14:43.180Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -56,16 +56,6 @@ msgid "This will take a long time."
 msgstr ""
 
 msgid "Are you sure?"
-msgstr ""
-
-msgid ""
-"Module 1 totals with missing sum or sum that does not match the "
-"auto-calculated"
-msgstr ""
-
-msgid ""
-"Module 1 (Subnational single entry) totals with missing sum or sum that "
-"does not match the auto-calculated"
 msgstr ""
 
 msgid ""
@@ -132,7 +122,6 @@ msgstr ""
 msgid "Username"
 msgstr ""
 
-msgid "Template Groups"
 msgid "Template Groups"
 msgstr ""
 
@@ -462,9 +451,6 @@ msgid "There is no UNDO for this action"
 msgstr ""
 
 msgid "Continue"
-msgstr ""
-
-msgid "Select File"
 msgstr ""
 
 msgid "Select File"

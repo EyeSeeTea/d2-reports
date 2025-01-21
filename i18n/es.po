@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2024-11-26T17:21:02.878Z\n"
+"POT-Creation-Date: 2025-01-21T08:14:12.526Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -68,16 +68,6 @@ msgid ""
 "not match the auto-calculated"
 msgstr ""
 
-msgid ""
-"Module 1 totals with missing sum or sum that does not match the auto-"
-"calculated"
-msgstr ""
-
-msgid ""
-"Module 1 (Subnational single entry) totals with missing sum or sum that does "
-"not match the auto-calculated"
-msgstr ""
-
 msgid "Metadata Admin Report"
 msgstr ""
 
@@ -132,7 +122,6 @@ msgstr ""
 msgid "Username"
 msgstr ""
 
-msgid "Template Groups"
 msgid "Template Groups"
 msgstr ""
 
@@ -463,9 +452,6 @@ msgid "There is no UNDO for this action"
 msgstr ""
 
 msgid "Continue"
-msgstr ""
-
-msgid "Select File"
 msgstr ""
 
 msgid "Select File"
@@ -825,7 +811,6 @@ msgid "No values to update"
 msgstr ""
 
 msgid "Occupation"
-msgstr ""
 msgstr ""
 
 msgid "Practising"
