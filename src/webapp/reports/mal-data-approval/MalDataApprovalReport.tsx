@@ -18,7 +18,7 @@ const MalDataApprovalStatusReport: React.FC = () => {
                 {i18n.t("Malaria Data Approval Report")}
             </Typography>
 
-            <DataApprovalList dataSetCode="0MAL_5" />
+            <DataApprovalList />
         </div>
     );
 };

@@ -16,7 +16,14 @@ export const SQL_VIEW_MAL_METADATA_NAME = "MAL Data approval header";
 export const SQL_VIEW_MAL_DIFF_NAME = "MAL Data Approval Diff";
 export const SQL_VIEW_NHWA_SUBNATIONAL_CORRECT = "NHWA Module 1 Subnational correct org unit name";
 
-const base = {
+type BaseConfigType = {
+    dataSets: { namePrefix: string | undefined; nameExcluded: RegExp | string | undefined; codes?: string[] };
+    sqlViewNames: string[];
+    constantCode: string;
+    approvalWorkflows: { namePrefix: string };
+};
+
+const base: Record<ReportType, BaseConfigType> = {
     nhwa: {
         dataSets: { namePrefix: "NHWA", nameExcluded: /old$/ },
         sqlViewNames: [SQL_VIEW_DATA_COMMENTS_NAME, SQL_VIEW_DATA_APPROVAL_NAME, SQL_VIEW_NHWA_SUBNATIONAL_CORRECT],
@@ -24,7 +31,7 @@ const base = {
         approvalWorkflows: { namePrefix: "NHWA" },
     },
     mal: {
-        dataSets: { namePrefix: "MAL - WMR Form", nameExcluded: /(?: - OLD|-APVD)$/ },
+        dataSets: { namePrefix: undefined, nameExcluded: undefined, codes: ["0MAL_5"] },
         sqlViewNames: [
             SQL_VIEW_DATA_DUPLICATION_NAME,
             SQL_VIEW_MAL_METADATA_NAME,
@@ -35,7 +42,7 @@ const base = {
         approvalWorkflows: { namePrefix: "MAL" },
     },
     "mal-subscription": {
-        dataSets: { namePrefix: "NONE", nameExcluded: "NONE" },
+        dataSets: { namePrefix: undefined, nameExcluded: undefined },
         sqlViewNames: [],
         constantCode: "",
         approvalWorkflows: { namePrefix: "" },
@@ -53,43 +60,43 @@ const base = {
         approvalWorkflows: { namePrefix: "AMR" },
     },
     auditEmergency: {
-        dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
+        dataSets: { namePrefix: undefined, nameExcluded: undefined },
         sqlViewNames: [],
         constantCode: "",
         approvalWorkflows: { namePrefix: "" },
     },
     auditTrauma: {
-        dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
+        dataSets: { namePrefix: undefined, nameExcluded: undefined },
         sqlViewNames: [],
         constantCode: "",
         approvalWorkflows: { namePrefix: "" },
     },
     "summary-patient": {
-        dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
+        dataSets: { namePrefix: undefined, nameExcluded: undefined },
         sqlViewNames: [],
         constantCode: "",
         approvalWorkflows: { namePrefix: "" },
     },
     "summary-mortality": {
-        dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
+        dataSets: { namePrefix: undefined, nameExcluded: undefined },
         sqlViewNames: [],
         constantCode: "",
         approvalWorkflows: { namePrefix: "" },
     },
     authMonitoring: {
-        dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
+        dataSets: { namePrefix: undefined, nameExcluded: undefined },
         sqlViewNames: [],
         constantCode: "",
         approvalWorkflows: { namePrefix: "" },
     },
     "data-quality": {
-        dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
+        dataSets: { namePrefix: undefined, nameExcluded: undefined },
         sqlViewNames: [],
         constantCode: "",
         approvalWorkflows: { namePrefix: "" },
     },
     twoFactorUserMonitoring: {
-        dataSets: { namePrefix: "NONE", nameExcluded: /-APVD$/ },
+        dataSets: { namePrefix: undefined, nameExcluded: undefined },
         sqlViewNames: [],
         constantCode: "",
         approvalWorkflows: { namePrefix: "" },
@@ -143,6 +150,8 @@ export class Dhis2ConfigRepository implements ConfigRepository {
     }
 
     getMetadata() {
+        const { dataSets, constantCode, sqlViewNames, approvalWorkflows } = base[this.type];
+
         const metadata$ = this.api.metadata.get({
             dataSets: {
                 fields: {
@@ -154,19 +163,22 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                     },
                     organisationUnits: { id: true },
                 },
-                filter: { name: { $ilike: base[this.type].dataSets.namePrefix } },
+                filter: {
+                    name: dataSets.namePrefix ? { $ilike: dataSets.namePrefix } : undefined,
+                    code: dataSets.codes ? { in: dataSets.codes } : undefined,
+                },
             },
             constants: {
                 fields: { description: true },
-                filter: { code: { eq: base[this.type].constantCode } },
+                filter: { code: { eq: constantCode } },
             },
             sqlViews: {
                 fields: { id: true, name: true },
-                filter: { name: { in: base[this.type].sqlViewNames } },
+                filter: { name: { in: sqlViewNames } },
             },
             dataApprovalWorkflows: {
                 fields: { id: true, name: true },
-                filter: { name: { $ilike: base[this.type].approvalWorkflows.namePrefix } },
+                filter: { name: { $ilike: approvalWorkflows.namePrefix } },
             },
         });
 
@@ -310,6 +322,8 @@ function getSectionsInfo(constantData: Constant) {
 function getFilteredDataSets<DataSet extends NamedRef>(dataSets: DataSet[]): DataSet[] {
     const type = getReportType();
     const { namePrefix, nameExcluded } = base[type].dataSets;
+
+    if (!namePrefix || !nameExcluded) return dataSets;
     return dataSets.filter(({ name }) => name.startsWith(namePrefix) && !name.match(nameExcluded));
 }
 
