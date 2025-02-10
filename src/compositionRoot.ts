@@ -105,6 +105,8 @@ import { SaveMonitoringTwoFactorUseCase } from "./domain/reports/twofactor-monit
 import { MonitoringTwoFactorD2Repository } from "./data/reports/twofactor-monitoring/MonitoringTwoFactorD2Repository";
 import { GetOrgUnitsWithChildrenUseCase } from "./domain/reports/glass-data-submission/usecases/GetOrgUnitsWithChildrenUseCase";
 import { GetAllOrgUnitsByLevelUseCase } from "./domain/common/usecases/GetAllOrgUnitsByLevelUseCase";
+import { GetMalDataApprovalOUsWithChildrenUseCase } from "./domain/reports/mal-data-approval/usecases/GetMalDataApprovalOUsWithChildrenUseCase";
+import { OrgUnitWithChildrenD2Repository } from "./data/reports/mal-data-approval/OrgUnitWithChildrenD2Repository";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -129,6 +131,7 @@ export function getCompositionRoot(api: D2Api) {
     const subnationalCorrectSettingsRepository = new SubnationalCorrectD2SettingsRepository(api);
     const authoritiesMonitoringRepository = new AuthoritiesMonitoringDefaultRepository(api);
     const monitoringTwoFactorD2Repository = new MonitoringTwoFactorD2Repository(api);
+    const orgUnitsWithChildrenRepository = new OrgUnitWithChildrenD2Repository(api);
 
     return {
         admin: getExecute({
@@ -159,6 +162,7 @@ export function getCompositionRoot(api: D2Api) {
             duplicateValue: new DuplicateDataValuesUseCase(dataDuplicationRepository),
             getSortOrder: new GetSortOrderUseCase(dataDuplicationRepository),
             generateSortOrder: new GenerateSortOrderUseCase(dataDuplicationRepository),
+            getOrgUnitsWithChildren: new GetMalDataApprovalOUsWithChildrenUseCase(orgUnitsWithChildrenRepository),
         }),
         malDataSubscription: getExecute({
             get: new GetMalDataElementsSubscriptionUseCase(dataSubscriptionRepository),

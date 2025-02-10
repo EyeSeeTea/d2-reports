@@ -38,12 +38,15 @@ import { DataDifferencesList } from "../DataDifferencesList";
 import { Notifications, NotificationsOff, PlaylistAddCheck, ThumbUp } from "@material-ui/icons";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
 import { MAL_WMR_FORM } from "../../../../data/reports/mal-data-approval/MalDataApprovalDefaultRepository";
+import { emptySubmissionFilter } from "./useDataApprovalFilters";
 
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config, api } = useAppContext();
     const { currentUser } = config;
     const [isDialogOpen, { enable: openDialog, disable: closeDialog }] = useBooleanState(false);
     const snackbar = useSnackbar();
+
+    const [filters, setFilters] = useState(emptySubmissionFilter);
 
     const isMalApprover =
         _.intersection(
@@ -57,7 +60,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
             ["MAL_Malaria admin"]
         ).length > 0;
 
-    const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
     const [selected, setSelected] = useState<string[]>([""]);
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [reloadKey, reload] = useReload();
@@ -536,7 +538,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
         icon: <RestartAltIcon />,
         onClick: async () => {
             setOldPeriods(oldYears => !oldYears);
-            setFilters(currentFilters => ({ ...currentFilters, periods: [] }));
+            // setFilters(currentFilters => ({ ...currentFilters, periods: [] }));
         },
     };
 
@@ -580,15 +582,5 @@ export function getSortingFromTableSorting(sorting: TableSorting<DataApprovalVie
     return {
         field: sorting.field === "id" ? "period" : sorting.field,
         direction: sorting.order,
-    };
-}
-
-function getEmptyDataValuesFilter(_config: Config): DataSetsFilter {
-    return {
-        dataSetIds: [],
-        orgUnitPaths: [],
-        periods: ["2021"],
-        completionStatus: undefined,
-        approvalStatus: undefined,
     };
 }

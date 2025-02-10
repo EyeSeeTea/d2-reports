@@ -26,7 +26,7 @@ import {
 } from "../../../domain/reports/mal-data-approval/repositories/MalDataApprovalRepository";
 import { DataDiffItem, DataDiffItemIdentifier } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
-import { paginate } from "../../../domain/common/entities/PaginatedObjects";
+import { emptyPage, paginate } from "../../../domain/common/entities/PaginatedObjects";
 
 interface VariableHeaders {
     dataSets: string;
@@ -149,24 +149,21 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
     }
 
     async getDiff(options: MalDataApprovalOptions): Promise<PaginatedObjects<DataDiffItem>> {
-        const { config } = options; // ?
-        const { dataSetIds, orgUnitIds, periods } = options; // ?
+        const { dataSetIds, orgUnitIds, periods } = options;
 
-        const allDataSetIds = _.values(config.dataSets).map(ds => ds.id); // ?
         const sqlViews = new Dhis2SqlViews(this.api);
-        const paging_to_download = { page: 1, pageSize: 10000 };
-
-        const { rows } = await sqlViews
-            .query<VariablesDiff, SqlFieldDiff>(
-                getSqlViewId(config, SQL_VIEW_MAL_DIFF_NAME),
-                {
-                    orgUnits: sqlViewJoinIds(orgUnitIds),
-                    periods: sqlViewJoinIds(periods),
-                    dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
-                },
-                paging_to_download
-            )
-            .getData();
+        const pagingToDownload = { page: 1, pageSize: 10000 };
+        const sqlVariables = {
+            orgUnits: sqlViewJoinIds(orgUnitIds),
+            periods: sqlViewJoinIds(periods),
+            dataSets: sqlViewJoinIds(dataSetIds),
+        };
+        const rows = await this.getSqlViewRows<VariablesDiff, SqlFieldDiff>(
+            sqlViews,
+            SQL_VIEW_MAL_DIFF_NAME,
+            sqlVariables,
+            pagingToDownload
+        );
 
         const items: Array<DataDiffItem> = rows.map(
             (item): DataDiffItem => ({
@@ -199,61 +196,89 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
     }
 
     async get(options: MalDataApprovalOptions): Promise<PaginatedObjects<MalDataApprovalItem>> {
-        const { config } = options; // ?
-        const { sorting, dataSetIds, orgUnitIds, periods, useOldPeriods } = options; // ?
-        const allDataSetIds = _.values(config.dataSets).map(ds => ds.id); // ?
-        const sqlViews = new Dhis2SqlViews(this.api);
-        const paging_to_download = { page: 1, pageSize: 10000 };
-        const { rows: headerRows } = await sqlViews
-            .query<VariableHeaders, SqlFieldHeaders>(
-                getSqlViewId(config, SQL_VIEW_MAL_METADATA_NAME),
-                {
-                    dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
-                },
-                paging_to_download
-            )
-            .getData();
+        const { approvalStatus, completionStatus, config, dataSetIds, orgUnitIds, periods, sorting, useOldPeriods } =
+            options;
+        if (_.isEmpty(dataSetIds)) return emptyPage;
 
-        const { rows } = await sqlViews
-            .query<Variables, SqlField>(
-                getSqlViewId(
-                    config,
-                    !useOldPeriods ? SQL_VIEW_DATA_DUPLICATION_NAME : SQL_VIEW_OLD_DATA_DUPLICATION_NAME
-                ),
-                {
-                    orgUnitRoot: sqlViewJoinIds(config.currentUser.orgUnits.map(({ id }) => id)),
-                    orgUnits: sqlViewJoinIds(orgUnitIds),
-                    periods: sqlViewJoinIds(periods),
-                    dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
-                    completed: options.completionStatus === undefined ? "-" : options.completionStatus ? "true" : "-",
-                    approved: options.approvalStatus === undefined ? "-" : options.approvalStatus.toString(),
-                    orderByColumn: fieldMapping[sorting.field],
-                    orderByDirection: sorting.direction,
-                },
-                paging_to_download
-            )
-            .getData();
+        const sqlViews = new Dhis2SqlViews(this.api);
+        const pagingToDownload = { page: 1, pageSize: 10000 };
+        const sqlViewId = !useOldPeriods ? SQL_VIEW_DATA_DUPLICATION_NAME : SQL_VIEW_OLD_DATA_DUPLICATION_NAME;
+        const sqlVariables = {
+            orgUnitRoot: sqlViewJoinIds(config.currentUser.orgUnits.map(({ id }) => id)),
+            orgUnits: sqlViewJoinIds(orgUnitIds),
+            periods: sqlViewJoinIds(periods),
+            dataSets: sqlViewJoinIds(dataSetIds),
+            completed: completionStatus === undefined ? "-" : completionStatus ? "true" : "-",
+            approved: approvalStatus === undefined ? "-" : approvalStatus.toString(),
+            orderByColumn: fieldMapping[sorting.field],
+            orderByDirection: sorting.direction,
+        };
+
+        const headerRows = await this.getSqlViewHeaders<SqlFieldHeaders>(sqlViews, options, pagingToDownload);
+        const rows = await this.getSqlViewRows<Variables, SqlField>(
+            sqlViews,
+            getSqlViewId(config, sqlViewId),
+            sqlVariables,
+            pagingToDownload
+        );
 
         const countryCodes = await this.getCountryCodes();
-
-        const { pager, objects } = mergeHeadersAndData(options, periods, headerRows, rows, countryCodes);
+        const { pager, objects } = mergeHeadersAndData(options, headerRows, rows, countryCodes);
         const objectsInPage = await promiseMap(objects, async item => {
-            const approved = (
-                await this.api
-                    .get<any>("/dataApprovals", { ds: item.dataSetUid, pe: item.period, ou: item.orgUnitUid })
-                    .getData()
-            ).mayUnapprove;
+            const { approved } = await this.getDataApprovalStatus(item);
 
             return {
                 ...item,
-                approved,
+                approved: approved,
             };
         });
 
-        return { pager, objects: objectsInPage };
-
+        return { pager: pager, objects: objectsInPage };
         // A data value is not associated to a specific data set, but we can still map it
         // through the data element (1 data value -> 1 data element -> N data sets).
+    }
+
+    private async getDataApprovalStatus(item: MalDataApprovalItem): Promise<{ approved: boolean }> {
+        const { mayUnapprove } = await this.api
+            .get<{ mayUnapprove: boolean }>("/dataApprovals", {
+                ds: item.dataSetUid,
+                pe: item.period,
+                ou: item.orgUnitUid,
+            })
+            .getData();
+
+        return { approved: mayUnapprove };
+    }
+
+    private async getSqlViewRows<VariablesType extends {}, FieldType extends string>(
+        sqlViews: Dhis2SqlViews,
+        sqlViewId: string,
+        variables: VariablesType,
+        pagingToDownload: { page: number; pageSize: number }
+    ): Promise<Record<FieldType, string>[]> {
+        const { rows } = await sqlViews
+            .query<VariablesType, FieldType>(sqlViewId, variables, pagingToDownload)
+            .getData();
+
+        return rows;
+    }
+
+    private async getSqlViewHeaders<T extends string>(
+        sqlViews: Dhis2SqlViews,
+        options: MalDataApprovalOptions,
+        pagingToDownload: { page: number; pageSize: number }
+    ): Promise<Record<T, string>[]> {
+        const { config, dataSetIds } = options;
+
+        const { rows: headerRows } = await sqlViews
+            .query<VariableHeaders, T>(
+                getSqlViewId(config, SQL_VIEW_MAL_METADATA_NAME),
+                { dataSets: sqlViewJoinIds(dataSetIds) },
+                pagingToDownload
+            )
+            .getData();
+
+        return headerRows;
     }
 
     async save(filename: string, dataSets: MalDataApprovalItem[]): Promise<void> {
@@ -719,13 +744,11 @@ function sqlViewJoinIds(ids: Id[]): string {
 
 function mergeHeadersAndData(
     options: MalDataApprovalOptions,
-    selectablePeriods: string[],
     headers: SqlViewGetData<SqlFieldHeaders>["rows"],
     data: SqlViewGetData<SqlField>["rows"],
     countryCodes: { id: string; code: string }[]
 ) {
     const { sorting, paging, orgUnitIds, periods, approvalStatus, completionStatus } = options; // ?
-    const activePeriods = periods.length > 0 ? periods : selectablePeriods;
     const rows: Array<MalDataApprovalItem> = [];
 
     const mapping = _(data)
@@ -736,7 +759,7 @@ function mergeHeadersAndData(
 
     const filterOrgUnitIds = orgUnitIds.length > 0 ? orgUnitIds : undefined;
 
-    for (const period of activePeriods) {
+    for (const period of periods) {
         for (const header of headers) {
             if (filterOrgUnitIds !== undefined && filterOrgUnitIds.indexOf(header.orgunituid) === -1) {
                 continue;

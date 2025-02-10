@@ -6,6 +6,7 @@ import { User } from "../../domain/common/entities/User";
 import { ConfigRepository } from "../../domain/common/repositories/ConfigRepository";
 import { D2Api, Id } from "../../types/d2-api";
 import { getReportType } from "../../webapp/utils/reportType";
+import { malDataSetCodes } from "../reports/mal-data-approval/constants/MalDataApprovalConstants";
 
 export const SQL_VIEW_DATA_COMMENTS_NAME = "NHWA Data Comments";
 export const SQL_VIEW_DATA_APPROVAL_NAME = "NHWA Data Approval Status";
@@ -31,7 +32,11 @@ const base: Record<ReportType, BaseConfigType> = {
         approvalWorkflows: { namePrefix: "NHWA" },
     },
     mal: {
-        dataSets: { namePrefix: undefined, nameExcluded: undefined, codes: ["0MAL_5"] },
+        dataSets: {
+            namePrefix: undefined,
+            nameExcluded: undefined,
+            codes: Object.values(malDataSetCodes),
+        },
         sqlViewNames: [
             SQL_VIEW_DATA_DUPLICATION_NAME,
             SQL_VIEW_MAL_METADATA_NAME,
@@ -48,13 +53,13 @@ const base: Record<ReportType, BaseConfigType> = {
         approvalWorkflows: { namePrefix: "" },
     },
     glass: {
-        dataSets: { namePrefix: "AMR", nameExcluded: /-APVD$/ },
+        dataSets: { namePrefix: "AMR", nameExcluded: undefined },
         sqlViewNames: [],
         constantCode: "",
         approvalWorkflows: { namePrefix: "AMR" },
     },
     "glass-admin": {
-        dataSets: { namePrefix: "AMR", nameExcluded: /-APVD$/ },
+        dataSets: { namePrefix: "AMR", nameExcluded: undefined },
         sqlViewNames: [],
         constantCode: "",
         approvalWorkflows: { namePrefix: "AMR" },
