@@ -27,8 +27,9 @@ import {
 import { DataDiffItem, DataDiffItemIdentifier } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 import { emptyPage, paginate } from "../../../domain/common/entities/PaginatedObjects";
-import { malApprovedDataSetCodes } from "./constants/MalDataApprovalConstants";
+import { malApprovedDataSetCodes, malariaDataSets } from "./constants/MalDataApprovalConstants";
 import { getMetadataByIdentifiableToken } from "../../common/utils/getMetadataByIdentifiableToken";
+import { isValueInUnionType } from "../../../types/utils";
 
 interface VariableHeaders {
     dataSets: string;
@@ -392,28 +393,25 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
     async getApprovalDataSetId(dataApprovalItems: { dataSet: Id }[]): Promise<string> {
         const dataSetId = dataApprovalItems[0]?.dataSet;
-        const { objects: dataSets } = await this.api.models.dataSets
-            .get({
-                filter: { id: { eq: dataSetId } },
-                fields: { name: true },
-            })
-            .getData();
-        const dataSetName = _.first(dataSets)?.name as MalDataSet;
+        if (!dataSetId) throw new Error("Data set not found");
 
-        const approvedDataSetCode = malApprovedDataSetCodes[dataSetName];
-        const { objects: apvdDataSets } = await this.api.models.dataSets
-            .get({
-                filter: { code: { eq: approvedDataSetCode } },
-                fields: {
-                    id: true,
-                },
-                paging: false,
-            })
-            .getData();
+        const { name: dataSetName } = await getMetadataByIdentifiableToken({
+            api: this.api,
+            metadataType: "dataSets",
+            token: dataSetId,
+        });
+        const approvedDataSetCode = isValueInUnionType(dataSetName, malariaDataSets)
+            ? malApprovedDataSetCodes[dataSetName]
+            : undefined;
+        if (!approvedDataSetCode) throw new Error(`Approved data set code not found for data set: ${dataSetName}`);
 
-        if (!apvdDataSets[0]?.id) throw new Error("Approved dataset not found");
+        const { id: apvdDataSetId } = await getMetadataByIdentifiableToken({
+            api: this.api,
+            metadataType: "dataSets",
+            token: approvedDataSetCode,
+        });
 
-        return apvdDataSets[0].id;
+        return process.env.REACT_APP_APPROVE_DATASET_ID ?? apvdDataSetId;
     }
 
     async duplicateDataSets(
