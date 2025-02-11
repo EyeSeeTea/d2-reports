@@ -27,6 +27,7 @@ import {
 import { DataDiffItem, DataDiffItemIdentifier } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 import { emptyPage, paginate } from "../../../domain/common/entities/PaginatedObjects";
+import { malApprovedDataSetCodes, MalDataSet } from "./constants/MalDataApprovalConstants";
 
 interface VariableHeaders {
     dataSets: string;
@@ -378,9 +379,35 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         }
     }
 
+    async getApprovalDataSetId(dataApprovalItems: { dataSet: Id }[]): Promise<string> {
+        const dataSetId = dataApprovalItems[0]?.dataSet;
+        const { objects: dataSets } = await this.api.models.dataSets
+            .get({
+                filter: { id: { eq: dataSetId } },
+                fields: { name: true },
+            })
+            .getData();
+        const dataSetName = _.first(dataSets)?.name as MalDataSet;
+
+        const approvedDataSetCode = malApprovedDataSetCodes[dataSetName];
+        const { objects: apvdDataSets } = await this.api.models.dataSets
+            .get({
+                filter: { code: { eq: approvedDataSetCode } },
+                fields: {
+                    id: true,
+                },
+                paging: false,
+            })
+            .getData();
+
+        if (!apvdDataSets[0]?.id) throw new Error("Approved dataset not found");
+
+        return apvdDataSets[0].id;
+    }
+
     async duplicateDataSets(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean> {
         try {
-            const approvalDataSetId = process.env.REACT_APP_APPROVE_DATASET_ID ?? "fRrt4V8ImqD";
+            const approvalDataSetId = await this.getApprovalDataSetId(dataSets);
 
             const dataValueSets: dataSetsValueType[] = await this.getDataValueSets(dataSets);
 
@@ -416,7 +443,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
     async duplicateDataValues(dataValues: DataDiffItemIdentifier[]): Promise<boolean> {
         try {
-            const approvalDataSetId = process.env.REACT_APP_APPROVE_DATASET_ID ?? "fRrt4V8ImqD";
+            const approvalDataSetId = await this.getApprovalDataSetId(dataValues);
             const uniqueDataSets = _.uniqBy(dataValues, "dataSet");
             const uniqueDataElementsNames = _.uniq(_.map(dataValues, "dataElement"));
 
@@ -565,13 +592,13 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         try {
             const duplicateResponse = await this.duplicateDataValues(dataValues);
 
-            const revokeData: MalDataApprovalItemIdentifier = {
+            const revokeData: DataDiffItemIdentifier = {
                 dataSet: dataValues[0]?.dataSet ?? "",
                 period: dataValues[0]?.period ?? "",
                 orgUnit: dataValues[0]?.orgUnit ?? "",
-                orgUnitCode: "",
-
-                workflow: "",
+                dataElement: dataValues[0]?.dataElement ?? "",
+                value: dataValues[0]?.value ?? "",
+                comment: dataValues[0]?.comment,
             };
 
             const revokeResponse = await this.api
