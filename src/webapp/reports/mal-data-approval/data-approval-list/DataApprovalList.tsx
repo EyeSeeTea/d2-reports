@@ -37,7 +37,6 @@ import { useSelectablePeriods } from "./hooks/useSelectablePeriods";
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
     const snackbar = useSnackbar();
-
     const [filters, setFilters] = useState(emptyApprovalFilter);
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [__, setDiffState] = useState<string>("");

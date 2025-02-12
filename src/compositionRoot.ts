@@ -108,6 +108,8 @@ import { OrgUnitWithChildrenD2Repository } from "./data/reports/mal-data-approva
 import { UpdateMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/UpdateMonitoringUseCase";
 import { UserGroupD2Repository } from "./data/reports/mal-data-approval/UserGroupD2Repository";
 import { MonitoringValueDataStoreRepository } from "./data/reports/mal-data-approval/MonitoringValueDataStoreRepository";
+import { CountryCodeD2Repository } from "./data/reports/mal-data-approval/CountryCodeD2Repository";
+import { GetMonitoringValueUseCase } from "./domain/reports/mal-data-approval/usecases/GetMonitoringValueUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -135,6 +137,7 @@ export function getCompositionRoot(api: D2Api) {
     const orgUnitsWithChildrenRepository = new OrgUnitWithChildrenD2Repository(api);
     const userGroupRepository = new UserGroupD2Repository(api);
     const monitoringValueRepository = new MonitoringValueDataStoreRepository(api);
+    const countryCodeRepository = new CountryCodeD2Repository(api);
 
     return {
         admin: getExecute({
@@ -164,6 +167,7 @@ export function getCompositionRoot(api: D2Api) {
             getColumns: new GetMalDataApprovalColumnsUseCase(dataDuplicationRepository),
             saveColumns: new SaveMalDataApprovalColumnsUseCase(dataDuplicationRepository),
             getMonitoring: new GetMonitoringUseCase(monitoringValueRepository),
+            getMonitoringValue: new GetMonitoringValueUseCase(countryCodeRepository, userGroupRepository),
             updateMonitoring: new UpdateMonitoringUseCase(monitoringValueRepository, userGroupRepository),
             updateStatus: new UpdateMalApprovalStatusUseCase(
                 dataDuplicationRepository,
