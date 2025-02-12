@@ -1,18 +1,18 @@
-import { DropdownProps, MultipleDropdownProps } from "@eyeseetea/d2-ui-components";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { DataSetsFilter } from "./Filters";
-import { useAppContext } from "../../../contexts/app-context";
-import { OrgUnitWithChildren } from "../../../../domain/reports/mal-data-approval/entities/OrgUnitWithChildren";
-import { getOrgUnitsFromId, getRootIds } from "../../../../domain/common/entities/OrgUnit";
 import _ from "lodash";
-import { OrgUnitsFilterButtonProps } from "../../../components/org-units-filter/OrgUnitsFilterButton";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { DropdownProps, MultipleDropdownProps } from "@eyeseetea/d2-ui-components";
+import { useAppContext } from "../../../../contexts/app-context";
+import { DataSetsFilter } from "../Filters";
+import { OrgUnitsFilterButtonProps } from "../../../../components/org-units-filter/OrgUnitsFilterButton";
+import { getOrgUnitsFromId, getRootIds } from "../../../../../domain/common/entities/OrgUnit";
+import { OrgUnitWithChildren } from "../../../../../domain/reports/mal-data-approval/entities/OrgUnitWithChildren";
 
-type DataSubmissionFilterProps = {
+type DataApprovalFilterProps = {
     values: DataSetsFilter;
     onChange: (filter: DataSetsFilter) => void;
 };
 
-type DataSubmissionFilterState = {
+type DataApprovalFilterState = {
     filterValues: DataSetsFilter;
     rootIds: string[];
     selectableIds: string[];
@@ -27,12 +27,12 @@ type DataSubmissionFilterState = {
     };
 };
 
-export function useDataSubmissionFilters(filterProps: DataSubmissionFilterProps): DataSubmissionFilterState {
+export function useDataApprovalFilters(filterProps: DataApprovalFilterProps): DataApprovalFilterState {
     const { config, compositionRoot } = useAppContext();
     const { values: filter, onChange } = filterProps;
     const { orgUnitPaths } = filter;
 
-    const [filterValues, setFilterValues] = useState(emptySubmissionFilter);
+    const [filterValues, setFilterValues] = useState(emptyApprovalFilter);
     const [orgUnits, setOrgUnits] = useState<OrgUnitWithChildren[]>([]);
 
     useEffect(() => {
@@ -104,8 +104,8 @@ export function useDataSubmissionFilters(filterProps: DataSubmissionFilterProps)
     }, [filterValues, onChange]);
 
     const clearFilters = useCallback(() => {
-        onChange(emptySubmissionFilter);
-        setFilterValues(emptySubmissionFilter);
+        onChange(emptyApprovalFilter);
+        setFilterValues(emptyApprovalFilter);
     }, [onChange]);
 
     return {
@@ -126,7 +126,7 @@ export function useDataSubmissionFilters(filterProps: DataSubmissionFilterProps)
 
 const countryLevel = 3;
 
-export const emptySubmissionFilter: DataSetsFilter = {
+export const emptyApprovalFilter: DataSetsFilter = {
     dataSetIds: [],
     orgUnitPaths: [],
     periods: [],

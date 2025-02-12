@@ -6,7 +6,7 @@ import i18n from "../../../../locales";
 import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
 import { useAppContext } from "../../../contexts/app-context";
 import { Button } from "@material-ui/core";
-import { useDataSubmissionFilters } from "./useDataApprovalFilters";
+import { useDataApprovalFilters } from "./hooks/useDataApprovalFilters";
 import { OrgUnitsFilterButton } from "../../../components/org-units-filter/OrgUnitsFilterButton";
 
 type DataSetsFiltersProps = {
@@ -34,7 +34,8 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { hideDataSets, values: filter, options: filterOptions } = props;
 
     const { filterValues, rootIds, selectableIds, setFilterValues, applyFilters, clearFilters } =
-        useDataSubmissionFilters(props);
+        useDataApprovalFilters(props);
+    useDataApprovalFilters(props);
 
     const dataSetItems = useMemoOptionsFromNamedRef(filterOptions.dataSets);
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);

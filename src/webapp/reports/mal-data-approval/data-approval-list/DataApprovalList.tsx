@@ -14,7 +14,6 @@ import DoneAllIcon from "@material-ui/icons/DoneAll";
 import RemoveIcon from "@material-ui/icons/Remove";
 import RestartAltIcon from "@material-ui/icons/Storage";
 import _ from "lodash";
-import { format } from "date-fns";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { sortByName } from "../../../../domain/common/entities/Base";
 import { Config } from "../../../../domain/common/entities/Config";
@@ -38,27 +37,19 @@ import { DataDifferencesList } from "../DataDifferencesList";
 import { Notifications, NotificationsOff, PlaylistAddCheck, ThumbUp } from "@material-ui/icons";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
 import { MAL_WMR_FORM } from "../../../../data/reports/mal-data-approval/MalDataApprovalDefaultRepository";
-import { emptySubmissionFilter } from "./useDataApprovalFilters";
+import { emptyApprovalFilter } from "./hooks/useDataApprovalFilters";
+import { useDataApprovalListColumns } from "./hooks/useDataApprovalListColumns";
+import { useActiveDataApprovalActions } from "./hooks/useActiveDataApprovalActions";
 
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config, api } = useAppContext();
-    const { currentUser } = config;
     const [isDialogOpen, { enable: openDialog, disable: closeDialog }] = useBooleanState(false);
     const snackbar = useSnackbar();
 
-    const [filters, setFilters] = useState(emptySubmissionFilter);
+    const [filters, setFilters] = useState(emptyApprovalFilter);
 
-    const isMalApprover =
-        _.intersection(
-            currentUser.userGroups.map(userGroup => userGroup.name),
-            ["MAL_Country Approver"]
-        ).length > 0;
-
-    const isMalAdmin =
-        _.intersection(
-            currentUser.userGroups.map(userGroup => userGroup.name),
-            ["MAL_Malaria admin"]
-        ).length > 0;
+    const activeActions = useActiveDataApprovalActions();
+    const { columns } = useDataApprovalListColumns();
 
     const [selected, setSelected] = useState<string[]>([""]);
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
@@ -180,51 +171,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
-            columns: [
-                { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
-                { name: "period", text: i18n.t("Period"), sortable: true },
-                { name: "dataSet", text: i18n.t("Data set"), sortable: true, hidden: true },
-                { name: "attribute", text: i18n.t("Attribute"), sortable: true, hidden: true },
-                {
-                    name: "completed",
-                    text: i18n.t("Completion status"),
-                    sortable: true,
-                    getValue: row => (row.completed ? "Completed" : "Not completed"),
-                },
-                {
-                    name: "validated",
-                    text: i18n.t("Submission status"),
-                    sortable: true,
-                    getValue: row =>
-                        row.validated ? "Submitted" : row.completed ? "Ready for submission" : "Not completed",
-                },
-                { name: "modificationCount", text: i18n.t("Modification Count"), sortable: true },
-                {
-                    name: "lastUpdatedValue",
-                    text: i18n.t("Last modification date"),
-                    sortable: true,
-                    getValue: row =>
-                        row.lastUpdatedValue ? format(row.lastUpdatedValue, "yyyy-MM-dd' 'HH:mm:ss") : "No data",
-                },
-                {
-                    name: "lastDateOfSubmission",
-                    text: i18n.t("Last date of submission"),
-                    sortable: true,
-                    getValue: row =>
-                        row.lastDateOfSubmission
-                            ? format(row.lastDateOfSubmission, "yyyy-MM-dd' 'HH:mm:ss")
-                            : "Never submitted",
-                },
-                {
-                    name: "lastDateOfApproval",
-                    text: i18n.t("Last date of approval"),
-                    sortable: true,
-                    getValue: row =>
-                        row.lastDateOfApproval
-                            ? format(row.lastDateOfApproval, "yyyy-MM-dd' 'HH:mm:ss")
-                            : "Never approved",
-                },
-            ],
+            columns: columns,
             actions: [
                 {
                     name: "complete",
@@ -240,12 +187,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: (rows: DataApprovalViewModel[]) => {
-                        return (
-                            _.every(rows, row => row.completed === false && row.lastUpdatedValue) &&
-                            (isMalApprover || isMalAdmin)
-                        );
-                    },
+                    isActive: activeActions.isCompleteActionVisible,
                 },
                 {
                     name: "incomplete",
@@ -261,7 +203,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.completed === true && !row.validated),
+                    isActive: activeActions.isIncompleteActionVisible,
                 },
                 {
                     name: "submit",
@@ -277,12 +219,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: (rows: DataApprovalViewModel[]) => {
-                        return (
-                            _.every(rows, row => row.approved === false && row.lastUpdatedValue) &&
-                            (isMalApprover || isMalAdmin)
-                        );
-                    },
+                    isActive: activeActions.isSubmitActionVisible,
                 },
                 {
                     name: "revoke",
@@ -298,7 +235,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.approved === true),
+                    isActive: activeActions.isRevokeActionVisible,
                 },
                 {
                     name: "approve",
@@ -334,7 +271,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.lastUpdatedValue) && isMalAdmin,
+                    isActive: activeActions.isApproveActionVisible,
                 },
                 {
                     name: "activate",
@@ -367,7 +304,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => !row.monitoring) && isMalAdmin,
+                    isActive: activeActions.isActivateMonitoringActionVisible,
                 },
                 {
                     name: "deactivate",
@@ -400,7 +337,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
                         reload();
                     },
-                    isActive: rows => _.every(rows, row => row.monitoring) && isMalAdmin,
+                    isActive: activeActions.isDeactivateMonitoringActionVisible,
                 },
                 {
                     name: "getDiff",
@@ -411,9 +348,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         openDialog();
                         setSelected(selectedIds);
                     },
-                    isActive: rows =>
-                        _.every(rows, row => row.lastUpdatedValue && row.validated === false) &&
-                        (isMalApprover || isMalAdmin),
+                    isActive: activeActions.isGetDifferenceActionVisible,
                 },
                 {
                     name: "getDiffAndRevoke",
@@ -424,9 +359,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                         openDialog();
                         setSelected(selectedIds);
                     },
-                    isActive: rows =>
-                        _.every(rows, row => row.lastUpdatedValue && row.validated === true) &&
-                        (isMalApprover || isMalAdmin),
+                    isActive: activeActions.isGetDifferenceAndRevokeActionVisible,
                 },
             ],
             initialSorting: {
@@ -439,15 +372,23 @@ export const DataApprovalList: React.FC = React.memo(() => {
             },
         }),
         [
+            columns,
+            activeActions.isCompleteActionVisible,
+            activeActions.isIncompleteActionVisible,
+            activeActions.isSubmitActionVisible,
+            activeActions.isRevokeActionVisible,
+            activeActions.isApproveActionVisible,
+            activeActions.isActivateMonitoringActionVisible,
+            activeActions.isDeactivateMonitoringActionVisible,
+            activeActions.isGetDifferenceActionVisible,
+            activeActions.isGetDifferenceAndRevokeActionVisible,
             compositionRoot.malDataApproval,
             snackbar,
             reload,
-            isMalApprover,
-            isMalAdmin,
+            getMonitoringValue,
             getMonitoringJson,
             config.dataSets,
             dataNotificationsUserGroup,
-            getMonitoringValue,
             disableRevoke,
             openDialog,
             enableRevoke,
@@ -569,7 +510,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 <DataDifferencesList
                     selectedIds={selected}
                     revoke={revoke}
-                    isMalAdmin={isMalAdmin}
                     isUpdated={() => setDiffState(`${new Date().getTime()}`)}
                     key={new Date().getTime()}
                 />

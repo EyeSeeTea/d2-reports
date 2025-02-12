@@ -20,24 +20,20 @@ import { DataApprovalViewModel } from "./DataApprovalViewModel";
 import { DataDiffViewModel, getDataDiffViews } from "./DataDiffViewModel";
 import { ThumbUp } from "@material-ui/icons";
 import { parseDataDuplicationItemId } from "../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
+import { useDataApprovalPermissions } from "./data-approval-list/hooks/useDataApprovalPermissions";
 
 interface DataDifferencesListProps {
     selectedIds: string[];
     revoke: boolean;
-    isMalAdmin: boolean;
     isUpdated: () => void;
 }
 
-export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({
-    selectedIds,
-    revoke,
-    isMalAdmin,
-    isUpdated,
-}) => {
+export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ selectedIds, revoke, isUpdated }) => {
     const { compositionRoot, config } = useAppContext();
     const loading = useLoading();
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const snackbar = useSnackbar();
+    const { isMalAdmin } = useDataApprovalPermissions();
 
     const baseConfig: TableConfig<DataDiffViewModel> = useMemo(
         () => ({
