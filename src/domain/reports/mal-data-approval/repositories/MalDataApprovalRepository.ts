@@ -4,11 +4,11 @@ import { PaginatedObjects, Paging, Sorting } from "../../../common/entities/Pagi
 import { DataDiffItem } from "../entities/DataDiffItem";
 import { MalDataApprovalItem, MalDataApprovalItemIdentifier, MonitoringValue } from "../entities/MalDataApprovalItem";
 import { DataDiffItemIdentifier } from "../entities/DataDiffItem";
+import { CountryCode } from "../entities/CountryCode";
 
 export interface MalDataApprovalRepository {
-    get(options: MalDataApprovalOptions): Promise<PaginatedObjects<MalDataApprovalItem>>;
+    get(options: MalDataApprovalOptions, countryCodes: CountryCode[]): Promise<PaginatedObjects<MalDataApprovalItem>>;
     getDiff(options: MalDataApprovalOptions): Promise<PaginatedObjects<DataDiffItem>>;
-    getCountryCodes(): Promise<{ id: string; code: string }[]>;
     save(filename: string, dataSets: MalDataApprovalItem[]): Promise<void>;
     complete(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean>;
     approve(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean>;

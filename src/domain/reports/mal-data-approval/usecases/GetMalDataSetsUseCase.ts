@@ -5,6 +5,7 @@ import { DataSetRepository } from "../../../common/repositories/DataSetRepositor
 import { DataValuesRepository } from "../../../common/repositories/DataValuesRepository";
 import { WmrDiffReport } from "../../WmrDiffReport";
 import { MalDataApprovalItem } from "../entities/MalDataApprovalItem";
+import { CountryCodeRepository } from "../repositories/CountryCodeRepository";
 import { MalDataApprovalRepository, MalDataApprovalOptions } from "../repositories/MalDataApprovalRepository";
 
 type DataSetsOptions = MalDataApprovalOptions;
@@ -13,11 +14,13 @@ export class GetMalDataSetsUseCase implements UseCase {
     constructor(
         private malDataRepository: MalDataApprovalRepository,
         private dataValueRepository: DataValuesRepository,
-        private dataSetRepository: DataSetRepository
+        private dataSetRepository: DataSetRepository,
+        private countryCodeRepository: CountryCodeRepository
     ) {}
 
     async execute(options: DataSetsOptions): Promise<PaginatedObjects<MalDataApprovalItem>> {
-        const result = await this.malDataRepository.get(options);
+        const countryCodes = await this.countryCodeRepository.getCountryCodes();
+        const result = await this.malDataRepository.get(options, countryCodes);
 
         const response = await promiseMap(result.objects, async item => {
             const dataElementsWithValues = await new WmrDiffReport(

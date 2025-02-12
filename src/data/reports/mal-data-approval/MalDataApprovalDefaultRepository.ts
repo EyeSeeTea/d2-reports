@@ -28,6 +28,7 @@ import { DataDiffItem, DataDiffItemIdentifier } from "../../../domain/reports/ma
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 import { emptyPage, paginate } from "../../../domain/common/entities/PaginatedObjects";
 import { malApprovedDataSetCodes, MalDataSet } from "./constants/MalDataApprovalConstants";
+import { CountryCode } from "../../../domain/reports/mal-data-approval/entities/CountryCode";
 
 interface VariableHeaders {
     dataSets: string;
@@ -196,7 +197,10 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         }
     }
 
-    async get(options: MalDataApprovalOptions): Promise<PaginatedObjects<MalDataApprovalItem>> {
+    async get(
+        options: MalDataApprovalOptions,
+        countryCodes: CountryCode[]
+    ): Promise<PaginatedObjects<MalDataApprovalItem>> {
         const { approvalStatus, completionStatus, config, dataSetIds, orgUnitIds, periods, sorting, useOldPeriods } =
             options;
         if (_.isEmpty(dataSetIds)) return emptyPage;
@@ -223,7 +227,6 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             pagingToDownload
         );
 
-        const countryCodes = await this.getCountryCodes();
         const { pager, objects } = mergeHeadersAndData(options, headerRows, rows, countryCodes);
         const objectsInPage = await promiseMap(objects, async item => {
             const { approved } = await this.getDataApprovalStatus(item);
@@ -682,16 +685,6 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
     async saveColumns(namespace: string, columns: string[]): Promise<void> {
         return this.storageClient.saveObject<string[]>(namespace, columns);
-    }
-
-    async getCountryCodes() {
-        const { organisationUnits } = await this.api
-            .get<{ organisationUnits: { id: string; code: string }[] }>(
-                "/organisationUnits.json?fields=id,code&filter=level:eq:3&paging=false"
-            )
-            .getData();
-
-        return organisationUnits;
     }
 
     async getMonitoring(namespace: string): Promise<MonitoringValue> {

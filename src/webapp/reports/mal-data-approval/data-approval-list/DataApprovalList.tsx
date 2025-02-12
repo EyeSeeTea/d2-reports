@@ -18,48 +18,48 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { sortByName } from "../../../../domain/common/entities/Base";
 import { Config } from "../../../../domain/common/entities/Config";
 import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
-import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
-import {
-    CountryCode,
-    MalDataApprovalItem,
-    Monitoring,
-    MonitoringValue,
-    parseDataDuplicationItemId,
-} from "../../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
+import { emptyPage, Sorting } from "../../../../domain/common/entities/PaginatedObjects";
+import { MalDataApprovalItem } from "../../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
 import { ConfirmationDialog } from "@eyeseetea/d2-ui-components";
-import { useBooleanState } from "../../../utils/use-boolean";
-import { useReload } from "../../../utils/use-reload";
 import { DataApprovalViewModel, getDataApprovalViews } from "../DataApprovalViewModel";
 import { DataSetsFilter, Filters } from "./Filters";
 import { DataDifferencesList } from "../DataDifferencesList";
 import { Notifications, NotificationsOff, PlaylistAddCheck, ThumbUp } from "@material-ui/icons";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
-import { MAL_WMR_FORM } from "../../../../data/reports/mal-data-approval/MalDataApprovalDefaultRepository";
 import { emptyApprovalFilter } from "./hooks/useDataApprovalFilters";
 import { useDataApprovalListColumns } from "./hooks/useDataApprovalListColumns";
 import { useActiveDataApprovalActions } from "./hooks/useActiveDataApprovalActions";
+import { useDataApprovalActions } from "./hooks/useDataApprovalActions";
+import { useDataMonitoring } from "./hooks/useDataMonitoring";
 
 export const DataApprovalList: React.FC = React.memo(() => {
-    const { compositionRoot, config, api } = useAppContext();
-    const [isDialogOpen, { enable: openDialog, disable: closeDialog }] = useBooleanState(false);
+    const { compositionRoot, config } = useAppContext();
     const snackbar = useSnackbar();
 
-    const [filters, setFilters] = useState(emptyApprovalFilter);
-
     const activeActions = useActiveDataApprovalActions();
+    const {
+        globalMessage,
+        modalActions: { closeDataDifferencesDialog, isDialogOpen, revoke },
+        onTableActionClick,
+        reloadKey,
+        selectedIds,
+    } = useDataApprovalActions();
     const { columns } = useDataApprovalListColumns();
+    const { monitoringValue } = useDataMonitoring();
 
-    const [selected, setSelected] = useState<string[]>([""]);
+    useEffect(() => {
+        if (globalMessage?.type === "error") snackbar.error(globalMessage.message);
+        else if (globalMessage?.type === "success") snackbar.success(globalMessage.message);
+    }, [globalMessage, snackbar]);
+
+    const [filters, setFilters] = useState(emptyApprovalFilter);
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
-    const [reloadKey, reload] = useReload();
-    const [revoke, { enable: enableRevoke, disable: disableRevoke }] = useBooleanState(false);
     const [__, setDiffState] = useState<string>("");
-
     const [oldPeriods, setOldPeriods] = useState(false);
 
-    const selectablePeriods = React.useMemo(() => {
+    const selectablePeriods = useMemo(() => {
         const currentYear = new Date().getFullYear();
 
         return oldPeriods
@@ -67,107 +67,11 @@ export const DataApprovalList: React.FC = React.memo(() => {
             : _.range(currentYear - 5, currentYear).map(n => n.toString());
     }, [oldPeriods]);
 
-    const [countryCodes, setCountryCodes] = useState<CountryCode[]>([]);
-    const [dataNotificationsUserGroup, setDataNotificationsUserGroup] = useState<string>("");
-
-    useEffect(() => {
-        async function getMalNotificationsUserGroup() {
-            const { userGroups } = await api
-                .get<{ userGroups: { id: string }[] }>("/userGroups?fields=id&filter=name:eq:MAL_Data%20Notifications")
-                .getData();
-
-            return _.first(userGroups)?.id ?? "";
-        }
-        getMalNotificationsUserGroup().then(userGroup => {
-            setDataNotificationsUserGroup(userGroup);
-        });
-    }, [api, compositionRoot.malDataApproval]);
-
-    const getMonitoringValue = useMemo(
-        () => async () => {
-            return await compositionRoot.malDataApproval.getMonitoring(Namespaces.MONITORING);
-        },
-        [compositionRoot.malDataApproval]
-    );
-
     useEffect(() => {
         compositionRoot.malDataApproval.getColumns(Namespaces.MAL_APPROVAL_STATUS_USER_COLUMNS).then(columns => {
             setVisibleColumns(columns);
         });
     }, [compositionRoot]);
-
-    useEffect(() => {
-        compositionRoot.malDataApproval.getCountryCodes().then(countryCodes => {
-            setCountryCodes(countryCodes);
-        });
-    }, [compositionRoot.malDataApproval]);
-
-    const getMonitoringJson = React.useMemo(
-        () =>
-            (
-                initialMonitoringValues: MonitoringValue | Monitoring[],
-                addedMonitoringValues: Monitoring[],
-                elementType: string,
-                dataSet: string,
-                userGroups: string[]
-            ): MonitoringValue => {
-                if (!_.isArray(initialMonitoringValues) && initialMonitoringValues) {
-                    const initialMonitoring =
-                        _.first(initialMonitoringValues[elementType]?.[dataSet])?.monitoring ?? [];
-
-                    const newDataSets = _.merge({}, initialMonitoringValues[elementType], {
-                        [dataSet]: [
-                            _.omit(
-                                {
-                                    monitoring: combineMonitoringValues(initialMonitoring, addedMonitoringValues).map(
-                                        monitoring => {
-                                            return {
-                                                ...monitoring,
-                                                orgUnit:
-                                                    monitoring.orgUnit.length > 3
-                                                        ? countryCodes.find(
-                                                              countryCode => countryCode.id === monitoring.orgUnit
-                                                          )?.code
-                                                        : monitoring.orgUnit,
-                                            };
-                                        }
-                                    ),
-                                    userGroups,
-                                },
-                                "userGroup"
-                            ),
-                        ],
-                    });
-
-                    return {
-                        ...initialMonitoringValues,
-                        dataSets: newDataSets,
-                    };
-                } else {
-                    const initialMonitoring: Monitoring[] = initialMonitoringValues.map(initialMonitoringValue => {
-                        return {
-                            orgUnit:
-                                countryCodes.find(countryCode => countryCode.id === initialMonitoringValue.orgUnit)
-                                    ?.code ?? initialMonitoringValue.orgUnit,
-                            period: initialMonitoringValue.period,
-                            enable: initialMonitoringValue.monitoring,
-                        };
-                    });
-
-                    return {
-                        [elementType]: {
-                            [dataSet]: [
-                                {
-                                    monitoring: combineMonitoringValues(initialMonitoring, addedMonitoringValues),
-                                    userGroups,
-                                },
-                            ],
-                        },
-                    };
-                }
-            },
-        [countryCodes]
-    );
 
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
@@ -178,15 +82,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     text: i18n.t("Complete"),
                     icon: <DoneIcon />,
                     multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
-                        if (items.length === 0) return;
-
-                        const result = await compositionRoot.malDataApproval.updateStatus(items, "complete");
-                        if (!result) snackbar.error(i18n.t("Error when trying to complete data set"));
-
-                        reload();
-                    },
+                    onClick: onTableActionClick.completeAction,
                     isActive: activeActions.isCompleteActionVisible,
                 },
                 {
@@ -194,15 +90,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     text: i18n.t("Incomplete"),
                     icon: <RemoveIcon />,
                     multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
-                        if (items.length === 0) return;
-
-                        const result = await compositionRoot.malDataApproval.updateStatus(items, "incomplete");
-                        if (!result) snackbar.error(i18n.t("Error when trying to incomplete data set"));
-
-                        reload();
-                    },
+                    onClick: onTableActionClick.incompleteAction,
                     isActive: activeActions.isIncompleteActionVisible,
                 },
                 {
@@ -210,15 +98,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     text: i18n.t("Submit"),
                     icon: <DoneAllIcon />,
                     multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
-                        if (items.length === 0) return;
-
-                        const result = await compositionRoot.malDataApproval.updateStatus(items, "approve");
-                        if (!result) snackbar.error(i18n.t("Error when trying to submit data set"));
-
-                        reload();
-                    },
+                    onClick: onTableActionClick.submitAction,
                     isActive: activeActions.isSubmitActionVisible,
                 },
                 {
@@ -226,15 +106,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     text: i18n.t("Revoke"),
                     icon: <ClearAllIcon />,
                     multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
-                        if (items.length === 0) return;
-
-                        const result = await compositionRoot.malDataApproval.updateStatus(items, "revoke");
-                        if (!result) snackbar.error(i18n.t("Error when trying to unsubmit data set"));
-
-                        reload();
-                    },
+                    onClick: onTableActionClick.revokeAction,
                     isActive: activeActions.isRevokeActionVisible,
                 },
                 {
@@ -242,35 +114,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     text: i18n.t("Approve"),
                     icon: <ThumbUp />,
                     multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
-                        if (items.length === 0) return;
-
-                        const monitoringValues = items.map(item => {
-                            return {
-                                orgUnit: item.orgUnit,
-                                period: item.period,
-                                enable: true,
-                            };
-                        });
-                        const monitoring = await getMonitoringValue();
-
-                        await compositionRoot.malDataApproval.saveMonitoring(
-                            Namespaces.MONITORING,
-                            getMonitoringJson(
-                                monitoring,
-                                monitoringValues,
-                                "dataSets",
-                                config.dataSets[MAL_WMR_FORM]?.name ?? "",
-                                [dataNotificationsUserGroup]
-                            )
-                        );
-
-                        const result = await compositionRoot.malDataApproval.updateStatus(items, "duplicate");
-                        if (!result) snackbar.error(i18n.t("Error when trying to approve data values"));
-
-                        reload();
-                    },
+                    onClick: onTableActionClick.approveAction,
                     isActive: activeActions.isApproveActionVisible,
                 },
                 {
@@ -278,32 +122,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     text: i18n.t("Activate monitoring"),
                     icon: <Notifications />,
                     multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
-                        if (items.length === 0) return;
-
-                        const monitoringValues = items.map(item => {
-                            return {
-                                orgUnit: item.orgUnitCode ?? item.orgUnit,
-                                period: item.period,
-                                enable: true,
-                            };
-                        });
-                        const monitoring = await getMonitoringValue();
-
-                        await compositionRoot.malDataApproval.saveMonitoring(
-                            Namespaces.MONITORING,
-                            getMonitoringJson(
-                                monitoring,
-                                monitoringValues,
-                                "dataSets",
-                                config.dataSets[MAL_WMR_FORM]?.name ?? "",
-                                [dataNotificationsUserGroup]
-                            )
-                        );
-
-                        reload();
-                    },
+                    onClick: onTableActionClick.activateMonitoringAction,
                     isActive: activeActions.isActivateMonitoringActionVisible,
                 },
                 {
@@ -311,54 +130,21 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     text: i18n.t("Deactivate monitoring"),
                     icon: <NotificationsOff />,
                     multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
-                        if (items.length === 0) return;
-
-                        const monitoringValues = items.map(item => {
-                            return {
-                                orgUnit: item.orgUnitCode ?? item.orgUnit,
-                                period: item.period,
-                                enable: false,
-                            };
-                        });
-                        const monitoring = await getMonitoringValue();
-
-                        await compositionRoot.malDataApproval.saveMonitoring(
-                            Namespaces.MONITORING,
-                            getMonitoringJson(
-                                monitoring,
-                                monitoringValues,
-                                "dataSets",
-                                config.dataSets[MAL_WMR_FORM]?.name ?? "",
-                                [dataNotificationsUserGroup]
-                            )
-                        );
-
-                        reload();
-                    },
+                    onClick: onTableActionClick.deactivateMonitoringAction,
                     isActive: activeActions.isDeactivateMonitoringActionVisible,
                 },
                 {
                     name: "getDiff",
                     text: i18n.t("Check Difference"),
                     icon: <PlaylistAddCheck />,
-                    onClick: async (selectedIds: string[]) => {
-                        disableRevoke();
-                        openDialog();
-                        setSelected(selectedIds);
-                    },
+                    onClick: onTableActionClick.getDifferenceAction,
                     isActive: activeActions.isGetDifferenceActionVisible,
                 },
                 {
                     name: "getDiffAndRevoke",
                     text: i18n.t("Check Difference"),
                     icon: <PlaylistAddCheck />,
-                    onClick: async (selectedIds: string[]) => {
-                        enableRevoke();
-                        openDialog();
-                        setSelected(selectedIds);
-                    },
+                    onClick: onTableActionClick.getDifferenceAndRevokeAction,
                     isActive: activeActions.isGetDifferenceAndRevokeActionVisible,
                 },
             ],
@@ -373,6 +159,15 @@ export const DataApprovalList: React.FC = React.memo(() => {
         }),
         [
             columns,
+            onTableActionClick.completeAction,
+            onTableActionClick.incompleteAction,
+            onTableActionClick.submitAction,
+            onTableActionClick.revokeAction,
+            onTableActionClick.approveAction,
+            onTableActionClick.activateMonitoringAction,
+            onTableActionClick.deactivateMonitoringAction,
+            onTableActionClick.getDifferenceAction,
+            onTableActionClick.getDifferenceAndRevokeAction,
             activeActions.isCompleteActionVisible,
             activeActions.isIncompleteActionVisible,
             activeActions.isSubmitActionVisible,
@@ -382,21 +177,13 @@ export const DataApprovalList: React.FC = React.memo(() => {
             activeActions.isDeactivateMonitoringActionVisible,
             activeActions.isGetDifferenceActionVisible,
             activeActions.isGetDifferenceAndRevokeActionVisible,
-            compositionRoot.malDataApproval,
-            snackbar,
-            reload,
-            getMonitoringValue,
-            getMonitoringJson,
-            config.dataSets,
-            dataNotificationsUserGroup,
-            disableRevoke,
-            openDialog,
-            enableRevoke,
         ]
     );
 
-    const getRows = useMemo(
-        () => async (_search: string, paging: TablePagination, sorting: TableSorting<DataApprovalViewModel>) => {
+    const getRows = useCallback(
+        async (_search: string, paging: TablePagination, sorting: TableSorting<DataApprovalViewModel>) => {
+            if (!monitoringValue) return emptyPage;
+
             const { pager, objects } = await compositionRoot.malDataApproval.get({
                 config: config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
@@ -404,12 +191,11 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 useOldPeriods: oldPeriods,
                 ...getUseCaseOptions(filters, selectablePeriods),
             });
-            const monitoring = await getMonitoringValue();
 
             console.debug("Reloading", reloadKey);
-            return { pager, objects: getDataApprovalViews(config, objects, monitoring) };
+            return { pager, objects: getDataApprovalViews(config, objects, monitoringValue) };
         },
-        [compositionRoot.malDataApproval, config, oldPeriods, filters, selectablePeriods, reloadKey, getMonitoringValue]
+        [compositionRoot.malDataApproval, config, oldPeriods, filters, selectablePeriods, reloadKey, monitoringValue]
     );
 
     function getUseCaseOptions(filter: DataSetsFilter, selectablePeriods: string[]) {
@@ -451,27 +237,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
             approvalWorkflow: config.approvalWorkflow,
         };
     }
-    const filterOptions = React.useMemo(() => getFilterOptions(config, selectablePeriods), [config, selectablePeriods]);
-
-    function closeDiffDialog() {
-        closeDialog();
-        disableRevoke();
-        reload();
-    }
-
-    function combineMonitoringValues(
-        initialMonitoringValues: Monitoring[],
-        addedMonitoringValues: Monitoring[]
-    ): Monitoring[] {
-        const combinedMonitoringValues = addedMonitoringValues.map(added => {
-            return initialMonitoringValues.filter(
-                initial => initial.orgUnit !== added.orgUnit || initial.period !== added.period
-            );
-        });
-        const combinedMonitoring = _.union(_.intersection(...combinedMonitoringValues), addedMonitoringValues);
-
-        return _.union(combinedMonitoring);
-    }
+    const filterOptions = useMemo(() => getFilterOptions(config, selectablePeriods), [config, selectablePeriods]);
 
     const periodsToggle: TableGlobalAction = {
         name: "switchPeriods",
@@ -502,13 +268,13 @@ export const DataApprovalList: React.FC = React.memo(() => {
             <ConfirmationDialog
                 isOpen={isDialogOpen}
                 title={i18n.t("Check differences")}
-                onCancel={closeDiffDialog}
+                onCancel={closeDataDifferencesDialog}
                 cancelText={i18n.t("Close")}
                 maxWidth="md"
                 fullWidth
             >
                 <DataDifferencesList
-                    selectedIds={selected}
+                    selectedIds={selectedIds}
                     revoke={revoke}
                     isUpdated={() => setDiffState(`${new Date().getTime()}`)}
                     key={new Date().getTime()}

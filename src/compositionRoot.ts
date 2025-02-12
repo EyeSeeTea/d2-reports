@@ -69,7 +69,6 @@ import { GetSubnationalCorrectUseCase } from "./domain/reports/nhwa-subnational-
 import { DismissSubnationalCorrectValuesUseCase } from "./domain/reports/nhwa-subnational-correct-orgunit/usecases/DismissSubnationalCorrectValuesUseCase";
 import { SubnationalCorrectD2SettingsRepository } from "./data/reports/nhwa-subnational-correct-orgunit/SubnationalCorrectD2SettingsRepository";
 import { GetEARDataSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/GetEARDataSubmissionUseCase";
-import { GetMalCountryCodesUseCase } from "./domain/reports/mal-data-approval/usecases/GetMalCountryCodesUseCase";
 import { DataQualityDefaultRepository } from "./data/reports/data-quality/DataQualityDefaultRepository";
 import { GetIndicatorsUseCase } from "./domain/reports/data-quality/usecases/GetIndicatorsUseCase";
 import { GetProgramIndicatorsUseCase } from "./domain/reports/data-quality/usecases/GetProgramIndicatorsUseCase";
@@ -107,6 +106,9 @@ import { GetOrgUnitsWithChildrenUseCase } from "./domain/reports/glass-data-subm
 import { GetAllOrgUnitsByLevelUseCase } from "./domain/common/usecases/GetAllOrgUnitsByLevelUseCase";
 import { GetMalDataApprovalOUsWithChildrenUseCase } from "./domain/reports/mal-data-approval/usecases/GetMalDataApprovalOUsWithChildrenUseCase";
 import { OrgUnitWithChildrenD2Repository } from "./data/reports/mal-data-approval/OrgUnitWithChildrenD2Repository";
+import { CountryCodeD2Repository } from "./data/reports/mal-data-approval/CountryCodeD2Repository";
+import { GetMonitoringValueUseCase } from "./domain/reports/mal-data-approval/usecases/GetMonitoringValueUseCase";
+import { UserGroupD2Repository } from "./data/reports/mal-data-approval/UserGroupD2Repository";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -132,6 +134,8 @@ export function getCompositionRoot(api: D2Api) {
     const authoritiesMonitoringRepository = new AuthoritiesMonitoringDefaultRepository(api);
     const monitoringTwoFactorD2Repository = new MonitoringTwoFactorD2Repository(api);
     const orgUnitsWithChildrenRepository = new OrgUnitWithChildrenD2Repository(api);
+    const countryCodeRepository = new CountryCodeD2Repository(api);
+    const userGroupRepository = new UserGroupD2Repository(api);
 
     return {
         admin: getExecute({
@@ -150,13 +154,18 @@ export function getCompositionRoot(api: D2Api) {
             updateStatus: new UpdateStatusUseCase(dataApprovalRepository),
         }),
         malDataApproval: getExecute({
-            get: new GetMalDataSetsUseCase(dataDuplicationRepository, dataValuesRepository, dataSetRepository),
+            get: new GetMalDataSetsUseCase(
+                dataDuplicationRepository,
+                dataValuesRepository,
+                dataSetRepository,
+                countryCodeRepository
+            ),
             getDiff: new GetMalDataDiffUseCase(dataValuesRepository, dataSetRepository),
-            getCountryCodes: new GetMalCountryCodesUseCase(dataDuplicationRepository),
             save: new SaveMalDataSetsUseCase(dataDuplicationRepository),
             getColumns: new GetMalDataApprovalColumnsUseCase(dataDuplicationRepository),
             saveColumns: new SaveMalDataApprovalColumnsUseCase(dataDuplicationRepository),
             getMonitoring: new GetMonitoringUseCase(dataDuplicationRepository),
+            getMonitoringValue: new GetMonitoringValueUseCase(countryCodeRepository, userGroupRepository),
             saveMonitoring: new SaveMonitoringUseCase(dataDuplicationRepository),
             updateStatus: new UpdateMalApprovalStatusUseCase(dataDuplicationRepository),
             duplicateValue: new DuplicateDataValuesUseCase(dataDuplicationRepository),

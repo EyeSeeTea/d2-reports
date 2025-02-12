@@ -35,11 +35,6 @@ export interface Monitoring {
     enable?: boolean;
 }
 
-export interface CountryCode {
-    id: string;
-    code: string;
-}
-
 export type MonitoringValue = Record<string, Record<string, { monitoring: Monitoring[]; userGroups: string[] }[]>>;
 
 export function getDataDuplicationItemId(dataSet: MalDataApprovalItem): string {
@@ -55,20 +50,11 @@ export function getDataDuplicationItemId(dataSet: MalDataApprovalItem): string {
 export function getDataDuplicationItemMonitoringValue(
     dataSet: MalDataApprovalItem,
     dataSetName: string,
-    monitoring: MonitoringValue | Monitoring[]
+    monitoring: MonitoringValue
 ): boolean {
-    if (_.isArray(monitoring)) {
-        return (
-            monitoring.find(
-                monitoringValue =>
-                    monitoringValue.orgUnit === dataSet.orgUnitUid && monitoringValue.period === dataSet.period
-            )?.monitoring ?? false
-        );
-    } else {
-        const monitoringArray = _.first(monitoring["dataSets"]?.[dataSetName])?.monitoring;
+    const monitoringArray = _.first(monitoring["dataSets"]?.[dataSetName])?.monitoring;
 
-        return !!_.find(monitoringArray, { orgUnit: dataSet.orgUnitCode, period: dataSet.period })?.enable;
-    }
+    return !!_.find(monitoringArray, { orgUnit: dataSet.orgUnitCode, period: dataSet.period })?.enable;
 }
 
 export function parseDataDuplicationItemId(string: string): MalDataApprovalItemIdentifier | undefined {
