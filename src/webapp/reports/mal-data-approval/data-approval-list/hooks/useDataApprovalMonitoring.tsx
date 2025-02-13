@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import {
     MalDataApprovalItemIdentifier,
-    MonitoringValue,
+    MalDataSet,
 } from "../../../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import { Namespaces } from "../../../../../data/common/clients/storage/Namespaces";
 import { useAppContext } from "../../../../contexts/app-context";
 import _ from "lodash";
+import { MonitoringValue } from "../../../../../domain/reports/mal-data-approval/entities/MonitoringValue";
 
 export function useDataApprovalMonitoring() {
     const { compositionRoot, config } = useAppContext();
@@ -19,18 +20,17 @@ export function useDataApprovalMonitoring() {
         async (items: MalDataApprovalItemIdentifier[], enableMonitoring: boolean) => {
             const dataSetName = _.values(config.dataSets).find(dataSet =>
                 items.map(item => item.dataSet).includes(dataSet.id)
-            )?.name;
+            )?.name as MalDataSet;
 
             if (!monitoringValue || !dataSetName) return;
 
-            const monitoring = await compositionRoot.malDataApproval.getMonitoringValue(
-                monitoringValue,
-                items,
-                dataSetName,
-                enableMonitoring
-            );
-
-            return await compositionRoot.malDataApproval.saveMonitoring(Namespaces.MONITORING, monitoring);
+            return await compositionRoot.malDataApproval.updateMonitoring({
+                namespace: Namespaces.MONITORING,
+                monitoringValue: monitoringValue,
+                dataApprovalItems: items,
+                dataSetName: dataSetName,
+                enableMonitoring: enableMonitoring,
+            });
         },
         [compositionRoot.malDataApproval, config.dataSets, monitoringValue]
     );

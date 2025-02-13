@@ -18,7 +18,7 @@ import {
 import {
     MalDataApprovalItem,
     MalDataApprovalItemIdentifier,
-    MonitoringValue,
+    MalDataSet,
 } from "../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import {
     MalDataApprovalOptions,
@@ -27,7 +27,7 @@ import {
 import { DataDiffItem, DataDiffItemIdentifier } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 import { emptyPage, paginate } from "../../../domain/common/entities/PaginatedObjects";
-import { malApprovedDataSetCodes, MalDataSet } from "./constants/MalDataApprovalConstants";
+import { malApprovedDataSetCodes } from "./constants/MalDataApprovalConstants";
 import { CountryCode } from "../../../domain/reports/mal-data-approval/entities/CountryCode";
 
 interface VariableHeaders {
@@ -142,12 +142,10 @@ const fieldMapping: Record<keyof MalDataApprovalItem, SqlField> = {
 
 export class MalDataApprovalDefaultRepository implements MalDataApprovalRepository {
     private storageClient: StorageClient;
-    private globalStorageClient: StorageClient;
 
     constructor(private api: D2Api) {
         const instance = new Instance({ url: this.api.baseUrl });
         this.storageClient = new DataStoreStorageClient("user", instance);
-        this.globalStorageClient = new DataStoreStorageClient("global", instance);
     }
 
     async getDiff(options: MalDataApprovalOptions): Promise<PaginatedObjects<DataDiffItem>> {
@@ -686,16 +684,6 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
     async saveColumns(namespace: string, columns: string[]): Promise<void> {
         return this.storageClient.saveObject<string[]>(namespace, columns);
-    }
-
-    async getMonitoring(namespace: string): Promise<MonitoringValue> {
-        const monitoring = (await this.globalStorageClient.getObject<MonitoringValue>(namespace)) ?? {};
-
-        return monitoring;
-    }
-
-    async saveMonitoring(namespace: string, monitoring: MonitoringValue): Promise<void> {
-        return await this.globalStorageClient.saveObject<MonitoringValue>(namespace, monitoring);
     }
 
     async getSortOrder(): Promise<string[]> {

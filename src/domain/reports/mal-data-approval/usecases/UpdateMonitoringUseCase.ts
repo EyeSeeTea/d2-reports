@@ -1,51 +1,63 @@
 import _ from "lodash";
 import { UseCase } from "../../../../compositionRoot";
-import { MalDataApprovalItemIdentifier, Monitoring, MonitoringValue } from "../entities/MalDataApprovalItem";
+import { MalDataApprovalItemIdentifier, MalDataSet } from "../entities/MalDataApprovalItem";
 import { UserGroupRepository } from "../repositories/UserGroupRepository";
 import { CountryCodeRepository } from "../repositories/CountryCodeRepository";
 import { CountryCode } from "../entities/CountryCode";
+import { MonitoringValueRepository } from "../repositories/MonitoringValueRepository";
+import { Monitoring, MonitoringValue } from "../entities/MonitoringValue";
 
-export class GetMonitoringValueUseCase implements UseCase {
+type UpdateMonitoringUseCaseOptions = {
+    namespace: string;
+    monitoringValue: MonitoringValue;
+    dataApprovalItems: MalDataApprovalItemIdentifier[];
+    dataSetName: MalDataSet;
+    enableMonitoring: boolean;
+};
+
+export class UpdateMonitoringUseCase implements UseCase {
     constructor(
+        private monitoringValueRepository: MonitoringValueRepository,
         private countryCodeRepository: CountryCodeRepository,
         private userGroupRepository: UserGroupRepository
     ) {}
 
-    async execute(
-        monitoringValue: MonitoringValue,
-        items: MalDataApprovalItemIdentifier[],
-        dataSetName: string,
-        enableMonitoring: boolean
-    ): Promise<MonitoringValue> {
-        const monitoringValues = items.map(item => {
-            return {
-                orgUnit: item.orgUnit,
-                period: item.period,
-                enable: enableMonitoring,
-            };
-        });
+    async execute(options: UpdateMonitoringUseCaseOptions): Promise<void> {
+        const { namespace, monitoringValue, dataApprovalItems, dataSetName, enableMonitoring } = options;
+
         const dataNotificationsUserGroup = await this.userGroupRepository.getUserGroupByCode(
             malDataNotificationsUserGroup
         );
         const countryCodes = await this.countryCodeRepository.getCountryCodes();
-
-        return getMonitoringJson(
+        const monitoring = buildMonitoringValue(
             monitoringValue,
-            monitoringValues,
+            dataApprovalItems,
             dataSetName,
             countryCodes,
-            dataNotificationsUserGroup
+            dataNotificationsUserGroup,
+            enableMonitoring
         );
+
+        return this.monitoringValueRepository.save(namespace, monitoring);
     }
 }
 
-function getMonitoringJson(
+function buildMonitoringValue(
     monitoringValue: MonitoringValue,
-    addedMonitoringValues: Monitoring[],
-    dataSetName: string,
+    dataApprovalItems: MalDataApprovalItemIdentifier[],
+    dataSetName: MalDataSet,
     countryCodes: CountryCode[],
-    dataNotificationsUserGroup: string
+    dataNotificationsUserGroup: string,
+    enableMonitoring: boolean
 ): MonitoringValue {
+    const addedMonitoringValues = dataApprovalItems.map(item => {
+        return {
+            orgUnit: item.orgUnit,
+            period: item.period,
+            enable: enableMonitoring,
+        };
+    });
+
     const initialMonitoring = _.first(monitoringValue["dataSets"]?.[dataSetName])?.monitoring ?? [];
     const newDataSets = _.merge({}, monitoringValue["dataSets"], {
         [dataSetName]: [

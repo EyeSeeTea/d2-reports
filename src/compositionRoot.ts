@@ -27,7 +27,6 @@ import { MalDataSubscriptionDefaultRepository } from "./data/reports/mal-data-su
 import { GetSortOrderUseCase } from "./domain/reports/mal-data-approval/usecases/GetSortOrderUseCase";
 import { GenerateSortOrderUseCase } from "./domain/reports/mal-data-approval/usecases/GenerateSortOrderUseCase";
 import { GetMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/GetMonitoringUseCase";
-import { SaveMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/SaveMonitoringUseCase";
 import { DuplicateDataValuesUseCase } from "./domain/reports/mal-data-approval/usecases/DuplicateDataValuesUseCase";
 import { GetMalDataElementsSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalDataElementsSubscriptionUseCase";
 import { SaveMalDataSubscriptionColumnsUseCase } from "./domain/reports/mal-data-subscription/usecases/SaveMalDataSubscriptionColumnsUseCase";
@@ -107,8 +106,9 @@ import { GetAllOrgUnitsByLevelUseCase } from "./domain/common/usecases/GetAllOrg
 import { GetMalDataApprovalOUsWithChildrenUseCase } from "./domain/reports/mal-data-approval/usecases/GetMalDataApprovalOUsWithChildrenUseCase";
 import { OrgUnitWithChildrenD2Repository } from "./data/reports/mal-data-approval/OrgUnitWithChildrenD2Repository";
 import { CountryCodeD2Repository } from "./data/reports/mal-data-approval/CountryCodeD2Repository";
-import { GetMonitoringValueUseCase } from "./domain/reports/mal-data-approval/usecases/GetMonitoringValueUseCase";
+import { UpdateMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/UpdateMonitoringUseCase";
 import { UserGroupD2Repository } from "./data/reports/mal-data-approval/UserGroupD2Repository";
+import { MonitoringValueDataStoreRepository } from "./data/reports/mal-data-approval/MonitoringValueDataStoreRepository";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -136,6 +136,7 @@ export function getCompositionRoot(api: D2Api) {
     const orgUnitsWithChildrenRepository = new OrgUnitWithChildrenD2Repository(api);
     const countryCodeRepository = new CountryCodeD2Repository(api);
     const userGroupRepository = new UserGroupD2Repository(api);
+    const monitoringValueRepository = new MonitoringValueDataStoreRepository(api);
 
     return {
         admin: getExecute({
@@ -164,9 +165,12 @@ export function getCompositionRoot(api: D2Api) {
             save: new SaveMalDataSetsUseCase(dataDuplicationRepository),
             getColumns: new GetMalDataApprovalColumnsUseCase(dataDuplicationRepository),
             saveColumns: new SaveMalDataApprovalColumnsUseCase(dataDuplicationRepository),
-            getMonitoring: new GetMonitoringUseCase(dataDuplicationRepository),
-            getMonitoringValue: new GetMonitoringValueUseCase(countryCodeRepository, userGroupRepository),
-            saveMonitoring: new SaveMonitoringUseCase(dataDuplicationRepository),
+            getMonitoring: new GetMonitoringUseCase(monitoringValueRepository),
+            updateMonitoring: new UpdateMonitoringUseCase(
+                monitoringValueRepository,
+                countryCodeRepository,
+                userGroupRepository
+            ),
             updateStatus: new UpdateMalApprovalStatusUseCase(dataDuplicationRepository),
             duplicateValue: new DuplicateDataValuesUseCase(dataDuplicationRepository),
             getSortOrder: new GetSortOrderUseCase(dataDuplicationRepository),

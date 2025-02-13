@@ -2,11 +2,14 @@ import _ from "lodash";
 import { Config } from "../../../domain/common/entities/Config";
 import {
     MalDataApprovalItem,
+    MalDataSet,
     getDataDuplicationItemId,
-    getDataDuplicationItemMonitoringValue,
-    MonitoringValue,
 } from "../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import { toDate } from "date-fns-tz";
+import {
+    getDataDuplicationItemMonitoringValue,
+    MonitoringValue,
+} from "../../../domain/reports/mal-data-approval/entities/MonitoringValue";
 
 export interface DataApprovalViewModel {
     id: string;
@@ -34,7 +37,8 @@ export function getDataApprovalViews(
     monitoring: MonitoringValue
 ): DataApprovalViewModel[] {
     return items.map(item => {
-        const dataSetName = _.values(config.dataSets).find(dataSet => item.dataSetUid === dataSet.id)?.name ?? "";
+        const dataSetName = (_.values(config.dataSets).find(dataSet => item.dataSetUid === dataSet.id)?.name ??
+            "") as MalDataSet;
 
         return {
             id: getDataDuplicationItemId(item),

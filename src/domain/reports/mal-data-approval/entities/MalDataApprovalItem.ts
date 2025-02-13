@@ -1,5 +1,3 @@
-import _ from "lodash";
-
 export interface MalDataApprovalItem {
     dataSetUid: string;
     dataSet: string;
@@ -28,14 +26,11 @@ export interface MalDataApprovalItemIdentifier {
     workflow: string | undefined;
 }
 
-export interface Monitoring {
-    orgUnit: string;
-    period: string;
-    monitoring?: boolean;
-    enable?: boolean;
-}
-
-export type MonitoringValue = Record<string, Record<string, { monitoring: Monitoring[]; userGroups: string[] }[]>>;
+export type MalDataSet =
+    | "MAL - WMR Form"
+    | "MAL - Antimalarial drug policy"
+    | "MAL - WMR National Policies"
+    | "MAL - Malaria Free";
 
 export function getDataDuplicationItemId(dataSet: MalDataApprovalItem): string {
     return [
@@ -45,16 +40,6 @@ export function getDataDuplicationItemId(dataSet: MalDataApprovalItem): string {
         dataSet.orgUnitUid,
         dataSet.orgUnitCode,
     ].join("-");
-}
-
-export function getDataDuplicationItemMonitoringValue(
-    dataSet: MalDataApprovalItem,
-    dataSetName: string,
-    monitoring: MonitoringValue
-): boolean {
-    const monitoringArray = _.first(monitoring["dataSets"]?.[dataSetName])?.monitoring;
-
-    return !!_.find(monitoringArray, { orgUnit: dataSet.orgUnitCode, period: dataSet.period })?.enable;
 }
 
 export function parseDataDuplicationItemId(string: string): MalDataApprovalItemIdentifier | undefined {

@@ -1,10 +1,7 @@
 import _ from "lodash";
 import { useCallback, useState } from "react";
 import i18n from "../../../../../locales";
-import {
-    MonitoringValue,
-    parseDataDuplicationItemId,
-} from "../../../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
+import { parseDataDuplicationItemId } from "../../../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import { useReload } from "../../../../utils/use-reload";
 import { useAppContext } from "../../../../contexts/app-context";
 import { useDataApprovalMonitoring } from "./useDataApprovalMonitoring";
@@ -39,7 +36,7 @@ type DataApprovalActionsState = {
     };
 };
 
-export function useDataApprovalActions(monitoringValue?: MonitoringValue): DataApprovalActionsState {
+export function useDataApprovalActions(): DataApprovalActionsState {
     const { compositionRoot } = useAppContext();
     const [reloadKey, reload] = useReload();
     const { saveMonitoring: saveMonitoringValue } = useDataApprovalMonitoring();
@@ -63,7 +60,7 @@ export function useDataApprovalActions(monitoringValue?: MonitoringValue): DataA
     const approveAction = useCallback(
         async (selectedIds: string[]) => {
             const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
-            if (items.length === 0 || !monitoringValue) return;
+            if (items.length === 0) return;
 
             const result = await compositionRoot.malDataApproval.updateStatus(items, "duplicate");
             if (!result) setGlobalMessage({ type: "error", message: i18n.t("Error when trying to approve data set") });
@@ -71,7 +68,7 @@ export function useDataApprovalActions(monitoringValue?: MonitoringValue): DataA
             saveMonitoringValue(items, true);
             reload();
         },
-        [compositionRoot.malDataApproval, monitoringValue, reload, saveMonitoringValue]
+        [compositionRoot.malDataApproval, reload, saveMonitoringValue]
     );
 
     const completeAction = useCallback(
