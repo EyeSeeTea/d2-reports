@@ -1,3 +1,5 @@
+import { MalDataSet } from "../../../../data/reports/mal-data-approval/constants/MalDataApprovalConstants";
+
 export interface MalDataApprovalItem {
     dataSetUid: string;
     dataSet: MalDataSet;
@@ -25,15 +27,6 @@ export interface MalDataApprovalItemIdentifier {
     period: string;
     workflow: string | undefined;
 }
-
-export const malDataSets = [
-    "MAL - WMR Form",
-    "MAL - Antimalarial drug policy",
-    "MAL - WMR National Policies",
-    "MAL - Malaria Free",
-] as const;
-
-export type MalDataSet = typeof malDataSets[number];
 
 export function getDataDuplicationItemId(dataSet: MalDataApprovalItem): string {
     return [

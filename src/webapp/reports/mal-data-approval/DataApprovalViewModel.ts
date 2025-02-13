@@ -3,7 +3,6 @@ import {
     getDataDuplicationItemId,
 } from "../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import { toDate } from "date-fns-tz";
-
 export interface DataApprovalViewModel {
     id: string;
     dataSetUid: string;

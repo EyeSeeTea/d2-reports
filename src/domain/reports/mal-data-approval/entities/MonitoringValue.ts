@@ -1,5 +1,6 @@
 import _ from "lodash";
-import { MalDataApprovalItem, MalDataSet } from "./MalDataApprovalItem";
+import { MalDataApprovalItem } from "./MalDataApprovalItem";
+import { MalDataSet } from "../../../../data/reports/mal-data-approval/constants/MalDataApprovalConstants";
 
 export type Monitoring = {
     orgUnit: string;

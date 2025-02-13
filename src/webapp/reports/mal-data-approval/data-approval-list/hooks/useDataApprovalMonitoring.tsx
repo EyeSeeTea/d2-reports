@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-    MalDataApprovalItemIdentifier,
-    malDataSets,
-} from "../../../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
+import { MalDataApprovalItemIdentifier } from "../../../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import { Namespaces } from "../../../../../data/common/clients/storage/Namespaces";
 import { useAppContext } from "../../../../contexts/app-context";
 import _ from "lodash";
 import { MonitoringValue } from "../../../../../domain/reports/mal-data-approval/entities/MonitoringValue";
+import { malariaDataSets } from "../../../../../data/reports/mal-data-approval/constants/MalDataApprovalConstants";
 
 export function useDataApprovalMonitoring() {
     const { compositionRoot, config } = useAppContext();
@@ -21,7 +19,7 @@ export function useDataApprovalMonitoring() {
             const dataSetName = _.values(config.dataSets).find(dataSet =>
                 items.map(item => item.dataSet).includes(dataSet.id)
             )?.name;
-            const dataSetApprovalName = malDataSets.find(dataSet => dataSet === dataSetName);
+            const dataSetApprovalName = malariaDataSets.find(dataSet => dataSet === dataSetName);
 
             if (!monitoringValue) return;
             if (!dataSetApprovalName) throw new Error("Data set not found");
