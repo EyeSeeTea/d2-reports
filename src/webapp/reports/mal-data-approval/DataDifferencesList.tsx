@@ -12,7 +12,6 @@ import _ from "lodash";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Namespaces } from "../../../data/common/clients/storage/Namespaces";
 import { DataDiffItem, parseDataDiffItemId } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
-
 import i18n from "../../../locales";
 import { useAppContext } from "../../contexts/app-context";
 import { DataDiffViewModel, getDataDiffViews } from "./DataDiffViewModel";
