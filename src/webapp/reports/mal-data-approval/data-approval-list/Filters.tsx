@@ -17,7 +17,7 @@ type DataSetsFiltersProps = {
 };
 
 export interface DataSetsFilter {
-    dataSetIds: Id[];
+    dataSetId: Id | undefined;
     orgUnitPaths: Id[];
     periods: string[];
     completionStatus?: boolean;
@@ -31,7 +31,7 @@ interface FilterOptions {
 
 export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
     const { api } = useAppContext();
-    const { hideDataSets, values: filter, options: filterOptions } = props;
+    const { hideDataSets, options: filterOptions } = props;
 
     const { filterValues, rootIds, selectableIds, setFilterValues, applyFilters, clearFilters } =
         useDataApprovalFilters(props);
@@ -58,10 +58,10 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         <>
             <Container>
                 {!hideDataSets && (
-                    <DropdownStyled
+                    <DataSetDropdown
                         items={dataSetItems}
-                        values={filterValues.dataSetIds}
-                        onChange={setFilterValues.dataSetIds}
+                        value={filterValues.dataSetId}
+                        onChange={setFilterValues.dataSetId}
                         label={i18n.t("Data sets")}
                     />
                 )}
@@ -84,7 +84,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
 
                 <SingleDropdownStyled
                     items={completionStatusItems}
-                    value={fromBool(filter.completionStatus)}
+                    value={fromBool(filterValues.completionStatus)}
                     onChange={setFilterValues.completionStatus}
                     label={i18n.t("Completion status")}
                 />
@@ -98,7 +98,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
             </Container>
 
             <FilterButtonContainer>
-                <Button disabled={!filter.dataSetIds} onClick={applyFilters} variant="contained" color="primary">
+                <Button disabled={!filterValues.dataSetId} onClick={applyFilters} variant="contained" color="primary">
                     {i18n.t("Apply filters")}
                 </Button>
 
@@ -135,6 +135,11 @@ const DropdownStyled = styled(MultipleDropdown)`
 const SingleDropdownStyled = styled(Dropdown)`
     margin-left: -10px;
     width: 180px;
+`;
+
+const DataSetDropdown = styled(Dropdown)`
+    margin-left: -10px;
+    width: 260px;
 `;
 
 const FilterButtonContainer = styled.div`

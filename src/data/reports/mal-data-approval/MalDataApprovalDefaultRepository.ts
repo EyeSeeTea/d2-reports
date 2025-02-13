@@ -151,14 +151,15 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
     }
 
     async getDiff(options: MalDataApprovalOptions): Promise<PaginatedObjects<DataDiffItem>> {
-        const { dataSetIds, orgUnitIds, periods } = options;
+        const { dataSetId, orgUnitIds, periods } = options;
+        if (!dataSetId) return emptyPage;
 
         const sqlViews = new Dhis2SqlViews(this.api);
         const pagingToDownload = { page: 1, pageSize: 10000 };
         const sqlVariables = {
             orgUnits: sqlViewJoinIds(orgUnitIds),
             periods: sqlViewJoinIds(periods),
-            dataSets: sqlViewJoinIds(dataSetIds),
+            dataSets: dataSetId,
         };
         const rows = await this.getSqlViewRows<VariablesDiff, SqlFieldDiff>(
             sqlViews,
@@ -201,9 +202,9 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         options: MalDataApprovalOptions,
         countryCodes: CountryCode[]
     ): Promise<PaginatedObjects<MalDataApprovalItem>> {
-        const { approvalStatus, completionStatus, config, dataSetIds, orgUnitIds, periods, sorting, useOldPeriods } =
+        const { approvalStatus, completionStatus, config, dataSetId, orgUnitIds, periods, sorting, useOldPeriods } =
             options;
-        if (_.isEmpty(dataSetIds)) return emptyPage;
+        if (!dataSetId) return emptyPage;
 
         const sqlViews = new Dhis2SqlViews(this.api);
         const pagingToDownload = { page: 1, pageSize: 10000 };
@@ -212,7 +213,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             orgUnitRoot: sqlViewJoinIds(config.currentUser.orgUnits.map(({ id }) => id)),
             orgUnits: sqlViewJoinIds(orgUnitIds),
             periods: sqlViewJoinIds(periods),
-            dataSets: sqlViewJoinIds(dataSetIds),
+            dataSets: dataSetId,
             completed: completionStatus === undefined ? "-" : completionStatus ? "true" : "-",
             approved: approvalStatus === undefined ? "-" : approvalStatus.toString(),
             orderByColumn: fieldMapping[sorting.field],
@@ -272,12 +273,12 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         options: MalDataApprovalOptions,
         pagingToDownload: { page: number; pageSize: number }
     ): Promise<Record<T, string>[]> {
-        const { config, dataSetIds } = options;
+        const { config, dataSetId } = options;
 
         const { rows: headerRows } = await sqlViews
             .query<VariableHeaders, T>(
                 getSqlViewId(config, SQL_VIEW_MAL_METADATA_NAME),
-                { dataSets: sqlViewJoinIds(dataSetIds) },
+                { dataSets: dataSetId ?? "" },
                 pagingToDownload
             )
             .getData();

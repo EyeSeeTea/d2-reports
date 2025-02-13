@@ -33,10 +33,16 @@ import { useDataApprovalListColumns } from "./hooks/useDataApprovalListColumns";
 import { useActiveDataApprovalActions } from "./hooks/useActiveDataApprovalActions";
 import { useDataApprovalActions } from "./hooks/useDataApprovalActions";
 import { useDataMonitoring } from "./hooks/useDataMonitoring";
+import { useSelectablePeriods } from "./hooks/useSelectablePeriods";
 
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
     const snackbar = useSnackbar();
+
+    const [filters, setFilters] = useState(emptyApprovalFilter);
+    const [visibleColumns, setVisibleColumns] = useState<string[]>();
+    const [__, setDiffState] = useState<string>("");
+    const [oldPeriods, setOldPeriods] = useState(false);
 
     const activeActions = useActiveDataApprovalActions();
     const {
@@ -48,24 +54,12 @@ export const DataApprovalList: React.FC = React.memo(() => {
     } = useDataApprovalActions();
     const { columns } = useDataApprovalListColumns();
     const { monitoringValue } = useDataMonitoring();
+    const selectablePeriods = useSelectablePeriods(oldPeriods);
 
     useEffect(() => {
         if (globalMessage?.type === "error") snackbar.error(globalMessage.message);
         else if (globalMessage?.type === "success") snackbar.success(globalMessage.message);
     }, [globalMessage, snackbar]);
-
-    const [filters, setFilters] = useState(emptyApprovalFilter);
-    const [visibleColumns, setVisibleColumns] = useState<string[]>();
-    const [__, setDiffState] = useState<string>("");
-    const [oldPeriods, setOldPeriods] = useState(false);
-
-    const selectablePeriods = useMemo(() => {
-        const currentYear = new Date().getFullYear();
-
-        return oldPeriods
-            ? _.range(2000, currentYear - 5).map(n => n.toString())
-            : _.range(currentYear - 5, currentYear).map(n => n.toString());
-    }, [oldPeriods]);
 
     useEffect(() => {
         compositionRoot.malDataApproval.getColumns(Namespaces.MAL_APPROVAL_STATUS_USER_COLUMNS).then(columns => {
@@ -245,7 +239,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
         icon: <RestartAltIcon />,
         onClick: async () => {
             setOldPeriods(oldYears => !oldYears);
-            // setFilters(currentFilters => ({ ...currentFilters, periods: [] }));
+            setFilters(prev => ({ ...prev, periods: [] }));
         },
     };
 
@@ -284,7 +278,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
     );
 });
 
-export function getSortingFromTableSorting(sorting: TableSorting<DataApprovalViewModel>): Sorting<MalDataApprovalItem> {
+function getSortingFromTableSorting(sorting: TableSorting<DataApprovalViewModel>): Sorting<MalDataApprovalItem> {
     return {
         field: sorting.field === "id" ? "period" : sorting.field,
         direction: sorting.order,

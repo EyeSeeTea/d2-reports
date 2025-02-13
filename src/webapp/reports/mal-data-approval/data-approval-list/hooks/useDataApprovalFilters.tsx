@@ -19,7 +19,7 @@ type DataApprovalFilterState = {
     applyFilters: () => void;
     clearFilters: () => void;
     setFilterValues: {
-        dataSetIds: DropdownHandler;
+        dataSetId: SingleDropdownHandler;
         orgUnitPaths: OrgUnitsFilterButtonProps["setSelected"];
         periods: DropdownHandler;
         completionStatus: SingleDropdownHandler;
@@ -79,24 +79,24 @@ export function useDataApprovalFilters(filterProps: DataApprovalFilterProps): Da
         [orgUnitPaths, orgUnitsByPath]
     );
 
-    const setDataSetIds = useCallback<DropdownHandler>(
-        dataSetIds => setFilterValues({ ...filter, dataSetIds }),
-        [filter, setFilterValues]
+    const setDataSetId = useCallback<SingleDropdownHandler>(
+        dataSetId => setFilterValues(prev => ({ ...prev, dataSetId: dataSetId })),
+        [setFilterValues]
     );
 
     const setPeriods = useCallback<DropdownHandler>(
-        periods => setFilterValues({ ...filter, periods: periods }),
-        [filter, setFilterValues]
+        periods => setFilterValues(prev => ({ ...prev, periods: periods })),
+        [setFilterValues]
     );
 
     const setCompletionStatus = useCallback<SingleDropdownHandler>(
-        completionStatus => setFilterValues({ ...filter, completionStatus: toBool(completionStatus) }),
-        [filter, setFilterValues]
+        completionStatus => setFilterValues(prev => ({ ...prev, completionStatus: toBool(completionStatus) })),
+        [setFilterValues]
     );
 
     const setApprovalStatus = useCallback<SingleDropdownHandler>(
-        approvalStatus => setFilterValues({ ...filter, approvalStatus: toBool(approvalStatus) }),
-        [filter, setFilterValues]
+        approvalStatus => setFilterValues(prev => ({ ...prev, approvalStatus: toBool(approvalStatus) })),
+        [setFilterValues]
     );
 
     const applyFilters = useCallback(() => {
@@ -115,7 +115,7 @@ export function useDataApprovalFilters(filterProps: DataApprovalFilterProps): Da
         applyFilters: applyFilters,
         clearFilters: clearFilters,
         setFilterValues: {
-            dataSetIds: setDataSetIds,
+            dataSetId: setDataSetId,
             orgUnitPaths: setOrgUnitPaths,
             periods: setPeriods,
             completionStatus: setCompletionStatus,
@@ -127,7 +127,7 @@ export function useDataApprovalFilters(filterProps: DataApprovalFilterProps): Da
 const countryLevel = 3;
 
 export const emptyApprovalFilter: DataSetsFilter = {
-    dataSetIds: [],
+    dataSetId: undefined,
     orgUnitPaths: [],
     periods: [],
     completionStatus: undefined,

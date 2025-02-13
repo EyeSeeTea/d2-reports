@@ -32,7 +32,7 @@ export interface MalDataApprovalOptions {
     periods: string[];
     useOldPeriods?: boolean;
     orgUnitIds: Id[];
-    dataSetIds: Id[];
+    dataSetId: Id | undefined;
     approvalStatus?: boolean;
     completionStatus?: boolean;
 }

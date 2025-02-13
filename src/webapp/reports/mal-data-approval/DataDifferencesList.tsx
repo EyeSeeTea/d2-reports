@@ -11,16 +11,14 @@ import {
 import _ from "lodash";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Namespaces } from "../../../data/common/clients/storage/Namespaces";
-import { parseDataDiffItemId } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
-
+import { DataDiffItem, parseDataDiffItemId } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
 import i18n from "../../../locales";
 import { useAppContext } from "../../contexts/app-context";
-import { getSortingFromTableSorting } from "./data-approval-list/DataApprovalList";
-import { DataApprovalViewModel } from "./DataApprovalViewModel";
 import { DataDiffViewModel, getDataDiffViews } from "./DataDiffViewModel";
 import { ThumbUp } from "@material-ui/icons";
 import { parseDataDuplicationItemId } from "../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import { useDataApprovalPermissions } from "./data-approval-list/hooks/useDataApprovalPermissions";
+import { emptyPage, Sorting } from "../../../domain/common/entities/PaginatedObjects";
 
 interface DataDifferencesListProps {
     selectedIds: string[];
@@ -77,9 +75,9 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
     );
 
     const getRows = useMemo(
-        () => async (_search: string, paging: TablePagination, sorting: TableSorting<DataApprovalViewModel>) => {
+        () => async (_search: string, paging: TablePagination, sorting: TableSorting<DataDiffViewModel>) => {
             const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
-            if (items.length === 0) return;
+            if (items.length === 0) return emptyPage;
 
             const { pager, objects } = await compositionRoot.malDataApproval.getDiff({
                 config,
@@ -87,7 +85,7 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
                 sorting: getSortingFromTableSorting(sorting),
                 periods: items.map(item => item.period),
                 orgUnitIds: items.map(item => item.orgUnit),
-                dataSetIds: items.map(item => item.dataSet),
+                dataSetId: items[0]?.dataSet,
             });
 
             if (!pager || !objects) snackbar.error(i18n.t("Error when trying to check difference in data values"));
@@ -97,7 +95,6 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
         [compositionRoot.malDataApproval, config, selectedIds, snackbar]
     );
 
-    // @ts-ignore
     const tableProps = useObjectsTable(baseConfig, getRows);
 
     const saveReorderedColumns = useCallback(
@@ -137,3 +134,10 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
         ></ObjectsList>
     );
 };
+
+function getSortingFromTableSorting(sorting: TableSorting<DataDiffViewModel>): Sorting<DataDiffItem> {
+    return {
+        field: sorting.field === "id" ? "period" : sorting.field,
+        direction: sorting.order,
+    };
+}
