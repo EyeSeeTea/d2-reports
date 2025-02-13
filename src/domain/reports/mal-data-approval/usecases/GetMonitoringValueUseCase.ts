@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { UseCase } from "../../../../compositionRoot";
-import { Monitoring, MonitoringValue } from "../entities/MalDataApprovalItem";
+import { MalDataApprovalItemIdentifier, Monitoring, MonitoringValue } from "../entities/MalDataApprovalItem";
 import { UserGroupRepository } from "../repositories/UserGroupRepository";
 import { CountryCodeRepository } from "../repositories/CountryCodeRepository";
 import { CountryCode } from "../entities/CountryCode";
@@ -13,9 +13,17 @@ export class GetMonitoringValueUseCase implements UseCase {
 
     async execute(
         monitoringValue: MonitoringValue,
-        addedMonitoringValues: Monitoring[],
-        dataSetName: string
+        items: MalDataApprovalItemIdentifier[],
+        dataSetName: string,
+        enableMonitoring: boolean
     ): Promise<MonitoringValue> {
+        const monitoringValues = items.map(item => {
+            return {
+                orgUnit: item.orgUnit,
+                period: item.period,
+                enable: enableMonitoring,
+            };
+        });
         const dataNotificationsUserGroup = await this.userGroupRepository.getUserGroupByCode(
             malDataNotificationsUserGroup
         );
@@ -23,7 +31,7 @@ export class GetMonitoringValueUseCase implements UseCase {
 
         return getMonitoringJson(
             monitoringValue,
-            addedMonitoringValues,
+            monitoringValues,
             dataSetName,
             countryCodes,
             dataNotificationsUserGroup
