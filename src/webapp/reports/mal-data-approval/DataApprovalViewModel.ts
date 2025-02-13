@@ -1,4 +1,4 @@
-import { MAL_WMR_FORM } from "../../../data/reports/mal-data-approval/MalDataApprovalDefaultRepository";
+import _ from "lodash";
 import { Config } from "../../../domain/common/entities/Config";
 import {
     MalDataApprovalItem,
@@ -34,6 +34,8 @@ export function getDataApprovalViews(
     monitoring: MonitoringValue
 ): DataApprovalViewModel[] {
     return items.map(item => {
+        const dataSetName = _.values(config.dataSets).find(dataSet => item.dataSetUid === dataSet.id)?.name ?? "";
+
         return {
             id: getDataDuplicationItemId(item),
             dataSetUid: item.dataSetUid,
@@ -54,11 +56,7 @@ export function getDataApprovalViews(
                 ? toDate(item.lastDateOfApproval, { timeZone: "UTC" })
                 : undefined,
             modificationCount: item.modificationCount,
-            monitoring: getDataDuplicationItemMonitoringValue(
-                item,
-                config.dataSets[MAL_WMR_FORM]?.name ?? "",
-                monitoring
-            ),
+            monitoring: getDataDuplicationItemMonitoringValue(item, dataSetName, monitoring),
             approved: item.approved,
         };
     });

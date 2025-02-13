@@ -32,7 +32,7 @@ import { emptyApprovalFilter } from "./hooks/useDataApprovalFilters";
 import { useDataApprovalListColumns } from "./hooks/useDataApprovalListColumns";
 import { useActiveDataApprovalActions } from "./hooks/useActiveDataApprovalActions";
 import { useDataApprovalActions } from "./hooks/useDataApprovalActions";
-import { useDataMonitoring } from "./hooks/useDataMonitoring";
+import { useDataApprovalMonitoring } from "./hooks/useDataApprovalMonitoring";
 import { useSelectablePeriods } from "./hooks/useSelectablePeriods";
 
 export const DataApprovalList: React.FC = React.memo(() => {
@@ -53,7 +53,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
         selectedIds,
     } = useDataApprovalActions();
     const { columns } = useDataApprovalListColumns();
-    const { monitoringValue } = useDataMonitoring();
+    const { monitoringValue } = useDataApprovalMonitoring();
     const selectablePeriods = useSelectablePeriods(oldPeriods);
 
     useEffect(() => {
@@ -192,13 +192,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
         [compositionRoot.malDataApproval, config, oldPeriods, filters, selectablePeriods, reloadKey, monitoringValue]
     );
 
-    function getUseCaseOptions(filter: DataSetsFilter, selectablePeriods: string[]) {
-        return {
-            ...filter,
-            periods: _.isEmpty(filter.periods) ? selectablePeriods : filter.periods,
-            orgUnitIds: getOrgUnitIdsFromPaths(filter.orgUnitPaths),
-        };
-    }
     const saveReorderedColumns = useCallback(
         async (columnKeys: Array<keyof DataApprovalViewModel>) => {
             if (!visibleColumns) return;
@@ -224,13 +217,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
             .value();
     }, [tableProps.columns, visibleColumns]);
 
-    function getFilterOptions(config: Config, selectablePeriods: string[]) {
-        return {
-            dataSets: sortByName(_.values(config.dataSets)),
-            periods: selectablePeriods,
-            approvalWorkflow: config.approvalWorkflow,
-        };
-    }
     const filterOptions = useMemo(() => getFilterOptions(config, selectablePeriods), [config, selectablePeriods]);
 
     const periodsToggle: TableGlobalAction = {
@@ -282,5 +268,21 @@ function getSortingFromTableSorting(sorting: TableSorting<DataApprovalViewModel>
     return {
         field: sorting.field === "id" ? "period" : sorting.field,
         direction: sorting.order,
+    };
+}
+
+function getUseCaseOptions(filter: DataSetsFilter, selectablePeriods: string[]) {
+    return {
+        ...filter,
+        periods: _.isEmpty(filter.periods) ? selectablePeriods : filter.periods,
+        orgUnitIds: getOrgUnitIdsFromPaths(filter.orgUnitPaths),
+    };
+}
+
+function getFilterOptions(config: Config, selectablePeriods: string[]) {
+    return {
+        dataSets: sortByName(_.values(config.dataSets)),
+        periods: selectablePeriods,
+        approvalWorkflow: config.approvalWorkflow,
     };
 }

@@ -7,7 +7,7 @@ import {
 } from "../../../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import { useReload } from "../../../../utils/use-reload";
 import { useAppContext } from "../../../../contexts/app-context";
-import { useDataMonitoring } from "./useDataMonitoring";
+import { useDataApprovalMonitoring } from "./useDataApprovalMonitoring";
 import { useBooleanState } from "../../../../utils/use-boolean";
 
 type GlobalMessage = {
@@ -42,7 +42,7 @@ type DataApprovalActionsState = {
 export function useDataApprovalActions(monitoringValue?: MonitoringValue): DataApprovalActionsState {
     const { compositionRoot } = useAppContext();
     const [reloadKey, reload] = useReload();
-    const { saveMonitoring: saveMonitoringValue } = useDataMonitoring();
+    const { saveMonitoring: saveMonitoringValue } = useDataApprovalMonitoring();
 
     const [globalMessage, setGlobalMessage] = useState<GlobalMessage>();
     const [selectedIds, setSelectedIds] = useState<string[]>([""]);

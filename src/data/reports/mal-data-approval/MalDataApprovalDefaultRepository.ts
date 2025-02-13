@@ -829,4 +829,4 @@ function mergeHeadersAndData(
     return paginate(rowsFiltered, paging);
 }
 
-export const MAL_WMR_FORM = "CWuqJ3dtQC4";
+const MAL_WMR_FORM = "CWuqJ3dtQC4";
