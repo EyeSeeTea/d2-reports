@@ -4,15 +4,17 @@ import { DataValue } from "../common/entities/DataValue";
 import { DataSetRepository } from "../common/repositories/DataSetRepository";
 import { DataValuesRepository } from "../common/repositories/DataValuesRepository";
 import { DataDiffItem } from "./mal-data-approval/entities/DataDiffItem";
-
-const dataSetApprovalName = "MAL - WMR Form-APVD";
+import { DataSet } from "../common/entities/DataSet";
+import { malApprovedDataSetCodes } from "../../data/reports/mal-data-approval/constants/MalDataApprovalConstants";
+import { MalDataSet } from "./mal-data-approval/entities/MalDataApprovalItem";
 
 export class WmrDiffReport {
     constructor(private dataValueRepository: DataValuesRepository, private dataSetRepository: DataSetRepository) {}
 
     async getDiff(dataSetId: Id, orgUnitId: Id, period: string) {
-        const dataElements = await this.getDataElements(dataSetId);
-        const dataSetApproval = await this.dataSetRepository.getByNameOrCode(dataSetApprovalName);
+        const { dataSet, dataElements } = await this.getDataSetWithDataElements(dataSetId);
+        const approvedDataSetCode = malApprovedDataSetCodes[dataSet.name as MalDataSet];
+        const dataSetApproval = await this.dataSetRepository.getByNameOrCode(approvedDataSetCode);
         const approvalDataValues = await this.getDataValues(dataSetApproval.id, orgUnitId, period);
         const malDataValues = await this.getDataValues(dataSetId, orgUnitId, period);
 
@@ -37,11 +39,14 @@ export class WmrDiffReport {
         return dataValues;
     }
 
-    private async getDataElements(dataSetId: Id): Promise<DataElementsWithCombination[]> {
+    private async getDataSetWithDataElements(
+        dataSetId: Id
+    ): Promise<{ dataElements: DataElementsWithCombination[]; dataSet: DataSet }> {
         const dataSets = await this.dataSetRepository.getById(dataSetId);
         const dataSet = _(dataSets).first();
         if (!dataSet) throw Error("No data set found");
-        return dataSet.dataElements.flatMap(dataElement => {
+
+        const dataElementsWithCombination = dataSet.dataElements.flatMap(dataElement => {
             const combinations = dataElement.categoryCombo?.categoryOptionCombos || [];
 
             return combinations.map((combination): DataElementsWithCombination => {
@@ -54,6 +59,8 @@ export class WmrDiffReport {
                 };
             });
         });
+
+        return { dataElements: dataElementsWithCombination, dataSet: dataSet };
     }
 
     private filterDataElementsWithDataValue(
