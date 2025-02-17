@@ -692,13 +692,13 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         return sortOrderArray ?? [];
     }
 
-    async generateSortOrder(): Promise<void> {
+    async generateSortOrder(dataSetId: string): Promise<void> {
         try {
             const dataSetData: {
                 dataSetElements: dataSetElementsType[];
                 sections: { id: string }[];
             } = await this.api
-                .get<any>(`/dataSets/${MAL_WMR_FORM}`, { fields: "sections,dataSetElements[dataElement[id,name]]" })
+                .get<any>(`/dataSets/${dataSetId}`, { fields: "sections,dataSetElements[dataElement[id,name]]" })
                 .getData();
 
             if (_.isEmpty(dataSetData.sections) || _.isEmpty(dataSetData.dataSetElements)) {
@@ -707,9 +707,14 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
             const dataSetElements: dataElementsType[] = dataSetData.dataSetElements.map(item => item.dataElement);
 
-            const sectionsDEs = await promiseMap(dataSetData.sections, async sections => {
-                return this.api.get<any>(`/sections/${sections.id}`, { fields: "dataElements" }).getData();
-            });
+            const { sections: sectionsDEs } = await this.api.metadata
+                .get({
+                    sections: {
+                        filter: { id: { in: dataSetData.sections.map(item => item.id) } },
+                        fields: { dataElements: { id: true } },
+                    },
+                })
+                .getData();
 
             const sectionsDEsIds: { id: string }[] = sectionsDEs.flatMap(item => {
                 return item.dataElements.map((dataElementId: { id: string }) => {
@@ -816,5 +821,3 @@ function mergeHeadersAndData(
     });
     return paginate(rowsFiltered, paging);
 }
-
-const MAL_WMR_FORM = "CWuqJ3dtQC4";

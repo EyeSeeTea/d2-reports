@@ -20,7 +20,7 @@ export interface MalDataApprovalRepository {
     getColumns(namespace: string): Promise<string[]>;
     saveColumns(namespace: string, columns: string[]): Promise<void>;
     getSortOrder(): Promise<string[]>;
-    generateSortOrder(): Promise<void>;
+    generateSortOrder(dataSetId: string): Promise<void>;
 }
 
 export interface MalDataApprovalOptions {
