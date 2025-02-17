@@ -18,6 +18,7 @@ import {
     useObjectsTable,
 } from "@eyeseetea/d2-ui-components";
 import { Filter, Filters } from "./Filters";
+import DeleteIcon from "@material-ui/icons/Delete";
 
 export const FileResourcesMonitorList: React.FC = React.memo(() => {
     const { compositionRoot } = useAppContext();
@@ -47,7 +48,25 @@ export const FileResourcesMonitorList: React.FC = React.memo(() => {
                 { name: "href", text: i18n.t("Details"), sortable: true, hidden: true },
             ],
 
-            actions: [],
+            actions: [
+                {
+                    name: "delete",
+                    text: i18n.t("Delete"),
+                    icon: <DeleteIcon />,
+                    multiple: true,
+                    onClick: async (selectedIds: string[]) => {
+                        if (!selectedIds.length) return;
+
+                        const confirmed = window.confirm(i18n.t("Are you sure you want to delete the selected items?"));
+                        if (!confirmed) return;
+
+                        await compositionRoot.fileResourcesMonitoring.delete(selectedIds);
+
+                        _reload();
+                    },
+                    isActive: rows => rows.length > 0,
+                },
+            ],
             initialSorting: {
                 field: "id" as const,
                 order: "asc" as const,
@@ -58,7 +77,7 @@ export const FileResourcesMonitorList: React.FC = React.memo(() => {
             },
             searchBoxLabel: i18n.t("Search by filename..."),
         }),
-        []
+        [_reload, compositionRoot.fileResourcesMonitoring]
     );
 
     const getRowsList = React.useMemo(

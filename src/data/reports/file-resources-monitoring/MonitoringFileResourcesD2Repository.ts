@@ -24,6 +24,18 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         this.storageClient = new DataStoreStorageClient("user", instance);
     }
 
+    async delete(ids: string[]): Promise<void> {
+        const deletePromises = ids.map(async id => {
+            try {
+                await this.api.models.fileResources.delete({ id: id }).getData();
+            } catch (error) {
+                console.debug(error);
+            }
+        });
+
+        await Promise.all(deletePromises);
+    }
+
     async get(
         options: MonitoringFileResourcesOptions
     ): Promise<MonitoringFileResourcesPaginatedObjects<MonitoringFileResourcesFile>> {

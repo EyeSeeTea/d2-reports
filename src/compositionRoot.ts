@@ -110,6 +110,7 @@ import { GetMonitoringFileResourcesUseCase } from "./domain/reports/file-resourc
 import { SaveMonitoringFileResourcesColumnsUseCase } from "./domain/reports/file-resources-monitoring/usecases/SaveMonitoringFileResourcesColumnsUseCase";
 import { GetMonitoringFileResourcesColumnsUseCase } from "./domain/reports/file-resources-monitoring/usecases/GetMonitoringFileResourcesColumnsUseCase";
 import { SaveMonitoringFileResourcesUseCase } from "./domain/reports/file-resources-monitoring/usecases/SaveMonitoringFileResourcesUseCase";
+import { DeleteMonitoringFileResourcesUseCase } from "./domain/reports/file-resources-monitoring/usecases/DeleteMonitoringFileResourcesUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -269,6 +270,7 @@ export function getCompositionRoot(api: D2Api) {
         fileResourcesMonitoring: getExecute({
             get: new GetMonitoringFileResourcesUseCase(monitoringFileResourcesD2Repository),
             save: new SaveMonitoringFileResourcesUseCase(monitoringFileResourcesD2Repository),
+            delete: new DeleteMonitoringFileResourcesUseCase(monitoringFileResourcesD2Repository),
             getColumns: new GetMonitoringFileResourcesColumnsUseCase(monitoringFileResourcesD2Repository),
             saveColumns: new SaveMonitoringFileResourcesColumnsUseCase(monitoringFileResourcesD2Repository),
         }),
