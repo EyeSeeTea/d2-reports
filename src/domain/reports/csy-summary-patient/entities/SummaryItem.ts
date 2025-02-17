@@ -13,3 +13,5 @@ export interface SummaryItem {
     unknown: string;
     total: string;
 }
+
+export type SummaryType = "patientCharacteristics";

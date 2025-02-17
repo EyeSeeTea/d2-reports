@@ -52,7 +52,7 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         const filteredFiles = this.getFilteredFiles(uploads, countries, module);
 
         const rowIds = this.getRowIds(filteredFiles);
-        const { objects, pager } = paginate(filteredFiles, sorting, paging);
+        const { objects, pager } = paginate(filteredFiles, paging, sorting);
 
         return { objects: objects, pager: pager, rowIds: rowIds };
     }
@@ -65,7 +65,7 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
             .map(atc => atc.year)
             .uniq()
             .value();
-        const { objects, pager } = paginate(atcs, sorting, paging);
+        const { objects, pager } = paginate(atcs, paging, sorting);
 
         return { objects: objects, pager: pager, uploadedYears: uploadedYears };
     }
