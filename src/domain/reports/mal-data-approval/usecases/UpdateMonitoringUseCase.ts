@@ -1,11 +1,9 @@
-import _ from "lodash";
 import { UseCase } from "../../../../compositionRoot";
-import { MalDataApprovalItemIdentifier, MalDataSet } from "../entities/MalDataApprovalItem";
+import { MalDataApprovalItemIdentifier } from "../entities/MalDataApprovalItem";
 import { UserGroupRepository } from "../repositories/UserGroupRepository";
-import { CountryCodeRepository } from "../repositories/CountryCodeRepository";
-import { CountryCode } from "../entities/CountryCode";
 import { MonitoringValueRepository } from "../repositories/MonitoringValueRepository";
-import { Monitoring, MonitoringValue } from "../entities/MonitoringValue";
+import { MonitoringValue } from "../entities/MonitoringValue";
+import { MalDataSet } from "../../../../data/reports/mal-data-approval/constants/MalDataApprovalConstants";
 
 type UpdateMonitoringUseCaseOptions = {
     namespace: string;
@@ -18,7 +16,6 @@ type UpdateMonitoringUseCaseOptions = {
 export class UpdateMonitoringUseCase implements UseCase {
     constructor(
         private monitoringValueRepository: MonitoringValueRepository,
-        private countryCodeRepository: CountryCodeRepository,
         private userGroupRepository: UserGroupRepository
     ) {}
 
@@ -28,17 +25,15 @@ export class UpdateMonitoringUseCase implements UseCase {
         const dataNotificationsUserGroup = await this.userGroupRepository.getUserGroupByCode(
             malDataNotificationsUserGroup
         );
-        const countryCodes = await this.countryCodeRepository.getCountryCodes();
-        const monitoring = buildMonitoringValue(
+        const updatedMonitoringValue = buildMonitoringValue(
             monitoringValue,
             dataApprovalItems,
             dataSetName,
-            countryCodes,
             dataNotificationsUserGroup.id,
             enableMonitoring
         );
 
-        return this.monitoringValueRepository.save(namespace, monitoring);
+        return this.monitoringValueRepository.save(namespace, updatedMonitoringValue);
     }
 }
 
@@ -46,57 +41,48 @@ function buildMonitoringValue(
     monitoringValue: MonitoringValue,
     dataApprovalItems: MalDataApprovalItemIdentifier[],
     dataSetName: MalDataSet,
-    countryCodes: CountryCode[],
     dataNotificationsUserGroup: string,
     enableMonitoring: boolean
 ): MonitoringValue {
-    const addedMonitoringValues = dataApprovalItems.map(item => {
-        return {
-            orgUnit: item.orgUnit,
-            period: item.period,
-            enable: enableMonitoring,
-        };
-    });
-
-    const initialMonitoring = _.first(monitoringValue["dataSets"]?.[dataSetName])?.monitoring ?? [];
-    const newDataSets = _.merge({}, monitoringValue["dataSets"], {
-        [dataSetName]: [
-            _.omit(
-                {
-                    monitoring: combineMonitoringValues(initialMonitoring, addedMonitoringValues).map(monitoring => {
-                        return {
-                            ...monitoring,
-                            orgUnit:
-                                monitoring.orgUnit.length > 3
-                                    ? countryCodes.find(countryCode => countryCode.id === monitoring.orgUnit)?.code
-                                    : monitoring.orgUnit,
-                        };
-                    }),
-                    userGroups: [dataNotificationsUserGroup],
-                },
-                "userGroup"
-            ),
-        ],
-    });
-
-    return {
+    const updatedMonitoringValue: MonitoringValue = {
         ...monitoringValue,
-        dataSets: newDataSets,
+        dataSets: {
+            ...monitoringValue.dataSets,
+            [dataSetName]: monitoringValue.dataSets[dataSetName].map(dataSet => {
+                return dataApprovalItems.map(dataApprovalItem => {
+                    const matchingMonitoringItem = dataSet.monitoring.find(
+                        monitoringItem =>
+                            monitoringItem.orgUnit === dataApprovalItem.orgUnitCode &&
+                            monitoringItem.period === dataApprovalItem.period
+                    );
+
+                    return {
+                        ...dataSet,
+                        monitoring: !matchingMonitoringItem
+                            ? [
+                                  ...dataSet.monitoring,
+                                  {
+                                      orgUnit: dataApprovalItem.orgUnitCode,
+                                      period: dataApprovalItem.period,
+                                      enable: enableMonitoring,
+                                  },
+                              ]
+                            : [
+                                  ...dataSet.monitoring.filter(
+                                      monitoringItem =>
+                                          monitoringItem.orgUnit !== dataApprovalItem.orgUnitCode &&
+                                          monitoringItem.period !== dataApprovalItem.period
+                                  ),
+                                  { ...matchingMonitoringItem, enable: enableMonitoring },
+                              ],
+                        userGroups: [dataNotificationsUserGroup],
+                    };
+                });
+            }),
+        },
     };
-}
 
-function combineMonitoringValues(
-    initialMonitoringValues: Monitoring[],
-    addedMonitoringValues: Monitoring[]
-): Monitoring[] {
-    const combinedMonitoringValues = addedMonitoringValues.map(added => {
-        return initialMonitoringValues.filter(
-            initial => initial.orgUnit !== added.orgUnit || initial.period !== added.period
-        );
-    });
-    const combinedMonitoring = _.union(_.intersection(...combinedMonitoringValues), addedMonitoringValues);
-
-    return _.union(combinedMonitoring);
+    return updatedMonitoringValue;
 }
 
 const malDataNotificationsUserGroup = "MAL_Data_Notifications";
