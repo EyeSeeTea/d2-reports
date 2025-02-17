@@ -1,12 +1,11 @@
 import _ from "lodash";
 import { MalDataApprovalItem, MalDataSet } from "./MalDataApprovalItem";
 
-export interface Monitoring {
+type Monitoring = {
     orgUnit: string;
     period: string;
-    monitoring?: boolean;
-    enable?: boolean;
-}
+    enable: boolean;
+};
 
 export type MonitoringValue = Record<
     "dataSets",

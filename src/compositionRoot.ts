@@ -166,11 +166,7 @@ export function getCompositionRoot(api: D2Api) {
             getColumns: new GetMalDataApprovalColumnsUseCase(dataDuplicationRepository),
             saveColumns: new SaveMalDataApprovalColumnsUseCase(dataDuplicationRepository),
             getMonitoring: new GetMonitoringUseCase(monitoringValueRepository),
-            updateMonitoring: new UpdateMonitoringUseCase(
-                monitoringValueRepository,
-                countryCodeRepository,
-                userGroupRepository
-            ),
+            updateMonitoring: new UpdateMonitoringUseCase(monitoringValueRepository, userGroupRepository),
             updateStatus: new UpdateMalApprovalStatusUseCase(dataDuplicationRepository),
             duplicateValue: new DuplicateDataValuesUseCase(dataDuplicationRepository),
             getSortOrder: new GetSortOrderUseCase(dataDuplicationRepository),

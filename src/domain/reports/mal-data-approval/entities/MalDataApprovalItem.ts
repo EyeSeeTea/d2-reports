@@ -21,7 +21,7 @@ export interface MalDataApprovalItem {
 export interface MalDataApprovalItemIdentifier {
     dataSet: string;
     orgUnit: string;
-    orgUnitCode: string | undefined;
+    orgUnitCode: string;
     period: string;
     workflow: string | undefined;
 }
