@@ -178,7 +178,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
     const getRows = useCallback(
         async (_search: string, paging: TablePagination, sorting: TableSorting<DataApprovalViewModel>) => {
-            const { pager, objects } = await compositionRoot.malDataApproval.get({
+            const { pager, objects } = await compositionRoot.malDataApproval.get(Namespaces.MONITORING, {
                 config: config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
                 sorting: getSortingFromTableSorting(sorting),

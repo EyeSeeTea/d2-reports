@@ -1,5 +1,4 @@
 import { UseCase } from "../../../../compositionRoot";
-import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
 import { promiseMap } from "../../../../utils/promises";
 import { PaginatedObjects } from "../../../common/entities/PaginatedObjects";
 import { DataSetRepository } from "../../../common/repositories/DataSetRepository";
@@ -22,10 +21,13 @@ export class GetMalDataSetsUseCase implements UseCase {
         private monitoringValueRepository: MonitoringValueRepository
     ) {}
 
-    async execute(options: DataSetsOptions): Promise<PaginatedObjects<MalDataApprovalItem>> {
+    async execute(
+        monitoringNamespace: string,
+        options: DataSetsOptions
+    ): Promise<PaginatedObjects<MalDataApprovalItem>> {
         const countryCodes = await this.countryCodeRepository.getCountryCodes();
         const result = await this.malDataRepository.get(options, countryCodes);
-        const monitoringValue = await this.monitoringValueRepository.get(Namespaces.MONITORING);
+        const monitoringValue = await this.monitoringValueRepository.get(monitoringNamespace);
 
         const response = await promiseMap(result.objects, async item => {
             const dataElementsWithValues = await new WmrDiffReport(
