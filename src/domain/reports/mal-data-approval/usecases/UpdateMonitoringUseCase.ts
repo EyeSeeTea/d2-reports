@@ -72,9 +72,12 @@ function buildMonitoringValue(
         }));
 
         const mergedMonitoringData = [...initialMonitoring, ...addedMonitoring].reduce<Record<string, Monitoring>>(
-            (acc, entry) => ({
+            (acc, monitoringItem) => ({
                 ...acc,
-                [`${entry.orgUnit}-${entry.period}`]: { ...acc[`${entry.orgUnit}-${entry.period}`], ...entry },
+                [`${monitoringItem.orgUnit}-${monitoringItem.period}`]: {
+                    ...acc[`${monitoringItem.orgUnit}-${monitoringItem.period}`],
+                    ...monitoringItem,
+                },
             }),
             {}
         );

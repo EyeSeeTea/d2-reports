@@ -18,7 +18,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { sortByName } from "../../../../domain/common/entities/Base";
 import { Config } from "../../../../domain/common/entities/Config";
 import { getOrgUnitIdsFromPaths } from "../../../../domain/common/entities/OrgUnit";
-import { emptyPage, Sorting } from "../../../../domain/common/entities/PaginatedObjects";
+import { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import { MalDataApprovalItem } from "../../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
@@ -32,7 +32,6 @@ import { emptyApprovalFilter } from "./hooks/useDataApprovalFilters";
 import { useDataApprovalListColumns } from "./hooks/useDataApprovalListColumns";
 import { useActiveDataApprovalActions } from "./hooks/useActiveDataApprovalActions";
 import { useDataApprovalActions } from "./hooks/useDataApprovalActions";
-import { useDataApprovalMonitoring } from "./hooks/useDataApprovalMonitoring";
 import { useSelectablePeriods } from "./hooks/useSelectablePeriods";
 
 export const DataApprovalList: React.FC = React.memo(() => {
@@ -53,7 +52,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
         selectedIds,
     } = useDataApprovalActions();
     const { columns } = useDataApprovalListColumns();
-    const { monitoringValue } = useDataApprovalMonitoring();
     const selectablePeriods = useSelectablePeriods(oldPeriods);
 
     useEffect(() => {
@@ -180,8 +178,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
     const getRows = useCallback(
         async (_search: string, paging: TablePagination, sorting: TableSorting<DataApprovalViewModel>) => {
-            if (!monitoringValue) return emptyPage;
-
             const { pager, objects } = await compositionRoot.malDataApproval.get({
                 config: config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
@@ -191,9 +187,9 @@ export const DataApprovalList: React.FC = React.memo(() => {
             });
 
             console.debug("Reloading", reloadKey);
-            return { pager, objects: getDataApprovalViews(config, objects, monitoringValue) };
+            return { pager, objects: getDataApprovalViews(objects) };
         },
-        [compositionRoot.malDataApproval, config, oldPeriods, filters, selectablePeriods, reloadKey, monitoringValue]
+        [compositionRoot.malDataApproval, config, oldPeriods, filters, selectablePeriods, reloadKey]
     );
 
     const saveReorderedColumns = useCallback(

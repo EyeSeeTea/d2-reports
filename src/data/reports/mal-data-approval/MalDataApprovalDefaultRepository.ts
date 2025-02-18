@@ -782,7 +782,7 @@ function mergeHeadersAndData(
 
             const row: MalDataApprovalItem = {
                 dataSetUid: header.datasetuid,
-                dataSet: header.dataset,
+                dataSet: header.dataset as MalDataSet,
                 orgUnitUid: header.orgunituid,
                 orgUnit: header.orgunit,
                 orgUnitCode: countryCodes.find(countryCode => header.orgunituid === countryCode.id)?.code ?? "",
@@ -796,6 +796,7 @@ function mergeHeadersAndData(
                 lastDateOfSubmission: datavalue?.lastdateofsubmission,
                 lastDateOfApproval: datavalue?.lastdateofapproval,
                 modificationCount: datavalue?.diff,
+                monitoring: Boolean(datavalue?.monitoring),
             };
             rows.push(row);
         }

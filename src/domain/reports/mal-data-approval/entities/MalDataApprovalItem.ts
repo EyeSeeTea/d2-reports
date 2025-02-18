@@ -1,6 +1,6 @@
 export interface MalDataApprovalItem {
     dataSetUid: string;
-    dataSet: string;
+    dataSet: MalDataSet;
     orgUnitUid: string;
     orgUnit: string;
     orgUnitCode: string;
@@ -15,7 +15,7 @@ export interface MalDataApprovalItem {
     lastDateOfSubmission: string | undefined;
     lastDateOfApproval: string | undefined;
     modificationCount: string | undefined;
-    monitoring?: boolean | undefined;
+    monitoring: boolean;
 }
 
 export interface MalDataApprovalItemIdentifier {

@@ -159,7 +159,8 @@ export function getCompositionRoot(api: D2Api) {
                 dataDuplicationRepository,
                 dataValuesRepository,
                 dataSetRepository,
-                countryCodeRepository
+                countryCodeRepository,
+                monitoringValueRepository
             ),
             getDiff: new GetMalDataDiffUseCase(dataValuesRepository, dataSetRepository),
             save: new SaveMalDataSetsUseCase(dataDuplicationRepository),

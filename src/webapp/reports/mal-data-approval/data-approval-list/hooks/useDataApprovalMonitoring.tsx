@@ -36,7 +36,6 @@ export function useDataApprovalMonitoring() {
     );
 
     return {
-        monitoringValue: monitoringValue,
         saveMonitoring: saveMonitoring,
     };
 }

@@ -13,11 +13,11 @@ export type MonitoringValue = Record<
 >;
 
 export function getDataDuplicationItemMonitoringValue(
-    dataSet: MalDataApprovalItem,
-    dataSetName: MalDataSet,
+    dataApprovalItem: MalDataApprovalItem,
     monitoring: MonitoringValue
 ): boolean {
-    const monitoringArray = _.first(monitoring["dataSets"]?.[dataSetName])?.monitoring;
+    const monitoringArray = _.first(monitoring["dataSets"]?.[dataApprovalItem.dataSet])?.monitoring;
 
-    return !!_.find(monitoringArray, { orgUnit: dataSet.orgUnitCode, period: dataSet.period })?.enable;
+    return !!_.find(monitoringArray, { orgUnit: dataApprovalItem.orgUnitCode, period: dataApprovalItem.period })
+        ?.enable;
 }
