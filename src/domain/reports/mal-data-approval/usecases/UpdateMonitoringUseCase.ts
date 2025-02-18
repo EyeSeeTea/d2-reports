@@ -2,7 +2,8 @@ import { UseCase } from "../../../../compositionRoot";
 import { MalDataApprovalItemIdentifier, MalDataSet } from "../entities/MalDataApprovalItem";
 import { UserGroupRepository } from "../repositories/UserGroupRepository";
 import { MonitoringValueRepository } from "../repositories/MonitoringValueRepository";
-import { MonitoringValue } from "../entities/MonitoringValue";
+import { Monitoring, MonitoringValue } from "../entities/MonitoringValue";
+import _ from "lodash";
 
 type UpdateMonitoringUseCaseOptions = {
     namespace: string;
@@ -43,45 +44,54 @@ function buildMonitoringValue(
     dataNotificationsUserGroup: string,
     enableMonitoring: boolean
 ): MonitoringValue {
-    const updatedMonitoringValue: MonitoringValue = {
-        ...monitoringValue,
-        dataSets: {
-            ...monitoringValue.dataSets,
-            [dataSetName]: monitoringValue.dataSets[dataSetName].map(dataSet => {
-                return dataApprovalItems.map(dataApprovalItem => {
-                    const matchingMonitoringItem = dataSet.monitoring.find(
-                        monitoringItem =>
-                            monitoringItem.orgUnit === dataApprovalItem.orgUnitCode &&
-                            monitoringItem.period === dataApprovalItem.period
-                    );
+    const initialDatasetMonitoring = _.first(monitoringValue.dataSets[dataSetName]);
 
-                    return {
-                        ...dataSet,
-                        monitoring: !matchingMonitoringItem
-                            ? [
-                                  ...dataSet.monitoring,
-                                  {
-                                      orgUnit: dataApprovalItem.orgUnitCode,
-                                      period: dataApprovalItem.period,
-                                      enable: enableMonitoring,
-                                  },
-                              ]
-                            : [
-                                  ...dataSet.monitoring.filter(
-                                      monitoringItem =>
-                                          monitoringItem.orgUnit !== dataApprovalItem.orgUnitCode &&
-                                          monitoringItem.period !== dataApprovalItem.period
-                                  ),
-                                  { ...matchingMonitoringItem, enable: enableMonitoring },
-                              ],
+    if (!initialDatasetMonitoring) {
+        return {
+            ...monitoringValue,
+            dataSets: {
+                ...monitoringValue.dataSets,
+                [dataSetName]: [
+                    {
+                        monitoring: dataApprovalItems.map(dataApprovalItem => ({
+                            orgUnit: dataApprovalItem.orgUnitCode,
+                            period: dataApprovalItem.period,
+                            enable: enableMonitoring,
+                        })),
                         userGroups: [dataNotificationsUserGroup],
-                    };
-                });
-            }),
-        },
-    };
+                    },
+                ],
+            },
+        };
+    } else {
+        const initialMonitoring = initialDatasetMonitoring.monitoring;
+        const addedMonitoring = dataApprovalItems.map(dataApprovalItem => ({
+            enable: enableMonitoring,
+            period: dataApprovalItem.period,
+            orgUnit: dataApprovalItem.orgUnitCode,
+        }));
 
-    return updatedMonitoringValue;
+        const mergedMonitoringData = [...initialMonitoring, ...addedMonitoring].reduce<Record<string, Monitoring>>(
+            (acc, entry) => ({
+                ...acc,
+                [`${entry.orgUnit}-${entry.period}`]: { ...acc[`${entry.orgUnit}-${entry.period}`], ...entry },
+            }),
+            {}
+        );
+
+        return {
+            ...monitoringValue,
+            dataSets: {
+                ...monitoringValue.dataSets,
+                [dataSetName]: [
+                    {
+                        monitoring: Object.values(mergedMonitoringData),
+                        userGroups: [dataNotificationsUserGroup],
+                    },
+                ],
+            },
+        };
+    }
 }
 
 const malDataNotificationsUserGroup = "MAL_Data_Notifications";

@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { MalDataApprovalItem, MalDataSet } from "./MalDataApprovalItem";
 
-type Monitoring = {
+export type Monitoring = {
     orgUnit: string;
     period: string;
     enable: boolean;
