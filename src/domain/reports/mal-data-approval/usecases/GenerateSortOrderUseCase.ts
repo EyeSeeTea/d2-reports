@@ -4,7 +4,7 @@ import { MalDataApprovalRepository } from "../repositories/MalDataApprovalReposi
 export class GenerateSortOrderUseCase implements UseCase {
     constructor(private approvalRepository: MalDataApprovalRepository) {}
 
-    execute(): Promise<void> {
-        return this.approvalRepository.generateSortOrder();
+    execute(dataSetId: string): Promise<void> {
+        return this.approvalRepository.generateSortOrder(dataSetId);
     }
 }
