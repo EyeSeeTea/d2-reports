@@ -1,3 +1,4 @@
+import _ from "lodash";
 import React from "react";
 import { Typography, makeStyles } from "@material-ui/core";
 import {
@@ -10,13 +11,18 @@ import {
     useSnackbar,
 } from "@eyeseetea/d2-ui-components";
 import DoneAllIcon from "@material-ui/icons/DoneAll";
+
 import i18n from "../../../locales";
 import { useAppContext } from "../../contexts/app-context";
 import { getOrgUnitIdsFromPaths, getRootIds, OrgUnit } from "../../../domain/common/entities/OrgUnit";
 import { CategoryOptionCombo, DataElement } from "../../../domain/common/entities/DataSet";
-import { countryLevel } from "../common/nhwa-settings";
 import { useReload } from "../../utils/use-reload";
 import { Filters } from "../common/Filters";
+import { Stats } from "../../../domain/common/entities/Stats";
+import { AlertStatsErrors } from "../../components/alert-stats-errors/AlertStatsErrors";
+import { useSettings } from "../../hooks/UseAutocompleteCompute";
+
+export type NHWAAutoCompleteComputeProps = { countryLevel: string; settingsKey: string; title: string };
 
 export type AutoCompleteComputeViewModelWithPaging = {
     page: number;
@@ -37,7 +43,8 @@ export type AutoCompleteComputeViewModel = {
     currentValue: string | undefined;
 };
 
-export const NHWAAutoCompleteCompute: React.FC = () => {
+export const NHWAAutoCompleteCompute: React.FC<NHWAAutoCompleteComputeProps> = props => {
+    const { countryLevel, settingsKey, title } = props;
     const { compositionRoot, api, config } = useAppContext();
     const loading = useLoading();
     const snackbar = useSnackbar();
@@ -45,17 +52,20 @@ export const NHWAAutoCompleteCompute: React.FC = () => {
     const [selectedPeriods, setSelectedPeriods] = React.useState<string[]>([]);
     const [selectedOrgUnits, setSelectedOrgUnits] = React.useState<string[]>([]);
     const [orgUnits, setOrgUnits] = React.useState<OrgUnit[]>([]);
+    const [errors, setErrors] = React.useState<Stats["errorMessages"]>();
     const classes = useStyles();
+
+    const { settings } = useSettings({ settingKey: settingsKey });
 
     const rootIds = React.useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
 
     React.useEffect(() => {
         async function loadOrgUnits() {
-            const orgUnits = await compositionRoot.orgUnits.getByLevel(String(countryLevel));
+            const orgUnits = await compositionRoot.orgUnits.getByLevel(countryLevel);
             setOrgUnits(orgUnits);
         }
         loadOrgUnits();
-    }, [compositionRoot.orgUnits]);
+    }, [compositionRoot.orgUnits, countryLevel]);
 
     const baseConfig: TableConfig<AutoCompleteComputeViewModel> = React.useMemo(
         () => ({
@@ -87,7 +97,6 @@ export const NHWAAutoCompleteCompute: React.FC = () => {
                     getValue: row => row.currentValue || "Empty",
                 },
             ],
-
             actions: [],
             initialSorting: {
                 field: "dataElement" as const,
@@ -103,9 +112,10 @@ export const NHWAAutoCompleteCompute: React.FC = () => {
                     icon: <DoneAllIcon />,
                     text: i18n.t("Fix all incorrect values"),
                     onClick: async ids => {
-                        if (ids.length === 0) return;
+                        if (ids.length === 0 || !settings) return;
                         loading.show(true, i18n.t("Updating values..."));
                         const results = await compositionRoot.nhwa.getAutoCompleteComputeValues.execute({
+                            settings: settings,
                             cacheKey: reloadKey,
                             page: 1,
                             pageSize: 1e6,
@@ -120,11 +130,15 @@ export const NHWAAutoCompleteCompute: React.FC = () => {
                         compositionRoot.nhwa.fixAutoCompleteComputeValues
                             .execute(results.rows)
                             .then(stats => {
+                                loading.hide();
                                 reload();
-                                snackbar.openSnackbar("success", JSON.stringify(stats, null, 4), {
+                                const statsWithoutErrorMessages = _(stats).omit("errorMessages").value();
+                                snackbar.openSnackbar("success", JSON.stringify(statsWithoutErrorMessages, null, 4), {
                                     autoHideDuration: 20 * 10000,
                                 });
-                                loading.hide();
+                                if (stats.errorMessages.length > 0) {
+                                    setErrors(stats.errorMessages);
+                                }
                             })
                             .catch(err => {
                                 snackbar.error(err);
@@ -134,13 +148,15 @@ export const NHWAAutoCompleteCompute: React.FC = () => {
                 },
             ],
         }),
-        [compositionRoot, loading, snackbar, reload, reloadKey, selectedOrgUnits, selectedPeriods]
+        [compositionRoot, loading, snackbar, reload, reloadKey, selectedOrgUnits, selectedPeriods, settings]
     );
 
     const getRows = React.useMemo(
         () => async (_search: string, paging: TablePagination, sorting: TableSorting<AutoCompleteComputeViewModel>) => {
+            if (!settings) return { objects: [], pager: { page: 0, pageCount: 0, pageSize: 10, rows: [], total: 0 } };
             loading.show(true, i18n.t("Loading..."));
             const results = await compositionRoot.nhwa.getAutoCompleteComputeValues.execute({
+                settings: settings,
                 cacheKey: reloadKey,
                 page: paging.page,
                 pageSize: paging.pageSize,
@@ -154,7 +170,7 @@ export const NHWAAutoCompleteCompute: React.FC = () => {
             loading.hide();
             return { pager: { ...results }, objects: results.rows };
         },
-        [compositionRoot, reloadKey, selectedOrgUnits, selectedPeriods, loading]
+        [compositionRoot, reloadKey, selectedOrgUnits, selectedPeriods, loading, settings]
     );
 
     const tableProps = useObjectsTable(baseConfig, getRows);
@@ -162,8 +178,10 @@ export const NHWAAutoCompleteCompute: React.FC = () => {
     return (
         <div className={classes.wrapper}>
             <Typography variant="h5" gutterBottom>
-                {i18n.t("Module 1 totals with missing sum or sum that does not match the auto-calculated")}
+                {title}
             </Typography>
+
+            <AlertStatsErrors errors={errors} onCleanError={() => setErrors(undefined)} orgUnits={orgUnits} />
 
             <ObjectsList<AutoCompleteComputeViewModel> {...tableProps} onChangeSearch={undefined}>
                 <Filters
@@ -186,6 +204,4 @@ export const NHWAAutoCompleteCompute: React.FC = () => {
     );
 };
 
-const useStyles = makeStyles({
-    wrapper: { padding: 20 },
-});
+const useStyles = makeStyles({ wrapper: { padding: 20 } });

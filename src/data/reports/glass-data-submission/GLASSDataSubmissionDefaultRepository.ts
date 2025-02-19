@@ -9,13 +9,14 @@ import {
     EARSubmissionItemIdentifier,
     getUserModules,
     Status,
+    Module,
 } from "../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 import {
     EARDataSubmissionOptions,
     GLASSDataSubmissionOptions,
     GLASSDataSubmissionRepository,
 } from "../../../domain/reports/glass-data-submission/repositories/GLASSDataSubmissionRepository";
-import { D2Api, Pager } from "../../../types/d2-api";
+import { D2Api, SelectedPick } from "../../../types/d2-api";
 import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
 import { StorageClient } from "../../common/clients/storage/StorageClient";
 import { Instance } from "../../common/entities/Instance";
@@ -27,8 +28,14 @@ import {
 } from "../../../webapp/reports/glass-data-submission/glass-data-submission-list/Filters";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 import { Config } from "../../../domain/common/entities/Config";
-import { Event } from "@eyeseetea/d2-api/api/events";
 import { generateUid } from "../../../utils/uid";
+import { OrgUnitWithChildren } from "../../../domain/reports/glass-data-submission/entities/OrgUnit";
+import { D2TrackerEventSchema, TrackerEventsResponse } from "@eyeseetea/d2-api/api/trackerEvents";
+import {
+    D2TrackedEntityInstanceToPost,
+    D2TrackerTrackedEntitySchema,
+    TrackedEntitiesGetResponse,
+} from "@eyeseetea/d2-api/api/trackerTrackedEntities";
 
 interface CompleteDataSetRegistrationsResponse {
     completeDataSetRegistrations: Registration[] | undefined;
@@ -72,25 +79,6 @@ type DataValueSetsType = {
     dataValues: DataValueType[];
 };
 
-type Attribute = {
-    value: string;
-};
-
-type TrackedEntityInstance = {
-    attributes: Attribute[];
-    orgUnit: string;
-    enrollments: {
-        attributes: Attribute[];
-        events: {
-            program: string;
-            programStage: string;
-        }[];
-    }[];
-    programOwners: {
-        program: string;
-    }[];
-};
-
 export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmissionRepository {
     private storageClient: StorageClient;
     private globalStorageClient: StorageClient;
@@ -105,16 +93,16 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         options: GLASSDataSubmissionOptions,
         namespace: string
     ): Promise<PaginatedObjects<GLASSDataSubmissionItem>> {
-        const { paging, sorting, module } = options;
-        if (!module) return emptyPage;
+        const { paging, sorting, module: selectedModule, periods } = options;
+        if (!selectedModule) return emptyPage;
 
         const modules = await this.getModules();
         const objects = await this.getDataSubmissionObjects(namespace);
         const uploads = await this.getUploads();
 
-        const dataSubmissions = await this.getDataSubmissions(objects, modules, uploads);
+        const dataSubmissions = await this.getDataSubmissions(objects, modules, uploads, selectedModule, periods);
         const filteredRows = this.getFilteredRows(dataSubmissions, options);
-        const { pager, objects: rowsInPage } = paginate(filteredRows, sorting, paging);
+        const { pager, objects: rowsInPage } = paginate(filteredRows, paging, sorting);
 
         return {
             pager,
@@ -137,16 +125,25 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
     private async getDataSubmissions(
         objects: GLASSDataSubmissionItem[],
         modules: GLASSDataSubmissionModule[],
-        uploads: GLASSDataSubmissionItemUpload[]
+        uploads: GLASSDataSubmissionItemUpload[],
+        selectedModule: Module,
+        periods: string[]
     ): Promise<GLASSDataSubmissionItem[]> {
         const enrolledCountries = await this.getEnrolledCountries();
         const amrFocalPointProgramId = await this.getAMRFocalPointProgramId();
         const dataSubmissionItems = await this.getDataSubmissionIdentifiers(
             amrFocalPointProgramId,
             enrolledCountries.join(";"),
-            modules
+            modules,
+            periods
         );
-        const registrations = await this.getRegistrations(dataSubmissionItems);
+
+        const moduleQuestionnaires =
+            modules
+                .find(module => module.id === selectedModule)
+                ?.questionnaires.map(questionnaire => questionnaire.id) ?? [];
+
+        const registrations = await this.getRegistrations(dataSubmissionItems, moduleQuestionnaires);
 
         const dataSubmissions: GLASSDataSubmissionItem[] = dataSubmissionItems.map(dataSubmissionItem => {
             const dataSubmission = objects.find(
@@ -245,11 +242,11 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
     private async getDataSubmissionIdentifiers(
         program: string,
         orgUnit: string,
-        modules: GLASSDataSubmissionModule[]
+        modules: GLASSDataSubmissionModule[],
+        dataSubmissionPeriods: string[]
     ): Promise<GLASSDataSubmissionItemIdentifier[]> {
-        const instances = await this.getTrackedEntityInstances(program, orgUnit);
+        const instances = await this.getAllTrackedEntities(program, orgUnit);
 
-        const dataSubmissionPeriods = getDataSubmissionPeriods();
         const orgUnitModules: { orgUnit: string; module: string }[] = _(instances)
             .map(instance => {
                 const module = instance.attributes.map(attribute => attribute.value)[0] ?? "";
@@ -265,7 +262,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         return orgUnitModules.flatMap(orgUnitModule => {
             return dataSubmissionPeriods.map(dataSubmissionPeriod => ({
                 ...orgUnitModule,
-                period: dataSubmissionPeriod.toString(),
+                period: dataSubmissionPeriod,
                 module: modules.find(module => module.name === orgUnitModule.module)?.id ?? "",
             }));
         });
@@ -384,32 +381,23 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                 return { ...row, submissionStatus };
             });
 
-        const rowsInPage = _(filteredRows)
-            .orderBy([row => row[sorting.field]], [sorting.direction])
-            .drop((paging.page - 1) * paging.pageSize)
-            .take(paging.pageSize)
-            .value();
-
-        const pager: Pager = {
-            page: paging.page,
-            pageSize: paging.pageSize,
-            pageCount: Math.ceil(filteredRows.length / paging.pageSize),
-            total: filteredRows.length,
-        };
-
-        return {
-            pager,
-            objects: rowsInPage,
-        };
+        return paginate(filteredRows, paging, sorting);
     }
 
     private async getRegistrations(
-        items: GLASSDataSubmissionItemIdentifier[]
+        items: GLASSDataSubmissionItemIdentifier[],
+        moduleQuestionnaires: Id[]
     ): Promise<Record<RegistrationKey, RegistrationItemBase>> {
         const orgUnitIds = _.uniq(items.map(obj => obj.orgUnit));
         const periods = _.uniq(items.map(obj => obj.period));
         const orgUnitsById = await this.getOrgUnits(orgUnitIds);
-        const apiRegistrations = await this.getApiRegistrations({ orgUnitIds, periods });
+        const apiRegistrations = !_(moduleQuestionnaires).compact().isEmpty()
+            ? await this.getApiRegistrations({
+                  orgUnitIds,
+                  periods,
+                  moduleQuestionnaires,
+              })
+            : [];
 
         const registrationsByOrgUnitPeriod = _.keyBy(apiRegistrations, apiReg =>
             getRegistrationKey({ orgUnitId: apiReg.organisationUnit, period: apiReg.period })
@@ -432,13 +420,19 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             .value();
     }
 
-    private async getApiRegistrations(options: { orgUnitIds: Id[]; periods: string[] }): Promise<Registration[]> {
-        const responses = _.chunk(options.orgUnitIds, 300).map(orgUnitIdsGroups =>
-            this.api.get<CompleteDataSetRegistrationsResponse>("/completeDataSetRegistrations", {
-                dataSet: "OYc0CihXiSn",
-                orgUnit: orgUnitIdsGroups,
-                period: options.periods,
-            })
+    private async getApiRegistrations(options: {
+        orgUnitIds: Id[];
+        periods: string[];
+        moduleQuestionnaires: Id[];
+    }): Promise<Registration[]> {
+        const responses = options.moduleQuestionnaires.flatMap(dataSet =>
+            _.chunk(options.orgUnitIds, 300).map(orgUnitIdsGroups =>
+                this.api.get<CompleteDataSetRegistrationsResponse>("/completeDataSetRegistrations", {
+                    dataSet: dataSet,
+                    orgUnit: orgUnitIdsGroups,
+                    period: options.periods,
+                })
+            )
         );
 
         return _(await promiseMap(responses, response => response.getData()))
@@ -665,9 +659,14 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             .getData();
     }
 
-    private async getProgramEvents(program: string, orgUnit: string, isEGASPModule: boolean): Promise<Event[]> {
-        const { events } = await this.api.events // to do: use new tracker api
+    private async getTrackerProgramEvents(
+        program: string,
+        orgUnit: string,
+        isEGASPModule: boolean
+    ): Promise<D2TrackerEvent[]> {
+        const response: TrackerEventsResponse<typeof eventFields> = await this.api.tracker.events
             .get({
+                fields: eventFields,
                 program: program,
                 orgUnit: orgUnit,
                 ouMode: isEGASPModule ? "DESCENDANTS" : "SELECTED",
@@ -675,7 +674,112 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             })
             .getData();
 
-        return events;
+        return response.instances;
+    }
+
+    private async createTrackerProgramEventsByChunks(eventsToPost: D2TrackerEvent[]): Promise<void> {
+        await promiseMap(_.chunk(eventsToPost, 100), async eventsGroup => {
+            return await this.api.tracker
+                .post({ importStrategy: "CREATE" }, { events: _.reject(eventsGroup, _.isEmpty) })
+                .getData();
+        });
+    }
+
+    private async importTrackedEntitiesByStrategy(
+        trackedEntities: D2TrackedEntityInstanceToPost[],
+        importStrategy: "CREATE" | "UPDATE" | "CREATE_AND_UPDATE" | "DELETE",
+        async?: boolean
+    ): Promise<void> {
+        if (async) {
+            await this.api.tracker
+                .postAsync({ importStrategy: importStrategy }, { trackedEntities: trackedEntities })
+                .getData();
+        } else {
+            await this.api.tracker
+                .post({ importStrategy: importStrategy }, { trackedEntities: trackedEntities })
+                .getData();
+        }
+    }
+
+    private async importEventsByStrategy(
+        events: D2TrackerEvent[],
+        importStrategy: "CREATE" | "UPDATE" | "CREATE_AND_UPDATE" | "DELETE",
+        async?: boolean
+    ): Promise<void> {
+        if (async) {
+            await this.api.tracker.postAsync({ importStrategy: importStrategy }, { events: events }).getData();
+        } else {
+            await this.api.tracker.post({ importStrategy: importStrategy }, { events: events }).getData();
+        }
+    }
+
+    private getTEIsWithProgramStages(
+        trackedEntityInstances: D2TrackerEntity[],
+        programStages: string[]
+    ): D2TrackerEntity[] {
+        return trackedEntityInstances.filter(trackedEntity => {
+            const teiProgramStage = trackedEntity.enrollments[0]?.events[0]?.programStage ?? "";
+
+            return programStages.includes(teiProgramStage);
+        });
+    }
+
+    private getTrackedEntitiesOfPage(params: {
+        orgUnit: Id;
+        page: number;
+        pageSize: number;
+        program: Id;
+        period?: string;
+        trackedEntity?: string;
+        totalPages?: boolean;
+        enrollmentEnrolledAfter?: string;
+        enrollmentEnrolledBefore?: string;
+    }): Promise<TrackedEntitiesGetResponse<typeof trackedEntitiesFields>> {
+        const { program, orgUnit, enrollmentEnrolledAfter, enrollmentEnrolledBefore, ...restParams } = params;
+
+        return this.api.tracker.trackedEntities
+            .get({
+                fields: trackedEntitiesFields,
+                program: program,
+                orgUnit: orgUnit,
+                enrollmentOccurredAfter: enrollmentEnrolledAfter,
+                enrollmentOccurredBefore: enrollmentEnrolledBefore,
+                ouMode: "SELECTED",
+                ...restParams,
+            })
+            .getData();
+    }
+
+    private async getAllTrackedEntities(program: string, orgUnit: string, period?: string): Promise<D2TrackerEntity[]> {
+        const trackedEntities: D2TrackerEntity[] = [];
+        const enrollmentEnrolledAfter = period ? `${period}-1-1` : undefined;
+        const enrollmentEnrolledBefore = period ? `${period}-12-31` : undefined;
+        const totalPages = true;
+        const pageSize = 200;
+        let currentPage = 1;
+        let response;
+
+        try {
+            do {
+                response = await this.getTrackedEntitiesOfPage({
+                    program: program,
+                    orgUnit: orgUnit,
+                    page: currentPage,
+                    pageSize: pageSize,
+                    totalPages: totalPages,
+                    enrollmentEnrolledBefore,
+                    enrollmentEnrolledAfter,
+                });
+                if (!response.total) {
+                    throw new Error(`Error getting paginated events of program ${program} and organisation ${orgUnit}`);
+                }
+                trackedEntities.push(...response.instances);
+                currentPage++;
+            } while (response.page < Math.ceil((response.total as number) / pageSize));
+            return trackedEntities;
+        } catch {
+            return [];
+        }
     }
 
     private makeDataValuesArray(
@@ -878,24 +982,32 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         items: GLASSDataSubmissionItemIdentifier[]
     ): Promise<void> {
         _.forEach(items, async item => {
+            const allTrackedEntities: D2TrackerEntity[] = await this.getAllTrackedEntities(
+                program.id,
+                item.orgUnit,
+                item.period
+            );
             const trackedEntities = this.getTEIsWithProgramStages(
-                await this.getTrackedEntityInstances(program.id, item.orgUnit, item.period),
+                allTrackedEntities,
                 programStages.map(programStage => programStage.id)
             );
 
             if (!_.isEmpty(trackedEntities)) {
+                const allTrackedEntitiesInApprovedId: D2TrackerEntity[] = await this.getAllTrackedEntities(
+                    program.approvedId,
+                    item.orgUnit,
+                    item.period
+                );
                 const approvedTrackedEntities = this.getTEIsWithProgramStages(
-                    await this.getTrackedEntityInstances(program.approvedId, item.orgUnit, item.period),
+                    allTrackedEntitiesInApprovedId,
                     programStages.map(programStage => programStage.approvedId)
                 );
-                !_.isEmpty(approvedTrackedEntities) &&
-                    this.api.post(
-                        "/tracker",
-                        { importStrategy: "DELETE" },
-                        { trackedEntities: approvedTrackedEntities }
-                    );
 
-                const trackedEntitiesToPost: TrackedEntityInstance[] = trackedEntities.map(trackedEntity => ({
+                if (!_.isEmpty(approvedTrackedEntities)) {
+                    await this.importTrackedEntitiesByStrategy(approvedTrackedEntities, "DELETE");
+                }
+
+                const trackedEntitiesToPost: D2TrackerEntity[] = trackedEntities.map(trackedEntity => ({
                     ...trackedEntity,
                     trackedEntity: "",
                     programOwners: trackedEntity.programOwners.map(programOwner => ({
@@ -923,70 +1035,9 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                     })),
                 }));
 
-                return await this.api
-                    .post(
-                        "/tracker",
-                        { async: true, importStrategy: "CREATE_AND_UPDATE" },
-                        { trackedEntities: trackedEntitiesToPost }
-                    )
-                    .getData();
+                await this.importTrackedEntitiesByStrategy(trackedEntitiesToPost, "CREATE_AND_UPDATE", true);
             }
         });
-    }
-
-    private getTEIsWithProgramStages(
-        trackedEntityInstances: TrackedEntityInstance[],
-        programStages: string[]
-    ): TrackedEntityInstance[] {
-        return trackedEntityInstances.filter(trackedEntity => {
-            const teiProgramStage = trackedEntity.enrollments[0]?.events[0]?.programStage ?? "";
-
-            return programStages.includes(teiProgramStage);
-        });
-    }
-
-    private async getTrackedEntityInstances(
-        program: string,
-        orgUnit: string,
-        period?: string
-    ): Promise<TrackedEntityInstance[]> {
-        const startDate = period && `${period}-01-01`;
-        const endDate = period && `${period}-12-31`;
-
-        let trackedEntities: TrackedEntityInstance[] = [];
-        let currentPage = 1;
-        let response;
-        const pageSize = 200;
-
-        try {
-            do {
-                response = await this.api
-                    .get<{
-                        instances: TrackedEntityInstance[];
-                        total: number;
-                        page: number;
-                    }>("/tracker/trackedEntities", {
-                        program: program,
-                        orgUnit: orgUnit,
-                        enrollmentOccurredAfter: startDate,
-                        enrollmentOccurredBefore: endDate,
-                        pageSize,
-                        page: currentPage,
-                        totalPages: true,
-                        fields: ":all",
-                    })
-                    .getData();
-
-                if (!response.total) {
-                    throw new Error(`Error getting paginated events of program ${program} and organisation ${orgUnit}`);
-                }
-                trackedEntities = trackedEntities.concat(response.instances);
-                currentPage++;
-            } while (response.page < Math.ceil(response.total / pageSize));
-            return trackedEntities;
-        } catch {
-            return [];
-        }
     }
 
     private async getProgramStages(program: string): Promise<NamedRef[]> {
@@ -1016,23 +1067,24 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         isEGASPModule?: boolean
     ): Promise<void> {
         _.forEach(items, async item => {
-            const programEvents = await this.getProgramEvents(program.id, item.orgUnit, isEGASPModule ?? false);
+            const programEvents = await this.getTrackerProgramEvents(program.id, item.orgUnit, isEGASPModule ?? false);
             const events = programEvents.filter(
-                event => String(new Date(event.eventDate).getFullYear()) === item.period
+                event => String(new Date(event.occurredAt).getFullYear()) === item.period
             );
 
             if (!_.isEmpty(events)) {
-                const approvedProgramEvents = await this.getProgramEvents(
+                const approvedProgramEvents = await this.getTrackerProgramEvents(
                     program.approvedId,
                     item.orgUnit,
                     isEGASPModule ?? false
                 );
                 const approvedEvents = approvedProgramEvents.filter(
-                    event => String(new Date(event.eventDate).getFullYear()) === item.period
+                    event => String(new Date(event.occurredAt).getFullYear()) === item.period
                 );
 
-                !_.isEmpty(approvedEvents) &&
-                    this.api.post("/events", { importStrategy: "DELETE" }, { events: approvedEvents }); // to do: use new tracker api
+                if (!_.isEmpty(approvedEvents)) {
+                    await this.importEventsByStrategy(approvedEvents, "DELETE");
+                }
 
                 const approvedProgramStage = (await this.getProgramStages(program.approvedId))[0];
                 const eventsToPost = events.map(event => {
@@ -1044,9 +1096,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
                     };
                 });
 
-                await promiseMap(_.chunk(eventsToPost, 100), async eventsGroup => {
-                    return await this.api.events.post({}, { events: _.reject(eventsGroup, _.isEmpty) }).getData();
-                });
+                await this.createTrackerProgramEventsByChunks(eventsToPost);
             }
         });
     }
@@ -1073,7 +1123,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
             this.sendNotifications("Rejected by WHO", body, [], recipients);
 
-            await this.postDataSetRegistration(items, false);
+            await this.postDataSetRegistration(items, modules, false);
 
             return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
         } else if (signals) {
@@ -1101,7 +1151,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         this.sendNotifications(message, message, [], recipients);
 
-        await this.postDataSetRegistration(items, false);
+        await this.postDataSetRegistration(items, modules, false);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
@@ -1116,33 +1166,76 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         const message = await this.getNotificationText(items, modules, "update request accepted");
         this.sendNotifications(message, message, [], recipients);
 
-        await this.postDataSetRegistration(items, false);
+        await this.postDataSetRegistration(items, modules, false);
 
         return await this.globalStorageClient.saveObject<GLASSDataSubmissionItem[]>(namespace, newSubmissionValues);
     }
 
-    async getGLASSDashboardId(_namespace: string, _items: GLASSDataSubmissionItemIdentifier[]): Promise<string> {
+    async getGLASSDashboardId(): Promise<string> {
         const modules = await this.getModules();
         const glassUnapvdDashboardId = modules.find(module => module.name === "AMR")?.dashboards.validationReport ?? "";
 
         return glassUnapvdDashboardId;
     }
 
-    private async postDataSetRegistration(items: GLASSDataSubmissionItemIdentifier[], completed: boolean) {
-        const dataSetRegistrations = items.map(item => ({
-            dataSet: "OYc0CihXiSn",
-            period: item.period,
-            organisationUnit: item.orgUnit,
-            completed,
-        }));
-
-        await this.api
-            .post<CompleteDataSetRegistrationsResponse>(
-                "/completeDataSetRegistrations",
-                {},
-                { completeDataSetRegistrations: dataSetRegistrations }
-            )
+    async getOrganisationUnitsWithChildren(): Promise<OrgUnitWithChildren[]> {
+        const { organisationUnits } = await this.api.metadata
+            .get({
+                organisationUnits: {
+                    fields: {
+                        id: true,
+                        name: true,
+                        level: true,
+                        path: true,
+                        children: {
+                            id: true,
+                            name: true,
+                            level: true,
+                            path: true,
+                            children: { id: true, name: true, level: true, path: true },
+                        },
+                    },
+                    filter: { level: { eq: "1" } },
+                },
+            })
             .getData();
+
+        const regionalLevelOUs = organisationUnits.flatMap(ou => ou.children);
+        const countryLevelOUs = regionalLevelOUs.flatMap(ou => ou.children);
+        const allOrgUnits = _.union(organisationUnits, regionalLevelOUs, countryLevelOUs);
+
+        return _.orderBy(allOrgUnits, "level", "asc");
+    }
+
+    private async postDataSetRegistration(
+        items: GLASSDataSubmissionItemIdentifier[],
+        modules: GLASSDataSubmissionModule[],
+        completed: boolean
+    ) {
+        const selectedModule = items[0]?.module;
+        const moduleQuestionnaires =
+            modules
+                .find(module => module.id === selectedModule)
+                ?.questionnaires.map(questionnaire => questionnaire.id) ?? [];
+
+        const dataSetRegistrations = items.flatMap(item =>
+            moduleQuestionnaires.map(dataSet => ({
+                dataSet: dataSet,
+                period: item.period,
+                organisationUnit: item.orgUnit,
+                completed,
+            }))
+        );
+
+        if (!_(moduleQuestionnaires).compact().isEmpty()) {
+            await this.api
+                .post<CompleteDataSetRegistrationsResponse>(
+                    "/completeDataSetRegistrations",
+                    {},
+                    { completeDataSetRegistrations: dataSetRegistrations }
+                )
+                .getData();
+        }
     }
 
     private async sendNotifications(subject: string, text: string, userGroups: Ref[], users?: Ref[]): Promise<void> {
@@ -1272,9 +1365,48 @@ type OrgUnitNode = {
     children?: OrgUnitNode[];
 };
 
-function getDataSubmissionPeriods(): number[] {
-    const currentYear = new Date().getFullYear();
-    const dataSubmissionPeriods = _.range(currentYear - 7, currentYear);
+const eventFields = {
+    program: true,
+    programStage: true,
+    event: true,
+    dataValues: true,
+    orgUnit: true,
+    occurredAt: true,
+    status: true,
+} as const;
 
-    return dataSubmissionPeriods;
-}
+type D2TrackerEvent = SelectedPick<D2TrackerEventSchema, typeof eventFields>;
+
+const trackedEntitiesFields = {
+    trackedEntity: true,
+    trackedEntityType: true,
+    orgUnit: true,
+    enrollments: {
+        trackedEntity: true,
+        occurredAt: true,
+        orgUnit: true,
+        program: true,
+        enrollment: true,
+        status: true,
+        enrolledAt: true,
+        events: {
+            orgUnit: true,
+            program: true,
+            programStage: true,
+            event: true,
+            occurredAt: true,
+            dataValues: {
+                dataElement: true,
+                value: true,
+            },
+        },
+    },
+    attributes: {
+        attribute: true,
+        valueType: true,
+        value: true,
+    },
+    programOwners: true,
+} as const;
+
+type D2TrackerEntity = SelectedPick<D2TrackerTrackedEntitySchema, typeof trackedEntitiesFields>;

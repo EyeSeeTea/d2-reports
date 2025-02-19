@@ -2,6 +2,8 @@ import _ from "lodash";
 import { Id, NamedRef } from "../../../common/entities/Base";
 import { User } from "../../../common/entities/User";
 
+export type UpdateAction = "approve" | "reject" | "reopen" | "accept" | "unapvdDashboard";
+
 export type DataSubmissionPeriod = "YEARLY" | "QUARTERLY";
 
 export interface GLASSDataSubmissionItem {

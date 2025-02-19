@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2024-04-05T06:42:58.086Z\n"
-"PO-Revision-Date: 2024-04-05T06:42:58.086Z\n"
+"POT-Creation-Date: 2025-01-21T08:14:43.180Z\n"
+"PO-Revision-Date: 2025-01-21T08:14:43.180Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -56,6 +56,16 @@ msgid "This will take a long time."
 msgstr ""
 
 msgid "Are you sure?"
+msgstr ""
+
+msgid ""
+"Module 1 totals with missing sum or sum that does not match the "
+"auto-calculated"
+msgstr ""
+
+msgid ""
+"Module 1 (Subnational single entry) totals with missing sum or sum that "
+"does not match the auto-calculated"
 msgstr ""
 
 msgid "Metadata Admin Report"
@@ -130,6 +140,9 @@ msgstr ""
 msgid "Advanced filters"
 msgstr ""
 
+msgid "Failed to load org units"
+msgstr ""
+
 msgid "Period"
 msgstr ""
 
@@ -137,21 +150,6 @@ msgid "CSY Audit Filters - Emergency Care"
 msgstr ""
 
 msgid "Register ID"
-msgstr ""
-
-msgid "Overall Mortality in EU"
-msgstr ""
-
-msgid "Low acuity triage with EU disposition ICU"
-msgstr ""
-
-msgid "Highest triage category and time to first provider >30min​"
-msgstr ""
-
-msgid "Initial RBG low and Glucose not given"
-msgstr ""
-
-msgid "Shock and IVF including Blood"
 msgstr ""
 
 msgid "Yearly"
@@ -184,37 +182,107 @@ msgstr ""
 msgid "Quarter"
 msgstr ""
 
+msgid "Overall Mortality in EU"
+msgstr ""
+
+msgid "Low acuity triage with EU disposition ICU"
+msgstr ""
+
+msgid "EU dispo = ICU AND Triage category = lowest acuity triage category"
+msgstr ""
+
+msgid "Highest triage category and time to first provider >30min​"
+msgstr ""
+
+msgid ""
+"Triage category = highest category AND time between EU arrival date and "
+"time  to Date and time seen by a  first treating provider > 30 min"
+msgstr ""
+
+msgid "Initial RBG low and Glucose not given"
+msgstr ""
+
+msgid "Initial RBG = Low AND Glucose not given at EU"
+msgstr ""
+
+msgid "Shock and IVF including Blood"
+msgstr ""
+
+msgid ""
+"(Age>=16 OR Age category = adult - age unknown) AND Initial SBP<90mmHg AND  "
+"(Section: Emergency Unit Interventions > Medications and Fluids) IV Fluids "
+"= not done"
+msgstr ""
+
 msgid "CSY Audit Filters - Trauma Care"
 msgstr ""
 
 msgid "Mortality with low injury severity score"
 msgstr ""
 
+msgid ""
+"(EU Disposition = Death) OR (Hospital Disposition = Death) AND (KTS=14-16) "
+"OR (MGAP=23-29) OR (GAP=19-24) OR (RTS=11-12)"
+msgstr ""
+
 msgid "Oxygen not administered for patients with hypoxia"
+msgstr ""
+
+msgid ""
+"Initial Oxygen Sat < 92 AND EU Procedures != Supplemental Oxygen "
+"Administration"
 msgstr ""
 
 msgid "Oxygen not administered for patients with tachypnea"
 msgstr ""
 
+msgid ""
+"Initial Spontaneous RR <12 OR >30 AND EU Procedures != Supplemental Oxygen "
+"Administration"
+msgstr ""
+
 msgid "Mental status-dependent airway maneuver"
+msgstr ""
+
+msgid ""
+"GCS total < 8 OR AVPU=(P OR U) AND EU Procedures ≠ Endotracheal intubation, "
+"Surgical airway, OR Assisted Ventilation"
 msgstr ""
 
 msgid "All mortality"
 msgstr ""
 
+msgid "EU Disposition = Mortuary or Died OR Hospital Disposition = Morgue or Died"
+msgstr ""
+
 msgid "Emergency Unit"
+msgstr ""
+
+msgid "EU Disposition = Mortuary or Died"
 msgstr ""
 
 msgid "Hospital Mortality"
 msgstr ""
 
+msgid "Hospital Disposition = Morgue or Died"
+msgstr ""
+
 msgid "Severe injuries by any scoring system"
+msgstr ""
+
+msgid "(KTS<11) OR (MGAP=3-17) OR (GAP=3-10) OR (RTS≤3)"
 msgstr ""
 
 msgid "Moderate or severe injuries by any scoring system"
 msgstr ""
 
+msgid "(KTS≤13) OR (MGAP≤22) OR (GAP≤18) OR (RTS≤10)"
+msgstr ""
+
 msgid "Moderate injuries by any scoring system"
+msgstr ""
+
+msgid "(KTS=11-13) OR (MGAP=18-22) OR (GAP=11-18) OR (RTS=4-10)"
 msgstr ""
 
 msgid "CSY Summary Report - Mortality by Injury Severity"
@@ -238,7 +306,7 @@ msgstr ""
 msgid "Summary Type"
 msgstr ""
 
-msgid "CSY Summary Table Report - Patient Characteristics"
+msgid "CSY Summary Report - Patient Characteristics"
 msgstr ""
 
 msgid "Group"
@@ -385,16 +453,13 @@ msgstr ""
 msgid "Continue"
 msgstr ""
 
+msgid "Select File"
+msgstr ""
+
 msgid "Version has been successfully patched"
 msgstr ""
 
-msgid "Error encountered when parsing version"
-msgstr ""
-
 msgid "Upload finished"
-msgstr ""
-
-msgid "Error parsing the file"
 msgstr ""
 
 msgid "Recalculation has been cancelled successfully"
@@ -423,22 +488,13 @@ msgstr ""
 msgid "Approve"
 msgstr ""
 
-msgid "Error when trying to approve submission"
-msgstr ""
-
 msgid "Accept"
-msgstr ""
-
-msgid "Error when trying to accept submission"
 msgstr ""
 
 msgid "Reject"
 msgstr ""
 
 msgid "Reopen Submission"
-msgstr ""
-
-msgid "Error when trying to reopen submission"
 msgstr ""
 
 msgid "Creation Date"
@@ -450,25 +506,10 @@ msgstr ""
 msgid "Go to Signal"
 msgstr ""
 
-msgid "Error when trying to approve signal"
-msgstr ""
-
 msgid "Reject Signal"
 msgstr ""
 
-msgid "Signals have been successfully rejected"
-msgstr ""
-
-msgid "Error when trying to reject signal"
-msgstr ""
-
 msgid "Reject Data Submission"
-msgstr ""
-
-msgid "Data submissions have been successfully rejected"
-msgstr ""
-
-msgid "Error when trying to reject submission"
 msgstr ""
 
 msgid "Not Completed"
@@ -519,6 +560,36 @@ msgstr ""
 msgid "Quarters"
 msgstr ""
 
+msgid "Apply filters"
+msgstr ""
+
+msgid "Clear filters"
+msgstr ""
+
+msgid "Data submissions have been successfully {{action}}"
+msgstr ""
+
+msgid "Error when trying to {{action}} submission"
+msgstr ""
+
+msgid "Signals have been successfully approved"
+msgstr ""
+
+msgid "Error when trying to approve signal"
+msgstr ""
+
+msgid "Data submissions have been successfully rejected"
+msgstr ""
+
+msgid "Error when trying to reject submission"
+msgstr ""
+
+msgid "Signals have been successfully rejected"
+msgstr ""
+
+msgid "Error when trying to reject signal"
+msgstr ""
+
 msgid "Data Element"
 msgstr ""
 
@@ -535,6 +606,9 @@ msgid "Approved value comment"
 msgstr ""
 
 msgid "Approve value"
+msgstr ""
+
+msgid "Approving data values"
 msgstr ""
 
 msgid "Error when trying to approve data values"
@@ -681,10 +755,16 @@ msgstr ""
 msgid "Last updated value"
 msgstr ""
 
+msgid "Approving data sets..."
+msgstr ""
+
 msgid "Error when trying to approve data set"
 msgstr ""
 
 msgid "Unapprove"
+msgstr ""
+
+msgid "Unapproving data sets..."
 msgstr ""
 
 msgid "Error when trying to unapprove data set"
@@ -706,11 +786,6 @@ msgid "Fix all incorrect values"
 msgstr ""
 
 msgid "Updating values..."
-msgstr ""
-
-msgid ""
-"Module 1 totals with missing sum or sum that does not match the "
-"auto-calculated"
 msgstr ""
 
 msgid "NHWA Comments Report"
@@ -773,4 +848,29 @@ msgid "Dismiss"
 msgstr ""
 
 msgid "Module 1 (subnational) with fixes for organisation unit name"
+msgstr ""
+
+msgid "User Two Factor Monitoring"
+msgstr ""
+
+msgid "External auth"
+msgstr ""
+
+msgid "TwoFA"
+msgstr ""
+
+msgid "Email"
+msgstr ""
+
+msgid "Disabled"
+msgstr ""
+
+msgid "User groups"
+msgstr ""
+
+msgid "Open ID"
+msgstr ""
+
+msgctxt "Facility Dispo = Morgue or Died"
+msgid "ETA_EU Dispo = Morgue or Died or ETA"
 msgstr ""

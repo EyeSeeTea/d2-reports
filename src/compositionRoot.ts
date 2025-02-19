@@ -36,7 +36,7 @@ import { SaveSubscriptionUseCase } from "./domain/reports/mal-data-subscription/
 import { GetSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/GetSubscriptionUseCase";
 import { GetMonitoringUseCase as GetSubscriptionMonitoringUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMonitoringUseCase";
 import { SaveMonitoringUseCase as SaveSubscriptionMonitoringUseCase } from "./domain/reports/mal-data-subscription/usecases/SaveMonitoringUseCase";
-import { CSYAuditEmergencyDefaultRepository } from "./data/reports/csy-audit-emergency/CSYAuditEmergencyDefaultRepository";
+import { AuditItemD2Repository as CSYAuditEmergencyD2Repository } from "./data/reports/csy-audit-emergency/AuditItemD2Repository";
 import { GetAuditEmergencyUseCase } from "./domain/reports/csy-audit-emergency/usecases/GetAuditEmergencyUseCase";
 import { SaveAuditEmergencyUseCase } from "./domain/reports/csy-audit-emergency/usecases/SaveAuditEmergencyUseCase";
 import { GetAuditTraumaUseCase } from "./domain/reports/csy-audit-trauma/usecases/GetAuditTraumaUseCase";
@@ -47,13 +47,13 @@ import { GetGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-dat
 import { SaveGLASSDataSubmissionColumnsUseCase } from "./domain/reports/glass-data-submission/usecases/SaveGLASSDataSubmissionColumnsUseCase";
 import { UpdateGLASSSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/UpdateGLASSSubmissionUseCase";
 import { DHIS2MessageCountUseCase } from "./domain/reports/glass-data-submission/usecases/DHIS2MessageCountUseCase";
-import { CSYSummaryDefaultRepository } from "./data/reports/csy-summary-patient/CSYSummaryDefaultRepository";
+import { SummaryItemD2Repository as CSYSummaryPatientD2Repository } from "./data/reports/csy-summary-patient/SummaryItemD2Repository";
 import { GetSummaryUseCase } from "./domain/reports/csy-summary-patient/usecases/GetSummaryUseCase";
 import { SaveSummaryUseCase } from "./domain/reports/csy-summary-patient/usecases/SaveSummaryUseCase";
-import { CSYSummaryMortalityDefaultRepository } from "./data/reports/csy-summary-mortality/CSYSummaryDefaultRepository";
+import { SummaryItemD2Repository as CSYSummaryMortalityD2Repository } from "./data/reports/csy-summary-mortality/SummaryItemD2Repository";
 import { GetSummaryMortalityUseCase } from "./domain/reports/csy-summary-mortality/usecases/GetSummaryUseCase";
 import { SaveSummaryMortalityUseCase } from "./domain/reports/csy-summary-mortality/usecases/SaveSummaryUseCase";
-import { CSYAuditTraumaDefaultRepository } from "./data/reports/csy-audit-trauma/CSYAuditTraumaDefaultRepository";
+import { AuditItemD2Repository as CSYAuditTraumaD2Repository } from "./data/reports/csy-audit-trauma/AuditItemD2Repository";
 import { GetMalDashboardsSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalDashboardsSubscriptionUseCase";
 import { GetAutoCompleteComputeValuesUseCase } from "./domain/reports/nhwa-auto-complete-compute/usecases/GetAutoCompleteComputeValuesUseCase";
 import { DataSetD2Repository } from "./data/common/DataSetD2Repository";
@@ -97,11 +97,19 @@ import { GetATCRecalculationLogicUseCase } from "./domain/reports/glass-admin/us
 import { CancelRecalculationUseCase } from "./domain/reports/glass-admin/usecases/CancelRecalculationUseCase";
 import { GetGLASSDataSubmissionModulesUseCase } from "./domain/reports/glass-data-submission/usecases/GetGLASSDataSubmissionModulesUseCase";
 import { SaveAuthoritiesMonitoringUseCase } from "./domain/reports/authorities-monitoring/usecases/SaveAuthoritiesMonitoringUseCase";
+import { GetAutoCompleteComputeSettingsUseCase } from "./domain/reports/nhwa-auto-complete-compute/usecases/GetAutoCompleteComputeSettingsUseCase";
+import { GetMonitoringTwoFactorUseCase } from "./domain/reports/twofactor-monitoring/usecases/GetMonitoringTwoFactorUseCase";
+import { SaveMonitoringTwoFactorColumnsUseCase } from "./domain/reports/twofactor-monitoring/usecases/SaveMonitoringTwoFactorColumnsUseCase";
+import { GetMonitoringTwoFactorColumnsUseCase } from "./domain/reports/twofactor-monitoring/usecases/GetMonitoringTwoFactorColumnsUseCase";
+import { SaveMonitoringTwoFactorUseCase } from "./domain/reports/twofactor-monitoring/usecases/SaveMonitoringTwoFactorUseCase";
+import { MonitoringTwoFactorD2Repository } from "./data/reports/twofactor-monitoring/MonitoringTwoFactorD2Repository";
+import { GetOrgUnitsWithChildrenUseCase } from "./domain/reports/glass-data-submission/usecases/GetOrgUnitsWithChildrenUseCase";
+import { GetAllOrgUnitsByLevelUseCase } from "./domain/common/usecases/GetAllOrgUnitsByLevelUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
-    const csyAuditEmergencyRepository = new CSYAuditEmergencyDefaultRepository(api);
-    const csyAuditTraumaRepository = new CSYAuditTraumaDefaultRepository(api);
+    const csyAuditEmergencyRepository = new CSYAuditEmergencyD2Repository(api);
+    const csyAuditTraumaRepository = new CSYAuditTraumaD2Repository(api);
     const dataCommentsRepository = new NHWADataCommentsDefaultRepository(api);
     const dataApprovalRepository = new NHWADataApprovalDefaultRepository(api);
     const dataDuplicationRepository = new MalDataApprovalDefaultRepository(api);
@@ -110,8 +118,8 @@ export function getCompositionRoot(api: D2Api) {
     const widpAdminDefaultRepository = new WIDPAdminDefaultRepository(api);
     const glassAdminRepository = new GLASSDataMaintenanceDefaultRepository(api);
     const glassDataRepository = new GLASSDataSubmissionDefaultRepository(api);
-    const csySummaryRepository = new CSYSummaryDefaultRepository(api);
-    const csySummaryMortalityRepository = new CSYSummaryMortalityDefaultRepository(api);
+    const csySummaryPatientRepository = new CSYSummaryPatientD2Repository(api);
+    const csySummaryMortalityRepository = new CSYSummaryMortalityD2Repository(api);
     const orgUnitsRepository = new Dhis2OrgUnitsRepository(api);
     const dataSetRepository = new DataSetD2Repository(api);
     const dataValuesRepository = new DataValuesD2Repository(api);
@@ -120,6 +128,7 @@ export function getCompositionRoot(api: D2Api) {
     const subnationalCorrectRepository = new SubnationalCorrectD2Repository(api);
     const subnationalCorrectSettingsRepository = new SubnationalCorrectD2SettingsRepository(api);
     const authoritiesMonitoringRepository = new AuthoritiesMonitoringDefaultRepository(api);
+    const monitoringTwoFactorD2Repository = new MonitoringTwoFactorD2Repository(api);
 
     return {
         admin: getExecute({
@@ -138,8 +147,8 @@ export function getCompositionRoot(api: D2Api) {
             updateStatus: new UpdateStatusUseCase(dataApprovalRepository),
         }),
         malDataApproval: getExecute({
-            get: new GetMalDataSetsUseCase(dataDuplicationRepository),
-            getDiff: new GetMalDataDiffUseCase(dataDuplicationRepository),
+            get: new GetMalDataSetsUseCase(dataDuplicationRepository, dataValuesRepository, dataSetRepository),
+            getDiff: new GetMalDataDiffUseCase(dataValuesRepository, dataSetRepository),
             getCountryCodes: new GetMalCountryCodesUseCase(dataDuplicationRepository),
             save: new SaveMalDataSetsUseCase(dataDuplicationRepository),
             getColumns: new GetMalDataApprovalColumnsUseCase(dataDuplicationRepository),
@@ -191,10 +200,11 @@ export function getCompositionRoot(api: D2Api) {
             saveColumns: new SaveGLASSDataSubmissionColumnsUseCase(glassDataRepository),
             dhis2MessageCount: new DHIS2MessageCountUseCase(glassDataRepository),
             updateStatus: new UpdateGLASSSubmissionUseCase(glassDataRepository),
+            getOrgUnitsWithChildren: new GetOrgUnitsWithChildrenUseCase(glassDataRepository),
         }),
         summary: getExecute({
-            get: new GetSummaryUseCase(csySummaryRepository),
-            save: new SaveSummaryUseCase(csySummaryRepository),
+            get: new GetSummaryUseCase(csySummaryPatientRepository),
+            save: new SaveSummaryUseCase(csySummaryPatientRepository),
         }),
         summaryMortality: getExecute({
             get: new GetSummaryMortalityUseCase(csySummaryMortalityRepository),
@@ -210,6 +220,7 @@ export function getCompositionRoot(api: D2Api) {
             saveColumns: new SaveDataQualityColumnsUseCase(dataQualityRepository),
         }),
         orgUnits: getExecute({
+            getAllByLevel: new GetAllOrgUnitsByLevelUseCase(orgUnitsRepository),
             get: new GetOrgUnitsUseCase(orgUnitsRepository),
             getByLevel: new GetOrgUnitsByLevelUseCase(orgUnitsRepository),
         }),
@@ -217,10 +228,12 @@ export function getCompositionRoot(api: D2Api) {
             get: new GetConfig(configRepository),
         }),
         nhwa: {
+            getAutoCompleteComputeSettings: new GetAutoCompleteComputeSettingsUseCase(
+                autoCompleteComputeSettingsRepository
+            ),
             getAutoCompleteComputeValues: new GetAutoCompleteComputeValuesUseCase(
                 dataSetRepository,
-                dataValuesRepository,
-                autoCompleteComputeSettingsRepository
+                dataValuesRepository
             ),
             fixAutoCompleteComputeValues: new FixAutoCompleteComputeValuesUseCase(dataValuesRepository),
             getTotalsByActivityLevel: new GetTotalsByActivityLevelUseCase(
@@ -240,6 +253,12 @@ export function getCompositionRoot(api: D2Api) {
             save: new SaveAuthoritiesMonitoringUseCase(authoritiesMonitoringRepository),
             getColumns: new GetAuthoritiesMonitoringColumnsUseCase(authoritiesMonitoringRepository),
             saveColumns: new SaveAuthoritiesMonitoringColumnsUseCase(authoritiesMonitoringRepository),
+        }),
+        twoFactorUserMonitoring: getExecute({
+            get: new GetMonitoringTwoFactorUseCase(monitoringTwoFactorD2Repository),
+            save: new SaveMonitoringTwoFactorUseCase(monitoringTwoFactorD2Repository),
+            getColumns: new GetMonitoringTwoFactorColumnsUseCase(monitoringTwoFactorD2Repository),
+            saveColumns: new SaveMonitoringTwoFactorColumnsUseCase(monitoringTwoFactorD2Repository),
         }),
     };
 }

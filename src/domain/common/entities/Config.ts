@@ -4,7 +4,7 @@ import { getPath } from "./OrgUnit";
 import { User } from "./User";
 
 export interface Config {
-    dataSets: Record<Id, NamedRef>;
+    dataSets: Record<Id, NamedRef & { code: string | undefined }>;
     sections: Record<Id, NamedRef> | undefined;
     currentUser: User;
     sqlViews: Record<string, NamedRef>;

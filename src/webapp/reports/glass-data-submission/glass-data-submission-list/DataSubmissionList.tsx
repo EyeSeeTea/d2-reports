@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { DataSubmissionViewModel, EARDataSubmissionViewModel } from "../DataSubmissionViewModel";
 import {
     ConfirmationDialog,
@@ -15,31 +15,23 @@ import {
 import i18n from "../../../../locales";
 import { useAppContext } from "../../../contexts/app-context";
 import {
-    EARSubmissionItemIdentifier,
-    GLASSDataSubmissionItemIdentifier,
     parseDataSubmissionItemId,
     parseEARSubmissionItemId,
 } from "../../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
 import _ from "lodash";
-import { Filter, Filters } from "./Filters";
-import { Config } from "../../../../domain/common/entities/Config";
+import { emptySubmissionFilter, Filters } from "./Filters";
 import { Check, Dashboard, LockOpen, ThumbDown, ThumbUp } from "@material-ui/icons";
-import { useBooleanState } from "../../../utils/use-boolean";
 import { goToDhis2Url } from "../../../../utils/utils";
 import { useDataSubmissionList } from "./useDataSubmissionList";
+import { useDataSubmissionActions } from "./useDataSubmissionActions";
 
 export const DataSubmissionList: React.FC = React.memo(() => {
-    const { api, compositionRoot, config } = useAppContext();
+    const { api, compositionRoot } = useAppContext();
 
     const snackbar = useSnackbar();
-    const [filters, setFilters] = useState(() => getEmptyDataValuesFilter(config));
-    const [rejectionReason, setRejectionReason] = useState<string>("");
-    const [rejectedItems, setRejectedItems] = useState<GLASSDataSubmissionItemIdentifier[]>([]);
-    const [rejectedSignals, setRejectedSignals] = useState<EARSubmissionItemIdentifier[]>([]);
-    const [rejectedState, setRejectedState] = useState<"loading" | "idle">("idle");
+    const [filters, setFilters] = useState(emptySubmissionFilter);
     const [isDatasetUpdate, setDatasetUpdate] = useState<boolean>(false);
-    const [isDialogOpen, { enable: openDialog, disable: closeDialog }] = useBooleanState(false);
 
     const {
         dataSubmissionPeriod,
@@ -47,6 +39,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
         isEARModule,
         isEGASPUser,
         pagination,
+        moduleQuestionnaires,
         selectablePeriods,
         visibleColumns,
         visibleEARColumns,
@@ -57,28 +50,60 @@ export const DataSubmissionList: React.FC = React.memo(() => {
         saveReorderedEARColumns,
     } = useDataSubmissionList(filters);
 
+    const {
+        disableSave,
+        isRejectionDialogOpen,
+        loading,
+        rejectionReason,
+        saveText,
+        snackbarMessage,
+        approveEARSignal,
+        closeRejectionDialog,
+        onChangeRejectionReason,
+        openDataSubmissionRejectionDialog,
+        openEARSignalRejectionDialog,
+        rejectDataSubmission,
+        rejectEARSignal,
+        updateDataSubmissionStatus,
+    } = useDataSubmissionActions(isDatasetUpdate, reload);
+
+    useEffect(() => {
+        if (snackbarMessage) {
+            snackbar[snackbarMessage.type](snackbarMessage.message);
+        }
+    }, [snackbar, snackbarMessage]);
+
+    const baseTableColumns: TableColumn<DataSubmissionViewModel>[] = useMemo(
+        () => [
+            { name: "orgUnitName", text: i18n.t("Country"), sortable: true },
+            { name: "period", text: i18n.t(isEGASPUser ? "Period" : "Year"), sortable: true },
+            {
+                name: "questionnaireCompleted",
+                text: i18n.t("Questionnaire completed"),
+                sortable: true,
+                getValue: (row: DataSubmissionViewModel) =>
+                    row.questionnaireCompleted ? "Completed" : "Not completed",
+            },
+            {
+                name: "dataSetsUploaded",
+                text: i18n.t("DataSets uploaded"),
+                sortable: true,
+            },
+            {
+                name: "submissionStatus",
+                text: i18n.t("Status"),
+                sortable: true,
+            },
+        ],
+        [isEGASPUser]
+    );
+
     const baseConfig: TableConfig<DataSubmissionViewModel> = useMemo(
         () => ({
-            columns: [
-                { name: "orgUnitName", text: i18n.t("Country"), sortable: true },
-                { name: "period", text: i18n.t(isEGASPUser ? "Period" : "Year"), sortable: true },
-                {
-                    name: "questionnaireCompleted",
-                    text: i18n.t("Questionnaire completed"),
-                    sortable: true,
-                    getValue: row => (row.questionnaireCompleted ? "Completed" : "Not completed"),
-                },
-                {
-                    name: "dataSetsUploaded",
-                    text: i18n.t("DataSets uploaded"),
-                    sortable: true,
-                },
-                {
-                    name: "submissionStatus",
-                    text: i18n.t("Status"),
-                    sortable: true,
-                },
-            ],
+            columns:
+                !_.isEmpty(moduleQuestionnaires) || !filters.module
+                    ? baseTableColumns
+                    : baseTableColumns.filter(column => column.name !== "questionnaireCompleted"),
             actions: [
                 {
                     name: "unapvdDashboard",
@@ -106,22 +131,8 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     text: i18n.t("Approve"),
                     icon: <ThumbUp />,
                     multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataSubmissionItemId(item)));
-                        if (items.length === 0) return;
-
-                        try {
-                            await compositionRoot.glassDataSubmission.updateStatus(
-                                Namespaces.DATA_SUBMISSSIONS,
-                                "approve",
-                                items
-                            );
-                        } catch {
-                            snackbar.error(i18n.t("Error when trying to approve submission"));
-                        }
-
-                        reload();
-                    },
+                    onClick: async (selectedIds: string[]) =>
+                        updateDataSubmissionStatus("approve", selectedIds, Namespaces.DATA_SUBMISSSIONS),
                     isActive: (rows: DataSubmissionViewModel[]) => {
                         return _.every(rows, row => row.status === "PENDING_APPROVAL");
                     },
@@ -131,22 +142,8 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     text: i18n.t("Accept"),
                     icon: <Check />,
                     multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataSubmissionItemId(item)));
-                        if (items.length === 0) return;
-
-                        try {
-                            await compositionRoot.glassDataSubmission.updateStatus(
-                                Namespaces.DATA_SUBMISSSIONS,
-                                "accept",
-                                items
-                            );
-                        } catch {
-                            snackbar.error(i18n.t("Error when trying to accept submission"));
-                        }
-
-                        reload();
-                    },
+                    onClick: async (selectedIds: string[]) =>
+                        updateDataSubmissionStatus("accept", selectedIds, Namespaces.DATA_SUBMISSSIONS),
                     isActive: (rows: DataSubmissionViewModel[]) => {
                         return _.every(rows, row => row.status === "PENDING_UPDATE_APPROVAL");
                     },
@@ -156,13 +153,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     text: i18n.t("Reject"),
                     icon: <ThumbDown />,
                     multiple: true,
-                    onClick: (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataSubmissionItemId(item)));
-                        if (items.length === 0) return;
-
-                        setRejectedItems(items);
-                        openDialog();
-                    },
+                    onClick: openDataSubmissionRejectionDialog,
                     isActive: (rows: DataSubmissionViewModel[]) => {
                         return _.every(rows, row => {
                             setDatasetUpdate(row.status === "PENDING_UPDATE_APPROVAL");
@@ -176,22 +167,8 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     text: i18n.t("Reopen Submission"),
                     icon: <LockOpen />,
                     multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseDataSubmissionItemId(item)));
-                        if (items.length === 0) return;
-
-                        try {
-                            await compositionRoot.glassDataSubmission.updateStatus(
-                                Namespaces.DATA_SUBMISSSIONS,
-                                "reopen",
-                                items
-                            );
-                        } catch {
-                            snackbar.error(i18n.t("Error when trying to reopen submission"));
-                        }
-
-                        reload();
-                    },
+                    onClick: async (selectedIds: string[]) =>
+                        updateDataSubmissionStatus("reopen", selectedIds, Namespaces.DATA_SUBMISSSIONS),
                     isActive: (rows: DataSubmissionViewModel[]) => {
                         return _.every(rows, row => row.status === "PENDING_APPROVAL");
                     },
@@ -202,13 +179,14 @@ export const DataSubmissionList: React.FC = React.memo(() => {
         }),
         [
             api.baseUrl,
+            baseTableColumns,
             compositionRoot.glassDataSubmission,
+            filters.module,
             initialSorting,
-            isEGASPUser,
-            openDialog,
+            openDataSubmissionRejectionDialog,
             pagination,
-            reload,
-            snackbar,
+            moduleQuestionnaires,
+            updateDataSubmissionStatus,
         ]
     );
 
@@ -255,25 +233,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     text: i18n.t("Approve"),
                     icon: <ThumbUp />,
                     multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseEARSubmissionItemId(item)));
-                        if (items.length === 0) return;
-
-                        try {
-                            await compositionRoot.glassDataSubmission.updateStatus(
-                                Namespaces.SIGNALS,
-                                "approve",
-                                [],
-                                undefined,
-                                undefined,
-                                items
-                            );
-                        } catch {
-                            snackbar.error(i18n.t("Error when trying to approve signal"));
-                        }
-
-                        reload();
-                    },
+                    onClick: async (selectedIds: string[]) => approveEARSignal(selectedIds),
                     isActive: (rows: EARDataSubmissionViewModel[]) => {
                         return _.every(rows, row => row.status === "PENDING_APPROVAL");
                     },
@@ -283,13 +243,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                     text: i18n.t("Reject"),
                     icon: <ThumbDown />,
                     multiple: true,
-                    onClick: async (selectedIds: string[]) => {
-                        const items = _.compact(selectedIds.map(item => parseEARSubmissionItemId(item)));
-                        if (items.length === 0) return;
-
-                        setRejectedSignals(items);
-                        openDialog();
-                    },
+                    onClick: openEARSignalRejectionDialog,
                     isActive: (rows: EARDataSubmissionViewModel[]) => {
                         return _.every(rows, row => row.status === "PENDING_APPROVAL");
                     },
@@ -304,7 +258,7 @@ export const DataSubmissionList: React.FC = React.memo(() => {
                 pageSizeInitialValue: 10,
             },
         }),
-        [api.baseUrl, compositionRoot.glassDataSubmission, openDialog, reload, snackbar]
+        [api.baseUrl, approveEARSignal, openEARSignalRejectionDialog]
     );
 
     const tableProps = useObjectsTable<DataSubmissionViewModel>(baseConfig, getRows);
@@ -345,14 +299,10 @@ export const DataSubmissionList: React.FC = React.memo(() => {
             .value();
     }, [earTableProps.columns, visibleEARColumns]);
 
-    const closeRejectionDialog = () => {
-        closeDialog();
-        setRejectionReason("");
-    };
-
     return isEARModule ? (
         <ObjectsList<EARDataSubmissionViewModel>
             {...earTableProps}
+            loading={loading}
             columns={earColumnsToShow}
             onChangeSearch={undefined}
             onReorderColumns={saveReorderedEARColumns}
@@ -360,49 +310,23 @@ export const DataSubmissionList: React.FC = React.memo(() => {
             <Filters isEARModule={isEARModule} values={filters} options={filterOptions} onChange={setFilters} />
 
             <ConfirmationDialog
-                isOpen={isDialogOpen}
+                isOpen={isRejectionDialogOpen}
                 title={i18n.t("Reject Signal")}
                 onCancel={closeRejectionDialog}
                 cancelText={i18n.t("Cancel")}
-                onSave={async () => {
-                    setRejectedState("loading");
-                    try {
-                        await compositionRoot.glassDataSubmission.updateStatus(
-                            Namespaces.SIGNALS,
-                            "reject",
-                            [],
-                            rejectionReason,
-                            false,
-                            rejectedSignals
-                        );
-
-                        setRejectedState("idle");
-                        closeRejectionDialog();
-                        snackbar.success(i18n.t("Signals have been successfully rejected"));
-
-                        reload();
-                    } catch {
-                        snackbar.error(i18n.t("Error when trying to reject signal"));
-                    }
-                }}
-                saveText={rejectedState === "idle" ? "Reject" : "Rejecting"}
+                onSave={async () => rejectEARSignal()}
+                saveText={saveText}
                 maxWidth="md"
-                disableSave={!rejectionReason || rejectedState === "loading"}
+                disableSave={disableSave}
                 fullWidth
             >
                 <p>{i18n.t("Please provide a reason for rejecting this signal:")}</p>
-                <TextArea
-                    type="text"
-                    rows={4}
-                    onChange={({ value }: { value: string }) => {
-                        setRejectionReason(value);
-                    }}
-                    value={rejectionReason}
-                />
+                <TextArea type="text" rows={4} onChange={onChangeRejectionReason} value={rejectionReason} />
             </ConfirmationDialog>
         </ObjectsList>
     ) : (
         <ObjectsList<DataSubmissionViewModel>
+            loading={loading}
             {...tableProps}
             columns={columnsToShow}
             onChangeSearch={undefined}
@@ -416,58 +340,19 @@ export const DataSubmissionList: React.FC = React.memo(() => {
             />
 
             <ConfirmationDialog
-                isOpen={isDialogOpen}
+                isOpen={isRejectionDialogOpen}
                 title={i18n.t("Reject Data Submission")}
                 onCancel={closeRejectionDialog}
                 cancelText={i18n.t("Cancel")}
-                onSave={async () => {
-                    setRejectedState("loading");
-                    try {
-                        await compositionRoot.glassDataSubmission.updateStatus(
-                            Namespaces.DATA_SUBMISSSIONS,
-                            "reject",
-                            rejectedItems,
-                            rejectionReason,
-                            isDatasetUpdate
-                        );
-
-                        setRejectedState("idle");
-                        closeRejectionDialog();
-                        snackbar.success(i18n.t("Data submissions have been successfully rejected"));
-
-                        reload();
-                    } catch {
-                        snackbar.error(i18n.t("Error when trying to reject submission"));
-                    }
-                }}
-                saveText={rejectedState === "idle" ? "Reject" : "Rejecting"}
+                onSave={async () => rejectDataSubmission()}
+                saveText={saveText}
                 maxWidth="md"
-                disableSave={!rejectionReason || rejectedState === "loading"}
+                disableSave={disableSave}
                 fullWidth
             >
                 <p>{i18n.t("Please provide a reason for rejecting this data submission:")}</p>
-                <TextArea
-                    type="text"
-                    rows={4}
-                    onChange={({ value }: { value: string }) => {
-                        setRejectionReason(value);
-                    }}
-                    value={rejectionReason}
-                />
+                <TextArea type="text" rows={4} onChange={onChangeRejectionReason} value={rejectionReason} />
             </ConfirmationDialog>
         </ObjectsList>
     );
 });
-
-function getEmptyDataValuesFilter(_config: Config): Filter {
-    return {
-        module: undefined,
-        orgUnitPaths: [],
-        periods: [],
-        quarters: ["Q1"],
-        from: undefined,
-        to: undefined,
-        completionStatus: undefined,
-        submissionStatus: undefined,
-    };
-}
