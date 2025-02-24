@@ -692,7 +692,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         return sortOrderArray ?? [];
     }
 
-    async generateSortOrder(dataSetId: string): Promise<void> {
+    async saveMalDiffNames(dataSetId: string): Promise<void> {
         try {
             const dataSetData: {
                 dataSetElements: dataSetElementsType[];

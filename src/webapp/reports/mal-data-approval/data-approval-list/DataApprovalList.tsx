@@ -66,7 +66,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
     }, [compositionRoot]);
 
     useEffect(() => {
-        if (filters.dataSetId) compositionRoot.malDataApproval.generateSortOrder(filters.dataSetId);
+        if (filters.dataSetId) compositionRoot.malDataApproval.saveMalDiffNames(filters.dataSetId);
     }, [compositionRoot, filters.dataSetId]);
 
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(

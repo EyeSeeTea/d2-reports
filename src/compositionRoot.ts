@@ -25,7 +25,7 @@ import { GetMalDataApprovalColumnsUseCase } from "./domain/reports/mal-data-appr
 import { MalDataApprovalDefaultRepository } from "./data/reports/mal-data-approval/MalDataApprovalDefaultRepository";
 import { MalDataSubscriptionDefaultRepository } from "./data/reports/mal-data-subscription/MalDataSubscriptionDefaultRepository";
 import { GetSortOrderUseCase } from "./domain/reports/mal-data-approval/usecases/GetSortOrderUseCase";
-import { GenerateSortOrderUseCase } from "./domain/reports/mal-data-approval/usecases/GenerateSortOrderUseCase";
+import { SaveMalDiffNamesUseCase } from "./domain/reports/mal-data-approval/usecases/SaveMalDiffNamesUseCase";
 import { GetMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/GetMonitoringUseCase";
 import { DuplicateDataValuesUseCase } from "./domain/reports/mal-data-approval/usecases/DuplicateDataValuesUseCase";
 import { GetMalDataElementsSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalDataElementsSubscriptionUseCase";
@@ -171,7 +171,7 @@ export function getCompositionRoot(api: D2Api) {
             updateStatus: new UpdateMalApprovalStatusUseCase(dataDuplicationRepository),
             duplicateValue: new DuplicateDataValuesUseCase(dataDuplicationRepository),
             getSortOrder: new GetSortOrderUseCase(dataDuplicationRepository),
-            generateSortOrder: new GenerateSortOrderUseCase(dataDuplicationRepository),
+            saveMalDiffNames: new SaveMalDiffNamesUseCase(dataDuplicationRepository),
             getOrgUnitsWithChildren: new GetMalDataApprovalOUsWithChildrenUseCase(orgUnitsWithChildrenRepository),
         }),
         malDataSubscription: getExecute({
