@@ -30,8 +30,7 @@ export function useActiveDataApprovalActions(): ActiveDataApprovalActionsState {
 
     const isCompleteActionVisible = useCallback(
         (rows: DataApprovalViewModel[]) =>
-            _.every(rows, row => row.completed === false && row.lastUpdatedValue) &&
-            (isMalCountryApprover || isMalAdmin),
+            _.every(rows, row => !row.completed && row.lastUpdatedValue) && (isMalCountryApprover || isMalAdmin),
         [isMalAdmin, isMalCountryApprover]
     );
 
@@ -42,32 +41,29 @@ export function useActiveDataApprovalActions(): ActiveDataApprovalActionsState {
 
     const isGetDifferenceActionVisible = useCallback(
         (rows: DataApprovalViewModel[]) =>
-            _.every(rows, row => row.lastUpdatedValue && row.validated === false) &&
-            (isMalCountryApprover || isMalAdmin),
+            _.every(rows, row => row.lastUpdatedValue && !row.validated) && (isMalCountryApprover || isMalAdmin),
         [isMalAdmin, isMalCountryApprover]
     );
 
     const isGetDifferenceAndRevokeActionVisible = useCallback(
         (rows: DataApprovalViewModel[]) =>
-            _.every(rows, row => row.lastUpdatedValue && row.validated === true) &&
-            (isMalCountryApprover || isMalAdmin),
+            _.every(rows, row => row.lastUpdatedValue && row.validated) && (isMalCountryApprover || isMalAdmin),
         [isMalAdmin, isMalCountryApprover]
     );
 
     const isIncompleteActionVisible = useCallback(
-        (rows: DataApprovalViewModel[]) => _.every(rows, row => row.completed === true && !row.validated),
+        (rows: DataApprovalViewModel[]) => _.every(rows, row => row.completed && !row.validated),
         []
     );
 
     const isSubmitActionVisible = useCallback(
         (rows: DataApprovalViewModel[]) =>
-            _.every(rows, row => row.approved === false && row.lastUpdatedValue) &&
-            (isMalCountryApprover || isMalAdmin),
+            _.every(rows, row => !row.approved && row.lastUpdatedValue) && (isMalCountryApprover || isMalAdmin),
         [isMalAdmin, isMalCountryApprover]
     );
 
     const isRevokeActionVisible = useCallback(
-        (rows: DataApprovalViewModel[]) => _.every(rows, row => row.approved === true),
+        (rows: DataApprovalViewModel[]) => _.every(rows, row => row.approved),
         []
     );
 
