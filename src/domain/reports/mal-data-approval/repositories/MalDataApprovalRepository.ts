@@ -5,6 +5,7 @@ import { DataDiffItem } from "../entities/DataDiffItem";
 import { MalDataApprovalItem, MalDataApprovalItemIdentifier } from "../entities/MalDataApprovalItem";
 import { DataDiffItemIdentifier } from "../entities/DataDiffItem";
 import { CountryCode } from "../entities/CountryCode";
+import { Maybe } from "../../../../types/utils";
 
 export interface MalDataApprovalRepository {
     get(options: MalDataApprovalOptions, countryCodes: CountryCode[]): Promise<PaginatedObjects<MalDataApprovalItem>>;
@@ -30,7 +31,7 @@ export interface MalDataApprovalOptions {
     periods: string[];
     useOldPeriods?: boolean;
     orgUnitIds: Id[];
-    dataSetId: Id | undefined;
+    dataSetId: Maybe<Id>;
     approvalStatus?: boolean;
     completionStatus?: boolean;
 }
