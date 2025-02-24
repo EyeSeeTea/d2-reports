@@ -18,6 +18,8 @@ type ModalActions = {
     closeDataDifferencesDialog: () => void;
 };
 
+type CompletionStatus = "complete" | "incomplete";
+
 type DataApprovalActionsState = {
     globalMessage: GlobalMessage | undefined;
     reloadKey: string;
@@ -71,17 +73,23 @@ export function useDataApprovalActions(): DataApprovalActionsState {
         [compositionRoot.malDataApproval, reload, saveMonitoringValue]
     );
 
-    const completeAction = useCallback(
-        async (selectedIds: string[]) => {
+    const updateCompletionStatus = useCallback(
+        async (selectedIds: string[], status: CompletionStatus) => {
             const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
             if (items.length === 0) return;
 
-            const result = await compositionRoot.malDataApproval.updateStatus(items, "complete");
-            if (!result) setGlobalMessage({ type: "error", message: i18n.t("Error when trying to complete data set") });
+            const result = await compositionRoot.malDataApproval.updateStatus(items, status);
+            if (!result)
+                setGlobalMessage({ type: "error", message: i18n.t(`Error when trying to ${status} data set`) });
 
             reload();
         },
         [compositionRoot.malDataApproval, reload]
+    );
+
+    const completeAction = useCallback(
+        async (selectedIds: string[]) => updateCompletionStatus(selectedIds, "complete"),
+        [updateCompletionStatus]
     );
 
     const deactivateMonitoringAction = useCallback(
@@ -114,17 +122,8 @@ export function useDataApprovalActions(): DataApprovalActionsState {
     );
 
     const incompleteAction = useCallback(
-        async (selectedIds: string[]) => {
-            const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
-            if (items.length === 0) return;
-
-            const result = await compositionRoot.malDataApproval.updateStatus(items, "incomplete");
-            if (!result)
-                setGlobalMessage({ type: "error", message: i18n.t("Error when trying to incomplete data set") });
-
-            reload();
-        },
-        [compositionRoot.malDataApproval, reload]
+        async (selectedIds: string[]) => updateCompletionStatus(selectedIds, "incomplete"),
+        [updateCompletionStatus]
     );
 
     const revokeAction = useCallback(
