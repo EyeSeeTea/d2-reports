@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
     MalDataApprovalItemIdentifier,
-    MalDataSet,
+    malDataSets,
 } from "../../../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import { Namespaces } from "../../../../../data/common/clients/storage/Namespaces";
 import { useAppContext } from "../../../../contexts/app-context";
@@ -20,15 +20,17 @@ export function useDataApprovalMonitoring() {
         async (items: MalDataApprovalItemIdentifier[], enableMonitoring: boolean) => {
             const dataSetName = _.values(config.dataSets).find(dataSet =>
                 items.map(item => item.dataSet).includes(dataSet.id)
-            )?.name as MalDataSet;
+            )?.name;
+            const dataSetApprovalName = malDataSets.find(dataSet => dataSet === dataSetName);
 
-            if (!monitoringValue || !dataSetName) return;
+            if (!monitoringValue) return;
+            if (!dataSetApprovalName) throw new Error("Data set not found");
 
             return await compositionRoot.malDataApproval.updateMonitoring({
                 namespace: Namespaces.MONITORING,
                 monitoringValue: monitoringValue,
                 dataApprovalItems: items,
-                dataSetName: dataSetName,
+                dataSetName: dataSetApprovalName,
                 enableMonitoring: enableMonitoring,
             });
         },

@@ -26,11 +26,14 @@ export interface MalDataApprovalItemIdentifier {
     workflow: string | undefined;
 }
 
-export type MalDataSet =
-    | "MAL - WMR Form"
-    | "MAL - Antimalarial drug policy"
-    | "MAL - WMR National Policies"
-    | "MAL - Malaria Free";
+export const malDataSets = [
+    "MAL - WMR Form",
+    "MAL - Antimalarial drug policy",
+    "MAL - WMR National Policies",
+    "MAL - Malaria Free",
+] as const;
+
+export type MalDataSet = typeof malDataSets[number];
 
 export function getDataDuplicationItemId(dataSet: MalDataApprovalItem): string {
     return [
