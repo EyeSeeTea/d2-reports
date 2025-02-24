@@ -8,13 +8,11 @@ export function useDataApprovalListColumns() {
     const getColumnValues = useCallback((row: DataApprovalViewModel) => {
         return {
             completed: row.completed ? "Completed" : "Not completed",
-            lastDateOfApproval: row.lastDateOfApproval
-                ? format(row.lastDateOfApproval, "yyyy-MM-dd' 'HH:mm:ss")
-                : "Never approved",
+            lastDateOfApproval: row.lastDateOfApproval ? format(row.lastDateOfApproval, dateFormat) : "Never approved",
             lastDateOfSubmission: row.lastDateOfSubmission
-                ? format(row.lastDateOfSubmission, "yyyy-MM-dd' 'HH:mm:ss")
+                ? format(row.lastDateOfSubmission, dateFormat)
                 : "Never submitted",
-            lastUpdatedValue: row.lastUpdatedValue ? format(row.lastUpdatedValue, "yyyy-MM-dd' 'HH:mm:ss") : "No data",
+            lastUpdatedValue: row.lastUpdatedValue ? format(row.lastUpdatedValue, dateFormat) : "No data",
             validated: row.validated ? "Submitted" : row.completed ? "Ready for submission" : "Not completed",
         };
     }, []);
@@ -63,3 +61,5 @@ export function useDataApprovalListColumns() {
         columns: columns,
     };
 }
+
+const dateFormat = "yyyy-MM-dd' 'HH:mm:ss";
