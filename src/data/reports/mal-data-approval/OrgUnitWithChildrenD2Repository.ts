@@ -14,7 +14,7 @@ export class OrgUnitWithChildrenD2Repository implements OrgUnitWithChildrenRepos
                     fields: {
                         id: true,
                         path: true,
-                        name: true,
+                        displayName: true,
                         level: true,
                         children: { level: true, path: true },
                     },
@@ -22,7 +22,11 @@ export class OrgUnitWithChildrenD2Repository implements OrgUnitWithChildrenRepos
             })
             .getData();
 
-        return _.orderBy(organisationUnits, "level", "asc");
+        return _.orderBy(
+            organisationUnits.map(orgUnit => ({ ...orgUnit, name: orgUnit.displayName })),
+            "level",
+            "asc"
+        );
     }
 }
 
