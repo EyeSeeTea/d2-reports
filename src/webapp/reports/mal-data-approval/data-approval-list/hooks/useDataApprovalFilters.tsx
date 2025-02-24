@@ -41,7 +41,7 @@ export function useDataApprovalFilters(filterProps: DataApprovalFilterProps): Da
 
     const dataSetOrgUnits = getOrgUnitsFromId(config.orgUnits, orgUnits);
     const selectableOUs = _.union(
-        orgUnits.filter(org => org.level < 3),
+        orgUnits.filter(org => org.level < countryLevel),
         dataSetOrgUnits
     );
     const selectableIds = selectableOUs.map(ou => ou.id);
