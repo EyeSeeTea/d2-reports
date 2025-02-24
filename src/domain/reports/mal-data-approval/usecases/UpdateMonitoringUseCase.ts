@@ -29,7 +29,7 @@ export class UpdateMonitoringUseCase implements UseCase {
             monitoringValue,
             dataApprovalItems,
             dataSetName,
-            dataNotificationsUserGroup,
+            dataNotificationsUserGroup.id,
             enableMonitoring
         );
 

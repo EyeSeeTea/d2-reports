@@ -1,5 +1,7 @@
+import { Ref } from "../../../common/entities/Base";
+
 export interface UserGroupRepository {
     getUserGroupByCode(code: string): Promise<UserGroup>;
 }
 
-type UserGroup = string;
+type UserGroup = Ref;
