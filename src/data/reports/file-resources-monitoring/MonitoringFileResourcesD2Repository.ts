@@ -6,7 +6,6 @@ import { CsvData } from "../../common/CsvDataSource";
 import { CsvWriterDataSource } from "../../common/CsvWriterCsvDataSource";
 import { Instance } from "../../common/entities/Instance";
 import { downloadFile } from "../../common/utils/download-file";
-import { Pagination } from "../mal-data-approval/MalDataApprovalDefaultRepository";
 import { MonitoringFileResourcesOptions } from "../../../domain/reports/file-resources-monitoring/entities/MonitoringFileResourcesOptions";
 import {
     getSizeInMB,
@@ -15,6 +14,10 @@ import {
 import { paginate } from "../../../domain/common/entities/PaginatedObjects";
 import { MonitoringFileResourcesPaginatedObjects } from "../../../domain/reports/file-resources-monitoring/entities/MonitoringFileResourcesPaginatedObjects";
 import { MonitoringFileResourcesRepository } from "../../../domain/reports/file-resources-monitoring/repositories/MonitoringFileResourcesRepository";
+import { Dhis2SqlViews } from "../../common/Dhis2SqlViews";
+
+export const SQL_EVENT_FILERESOURCE_ID = "kMGTBR65nue";
+export const SQL_DATASETVALUES_FILERESOURCE_ID = "gMg3im4cTYd";
 
 export class MonitoringFileResourcesD2Repository implements MonitoringFileResourcesRepository {
     private storageClient: StorageClient;
@@ -44,7 +47,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
 
         const filteredRows = await this.getFilteredRows(objects, options);
 
-        const { pager, objects: rowsInPage } = paginate(filteredRows, sorting, paging);
+        const { pager, objects: rowsInPage } = paginate(filteredRows, paging, sorting);
         return {
             pager: pager,
             objects: rowsInPage,
@@ -63,6 +66,39 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
 
             return isInSearchQuery;
         });
+    }
+
+    private async getEventFileResources(): Promise<Record<string, string>> {
+        const response = await new Dhis2SqlViews(this.api)
+            .query<{}, EventSqlField>(SQL_EVENT_FILERESOURCE_ID, undefined, {})
+            .getData();
+
+        const eventFileResourceMap = response.rows.reduce<Record<string, string>>((acc, row) => {
+            acc[row.fileresourceuid] = row.eventuid;
+            return acc;
+        }, {});
+        return eventFileResourceMap;
+    }
+
+    private async getDataSetValueFileResources(): Promise<Record<string, DataSetValueFileResoruce>> {
+        const response = await new Dhis2SqlViews(this.api)
+            .query<{}, DataSetSqlField>(SQL_EVENT_FILERESOURCE_ID, undefined, {})
+            .getData();
+
+        const dataSetValueResourceMap = response.rows.reduce<Record<string, DataSetValueFileResoruce>>((acc, row) => {
+            acc[row.fileresourceuid] = {
+                dataElementUid: row.dataelementuid,
+                dataElementName: row.dataelementname,
+                organisationUnitUid: row.organisationunituid,
+                organisationUnitName: row.organisationunitname,
+                categoryOptionComboUid: row.categoryoptioncombouid,
+                categoryOptionComboName: row.categoryoptioncomboname,
+                startDate: row.startdate,
+            };
+            return acc;
+        }, {});
+
+        return dataSetValueResourceMap;
     }
 
     private async getFileResources(): Promise<MonitoringFileResourcesFile[]> {
@@ -119,23 +155,6 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         }
     }
 
-    paginate<Obj>(objects: Obj[], pagination: Pagination) {
-        const pager = {
-            page: pagination.page,
-            pageSize: pagination.pageSize,
-            pageCount: Math.ceil(objects.length / pagination.pageSize),
-            total: objects.length,
-        };
-        const { page, pageSize } = pagination;
-        const start = (page - 1) * pageSize;
-
-        const paginatedObjects = _(objects)
-            .slice(start, start + pageSize)
-            .value();
-
-        return { pager: pager, objects: paginatedObjects };
-    }
-
     async save(filename: string, files: MonitoringFileResourcesFile[]): Promise<void> {
         const headers = csvFields.map(field => ({ id: field, text: field }));
         const rows = files.map(file => ({
@@ -169,3 +188,24 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
 const csvFields = ["id", "name", "createdBy", "created", "lastUpdatedBy", "lastUpdated", "size", "href"] as const;
 
 type CsvField = typeof csvFields[number];
+
+type DataSetValueFileResoruce = {
+    dataElementUid: string;
+    dataElementName: string;
+    organisationUnitUid: string;
+    organisationUnitName: string;
+    categoryOptionComboUid: string;
+    categoryOptionComboName: string;
+    startDate: string;
+};
+
+type EventSqlField = "eventuid" | "fileresourceuid";
+type DataSetSqlField =
+    | "fileresourceuid"
+    | "dataelementname"
+    | "dataelementuid"
+    | "startdate"
+    | "categoryoptioncomboname"
+    | "categoryoptioncombouid"
+    | "organisationunitname"
+    | "organisationunituid";
