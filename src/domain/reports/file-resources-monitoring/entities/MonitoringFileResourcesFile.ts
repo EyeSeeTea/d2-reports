@@ -9,6 +9,7 @@ export interface MonitoringFileResourcesFile {
     lastUpdated: string;
     contentLength: string;
     href: string;
+    type: FileResourceType;
 }
 
 export function getSizeInMB(file: MonitoringFileResourcesFile): string {
@@ -16,3 +17,5 @@ export function getSizeInMB(file: MonitoringFileResourcesFile): string {
     const truncatedSize = Math.floor(sizeInMB * 100) / 100;
     return `${truncatedSize} MB`;
 }
+
+export type FileResourceType = "Document" | "Aggregated" | "Individual";

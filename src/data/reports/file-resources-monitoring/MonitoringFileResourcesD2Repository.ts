@@ -8,6 +8,7 @@ import { Instance } from "../../common/entities/Instance";
 import { downloadFile } from "../../common/utils/download-file";
 import { MonitoringFileResourcesOptions } from "../../../domain/reports/file-resources-monitoring/entities/MonitoringFileResourcesOptions";
 import {
+    FileResourceType,
     getSizeInMB,
     MonitoringFileResourcesFile,
 } from "../../../domain/reports/file-resources-monitoring/entities/MonitoringFileResourcesFile";
@@ -106,33 +107,12 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         let currentPage = 1;
         let response;
         const pageSize = 250;
+        const eventFileResources = await this.getEventFileResources();
+        const datasetFileresources = await this.getDataSetValueFileResources();
         try {
             do {
-                response = await this.api.models.fileResources
-                    .get({
-                        fields: {
-                            id: true,
-                            name: true,
-                            created: true,
-                            lastUpdated: true,
-                            createdBy: {
-                                name: true,
-                            },
-                            lastUpdatedBy: {
-                                name: true,
-                            },
-                            href: true,
-                            contentLength: true,
-                        },
-                        filter: {
-                            domain: {
-                                eq: "DATA_VALUE",
-                            },
-                        },
-                        page: currentPage,
-                        pageSize: pageSize,
-                    })
-                    .getData();
+                const filter = "DATA_VALUE|DOCUMENT";
+                response = await this.getFileResourcesQuery(response, currentPage, pageSize, filter);
 
                 const responseFiles = response.objects.map((file: any) => {
                     return {
@@ -144,6 +124,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
                         lastUpdatedBy: file.lastUpdatedBy,
                         contentLength: file.contentLength ?? "-",
                         href: file.href ?? "-",
+                        type: getType(file.id, eventFileResources, datasetFileresources, filter),
                     };
                 });
                 files = files.concat(responseFiles);
@@ -153,6 +134,35 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         } catch {
             return [];
         }
+    }
+
+    private async getFileResourcesQuery(response: any, currentPage: number, pageSize: number, filter: string) {
+        response = await this.api.models.fileResources
+            .get({
+                fields: {
+                    id: true,
+                    name: true,
+                    created: true,
+                    lastUpdated: true,
+                    createdBy: {
+                        name: true,
+                    },
+                    lastUpdatedBy: {
+                        name: true,
+                    },
+                    href: true,
+                    contentLength: true,
+                },
+                filter: {
+                    domain: {
+                        eq: filter,
+                    },
+                },
+                page: currentPage,
+                pageSize: pageSize,
+            })
+            .getData();
+        return response;
     }
 
     async save(filename: string, files: MonitoringFileResourcesFile[]): Promise<void> {
@@ -209,3 +219,19 @@ type DataSetSqlField =
     | "categoryoptioncombouid"
     | "organisationunitname"
     | "organisationunituid";
+
+function getType(
+    id: any,
+    eventiFileResources: Record<string, string>,
+    datasetFileresources: Record<string, DataSetValueFileResoruce>,
+    filter: string
+): FileResourceType {
+    if (filter.includes("DATA_VALUE")) {
+        if (id in datasetFileresources) {
+            return "Aggregated";
+        } else if (id in eventiFileResources) {
+            return "Individual";
+        }
+    }
+    return "Document";
+}
