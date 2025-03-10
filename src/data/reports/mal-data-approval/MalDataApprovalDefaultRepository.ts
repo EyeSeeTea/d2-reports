@@ -28,7 +28,6 @@ import { DataDiffItem, DataDiffItemIdentifier } from "../../../domain/reports/ma
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 import { emptyPage, paginate } from "../../../domain/common/entities/PaginatedObjects";
 import { malApprovedDataSetCodes } from "./constants/MalDataApprovalConstants";
-import { CountryCode } from "../../../domain/reports/mal-data-approval/entities/CountryCode";
 
 interface VariableHeaders {
     dataSets: string;
@@ -50,7 +49,7 @@ interface VariablesDiff {
     periods: string;
 }
 
-type SqlFieldHeaders = "datasetuid" | "dataset" | "orgunituid" | "orgunit";
+type SqlFieldHeaders = "datasetuid" | "dataset" | "orgunituid" | "orgunit" | "orgunitcode";
 
 type completeDataSetRegistrationsType = {
     completeDataSetRegistrations: [
@@ -196,10 +195,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         }
     }
 
-    async get(
-        options: MalDataApprovalOptions,
-        countryCodes: CountryCode[]
-    ): Promise<PaginatedObjects<MalDataApprovalItem>> {
+    async get(options: MalDataApprovalOptions): Promise<PaginatedObjects<MalDataApprovalItem>> {
         const { approvalStatus, completionStatus, config, dataSetId, orgUnitIds, periods, sorting, useOldPeriods } =
             options;
         if (!dataSetId) return emptyPage;
@@ -226,7 +222,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             pagingToDownload
         );
 
-        const { pager, objects } = mergeHeadersAndData(options, headerRows, rows, countryCodes);
+        const { pager, objects } = mergeHeadersAndData(options, headerRows, rows);
         const objectsInPage = await promiseMap(objects, async item => {
             const { approved } = await this.getDataApprovalStatus(item);
 
@@ -759,8 +755,7 @@ function sqlViewJoinIds(ids: Id[]): string {
 function mergeHeadersAndData(
     options: MalDataApprovalOptions,
     headers: SqlViewGetData<SqlFieldHeaders>["rows"],
-    data: SqlViewGetData<SqlField>["rows"],
-    countryCodes: { id: string; code: string }[]
+    data: SqlViewGetData<SqlField>["rows"]
 ) {
     const { sorting, paging, orgUnitIds, periods, approvalStatus, completionStatus } = options; // ?
     const rows: Array<MalDataApprovalItem> = [];
@@ -785,7 +780,7 @@ function mergeHeadersAndData(
                 dataSet: header.dataset as MalDataSet,
                 orgUnitUid: header.orgunituid,
                 orgUnit: header.orgunit,
-                orgUnitCode: countryCodes.find(countryCode => header.orgunituid === countryCode.id)?.code ?? "",
+                orgUnitCode: header.orgunitcode,
                 period: period,
                 attribute: datavalue?.attribute,
                 approvalWorkflow: datavalue?.approvalworkflow,
