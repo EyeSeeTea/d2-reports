@@ -14,11 +14,12 @@ import {
 } from "../../../domain/reports/file-resources-monitoring/entities/MonitoringFileResourcesFile";
 import { paginate } from "../../../domain/common/entities/PaginatedObjects";
 import { MonitoringFileResourcesPaginatedObjects } from "../../../domain/reports/file-resources-monitoring/entities/MonitoringFileResourcesPaginatedObjects";
-import { MonitoringFileResourcesRepository } from "../../../domain/reports/file-resources-monitoring/repositories/MonitoringFileResourcesRepository";
 import { Dhis2SqlViews } from "../../common/Dhis2SqlViews";
+import { MonitoringFileResourcesRepository } from "../../../domain/reports/file-resources-monitoring/repositories/MonitoringFileResourcesRepository";
 
 export const SQL_EVENT_FILERESOURCE_ID = "kMGTBR65nue";
 export const SQL_DATASETVALUES_FILERESOURCE_ID = "gMg3im4cTYd";
+export const SQL_DOCUMENT_FILERESOURCE = "NJ9a3HivW8W";
 
 export class MonitoringFileResourcesD2Repository implements MonitoringFileResourcesRepository {
     private storageClient: StorageClient;
@@ -27,11 +28,102 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         const instance = new Instance({ url: this.api.baseUrl });
         this.storageClient = new DataStoreStorageClient("user", instance);
     }
+    async delete(selectedIds: string[]): Promise<void> {
+        const datavalueMap = await this.getDataSetValueFileResources();
+        const documentsMap = await this.getDocumentAndFileResourcesUIds();
+        const eventMap = await this.getEventFileResources();
 
-    async delete(ids: string[]): Promise<void> {
+        const deleteActions = selectedIds.map(id => {
+            if (id in datavalueMap) {
+                const dataValueInfo = datavalueMap[id];
+                if (dataValueInfo !== undefined) {
+                    return this.deleteDataSetFile(dataValueInfo);
+                }
+            } else if (id in documentsMap) {
+                const document = documentsMap[id];
+                if (document !== undefined) {
+                    return this.deleteDocument(id);
+                }
+            } else if (id in eventMap) {
+                const event = eventMap[id];
+                if (event !== undefined) {
+                    return this.deleteEventFile(event, id);
+                }
+            }
+            console.warn(`ID ${id} not found`);
+            return Promise.resolve();
+        });
+
+        await Promise.all(deleteActions);
+    }
+
+    async deleteDocument(id: string) {
+        try {
+            await this.api.models.documents.delete({ id: id });
+        } catch (error) {
+            console.debug(error);
+        }
+    }
+
+    async deleteDataSetFile(dataSetFile: DataSetValueFileResource) {
+        try {
+            await this.api.delete("/dataValues", {
+                ou: dataSetFile.organisationUnitUid,
+                pe: dataSetFile.startDate,
+                de: dataSetFile.dataElementUid,
+            });
+        } catch (error) {
+            console.debug(error);
+        }
+    }
+
+    async deleteEventFile(eventId: string, fileResourceId: string): Promise<void> {
+        try {
+            const eventResponse = await this.api.events
+                .get({
+                    fields: {
+                        id: true,
+                        dataValues: { dataElement: true, value: true },
+                        event: true,
+                        orgUnit: true,
+                        program: true,
+                        programStage: true,
+                        status: true,
+                        eventDate: true,
+                    },
+                    event: eventId,
+                })
+                .getData();
+
+            const event = eventResponse.events[0];
+            if (!event) {
+                throw new Error(`Event not found ${eventId}`);
+            }
+
+            const filteredDataValues = event.dataValues.filter(dv => dv.value !== fileResourceId);
+
+            const payload = {
+                events: [
+                    {
+                        dataValues: filteredDataValues,
+                        event: eventId,
+                        orgUnit: event.orgUnit,
+                        program: event.program,
+                        status: event.status,
+                        eventDate: event.eventDate,
+                        programStage: event.programStage,
+                    },
+                ],
+            };
+            this.api.events.post({}, payload);
+        } catch (error) {
+            console.debug(error);
+        }
+    }
+    async deleteDocumentsByIds(ids: string[]): Promise<void> {
         const deletePromises = ids.map(async id => {
             try {
-                await this.api.models.fileResources.delete({ id: id }).getData();
+                await this.api.models.documents.delete({ id: id }).getData();
             } catch (error) {
                 console.debug(error);
             }
@@ -69,31 +161,47 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         });
     }
 
-    private async getEventFileResources(): Promise<Record<string, string>> {
+    private async getDocumentAndFileResourcesUIds(): Promise<Record<string, string>> {
         const response = await new Dhis2SqlViews(this.api)
-            .query<{}, EventSqlField>(SQL_EVENT_FILERESOURCE_ID, undefined, {})
+            .query<{}, DocumentSqlField>(SQL_DOCUMENT_FILERESOURCE, undefined, {})
             .getData();
 
-        const eventFileResourceMap = response.rows.reduce<Record<string, string>>((acc, row) => {
-            acc[row.fileresourceuid] = row.eventuid;
+        const documentFileResourceMap = response.rows.reduce<Record<string, string>>((acc, row) => {
+            if (row.fileresourceuid && row.documentuid) {
+                acc[row.fileresourceuid] = row.documentuid;
+            }
+            acc[row.fileresourceuid] = row.documentuid;
             return acc;
         }, {});
+
+        return documentFileResourceMap;
+    }
+
+    private async getEventFileResources(): Promise<Record<string, string>> {
+        const response = await new Dhis2SqlViews(this.api)
+            .query<{}, EventSqlField>(SQL_EVENT_FILERESOURCE_ID, undefined, {page:1,pageSize:10000})
+            .getData();
+
+            const eventFileResourceMap = response.rows.reduce<Record<string, string>>((acc, row) => {
+                if (row.fileresourceuid && row.eventuid) {
+                    acc[row.fileresourceuid] = row.eventuid;
+                }
+                acc[row.fileresourceuid] = row.eventuid;
+                return acc;
+            }, {}); 
         return eventFileResourceMap;
     }
 
-    private async getDataSetValueFileResources(): Promise<Record<string, DataSetValueFileResoruce>> {
+    private async getDataSetValueFileResources(): Promise<Record<string, DataSetValueFileResource>> {
         const response = await new Dhis2SqlViews(this.api)
-            .query<{}, DataSetSqlField>(SQL_EVENT_FILERESOURCE_ID, undefined, {})
-            .getData();
-
-        const dataSetValueResourceMap = response.rows.reduce<Record<string, DataSetValueFileResoruce>>((acc, row) => {
+            .query<{}, DataSetSqlField>(SQL_DATASETVALUES_FILERESOURCE_ID, undefined, {page:1,pageSize:10000})
+            .getData();        
+        
+        const dataSetValueResourceMap = response.rows.reduce<Record<string, DataSetValueFileResource>>((acc, row) => {
             acc[row.fileresourceuid] = {
                 dataElementUid: row.dataelementuid,
-                dataElementName: row.dataelementname,
                 organisationUnitUid: row.organisationunituid,
-                organisationUnitName: row.organisationunitname,
                 categoryOptionComboUid: row.categoryoptioncombouid,
-                categoryOptionComboName: row.categoryoptioncomboname,
                 startDate: row.startdate,
             };
             return acc;
@@ -107,14 +215,15 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         let currentPage = 1;
         let response;
         const pageSize = 250;
+        const documentFileResource = await this.getDocumentAndFileResourcesUIds();
         const eventFileResources = await this.getEventFileResources();
         const datasetFileresources = await this.getDataSetValueFileResources();
         try {
             do {
-                const filter = "DATA_VALUE|DOCUMENT";
+                const filter = ["DATA_VALUE", "DOCUMENT"];
                 response = await this.getFileResourcesQuery(response, currentPage, pageSize, filter);
 
-                const responseFiles = response.objects.map((file: any) => {
+                const responseFiles: MonitoringFileResourcesFile = response.objects.map((file: any) => {
                     return {
                         id: file.id,
                         name: file.name,
@@ -124,7 +233,13 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
                         lastUpdatedBy: file.lastUpdatedBy,
                         contentLength: file.contentLength ?? "-",
                         href: file.href ?? "-",
-                        type: getType(file.id, eventFileResources, datasetFileresources, filter),
+                        action_url: getActionUrl(
+                            file.id,
+                            eventFileResources,
+                            datasetFileresources,
+                            documentFileResource
+                        ),
+                        type: getType(file.id, eventFileResources, datasetFileresources, file.domain),
                     };
                 });
                 files = files.concat(responseFiles);
@@ -136,7 +251,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         }
     }
 
-    private async getFileResourcesQuery(response: any, currentPage: number, pageSize: number, filter: string) {
+    private async getFileResourcesQuery(response: any, currentPage: number, pageSize: number, filter: string[]) {
         response = await this.api.models.fileResources
             .get({
                 fields: {
@@ -152,10 +267,11 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
                     },
                     href: true,
                     contentLength: true,
+                    domain: true,
                 },
                 filter: {
                     domain: {
-                        eq: filter,
+                        in: filter,
                     },
                 },
                 page: currentPage,
@@ -176,6 +292,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
             lastUpdated: file.lastUpdated,
             size: getSizeInMB(file),
             href: file.href,
+            type: file.type,
         }));
 
         const csvDataSource = new CsvWriterDataSource();
@@ -195,43 +312,68 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         return this.storageClient.saveObject<string[]>(namespace, columns);
     }
 }
-const csvFields = ["id", "name", "createdBy", "created", "lastUpdatedBy", "lastUpdated", "size", "href"] as const;
+const csvFields = [
+    "id",
+    "name",
+    "createdBy",
+    "created",
+    "lastUpdatedBy",
+    "lastUpdated",
+    "size",
+    "href",
+    "type",
+] as const;
 
 type CsvField = typeof csvFields[number];
 
-type DataSetValueFileResoruce = {
+type DataSetValueFileResource = {
     dataElementUid: string;
-    dataElementName: string;
     organisationUnitUid: string;
-    organisationUnitName: string;
     categoryOptionComboUid: string;
-    categoryOptionComboName: string;
     startDate: string;
 };
 
+type DocumentSqlField = "documentuid" | "fileresourceuid";
 type EventSqlField = "eventuid" | "fileresourceuid";
 type DataSetSqlField =
     | "fileresourceuid"
-    | "dataelementname"
     | "dataelementuid"
     | "startdate"
-    | "categoryoptioncomboname"
     | "categoryoptioncombouid"
-    | "organisationunitname"
-    | "organisationunituid";
+    | "organisationunituid"
+    | "fileresourceuid";
 
 function getType(
     id: any,
-    eventiFileResources: Record<string, string>,
-    datasetFileresources: Record<string, DataSetValueFileResoruce>,
-    filter: string
+    eventIdFileResources: Record<string, string>,
+    datasetFileresources: Record<string, DataSetValueFileResource>,
+    domain: string
 ): FileResourceType {
-    if (filter.includes("DATA_VALUE")) {
+    
+    if (domain === "DATA_VALUE") {
         if (id in datasetFileresources) {
             return "Aggregated";
-        } else if (id in eventiFileResources) {
+        } else if (id in eventIdFileResources) {
             return "Individual";
         }
     }
-    return "Document";
+    if(domain === "DOCUMENT")
+        return "Document"
+    return "Unknown";
+}
+
+function getActionUrl(
+    id: any,
+    eventIdFileResources: Record<string, string>,
+    datasetFileresources: Record<string, DataSetValueFileResource>,
+    documentFileresources: Record<string, string>
+): string {
+    if (id in eventIdFileResources) {
+        return `api/event/${eventIdFileResources[id]}`;
+    } else if (id in datasetFileresources) {
+        return `api/dataValues?de=${datasetFileresources[id]?.dataElementUid}&co=${datasetFileresources[id]?.categoryOptionComboUid}&ou=${datasetFileresources[id]?.organisationUnitUid}&pe=${datasetFileresources[id]?.startDate}`;
+    } else if (id in documentFileresources) {
+        return `api/document/${documentFileresources[id]}`;
+    }
+    return "-";
 }

@@ -18,4 +18,4 @@ export function getSizeInMB(file: MonitoringFileResourcesFile): string {
     return `${truncatedSize} MB`;
 }
 
-export type FileResourceType = "Document" | "Aggregated" | "Individual";
+export type FileResourceType = "Document" | "Aggregated" | "Individual" | "Unknown";

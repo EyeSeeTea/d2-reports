@@ -1,7 +1,7 @@
 import { UseCase } from "../../../../compositionRoot";
 import { MonitoringFileResourcesRepository } from "../repositories/MonitoringFileResourcesRepository";
 
-export class DeleteMonitoringFileResourcesUseCase implements UseCase {
+export class DeleteMonitoringDocumentsUseCase implements UseCase {
     constructor(private monitoringRepository: MonitoringFileResourcesRepository) {}
 
     execute(ids: string[]): Promise<void> {

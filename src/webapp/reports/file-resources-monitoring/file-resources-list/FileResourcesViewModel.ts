@@ -13,6 +13,7 @@ export interface FileResourcesViewModel {
     size: string;
     contentLength: number;
     href: string;
+    type: string;
 }
 
 export function getFileResourcesMonitoringViews(items: MonitoringFileResourcesFile[]): FileResourcesViewModel[] {
@@ -27,6 +28,7 @@ export function getFileResourcesMonitoringViews(items: MonitoringFileResourcesFi
             size: item.contentLength !== undefined ? String(getSizeInMB(item)) : "-",
             contentLength: parseInt(item.contentLength) ?? 0,
             href: item.href,
+            type: item.type,
         };
     });
 }
