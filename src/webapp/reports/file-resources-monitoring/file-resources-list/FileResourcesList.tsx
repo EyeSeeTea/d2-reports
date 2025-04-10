@@ -45,7 +45,22 @@ export const FileResourcesMonitorList: React.FC = React.memo(() => {
                 { name: "lastUpdated", text: i18n.t("LastUpdated"), sortable: true },
                 { name: "lastUpdatedBy", text: i18n.t("LastUpdatedBy"), sortable: true, hidden: true },
                 { name: "size", text: i18n.t("Size"), sortable: true, hidden: true, sortField: "contentLength" }, //this field must be sorted by contentLenght to avoid wrong orders
-                { name: "href", text: i18n.t("Details"), sortable: false, hidden: true },
+                { name: "href", text: i18n.t("Details"), sortable: false, hidden: true },                
+                {
+                    name: "action_url",
+                    text: i18n.t("Action"),
+                    sortable: false,
+                    hidden: false,
+                    render: (row: FileResourcesViewModel) => {
+                        const baseUrl = row.href?.split("/api/")[0];
+                        const fullUrl = baseUrl ? `${baseUrl}${row.action_url}` : row.action_url;
+                        return (
+                            <a href={fullUrl} target="_blank" rel="noopener noreferrer">
+                                {i18n.t("View")}
+                            </a>
+                        );
+                    },
+                },
                 { name: "type", text: i18n.t("Type"), sortable: false, hidden: true },
             ],
             actions: [

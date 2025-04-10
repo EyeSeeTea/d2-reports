@@ -9,6 +9,7 @@ export interface MonitoringFileResourcesFile {
     lastUpdated: string;
     contentLength: string;
     href: string;
+    action_url: string;
     type: FileResourceType;
 }
 
