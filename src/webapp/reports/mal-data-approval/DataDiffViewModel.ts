@@ -1,4 +1,3 @@
-import { Config } from "../../../domain/common/entities/Config";
 import { DataDiffItem, getDataDiffItemId } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
 
 export interface DataDiffViewModel {
@@ -14,7 +13,7 @@ export interface DataDiffViewModel {
     apvdComment: string | undefined;
 }
 
-export function getDataDiffViews(_config: Config, items: DataDiffItem[]): DataDiffViewModel[] {
+export function getDataDiffViews(items: DataDiffItem[]): DataDiffViewModel[] {
     return items.map(item => {
         return {
             id: getDataDiffItemId(item),

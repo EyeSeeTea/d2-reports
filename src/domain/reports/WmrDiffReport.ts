@@ -85,7 +85,7 @@ export class WmrDiffReport {
                     dataSetUid: malariaDataSetId,
                     orgUnitUid: orgUnitId,
                     period: period,
-                    value: malariaDataValue?.value,
+                    value: approvalDataValue && !malariaDataValue ? "" : malariaDataValue?.value,
                     dataElement: this.buildDataElementNameWithCombination(dataElement),
                     comment: malariaDataValue?.comment,
                     apvdDataElement: approvalDataValue?.dataElement,
