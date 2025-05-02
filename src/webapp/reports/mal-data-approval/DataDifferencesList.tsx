@@ -12,6 +12,7 @@ import _ from "lodash";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Namespaces } from "../../../data/common/clients/storage/Namespaces";
 import { DataDiffItem, parseDataDiffItemId } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
+
 import i18n from "../../../locales";
 import { useAppContext } from "../../contexts/app-context";
 import { DataDiffViewModel, getDataDiffViews } from "./DataDiffViewModel";
@@ -59,7 +60,7 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
 
                         isUpdated();
                     },
-                    isActive: item => isMalAdmin && item.filter(item => item.value).length > 0,
+                    isActive: items => isMalAdmin && items.filter(item => item.value !== undefined).length > 0,
                 },
             ],
             initialSorting: {
@@ -88,9 +89,12 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
                 dataSetId: items[0]?.dataSet,
             });
 
-            if (!pager || !objects) snackbar.error(i18n.t("Error when trying to check difference in data values"));
+            if (!pager && !objects) {
+                snackbar.error(i18n.t("Error when trying to check difference in data values"));
+                return emptyPage;
+            }
 
-            return { pager, objects: getDataDiffViews(config, objects) };
+            return { pager: pager, objects: getDataDiffViews(objects) };
         },
         [compositionRoot.malDataApproval, config, selectedIds, snackbar]
     );
@@ -137,7 +141,7 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ select
 
 function getSortingFromTableSorting(sorting: TableSorting<DataDiffViewModel>): Sorting<DataDiffItem> {
     return {
-        field: sorting.field === "id" ? "period" : sorting.field,
+        field: sorting.field === "id" ? "dataElement" : sorting.field,
         direction: sorting.order,
     };
 }
