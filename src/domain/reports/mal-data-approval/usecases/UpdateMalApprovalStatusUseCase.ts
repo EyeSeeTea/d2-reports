@@ -21,33 +21,7 @@ export class UpdateMalApprovalStatusUseCase {
             case "approve":
                 return this.approvalRepository.approve(items);
             case "duplicate": {
-                const dataElementsWithValues: DataDiffItemIdentifier[] = _(
-                    await promiseMap(items, async item => {
-                        return await new WmrDiffReport(this.dataValueRepository, this.dataSetRepository).getDiff(
-                            item.dataSet,
-                            item.orgUnit,
-                            item.period
-                        );
-                    })
-                )
-                    .flatten()
-                    .map(dataElementWithValues => {
-                        const { dataElement, value, apvdValue, comment } = dataElementWithValues;
-                        if (!dataElement) throw Error("No data element found");
-
-                        return {
-                            dataSet: dataElementWithValues.dataSetUid,
-                            orgUnit: dataElementWithValues.orgUnitUid,
-                            period: dataElementWithValues.period,
-                            dataElement: dataElement,
-                            value: value ?? "",
-                            apvdValue: apvdValue ?? "",
-                            comment: comment,
-                        };
-                    })
-                    .compact()
-                    .value();
-
+                const dataElementsWithValues = await this.getDataElementsToDuplicate(items);
                 return this.approvalRepository.duplicateDataSets(items, dataElementsWithValues);
             }
             case "revoke":
@@ -57,6 +31,37 @@ export class UpdateMalApprovalStatusUseCase {
             default:
                 return false;
         }
+    }
+
+    private async getDataElementsToDuplicate(
+        items: MalDataApprovalItemIdentifier[]
+    ): Promise<DataDiffItemIdentifier[]> {
+        const dataElementsWithValues = await promiseMap(items, async item => {
+            return await new WmrDiffReport(this.dataValueRepository, this.dataSetRepository).getDiff(
+                item.dataSet,
+                item.orgUnit,
+                item.period
+            );
+        });
+
+        return _(dataElementsWithValues)
+            .flatten()
+            .map(dataElementWithValues => {
+                const { dataElement, value, apvdValue, comment } = dataElementWithValues;
+                if (!dataElement) throw Error("No data element found");
+
+                return {
+                    dataSet: dataElementWithValues.dataSetUid,
+                    orgUnit: dataElementWithValues.orgUnitUid,
+                    period: dataElementWithValues.period,
+                    dataElement: dataElement,
+                    value: value ?? "",
+                    apvdValue: apvdValue ?? "",
+                    comment: comment,
+                };
+            })
+            .compact()
+            .value();
     }
 }
 
