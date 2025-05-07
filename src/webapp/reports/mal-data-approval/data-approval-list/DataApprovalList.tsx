@@ -37,7 +37,7 @@ import { DataSetsFilter, Filters } from "./Filters";
 import { DataDifferencesList } from "../DataDifferencesList";
 import { Notifications, NotificationsOff, PlaylistAddCheck, ThumbUp } from "@material-ui/icons";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
-import { MAL_WMR_FORM } from "../../../../data/reports/mal-data-approval/MalDataApprovalDefaultRepository";
+import { MAL_WMR_FORM_CODE } from "../../../../data/reports/mal-data-approval/MalDataApprovalDefaultRepository";
 
 export const DataApprovalList: React.FC<{ dataSetCode?: string }> = React.memo(props => {
     const { dataSetCode } = props;
@@ -113,18 +113,23 @@ export const DataApprovalList: React.FC<{ dataSetCode?: string }> = React.memo(p
     const getMonitoringJson = React.useMemo(
         () =>
             (
+                config: Config,
                 initialMonitoringValues: MonitoringValue | Monitoring[],
                 addedMonitoringValues: Monitoring[],
                 elementType: string,
-                dataSet: string,
                 userGroups: string[]
             ): MonitoringValue => {
+                const dataSetName =
+                    _(config.dataSets)
+                        .values()
+                        .find(dataSet => dataSet.code === MAL_WMR_FORM_CODE)?.name ?? "";
+
                 if (!_.isArray(initialMonitoringValues) && initialMonitoringValues) {
                     const initialMonitoring =
-                        _.first(initialMonitoringValues[elementType]?.[dataSet])?.monitoring ?? [];
+                        _.first(initialMonitoringValues[elementType]?.[dataSetName])?.monitoring ?? [];
 
                     const newDataSets = _.merge({}, initialMonitoringValues[elementType], {
-                        [dataSet]: [
+                        [dataSetName]: [
                             _.omit(
                                 {
                                     monitoring: combineMonitoringValues(initialMonitoring, addedMonitoringValues).map(
@@ -164,7 +169,7 @@ export const DataApprovalList: React.FC<{ dataSetCode?: string }> = React.memo(p
 
                     return {
                         [elementType]: {
-                            [dataSet]: [
+                            [dataSetName]: [
                                 {
                                     monitoring: combineMonitoringValues(initialMonitoring, addedMonitoringValues),
                                     userGroups,
@@ -319,13 +324,9 @@ export const DataApprovalList: React.FC<{ dataSetCode?: string }> = React.memo(p
 
                         await compositionRoot.malDataApproval.saveMonitoring(
                             Namespaces.MONITORING,
-                            getMonitoringJson(
-                                monitoring,
-                                monitoringValues,
-                                "dataSets",
-                                config.dataSets[MAL_WMR_FORM]?.name ?? "",
-                                [dataNotificationsUserGroup]
-                            )
+                            getMonitoringJson(config, monitoring, monitoringValues, "dataSets", [
+                                dataNotificationsUserGroup,
+                            ])
                         );
 
                         const result = await compositionRoot.malDataApproval.updateStatus(items, "duplicate");
@@ -355,13 +356,9 @@ export const DataApprovalList: React.FC<{ dataSetCode?: string }> = React.memo(p
 
                         await compositionRoot.malDataApproval.saveMonitoring(
                             Namespaces.MONITORING,
-                            getMonitoringJson(
-                                monitoring,
-                                monitoringValues,
-                                "dataSets",
-                                config.dataSets[MAL_WMR_FORM]?.name ?? "",
-                                [dataNotificationsUserGroup]
-                            )
+                            getMonitoringJson(config, monitoring, monitoringValues, "dataSets", [
+                                dataNotificationsUserGroup,
+                            ])
                         );
 
                         reload();
@@ -388,13 +385,9 @@ export const DataApprovalList: React.FC<{ dataSetCode?: string }> = React.memo(p
 
                         await compositionRoot.malDataApproval.saveMonitoring(
                             Namespaces.MONITORING,
-                            getMonitoringJson(
-                                monitoring,
-                                monitoringValues,
-                                "dataSets",
-                                config.dataSets[MAL_WMR_FORM]?.name ?? "",
-                                [dataNotificationsUserGroup]
-                            )
+                            getMonitoringJson(config, monitoring, monitoringValues, "dataSets", [
+                                dataNotificationsUserGroup,
+                            ])
                         );
 
                         reload();
@@ -444,7 +437,7 @@ export const DataApprovalList: React.FC<{ dataSetCode?: string }> = React.memo(p
             isMalApprover,
             isMalAdmin,
             getMonitoringJson,
-            config.dataSets,
+            config,
             dataNotificationsUserGroup,
             getMonitoringValue,
             disableRevoke,

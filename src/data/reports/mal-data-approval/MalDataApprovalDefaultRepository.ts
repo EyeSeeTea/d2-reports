@@ -27,6 +27,7 @@ import {
 import { DataDiffItem, DataDiffItemIdentifier } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 import { paginate } from "../../../domain/common/entities/PaginatedObjects";
+import { getMetadataByIdentifiableToken } from "../../common/utils/getMetadataByIdentifiableToken";
 
 interface VariableHeaders {
     dataSets: string;
@@ -303,11 +304,17 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
     async approve(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean> {
         try {
+            const malSubmissionDateDataElement = await getMetadataByIdentifiableToken({
+                api: this.api,
+                metadataType: "dataElements",
+                token: dataElementCodes.MAL_SUBMISSION_DATE,
+            });
+
             const dataValues = dataSets.map(ds => ({
                 dataSet: ds.dataSet,
                 period: ds.period,
                 orgUnit: ds.orgUnit,
-                dataElement: dataElements.MAL_SUBMISSION_DATE_DE,
+                dataElement: malSubmissionDateDataElement.id,
                 categoryOptionCombo: DEFAULT_COC,
                 value: getISODate(),
             }));
@@ -364,7 +371,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         dataElementsWithValues: DataDiffItemIdentifier[]
     ): Promise<boolean> {
         try {
-            const approvalDataSetId = process.env.REACT_APP_APPROVE_DATASET_ID ?? MAL_WMR_FORM_APVD;
+            const approvalDataSetId = await this.getApprovalDataSetId();
 
             const dataValueSets: DataSetsValueType[] = await this.getDataValueSets(dataSets);
 
@@ -389,7 +396,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
             const dataValues = this.makeDataValuesArray(approvalDataSetId, dataValueSets, dataElementsMatchedArray);
 
-            this.addTimestampsToDataValuesArray(approvalDataSetId, dataSets, dataValues);
+            await this.addTimestampsToDataValuesArray(approvalDataSetId, dataSets, dataValues);
 
             await this.deleteEmptyDataValues(approvalDataSetId, ADSDataElements, dataElementsWithValues);
 
@@ -402,7 +409,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
     async duplicateDataValues(dataValues: DataDiffItemIdentifier[]): Promise<boolean> {
         try {
-            const approvalDataSetId = process.env.REACT_APP_APPROVE_DATASET_ID ?? MAL_WMR_FORM_APVD;
+            const approvalDataSetId = await this.getApprovalDataSetId();
             const uniqueDataSets = _.uniqBy(dataValues, "dataSet");
             const uniqueDataElementsNames = _.uniq(_.map(dataValues, "dataElement"));
 
@@ -431,7 +438,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
             const apvdDataValues = this.makeDataValuesArray(approvalDataSetId, dataValueSets, dataElementsMatchedArray);
 
-            this.addTimestampsToDataValuesArray(approvalDataSetId, dataValues, apvdDataValues);
+            await this.addTimestampsToDataValuesArray(approvalDataSetId, dataValues, apvdDataValues);
 
             await this.deleteEmptyDataValues(approvalDataSetId, ADSDataElements, dataValues);
 
@@ -440,6 +447,16 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             console.debug(error);
             return false;
         }
+    }
+
+    private async getApprovalDataSetId(): Promise<Id> {
+        const { id } = await getMetadataByIdentifiableToken({
+            api: this.api,
+            metadataType: "dataSets",
+            token: MAL_WMR_FORM_APVD_NAME,
+        });
+
+        return process.env.REACT_APP_APPROVE_DATASET_ID ?? id;
     }
 
     private async deleteEmptyDataValues(
@@ -516,17 +533,23 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             );
     }
 
-    private addTimestampsToDataValuesArray(
+    private async addTimestampsToDataValuesArray(
         approvalDataSetId: string,
         actionItems: MalDataApprovalItemIdentifier[] | DataDiffItemIdentifier[],
         dataValues: DataValueType[]
     ) {
+        const malApprovalDateDataElement = await getMetadataByIdentifiableToken({
+            api: this.api,
+            metadataType: "dataElements",
+            token: dataElementCodes.MAL_APPROVAL_DATE_APVD,
+        });
+
         actionItems.forEach(actionItem => {
             dataValues.push({
                 dataSet: approvalDataSetId,
                 period: actionItem.period,
                 orgUnit: actionItem.orgUnit,
-                dataElement: dataElements.MAL_APPROVAL_DATE_DE_APVD,
+                dataElement: malApprovalDateDataElement.id,
                 categoryOptionCombo: DEFAULT_COC,
                 attributeOptionCombo: DEFAULT_COC,
                 value: getISODate(),
@@ -715,7 +738,10 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                 dataSetElements: DataSetElementsType[];
                 sections: { id: string }[];
             } = await this.api
-                .get<any>(`/dataSets/${MAL_WMR_FORM}`, { fields: "sections,dataSetElements[dataElement[id,name]]" })
+                .get<any>(`/dataSets`, {
+                    fields: "sections,dataSetElements[dataElement[id,name]]",
+                    filter: `code:eq:${MAL_WMR_FORM_CODE}`,
+                })
                 .getData();
 
             if (_.isEmpty(dataSetData.sections) || _.isEmpty(dataSetData.dataSetElements)) {
@@ -836,10 +862,10 @@ function mergeHeadersAndData(
     return paginate(rowsFiltered, paging);
 }
 
-export const MAL_WMR_FORM = "CWuqJ3dtQC4";
-const MAL_WMR_FORM_APVD = "fRrt4V8ImqD";
-const dataElements = {
-    MAL_SUBMISSION_DATE_DE: "RvS8hSy27Ou",
-    MAL_APPROVAL_DATE_DE_APVD: "VqcXVXTPaZG",
+export const MAL_WMR_FORM_CODE = "0MAL_5";
+const MAL_WMR_FORM_APVD_NAME = "MAL - WMR Form-APVD";
+const dataElementCodes = {
+    MAL_SUBMISSION_DATE: "MAL_SUBMISSION_DATE",
+    MAL_APPROVAL_DATE_APVD: "MAL_APPROVAL_DATE-APVD",
 };
 const DEFAULT_COC = "Xr12mI7VPn3";
