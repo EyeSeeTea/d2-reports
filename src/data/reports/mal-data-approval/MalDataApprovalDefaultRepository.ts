@@ -497,26 +497,38 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         approvedDataElements: DataElementsType[],
         dataValues: DataDiffItemIdentifier[]
     ): Promise<void> {
-        const emptyValuesForApproval = dataValues
-            .filter(dataValue => !dataValue.value && dataValue.apvdValue)
+        const emptyDataValues = _(dataValues)
+            .filter(dataValue => !dataValue.value && dataValue.apvdValue !== undefined)
             .map(dataValue => {
-                const apvdDataElementId =
-                    approvedDataElements.find(dataElement => `${dataValue.dataElement}-APVD` === dataElement.name)
-                        ?.id ?? "";
+                const apvdDataElementId = approvedDataElements.find(
+                    dataElement => `${dataValue.dataElement}-APVD` === dataElement.name
+                )?.id;
+
+                if (!apvdDataElementId) {
+                    console.warn(`Data element ${dataValue.dataElement} not found`);
+                    return undefined;
+                }
 
                 return {
                     coc: DEFAULT_COC,
-                    de: apvdDataElementId,
-                    ds: approvalDataSetId,
-                    ou: dataValue.orgUnit,
-                    pe: dataValue.period,
+                    dataElement: apvdDataElementId,
+                    orgUnit: dataValue.orgUnit,
+                    period: dataValue.period,
+                    value: dataValue.value,
                 };
-            });
+            })
+            .compact()
+            .value();
 
-        if (!_.isEmpty(emptyValuesForApproval)) {
-            return await promiseMap(emptyValuesForApproval, async dataValueToDelete => {
-                return this.api.delete<void>("/dataValues", dataValueToDelete).getData();
-            }).then(() => undefined);
+        if (!_.isEmpty(emptyDataValues)) {
+            return this.api.dataValues
+                .postSet({ importStrategy: "DELETE" }, { dataSet: approvalDataSetId, dataValues: emptyDataValues })
+                .getData()
+                .then(dataValueSetsPostResponse => {
+                    if (dataValueSetsPostResponse.status !== "SUCCESS") {
+                        throw new Error("Error when deleting empty data values");
+                    }
+                });
         }
     }
 
