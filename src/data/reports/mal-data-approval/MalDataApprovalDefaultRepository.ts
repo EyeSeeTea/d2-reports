@@ -27,6 +27,7 @@ import {
 import { DataDiffItem, DataDiffItemIdentifier } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 import { paginate } from "../../../domain/common/entities/PaginatedObjects";
+import { getMetadataByIdentifiableToken } from "../../common/utils/getMetadataByIdentifiableToken";
 
 interface VariableHeaders {
     dataSets: string;
@@ -50,7 +51,7 @@ interface VariablesDiff {
 
 type SqlFieldHeaders = "datasetuid" | "dataset" | "orgunituid" | "orgunit";
 
-type completeDataSetRegistrationsType = {
+type CompleteDataSetRegistrationsType = {
     completeDataSetRegistrations: [
         {
             period?: string;
@@ -64,13 +65,13 @@ type completeDataSetRegistrationsType = {
     ];
 };
 
-type completeCheckresponseType = completeDataSetRegistrationsType[];
+type CompleteCheckResponseType = CompleteDataSetRegistrationsType[];
 
-type dataElementsType = { id: string; name: string };
+type DataElementsType = { id: string; name: string };
 
-type dataSetElementsType = { dataElement: dataElementsType };
+type DataSetElementsType = { dataElement: DataElementsType };
 
-type dataValueType = {
+type DataValueType = {
     dataElement: string;
     period: string;
     orgUnit: string;
@@ -78,12 +79,18 @@ type dataValueType = {
     [key: string]: string;
 };
 
-type dataSetsValueType = {
+type DataSetsValueType = {
     dataSet: string;
     period: string;
     orgUnit: string;
     completeDate?: string;
-    dataValues: dataValueType[];
+    dataValues: DataValueType[];
+};
+
+type DataElementMapping = {
+    origId: string;
+    destId: string;
+    name?: string;
 };
 
 type SqlFieldDiff =
@@ -297,19 +304,25 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
     async approve(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean> {
         try {
+            const malSubmissionDateDataElement = await getMetadataByIdentifiableToken({
+                api: this.api,
+                metadataType: "dataElements",
+                token: dataElementCodes.MAL_SUBMISSION_DATE,
+            });
+
             const dataValues = dataSets.map(ds => ({
                 dataSet: ds.dataSet,
                 period: ds.period,
                 orgUnit: ds.orgUnit,
-                dataElement: "RvS8hSy27Ou",
-                categoryOptionCombo: "Xr12mI7VPn3",
+                dataElement: malSubmissionDateDataElement.id,
+                categoryOptionCombo: DEFAULT_COC,
                 value: getISODate(),
             }));
 
             const dateResponse = await this.api.post<any>("/dataValueSets.json", {}, { dataValues }).getData();
             if (dateResponse.response.status !== "SUCCESS") throw new Error("Error when posting Submission date");
 
-            let completeCheckResponses: completeCheckresponseType = await promiseMap(dataSets, async approval =>
+            let completeCheckResponses: CompleteCheckResponseType = await promiseMap(dataSets, async approval =>
                 this.api
                     .get<any>("/completeDataSetRegistrations", {
                         dataSet: approval.dataSet,
@@ -353,34 +366,39 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         }
     }
 
-    async duplicateDataSets(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean> {
+    async duplicateDataSets(
+        dataSets: MalDataApprovalItemIdentifier[],
+        dataElementsWithValues: DataDiffItemIdentifier[]
+    ): Promise<boolean> {
         try {
-            const approvalDataSetId = process.env.REACT_APP_APPROVE_DATASET_ID ?? "fRrt4V8ImqD";
+            const approvalDataSetId = await this.getApprovalDataSetId();
 
-            const dataValueSets: dataSetsValueType[] = await this.getDataValueSets(dataSets);
+            const dataValueSets: DataSetsValueType[] = await this.getDataValueSets(dataSets);
 
             const uniqueDataSets = _.uniqBy(dataSets, "dataSet");
-            const DSDataElements: { dataSetElements: dataSetElementsType[] }[] = await this.getDSDataElements(
+            const DSDataElements: { dataSetElements: DataSetElementsType[] }[] = await this.getDSDataElements(
                 uniqueDataSets
             );
 
-            const ADSDataElements: dataElementsType[] = await this.getADSDataElements(approvalDataSetId);
+            const ADSDataElements: DataElementsType[] = await this.getADSDataElements(approvalDataSetId);
 
-            const dataElementsMatchedArray: { origId: any; destId: any }[] = DSDataElements.flatMap(DSDataElement => {
+            const dataElementsMatchedArray = DSDataElements.flatMap(DSDataElement => {
                 return DSDataElement.dataSetElements.map(element => {
                     const dataElement = element.dataElement;
                     const othername = dataElement.name + "-APVD";
                     const ADSDataElement = ADSDataElements.find(DataElement => String(DataElement.name) === othername);
                     return {
-                        origId: dataElement?.id,
-                        destId: ADSDataElement?.id,
+                        origId: dataElement.id,
+                        destId: ADSDataElement?.id ?? "",
                     };
                 });
             });
 
             const dataValues = this.makeDataValuesArray(approvalDataSetId, dataValueSets, dataElementsMatchedArray);
 
-            this.addTimestampsToDataValuesArray(approvalDataSetId, dataSets, dataValues);
+            await this.addTimestampsToDataValuesArray(approvalDataSetId, dataSets, dataValues);
+
+            await this.deleteEmptyDataValues(approvalDataSetId, ADSDataElements, dataElementsWithValues);
 
             return this.chunkedDataValuePost(dataValues, 3000);
         } catch (error: any) {
@@ -391,27 +409,25 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
     async duplicateDataValues(dataValues: DataDiffItemIdentifier[]): Promise<boolean> {
         try {
-            const approvalDataSetId = process.env.REACT_APP_APPROVE_DATASET_ID ?? "fRrt4V8ImqD";
+            const approvalDataSetId = await this.getApprovalDataSetId();
             const uniqueDataSets = _.uniqBy(dataValues, "dataSet");
             const uniqueDataElementsNames = _.uniq(_.map(dataValues, "dataElement"));
 
-            const DSDataElements: { dataSetElements: dataSetElementsType[] }[] = await this.getDSDataElements(
-                uniqueDataSets
-            );
+            const DSDataElements = await this.getDSDataElements(uniqueDataSets);
 
-            const dataValueSets: dataSetsValueType[] = await this.getDataValueSets(uniqueDataSets);
+            const dataValueSets = await this.getDataValueSets(uniqueDataSets);
 
-            const ADSDataElements: dataElementsType[] = await this.getADSDataElements(approvalDataSetId);
+            const ADSDataElements = await this.getADSDataElements(approvalDataSetId);
 
-            const dataElementsMatchedArray: { [key: string]: any }[] = DSDataElements.flatMap(DSDataElement => {
+            const dataElementsMatchedArray = DSDataElements.flatMap(DSDataElement => {
                 return DSDataElement.dataSetElements.flatMap(element => {
                     const dataElement = element.dataElement;
                     if (uniqueDataElementsNames.includes(dataElement.name)) {
                         const othername = dataElement.name + "-APVD";
                         const ADSDataElement = ADSDataElements.find(DataElement => DataElement.name === othername);
                         return {
-                            origId: dataElement?.id,
-                            destId: ADSDataElement?.id,
+                            origId: dataElement.id,
+                            destId: ADSDataElement?.id ?? "",
                             name: dataElement.name,
                         };
                     } else {
@@ -422,7 +438,9 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
             const apvdDataValues = this.makeDataValuesArray(approvalDataSetId, dataValueSets, dataElementsMatchedArray);
 
-            this.addTimestampsToDataValuesArray(approvalDataSetId, dataValues, apvdDataValues);
+            await this.addTimestampsToDataValuesArray(approvalDataSetId, dataValues, apvdDataValues);
+
+            await this.deleteEmptyDataValues(approvalDataSetId, ADSDataElements, dataValues);
 
             return this.chunkedDataValuePost(apvdDataValues, 3000);
         } catch (error: any) {
@@ -431,7 +449,57 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         }
     }
 
-    private async getDataValueSets(actionItems: any[]): Promise<dataSetsValueType[]> {
+    private async getApprovalDataSetId(): Promise<Id> {
+        const { id } = await getMetadataByIdentifiableToken({
+            api: this.api,
+            metadataType: "dataSets",
+            token: MAL_WMR_FORM_APVD_NAME,
+        });
+
+        return process.env.REACT_APP_APPROVE_DATASET_ID ?? id;
+    }
+
+    private async deleteEmptyDataValues(
+        approvalDataSetId: string,
+        approvedDataElements: DataElementsType[],
+        dataValues: DataDiffItemIdentifier[]
+    ): Promise<void> {
+        const emptyDataValues = _(dataValues)
+            .filter(dataValue => !dataValue.value && dataValue.apvdValue !== undefined)
+            .map(dataValue => {
+                const apvdDataElementId = approvedDataElements.find(
+                    dataElement => `${dataValue.dataElement}-APVD` === dataElement.name
+                )?.id;
+
+                if (!apvdDataElementId) {
+                    console.warn(`Data element ${dataValue.dataElement} not found`);
+                    return undefined;
+                }
+
+                return {
+                    coc: DEFAULT_COC,
+                    dataElement: apvdDataElementId,
+                    orgUnit: dataValue.orgUnit,
+                    period: dataValue.period,
+                    value: dataValue.value,
+                };
+            })
+            .compact()
+            .value();
+
+        if (!_.isEmpty(emptyDataValues)) {
+            return this.api.dataValues
+                .postSet({ importStrategy: "DELETE" }, { dataSet: approvalDataSetId, dataValues: emptyDataValues })
+                .getData()
+                .then(dataValueSetsPostResponse => {
+                    if (dataValueSetsPostResponse.status !== "SUCCESS") {
+                        throw new Error("Error when deleting empty data values");
+                    }
+                });
+        }
+    }
+
+    private async getDataValueSets(actionItems: any[]): Promise<DataSetsValueType[]> {
         return await promiseMap(actionItems, async item =>
             this.api
                 .get<any>("/dataValueSets", {
@@ -443,7 +511,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         );
     }
 
-    private async getDSDataElements(actionItems: any[]): Promise<{ dataSetElements: dataSetElementsType[] }[]> {
+    private async getDSDataElements(actionItems: any[]): Promise<{ dataSetElements: DataSetElementsType[] }[]> {
         return await promiseMap(actionItems, async item =>
             this.api
                 .get<any>(`/dataSets/${item.dataSet}`, { fields: "dataSetElements[dataElement[id,name]]" })
@@ -451,12 +519,12 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         );
     }
 
-    private async getADSDataElements(approvalDataSetId: string): Promise<dataElementsType[]> {
+    private async getADSDataElements(approvalDataSetId: string): Promise<DataElementsType[]> {
         return await this.api
             .get<any>(`/dataSets/${approvalDataSetId}`, { fields: "dataSetElements[dataElement[id,name]]" })
             .getData()
             .then(ADSDataElements =>
-                ADSDataElements.dataSetElements.map((element: dataSetElementsType) => {
+                ADSDataElements.dataSetElements.map((element: DataSetElementsType) => {
                     return {
                         id: element.dataElement.id,
                         name: element.dataElement.name,
@@ -465,19 +533,25 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             );
     }
 
-    private addTimestampsToDataValuesArray(
+    private async addTimestampsToDataValuesArray(
         approvalDataSetId: string,
         actionItems: MalDataApprovalItemIdentifier[] | DataDiffItemIdentifier[],
-        dataValues: dataValueType[]
+        dataValues: DataValueType[]
     ) {
+        const malApprovalDateDataElement = await getMetadataByIdentifiableToken({
+            api: this.api,
+            metadataType: "dataElements",
+            token: dataElementCodes.MAL_APPROVAL_DATE_APVD,
+        });
+
         actionItems.forEach(actionItem => {
             dataValues.push({
                 dataSet: approvalDataSetId,
                 period: actionItem.period,
                 orgUnit: actionItem.orgUnit,
-                dataElement: "VqcXVXTPaZG",
-                categoryOptionCombo: "Xr12mI7VPn3",
-                attributeOptionCombo: "Xr12mI7VPn3",
+                dataElement: malApprovalDateDataElement.id,
+                categoryOptionCombo: DEFAULT_COC,
+                attributeOptionCombo: DEFAULT_COC,
                 value: getISODate(),
             });
         });
@@ -485,9 +559,9 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
     private makeDataValuesArray(
         approvalDataSetId: string,
-        dataValueSets: dataSetsValueType[],
-        dataElementsMatchedArray: { [key: string]: any }[]
-    ): dataValueType[] {
+        dataValueSets: DataSetsValueType[],
+        dataElementsMatchedArray: DataElementMapping[]
+    ): DataValueType[] {
         return dataValueSets.flatMap(dataValueSet => {
             if (dataValueSet.dataValues) {
                 return dataValueSet.dataValues.flatMap(dataValue => {
@@ -496,7 +570,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                         dataElementsMatchedObj => dataElementsMatchedObj.origId === dataValue.dataElement
                     )?.destId;
 
-                    if (!_.isEmpty(destId) && !_.isEmpty(data.value)) {
+                    if (destId && data.value) {
                         data.dataElement = destId;
                         data.dataSet = approvalDataSetId;
                         delete data.lastUpdated;
@@ -513,7 +587,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         });
     }
 
-    private async chunkedDataValuePost(apvdDataValues: dataValueType[], chunkSize: number) {
+    private async chunkedDataValuePost(apvdDataValues: DataValueType[], chunkSize: number) {
         if (apvdDataValues.length > chunkSize) {
             const copyResponse = [];
             for (let i = 0; i < apvdDataValues.length; i += chunkSize) {
@@ -661,17 +735,20 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
     async generateSortOrder(): Promise<void> {
         try {
             const dataSetData: {
-                dataSetElements: dataSetElementsType[];
+                dataSetElements: DataSetElementsType[];
                 sections: { id: string }[];
             } = await this.api
-                .get<any>(`/dataSets/${MAL_WMR_FORM}`, { fields: "sections,dataSetElements[dataElement[id,name]]" })
+                .get<any>(`/dataSets`, {
+                    fields: "sections,dataSetElements[dataElement[id,name]]",
+                    filter: `code:eq:${MAL_WMR_FORM_CODE}`,
+                })
                 .getData();
 
             if (_.isEmpty(dataSetData.sections) || _.isEmpty(dataSetData.dataSetElements)) {
                 return this.storageClient.saveObject<string[]>(Namespaces.MAL_DIFF_NAMES_SORT_ORDER, []);
             }
 
-            const dataSetElements: dataElementsType[] = dataSetData.dataSetElements.map(item => item.dataElement);
+            const dataSetElements: DataElementsType[] = dataSetData.dataSetElements.map(item => item.dataElement);
 
             const sectionsDEs = await promiseMap(dataSetData.sections, async sections => {
                 return this.api.get<any>(`/sections/${sections.id}`, { fields: "dataElements" }).getData();
@@ -785,4 +862,10 @@ function mergeHeadersAndData(
     return paginate(rowsFiltered, paging);
 }
 
-export const MAL_WMR_FORM = "CWuqJ3dtQC4";
+export const MAL_WMR_FORM_CODE = "0MAL_5";
+const MAL_WMR_FORM_APVD_NAME = "MAL - WMR Form-APVD";
+const dataElementCodes = {
+    MAL_SUBMISSION_DATE: "MAL_SUBMISSION_DATE",
+    MAL_APPROVAL_DATE_APVD: "MAL_APPROVAL_DATE-APVD",
+};
+const DEFAULT_COC = "Xr12mI7VPn3";
