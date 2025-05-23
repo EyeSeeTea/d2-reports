@@ -13,6 +13,9 @@ import _ from "lodash";
 import { MalDataApprovalItemIdentifier } from "../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import { CodedRef } from "../domain/common/entities/Ref";
 
+const START_YEAR = 2000;
+const END_YEAR = new Date().getFullYear();
+
 export async function approveMalDataValues(baseUrl: string, authString: string): Promise<void> {
     const [username, password] = authString.split(":", 2);
     if (!username || !password) return;
@@ -30,6 +33,11 @@ export async function approveMalDataValues(baseUrl: string, authString: string):
     );
 
     const malDataApprovalItems = await buildMalApprovalItems(dataValueRepository, dataSet.id, orgUnit.id);
+
+    if (malDataApprovalItems.length === 0) {
+        console.debug(`No data values to approve in ${dataSet.name} dataset.`);
+        return;
+    }
     await updateMalApprovalStatusUseCase.execute(malDataApprovalItems, "duplicate");
 
     console.debug(`Successfully approved ${malDataApprovalItems.length} data values in ${dataSet.name} dataset.`);
@@ -44,7 +52,7 @@ async function getMalWMRMetadata(api: D2Api): Promise<{ dataSet: CodedRef; orgUn
     const orgUnit = await getMetadataByIdentifiableToken({
         api: api,
         metadataType: "organisationUnits",
-        token: "Global",
+        token: "WHO-HQ",
     });
 
     return { dataSet: dataSet, orgUnit: orgUnit };
@@ -99,6 +107,3 @@ async function main() {
 }
 
 main();
-
-const START_YEAR = 2000;
-const END_YEAR = new Date().getFullYear() - 1;
