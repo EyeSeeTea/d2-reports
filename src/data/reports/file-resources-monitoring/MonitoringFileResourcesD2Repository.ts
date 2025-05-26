@@ -155,8 +155,10 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
 
         await promiseMap(selectedIds, async (id: string) => {
             const type = getFileResourceType(id, refs);
+
             if (type === "Document") {
                 const parentId = getParentId(id, refs);
+
                 if (parentId) {
                     await this.deleteDocument(parentId);
                 }

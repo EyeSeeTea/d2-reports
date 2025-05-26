@@ -1,4 +1,5 @@
 import {
+    FileResourceType,
     formatBytes,
     MonitoringFileResourcesFile,
 } from "../../../../domain/reports/file-resources-monitoring/entities/MonitoringFileResourcesFile";
@@ -14,7 +15,7 @@ export interface FileResourcesViewModel {
     contentLength: number;
     href: string;
     action_url: string;
-    type: string;
+    type: FileResourceType;
 }
 
 export function getFileResourcesMonitoringViews(items: MonitoringFileResourcesFile[]): FileResourcesViewModel[] {
