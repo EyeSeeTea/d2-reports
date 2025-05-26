@@ -28,6 +28,44 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         const instance = new Instance({ url: this.api.baseUrl });
         this.storageClient = new DataStoreStorageClient("user", instance);
     }
+
+    async get(
+        options: MonitoringFileResourcesOptions
+    ): Promise<MonitoringFileResourcesPaginatedObjects<MonitoringFileResourcesFile>> {
+        const { paging, sorting } = options;
+        const objects = await this.getFileResources();
+
+        const filteredRows = await this.getFilteredRows(objects, options);
+
+        const { pager, objects: rowsInPage } = paginate(filteredRows, paging, sorting);
+        return {
+            pager: pager,
+            objects: rowsInPage,
+            files: objects,
+        };
+    }
+
+    async save(filename: string, files: MonitoringFileResourcesFile[]): Promise<void> {
+        const headers = csvFields.map(field => ({ id: field, text: field }));
+        const rows = files.map(file => ({
+            id: file.id,
+            name: file.name,
+            createdBy: file.createdBy.name,
+            created: file.created,
+            lastUpdatedBy: file.lastUpdatedBy?.name ?? "-",
+            lastUpdated: file.lastUpdated,
+            size: getSizeInMB(file),
+            href: file.href,
+            type: file.type,
+        }));
+
+        const csvDataSource = new CsvWriterDataSource();
+        const csvData: CsvData<CsvField> = { headers, rows };
+        const csvContents = csvDataSource.toString(csvData);
+
+        return await downloadFile(csvContents, filename, "text/csv");
+    }
+
     async delete(selectedIds: string[]): Promise<void> {
         const datavalueMap = await this.getDataSetValueFileResources();
         const documentsMap = await this.getDocumentAndFileResourcesUIds();
@@ -57,7 +95,17 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         await Promise.all(deleteActions);
     }
 
-    async deleteDocument(id: string) {
+    async getColumns(namespace: string): Promise<string[]> {
+        const columns = await this.storageClient.getObject<string[]>(namespace);
+
+        return columns ?? [];
+    }
+
+    async saveColumns(namespace: string, columns: string[]): Promise<void> {
+        return this.storageClient.saveObject<string[]>(namespace, columns);
+    }
+
+    private async deleteDocument(id: string) {
         try {
             await this.api.models.documents.delete({ id: id });
         } catch (error) {
@@ -65,7 +113,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         }
     }
 
-    async deleteDataSetFile(dataSetFile: DataSetValueFileResource) {
+    private async deleteDataSetFile(dataSetFile: DataSetValueFileResource) {
         try {
             await this.api.delete("/dataValues", {
                 ou: dataSetFile.organisationUnitUid,
@@ -77,7 +125,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         }
     }
 
-    async deleteEventFile(eventId: string, fileResourceId: string): Promise<void> {
+    private async deleteEventFile(eventId: string, fileResourceId: string): Promise<void> {
         try {
             const eventResponse = await this.api.events
                 .get({
@@ -120,6 +168,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
             console.debug(error);
         }
     }
+
     async deleteDocumentsByIds(ids: string[]): Promise<void> {
         const deletePromises = ids.map(async id => {
             try {
@@ -130,22 +179,6 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         });
 
         await Promise.all(deletePromises);
-    }
-
-    async get(
-        options: MonitoringFileResourcesOptions
-    ): Promise<MonitoringFileResourcesPaginatedObjects<MonitoringFileResourcesFile>> {
-        const { paging, sorting } = options;
-        const objects = await this.getFileResources();
-
-        const filteredRows = await this.getFilteredRows(objects, options);
-
-        const { pager, objects: rowsInPage } = paginate(filteredRows, paging, sorting);
-        return {
-            pager: pager,
-            objects: rowsInPage,
-            files: objects,
-        };
     }
 
     private async getFilteredRows(
@@ -179,24 +212,24 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
 
     private async getEventFileResources(): Promise<Record<string, string>> {
         const response = await new Dhis2SqlViews(this.api)
-            .query<{}, EventSqlField>(SQL_EVENT_FILERESOURCE_ID, undefined, {page:1,pageSize:10000})
+            .query<{}, EventSqlField>(SQL_EVENT_FILERESOURCE_ID, undefined, { page: 1, pageSize: 10000 })
             .getData();
 
-            const eventFileResourceMap = response.rows.reduce<Record<string, string>>((acc, row) => {
-                if (row.fileresourceuid && row.eventuid) {
-                    acc[row.fileresourceuid] = row.eventuid;
-                }
+        const eventFileResourceMap = response.rows.reduce<Record<string, string>>((acc, row) => {
+            if (row.fileresourceuid && row.eventuid) {
                 acc[row.fileresourceuid] = row.eventuid;
-                return acc;
-            }, {}); 
+            }
+            acc[row.fileresourceuid] = row.eventuid;
+            return acc;
+        }, {});
         return eventFileResourceMap;
     }
 
     private async getDataSetValueFileResources(): Promise<Record<string, DataSetValueFileResource>> {
         const response = await new Dhis2SqlViews(this.api)
-            .query<{}, DataSetSqlField>(SQL_DATASETVALUES_FILERESOURCE_ID, undefined, {page:1,pageSize:10000})
-            .getData();        
-        
+            .query<{}, DataSetSqlField>(SQL_DATASETVALUES_FILERESOURCE_ID, undefined, { page: 1, pageSize: 10000 })
+            .getData();
+
         const dataSetValueResourceMap = response.rows.reduce<Record<string, DataSetValueFileResource>>((acc, row) => {
             acc[row.fileresourceuid] = {
                 dataElementUid: row.dataelementuid,
@@ -280,37 +313,6 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
             .getData();
         return response;
     }
-
-    async save(filename: string, files: MonitoringFileResourcesFile[]): Promise<void> {
-        const headers = csvFields.map(field => ({ id: field, text: field }));
-        const rows = files.map(file => ({
-            id: file.id,
-            name: file.name,
-            createdBy: file.createdBy.name,
-            created: file.created,
-            lastUpdatedBy: file.lastUpdatedBy?.name ?? "-",
-            lastUpdated: file.lastUpdated,
-            size: getSizeInMB(file),
-            href: file.href,
-            type: file.type,
-        }));
-
-        const csvDataSource = new CsvWriterDataSource();
-        const csvData: CsvData<CsvField> = { headers, rows };
-        const csvContents = csvDataSource.toString(csvData);
-
-        return await downloadFile(csvContents, filename, "text/csv");
-    }
-
-    async getColumns(namespace: string): Promise<string[]> {
-        const columns = await this.storageClient.getObject<string[]>(namespace);
-
-        return columns ?? [];
-    }
-
-    async saveColumns(namespace: string, columns: string[]): Promise<void> {
-        return this.storageClient.saveObject<string[]>(namespace, columns);
-    }
 }
 const csvFields = [
     "id",
@@ -349,7 +351,6 @@ function getType(
     datasetFileresources: Record<string, DataSetValueFileResource>,
     domain: string
 ): FileResourceType {
-    
     if (domain === "DATA_VALUE") {
         if (id in datasetFileresources) {
             return "Aggregated";
@@ -357,8 +358,7 @@ function getType(
             return "Individual";
         }
     }
-    if(domain === "DOCUMENT")
-        return "Document"
+    if (domain === "DOCUMENT") return "Document";
     return "Unknown";
 }
 
