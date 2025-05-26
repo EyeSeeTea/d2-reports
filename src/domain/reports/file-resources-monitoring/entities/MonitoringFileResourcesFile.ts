@@ -13,10 +13,21 @@ export interface MonitoringFileResourcesFile {
     type: FileResourceType;
 }
 
-export function getSizeInMB(file: MonitoringFileResourcesFile): string {
-    const sizeInMB = parseFloat(file.contentLength) / (1024 * 1024);
-    const truncatedSize = Math.floor(sizeInMB * 100) / 100;
-    return `${truncatedSize} MB`;
+export function formatBytes(file: MonitoringFileResourcesFile): string {
+    const bytes = parseFloat(file.contentLength);
+
+    if (bytes === 0 || isNaN(bytes)) return "0 Bytes";
+
+    const k = 1024;
+    const dm = 1;
+
+    const sizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB"];
+
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    const value = parseFloat((bytes / Math.pow(k, i)).toFixed(dm));
+
+    return `${value} ${sizes[i]}`;
 }
 
 export type FileResourceType = "Document" | "Aggregated" | "Individual" | "Unknown";

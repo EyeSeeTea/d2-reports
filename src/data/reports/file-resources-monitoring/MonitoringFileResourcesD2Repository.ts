@@ -9,17 +9,30 @@ import { downloadFile } from "../../common/utils/download-file";
 import { MonitoringFileResourcesOptions } from "../../../domain/reports/file-resources-monitoring/entities/MonitoringFileResourcesOptions";
 import {
     FileResourceType,
-    getSizeInMB,
+    formatBytes,
     MonitoringFileResourcesFile,
 } from "../../../domain/reports/file-resources-monitoring/entities/MonitoringFileResourcesFile";
-import { paginate } from "../../../domain/common/entities/PaginatedObjects";
 import { MonitoringFileResourcesPaginatedObjects } from "../../../domain/reports/file-resources-monitoring/entities/MonitoringFileResourcesPaginatedObjects";
 import { Dhis2SqlViews } from "../../common/Dhis2SqlViews";
 import { MonitoringFileResourcesRepository } from "../../../domain/reports/file-resources-monitoring/repositories/MonitoringFileResourcesRepository";
+import { MetadataPick } from "@eyeseetea/d2-api/2.36";
+import { Id } from "../../../domain/common/entities/Base";
+import { promiseMap } from "../../../utils/promises";
 
 export const SQL_EVENT_FILERESOURCE_ID = "kMGTBR65nue";
 export const SQL_DATASETVALUES_FILERESOURCE_ID = "gMg3im4cTYd";
 export const SQL_DOCUMENT_FILERESOURCE = "NJ9a3HivW8W";
+
+type FileResourceFileRefs = {
+    documents: Document[];
+    tei: string[];
+    events: string[];
+};
+
+type Document = {
+    documentId: string;
+    fileResourceId: string;
+};
 
 export class MonitoringFileResourcesD2Repository implements MonitoringFileResourcesRepository {
     private storageClient: StorageClient;
@@ -33,15 +46,78 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         options: MonitoringFileResourcesOptions
     ): Promise<MonitoringFileResourcesPaginatedObjects<MonitoringFileResourcesFile>> {
         const { paging, sorting } = options;
-        const objects = await this.getFileResources();
 
-        const filteredRows = await this.getFilteredRows(objects, options);
+        const files = await this.api.models.fileResources
+            .get({
+                fields: fileResourcesFields,
+                page: paging.page,
+                pageSize: paging.pageSize,
+                order: `${sorting.field}:${sorting.direction}`,
+                filter: {
+                    domain: {
+                        in: ["DOCUMENT"],
+                    },
+                },
+            })
+            .getData();
 
-        const { pager, objects: rowsInPage } = paginate(filteredRows, paging, sorting);
+        const ids = files.objects.map(item => item.id);
+
+        const [docRefs, teiRefs = [], eventRefs = []] = await Promise.all([this.getDocumentResourceFileIds(ids)]);
+
+        const refs = {
+            documents: docRefs,
+            tei: teiRefs,
+            events: eventRefs,
+        };
+
         return {
-            pager: pager,
-            objects: rowsInPage,
-            files: objects,
+            pager: files.pager,
+            objects: files.objects.map(item => this.buildFileResource(refs, item as D2FileResource)),
+        };
+
+        // const objects = await this.getFileResources();
+
+        // const filteredRows = await this.getFilteredRows(objects, options);
+
+        // const { pager, objects: rowsInPage } = paginate(filteredRows, paging, sorting);
+        // return {
+        //     pager: pager,
+        //     objects: rowsInPage,
+        //     files: objects,
+        // };
+    }
+
+    async getDocumentResourceFileIds(ids: string[]): Promise<Document[]> {
+        if (ids.length === 0) return [];
+
+        const data = await this.api.models.documents
+            .get({
+                fields: { id: true, url: true },
+                filter: { url: { in: ids } },
+            })
+            .getData();
+
+        return data.objects.map(item => {
+            return {
+                documentId: item.id,
+                fileResourceId: item.url,
+            };
+        });
+    }
+
+    private buildFileResource(refs: FileResourceFileRefs, file: D2FileResource): MonitoringFileResourcesFile {
+        return {
+            id: file.id,
+            name: file.name,
+            created: file.created,
+            createdBy: file.createdBy,
+            lastUpdated: file.lastUpdated,
+            lastUpdatedBy: file.lastUpdatedBy,
+            contentLength: file.contentLength ?? "-",
+            href: file.href ?? "-",
+            action_url: "",
+            type: getFileResourceType(file.id, refs),
         };
     }
 
@@ -54,7 +130,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
             created: file.created,
             lastUpdatedBy: file.lastUpdatedBy?.name ?? "-",
             lastUpdated: file.lastUpdated,
-            size: getSizeInMB(file),
+            size: formatBytes(file),
             href: file.href,
             type: file.type,
         }));
@@ -67,33 +143,55 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
     }
 
     async delete(selectedIds: string[]): Promise<void> {
-        const datavalueMap = await this.getDataSetValueFileResources();
-        const documentsMap = await this.getDocumentAndFileResourcesUIds();
-        const eventMap = await this.getEventFileResources();
+        const [docRefs, teiRefs = [], eventRefs = []] = await Promise.all([
+            this.getDocumentResourceFileIds(selectedIds),
+        ]);
 
-        const deleteActions = selectedIds.map(id => {
-            if (id in datavalueMap) {
-                const dataValueInfo = datavalueMap[id];
-                if (dataValueInfo !== undefined) {
-                    return this.deleteDataSetFile(dataValueInfo);
-                }
-            } else if (id in documentsMap) {
-                const document = documentsMap[id];
-                if (document !== undefined) {
-                    return this.deleteDocument(id);
-                }
-            } else if (id in eventMap) {
-                const event = eventMap[id];
-                if (event !== undefined) {
-                    return this.deleteEventFile(event, id);
+        const refs = {
+            documents: docRefs,
+            tei: teiRefs,
+            events: eventRefs,
+        };
+
+        await promiseMap(selectedIds, async (id: string) => {
+            const type = getFileResourceType(id, refs);
+            if (type === "Document") {
+                const parentId = getParentId(id, refs);
+                if (parentId) {
+                    await this.deleteDocument(parentId);
                 }
             }
-            console.warn(`ID ${id} not found`);
-            return Promise.resolve();
         });
-
-        await Promise.all(deleteActions);
     }
+
+    // async delete(selectedIds: string[]): Promise<void> {
+    //     const datavalueMap = await this.getDataSetValueFileResources();
+    //     const documentsMap = await this.getDocumentAndFileResourcesUIds();
+    //     const eventMap = await this.getEventFileResources();
+
+    //     const deleteActions = selectedIds.map(id => {
+    //         if (id in datavalueMap) {
+    //             const dataValueInfo = datavalueMap[id];
+    //             if (dataValueInfo !== undefined) {
+    //                 return this.deleteDataSetFile(dataValueInfo);
+    //             }
+    //         } else if (id in documentsMap) {
+    //             const document = documentsMap[id];
+    //             if (document !== undefined) {
+    //                 return this.deleteDocument(id);
+    //             }
+    //         } else if (id in eventMap) {
+    //             const event = eventMap[id];
+    //             if (event !== undefined) {
+    //                 return this.deleteEventFile(event, id);
+    //             }
+    //         }
+    //         console.warn(`ID ${id} not found`);
+    //         return Promise.resolve();
+    //     });
+
+    //     await Promise.all(deleteActions);
+    // }
 
     async getColumns(namespace: string): Promise<string[]> {
         const columns = await this.storageClient.getObject<string[]>(namespace);
@@ -106,11 +204,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
     }
 
     private async deleteDocument(id: string) {
-        try {
-            await this.api.models.documents.delete({ id: id });
-        } catch (error) {
-            console.debug(error);
-        }
+        await this.api.models.documents.delete({ id: id }).getData();
     }
 
     private async deleteDataSetFile(dataSetFile: DataSetValueFileResource) {
@@ -167,18 +261,6 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         } catch (error) {
             console.debug(error);
         }
-    }
-
-    async deleteDocumentsByIds(ids: string[]): Promise<void> {
-        const deletePromises = ids.map(async id => {
-            try {
-                await this.api.models.documents.delete({ id: id }).getData();
-            } catch (error) {
-                console.debug(error);
-            }
-        });
-
-        await Promise.all(deletePromises);
     }
 
     private async getFilteredRows(
@@ -314,6 +396,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         return response;
     }
 }
+
 const csvFields = [
     "id",
     "name",
@@ -376,4 +459,45 @@ function getActionUrl(
         return `api/document/${documentFileresources[id]}`;
     }
     return "-";
+}
+
+const fileResourcesFields = {
+    id: true,
+    name: true,
+    created: true,
+    lastUpdated: true,
+    createdBy: {
+        id: true,
+        name: true,
+    },
+    lastUpdatedBy: {
+        id: true,
+        name: true,
+    },
+    contentLength: true,
+    href: true,
+    domain: true,
+} as const;
+
+type D2FileResource = MetadataPick<{ fileResources: { fields: typeof fileResourcesFields } }>["fileResources"][number];
+
+function getFileResourceType(id: string, refs: FileResourceFileRefs): FileResourceType {
+    if (refs.documents.find(doc => doc.fileResourceId === id)) {
+        return "Document";
+    } else if (id in refs.tei) {
+        return "Individual";
+    } else if (id in refs.events) {
+        return "Aggregated";
+    }
+    return "Unknown";
+}
+
+function getParentId(id: string, refs: FileResourceFileRefs): Id {
+    const parentDoc = refs.documents.find(doc => doc.fileResourceId === id);
+
+    if (parentDoc) {
+        return parentDoc.documentId;
+    } else {
+        return "";
+    }
 }

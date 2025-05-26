@@ -1,5 +1,5 @@
 import {
-    getSizeInMB,
+    formatBytes,
     MonitoringFileResourcesFile,
 } from "../../../../domain/reports/file-resources-monitoring/entities/MonitoringFileResourcesFile";
 
@@ -26,7 +26,7 @@ export function getFileResourcesMonitoringViews(items: MonitoringFileResourcesFi
             createdBy: item.createdBy !== undefined ? item.createdBy.name : "-",
             lastUpdatedBy: item.lastUpdatedBy !== undefined ? item.lastUpdatedBy.name : "-",
             lastUpdated: item.lastUpdated !== undefined ? item.lastUpdated : "-",
-            size: item.contentLength !== undefined ? String(getSizeInMB(item)) : "-",
+            size: item.contentLength !== undefined ? String(formatBytes(item)) : "-",
             contentLength: parseInt(item.contentLength) ?? 0,
             href: item.href,
             action_url: item.action_url,

@@ -27,6 +27,7 @@ export const FileResourcesMonitorList: React.FC = React.memo(() => {
     const [filenameQuery, setFilenameQuery] = useState<string>("");
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [reloadKey, _reload] = useReload();
+
     useEffect(() => {
         compositionRoot.fileResourcesMonitoring
             .getColumns(Namespaces.FILE_RESOURCES_MONITORING_COLUMNS)
@@ -45,7 +46,7 @@ export const FileResourcesMonitorList: React.FC = React.memo(() => {
                 { name: "lastUpdated", text: i18n.t("LastUpdated"), sortable: true },
                 { name: "lastUpdatedBy", text: i18n.t("LastUpdatedBy"), sortable: true, hidden: true },
                 { name: "size", text: i18n.t("Size"), sortable: true, hidden: true, sortField: "contentLength" }, //this field must be sorted by contentLenght to avoid wrong orders
-                { name: "href", text: i18n.t("Details"), sortable: false, hidden: true },                
+                { name: "href", text: i18n.t("Details"), sortable: false, hidden: true },
                 {
                     name: "action_url",
                     text: i18n.t("Action"),
