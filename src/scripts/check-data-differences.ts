@@ -18,6 +18,12 @@ type DataDifferencesOptions = {
     year?: string;
 };
 
+type DataDiffItem = {
+    dataElement: string | undefined;
+    orgUnit: string;
+    period: string;
+};
+
 export async function checkMalDataValuesDiff(options: DataDifferencesOptions): Promise<void> {
     const { baseUrl, authString, orgUnit: ouOption, year: yearOption } = options;
     const [username, password] = authString.split(":", 2);
@@ -45,30 +51,25 @@ export async function checkMalDataValuesDiff(options: DataDifferencesOptions): P
     else
         console.debug(
             `${result.length} differences found in ${dataSet.name} for period ${period} in ${orgUnit.name} organisation unit: \n`,
-            result
-                .map(
-                    (item, index) =>
-                        `${index + 1}. Data element: ${item.dataElement}, Org Unit: ${item.orgUnit}, Period: ${
-                            item.period
-                        }`
-                )
-                .join("\n")
+            formatDataDiffLog(result)
         );
 }
 
 async function getMalWMRMetadata(api: D2Api, ouOption?: string): Promise<{ dataSet: CodedRef; orgUnit: CodedRef }> {
-    const dataSet = await getMetadataByIdentifiableToken({
-        api: api,
-        metadataType: "dataSets",
-        token: MAL_WMR_FORM_CODE,
-    });
-    const orgUnit = await getMetadataByIdentifiableToken({
-        api: api,
-        metadataType: "organisationUnits",
-        token: ouOption ?? ANGOLA_ORG_UNIT_NAME,
-    });
+    const [dataSet, orgUnit] = await Promise.all([
+        getMetadataByIdentifiableToken({
+            api: api,
+            metadataType: "dataSets",
+            token: MAL_WMR_FORM_CODE,
+        }),
+        getMetadataByIdentifiableToken({
+            api: api,
+            metadataType: "organisationUnits",
+            token: ouOption ?? ANGOLA_ORG_UNIT_NAME,
+        }),
+    ]);
 
-    return { dataSet: dataSet, orgUnit: orgUnit };
+    return { dataSet, orgUnit };
 }
 
 async function main() {
@@ -112,6 +113,15 @@ async function main() {
         console.error(err);
         process.exit(1);
     }
+}
+
+function formatDataDiffLog(dataDiffItems: DataDiffItem[]): string {
+    return dataDiffItems
+        .map(
+            (item, index) =>
+                `${index + 1}. Data element: ${item.dataElement}, Org Unit: ${item.orgUnit}, Period: ${item.period}`
+        )
+        .join("\n");
 }
 
 main();
