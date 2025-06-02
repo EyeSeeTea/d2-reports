@@ -29,6 +29,7 @@ type FileResourceFileRefs = {
     eventValues: EventFileRef[];
     dataValues: DataValueFileRef[];
     userAvatar: UserAvatarFileRef[];
+    messageAttachments?: MessageAttachmentsFileRef[];
 };
 
 type DocumentFileRef = {
@@ -58,7 +59,15 @@ type UserAvatarFileRef = {
     fileResourceId: string;
 };
 
-type FileRef = DocumentFileRef | EventFileRef | DataValueFileRef | UserAvatarFileRef;
+type MessageAttachmentsFileRef = {
+    kind: "messageAttachment";
+    messageConversationId: string;
+    messageId: string;
+    fileResourceId: string;
+    lastSenderId: string;
+};
+
+type FileRef = DocumentFileRef | EventFileRef | DataValueFileRef | UserAvatarFileRef | MessageAttachmentsFileRef;
 
 export class MonitoringFileResourcesD2Repository implements MonitoringFileResourcesRepository {
     private storageClient: StorageClient;
@@ -82,7 +91,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
                 order: `${sorting.field}:${sorting.direction}`,
                 filter: {
                     domain: {
-                        in: ["DOCUMENT", "DATA_VALUE", "USER_AVATAR"],
+                        in: ["DOCUMENT", "DATA_VALUE", "USER_AVATAR", "MESSAGE_ATTACHMENT"],
                     },
                 },
             })
@@ -197,6 +206,41 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         });
     }
 
+    private async getMessagesWithAttachments(): Promise<MessageAttachmentsFileRef[]> {
+        return this.cache.getOrPromise("messages", async () => {
+            const data = await this.api.models.messageConversations
+                .get({
+                    fields: { id: true, lastSender: { id: true }, messages: { id: true, attachments: { id: true } } },
+                    paging: false,
+                    filter: {
+                        "messages.attachments.id": { "!null": true },
+                    },
+                })
+                .getData();
+
+            return data.objects
+                .map(item => {
+                    const messages = item.messages as { id: string; attachments: { id: string }[] }[];
+
+                    return messages
+                        .map(message => {
+                            return message.attachments.map(attachment => {
+                                return {
+                                    kind: "messageAttachment" as const,
+                                    messageConversationId: item.id,
+                                    messageId: message.id,
+                                    fileResourceId: attachment.id,
+                                    lastSenderId: item.lastSender.id,
+                                };
+                            });
+                        })
+                        .flat()
+                        .flat();
+                })
+                .flat();
+        });
+    }
+
     private buildFileResource(refs: FileResourceFileRefs, file: D2FileResource): MonitoringFileResourcesFile {
         const id = getIdByRef(file.id, refs);
 
@@ -255,6 +299,10 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
                 }
                 case "userAvatar": {
                     await this.deleteUserAvatar(ref);
+                    break;
+                }
+                case "messageAttachment": {
+                    await this.deleteMessageAttachment(ref);
                     break;
                 }
             }
@@ -324,9 +372,9 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
                 .get({ fields: { $owner: true }, filter: { id: { in: [ref.userId] } } })
                 .getData();
 
-            if (data.objects.length > 0) {
-                const user = data.objects[0];
+            const user = data.objects[0];
 
+            if (user) {
                 const userNoAvatar = {
                     ...user,
                     avatar: undefined,
@@ -337,6 +385,11 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         } catch (error) {
             console.debug(error);
         }
+    }
+
+    private async deleteMessageAttachment(ref: MessageAttachmentsFileRef): Promise<void> {
+        // Remove messageConversation because remove message or attachment not working
+        await this.api.delete(`/messageConversations/${ref.messageConversationId}/${ref.lastSenderId}`).getData();
     }
 
     private async deleteEventFile(eventId: string, fileResourceId: string): Promise<void> {
@@ -517,11 +570,12 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
     }
 
     private async getRefs(): Promise<FileResourceFileRefs> {
-        const [docRefs, eventRefs, dataValuesRefs, userRefs] = await Promise.all([
+        const [docRefs, eventRefs, dataValuesRefs, userRefs, messageAttachments] = await Promise.all([
             this.getDocuments(),
             this.getFileIdsInEvents(),
             this.getFileIdsDataValues(),
             this.getUsersWithAvatar(),
+            this.getMessagesWithAttachments(),
         ]);
 
         const refs: FileResourceFileRefs = {
@@ -529,6 +583,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
             eventValues: eventRefs,
             dataValues: dataValuesRefs,
             userAvatar: userRefs,
+            messageAttachments: messageAttachments,
         };
         return refs;
     }
@@ -629,6 +684,8 @@ function getFileResourceType(id: string, refs: FileResourceFileRefs): FileResour
             return "Aggregated";
         case "userAvatar":
             return "UserAvatar";
+        case "messageAttachment":
+            return "MessageAttachment";
         default:
             return "Unknown";
     }
@@ -646,6 +703,8 @@ function getIdByRef(id: string, refs: FileResourceFileRefs): string {
             return `dataValue|${ref.organisationUnitUid}|${ref.period}|${ref.dataElementUid}|${ref.categoryOptionComboUid}|${id}`;
         case "userAvatar":
             return `user|${ref.userId}|${id}`;
+        case "messageAttachment":
+            return `messageAttachment|${ref.messageConversationId}|${ref.lastSenderId}|${ref.messageId}|${id}`;
         default:
             return "";
     }
@@ -677,6 +736,14 @@ function getRefById(id: string): FileRef | null {
                 userId: getPart(1),
                 fileResourceId: getPart(2),
             };
+        case "messageAttachment":
+            return {
+                kind: "messageAttachment",
+                messageConversationId: getPart(1),
+                lastSenderId: getPart(2),
+                messageId: getPart(3),
+                fileResourceId: getPart(4),
+            };
         default:
             return null;
     }
@@ -687,6 +754,7 @@ function getRef(id: string, refs: FileResourceFileRefs): FileRef | null {
     const eventValueDoc = refs.eventValues.find(event => event.fileResourceId === id);
     const dataValueDoc = refs.dataValues.find(data => data.fileResourceId === id);
     const userAvatarDoc = refs.userAvatar.find(user => user.fileResourceId === id);
+    const messageAttachmentDoc = refs.messageAttachments?.find(message => message.fileResourceId === id);
 
-    return parentDoc ?? eventValueDoc ?? dataValueDoc ?? userAvatarDoc ?? null;
+    return parentDoc ?? eventValueDoc ?? dataValueDoc ?? userAvatarDoc ?? messageAttachmentDoc ?? null;
 }
