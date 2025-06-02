@@ -6,6 +6,7 @@ import {
 
 export interface FileResourcesViewModel {
     id: string;
+    fileResourceId: string;
     name: string;
     created: string;
     createdBy: string;
@@ -21,6 +22,7 @@ export interface FileResourcesViewModel {
 export function getFileResourcesMonitoringViews(items: MonitoringFileResourcesFile[]): FileResourcesViewModel[] {
     return items.map(item => {
         return {
+            fileResourceId: item.fileResourceId,
             id: item.id,
             name: item.name,
             created: item.created !== undefined ? item.created : "-",

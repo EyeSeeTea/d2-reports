@@ -2,6 +2,7 @@ import { Id, NamedRef } from "../../../common/entities/Base";
 
 export interface MonitoringFileResourcesFile {
     id: Id;
+    fileResourceId: string;
     name: string;
     createdBy: NamedRef;
     created: string;
@@ -30,4 +31,4 @@ export function formatBytes(file: MonitoringFileResourcesFile): string {
     return `${value} ${sizes[i]}`;
 }
 
-export type FileResourceType = "Document" | "Aggregated" | "Individual" | "Unknown";
+export type FileResourceType = "Document" | "Aggregated" | "Events" | "Unknown";
