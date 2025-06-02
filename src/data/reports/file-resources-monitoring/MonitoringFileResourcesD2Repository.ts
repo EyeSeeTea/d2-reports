@@ -28,6 +28,7 @@ type FileResourceFileRefs = {
     documents: DocumentFileRef[];
     eventValues: EventFileRef[];
     dataValues: DataValueFileRef[];
+    userAvatar: UserAvatarFileRef[];
 };
 
 type DocumentFileRef = {
@@ -51,7 +52,13 @@ type DataValueFileRef = {
     organisationUnitUid: string;
 };
 
-type FileRef = DocumentFileRef | EventFileRef | DataValueFileRef;
+type UserAvatarFileRef = {
+    kind: "userAvatar";
+    userId: string;
+    fileResourceId: string;
+};
+
+type FileRef = DocumentFileRef | EventFileRef | DataValueFileRef | UserAvatarFileRef;
 
 export class MonitoringFileResourcesD2Repository implements MonitoringFileResourcesRepository {
     private storageClient: StorageClient;
@@ -75,7 +82,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
                 order: `${sorting.field}:${sorting.direction}`,
                 filter: {
                     domain: {
-                        in: ["DOCUMENT", "DATA_VALUE"],
+                        in: ["DOCUMENT", "DATA_VALUE", "USER_AVATAR"],
                     },
                 },
             })
@@ -168,6 +175,28 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         });
     }
 
+    private async getUsersWithAvatar(): Promise<UserAvatarFileRef[]> {
+        return this.cache.getOrPromise("users", async () => {
+            const data = await this.api.models.users
+                .get({
+                    fields: { id: true, avatar: { id: true } },
+                    paging: false,
+                    filter: {
+                        avatar: { "!null": true },
+                    },
+                })
+                .getData();
+
+            return data.objects.map<UserAvatarFileRef>(item => {
+                return {
+                    kind: "userAvatar",
+                    userId: item.id,
+                    fileResourceId: item.avatar?.id || "",
+                };
+            });
+        });
+    }
+
     private buildFileResource(refs: FileResourceFileRefs, file: D2FileResource): MonitoringFileResourcesFile {
         const id = getIdByRef(file.id, refs);
 
@@ -224,8 +253,14 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
                     await this.deleteDataSetFile(ref);
                     break;
                 }
+                case "userAvatar": {
+                    await this.deleteUserAvatar(ref);
+                    break;
+                }
             }
         });
+
+        this.cache.clear();
     }
 
     // async delete(selectedIds: string[]): Promise<void> {
@@ -278,6 +313,27 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
                 pe: dataSetFile.period,
                 de: dataSetFile.dataElementUid,
             });
+        } catch (error) {
+            console.debug(error);
+        }
+    }
+
+    private async deleteUserAvatar(ref: UserAvatarFileRef): Promise<void> {
+        try {
+            const data = await this.api.models.users
+                .get({ fields: { $owner: true }, filter: { id: { in: [ref.userId] } } })
+                .getData();
+
+            if (data.objects.length > 0) {
+                const user = data.objects[0];
+
+                const userNoAvatar = {
+                    ...user,
+                    avatar: undefined,
+                };
+
+                await this.api.put(`/users/${ref.userId}`, undefined, userNoAvatar).getData();
+            }
         } catch (error) {
             console.debug(error);
         }
@@ -461,16 +517,18 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
     }
 
     private async getRefs(): Promise<FileResourceFileRefs> {
-        const [docRefs, eventRefs, dataValuesRefs] = await Promise.all([
+        const [docRefs, eventRefs, dataValuesRefs, userRefs] = await Promise.all([
             this.getDocuments(),
             this.getFileIdsInEvents(),
             this.getFileIdsDataValues(),
+            this.getUsersWithAvatar(),
         ]);
 
         const refs: FileResourceFileRefs = {
             documents: docRefs,
             eventValues: eventRefs,
             dataValues: dataValuesRefs,
+            userAvatar: userRefs,
         };
         return refs;
     }
@@ -569,6 +627,8 @@ function getFileResourceType(id: string, refs: FileResourceFileRefs): FileResour
             return "Events";
         case "dataValue":
             return "Aggregated";
+        case "userAvatar":
+            return "UserAvatar";
         default:
             return "Unknown";
     }
@@ -584,6 +644,8 @@ function getIdByRef(id: string, refs: FileResourceFileRefs): string {
             return `event|${ref.eventId}|${id}`;
         case "dataValue":
             return `dataValue|${ref.organisationUnitUid}|${ref.period}|${ref.dataElementUid}|${ref.categoryOptionComboUid}|${id}`;
+        case "userAvatar":
+            return `user|${ref.userId}|${id}`;
         default:
             return "";
     }
@@ -597,17 +659,23 @@ function getRefById(id: string): FileRef | null {
 
     switch (type) {
         case "document":
-            return { kind: "document", documentId: getPart(1), fileResourceId: id };
+            return { kind: "document", documentId: getPart(1), fileResourceId: getPart(2) };
         case "event":
-            return { kind: "event", eventId: getPart(1), fileResourceId: id };
+            return { kind: "event", eventId: getPart(1), fileResourceId: getPart(2) };
         case "dataValue":
             return {
                 kind: "dataValue",
-                fileResourceId: id,
                 dataElementUid: getPart(1),
                 period: getPart(2),
                 categoryOptionComboUid: getPart(3),
                 organisationUnitUid: getPart(4),
+                fileResourceId: getPart(5),
+            };
+        case "user":
+            return {
+                kind: "userAvatar",
+                userId: getPart(1),
+                fileResourceId: getPart(2),
             };
         default:
             return null;
@@ -618,6 +686,7 @@ function getRef(id: string, refs: FileResourceFileRefs): FileRef | null {
     const parentDoc = refs.documents.find(doc => doc.fileResourceId === id);
     const eventValueDoc = refs.eventValues.find(event => event.fileResourceId === id);
     const dataValueDoc = refs.dataValues.find(data => data.fileResourceId === id);
+    const userAvatarDoc = refs.userAvatar.find(user => user.fileResourceId === id);
 
-    return parentDoc ?? eventValueDoc ?? dataValueDoc ?? null;
+    return parentDoc ?? eventValueDoc ?? dataValueDoc ?? userAvatarDoc ?? null;
 }
