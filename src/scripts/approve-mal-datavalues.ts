@@ -16,9 +16,18 @@ import { DataDiffItemIdentifier } from "../domain/reports/mal-data-approval/enti
 import { DuplicateDataValuesUseCase } from "../domain/reports/mal-data-approval/usecases/DuplicateDataValuesUseCase";
 
 const START_YEAR = 2000;
-const END_YEAR = new Date().getFullYear();
+const END_YEAR = new Date().getFullYear() - 1;
+const globalOU = "WHO-HQ";
 
-export async function approveMalDataValues(baseUrl: string, authString: string): Promise<void> {
+type ApprovalOptions = {
+    baseUrl: string;
+    authString: string;
+    ouOption: string;
+    yearOption: string;
+};
+
+export async function approveMalDataValues(options: ApprovalOptions): Promise<void> {
+    const { baseUrl, authString, ouOption, yearOption } = options;
     const [username, password] = authString.split(":", 2);
     if (!username || !password) return;
 
@@ -27,13 +36,14 @@ export async function approveMalDataValues(baseUrl: string, authString: string):
     const dataValueRepository = new DataValuesD2Repository(api);
     const dataSetRepository = new DataSetD2Repository(api);
 
-    const { dataSet, orgUnit } = await getMalWMRMetadata(api);
+    const { dataSet, orgUnit } = await getMalWMRMetadata(api, ouOption);
 
     const malDataApprovalItems = await buildMalApprovalItems(
         dataValueRepository,
         dataSetRepository,
         dataSet.id,
-        orgUnit.id
+        orgUnit.id,
+        yearOption
     );
 
     if (malDataApprovalItems.length === 0) {
@@ -56,28 +66,31 @@ export async function approveMalDataValues(baseUrl: string, authString: string):
         });
 }
 
-async function getMalWMRMetadata(api: D2Api): Promise<{ dataSet: CodedRef; orgUnit: CodedRef }> {
-    const dataSet = await getMetadataByIdentifiableToken({
-        api: api,
-        metadataType: "dataSets",
-        token: MAL_WMR_FORM_CODE,
-    });
-    const orgUnit = await getMetadataByIdentifiableToken({
-        api: api,
-        metadataType: "organisationUnits",
-        token: "WHO-HQ",
-    });
+async function getMalWMRMetadata(api: D2Api, ouOption: string): Promise<{ dataSet: CodedRef; orgUnit: CodedRef }> {
+    const [dataSet, orgUnit] = await Promise.all([
+        getMetadataByIdentifiableToken({
+            api: api,
+            metadataType: "dataSets",
+            token: MAL_WMR_FORM_CODE,
+        }),
+        getMetadataByIdentifiableToken({
+            api: api,
+            metadataType: "organisationUnits",
+            token: ouOption ?? globalOU,
+        }),
+    ]);
 
-    return { dataSet: dataSet, orgUnit: orgUnit };
+    return { dataSet, orgUnit };
 }
 
 async function buildMalApprovalItems(
     dataValueRepository: DataValuesD2Repository,
     dataSetRepository: DataSetD2Repository,
     dataSetId: Id,
-    orgUnitId: Id
+    orgUnitId: Id,
+    yearOption?: string
 ): Promise<DataDiffItemIdentifier[]> {
-    const periods = _.range(START_YEAR, END_YEAR).map(year => year.toString());
+    const periods = yearOption ? [yearOption] : _.range(START_YEAR, END_YEAR).map(year => year.toString());
     const dataValuesToApprove = await promiseMap(periods, async period => {
         const dataElementsWithValues = await new WmrDiffReport(dataValueRepository, dataSetRepository).getDiff(
             dataSetId,
@@ -116,9 +129,25 @@ async function main() {
         default: process.env.REACT_APP_DHIS2_BASE_URL,
     });
 
+    parser.add_argument("-ou", "--org-unit", {
+        help: "Organisation unit identifier",
+        metavar: "ORG_UNIT",
+        default: globalOU,
+    });
+
+    parser.add_argument("-y", "--year", {
+        help: "Year to approve data values for",
+        metavar: "YEAR",
+    });
+
     try {
         const args = parser.parse_args();
-        await approveMalDataValues(args.url, args.user_auth);
+        await approveMalDataValues({
+            baseUrl: args.url,
+            authString: args.user_auth,
+            ouOption: args.org_unit,
+            yearOption: args.year,
+        });
     } catch (err) {
         console.error(err);
         process.exit(1);
