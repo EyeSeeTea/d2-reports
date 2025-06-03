@@ -96,10 +96,7 @@ async function buildMalApprovalItems(
         }));
     });
 
-    return _(dataValuesToApprove)
-        .flatten()
-        .uniqBy(item => `${item.dataSet}-${item.orgUnit}-${item.period}`)
-        .value();
+    return _(dataValuesToApprove).flatten().value();
 }
 
 async function main() {
