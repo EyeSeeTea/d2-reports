@@ -32,5 +32,5 @@ export async function getMetadataByIdentifiableToken(options: {
         });
 }
 
-const metadataTypes = ["dataElements", "dataSets", "categoryOptionCombos"] as const;
+const metadataTypes = ["dataElements", "dataSets", "categoryOptionCombos", "organisationUnits"] as const;
 type MetadataType = typeof metadataTypes[number];
