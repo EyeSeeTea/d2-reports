@@ -52,21 +52,6 @@ export function useFileResources() {
                 { name: "size", text: i18n.t("Size"), sortable: true, hidden: true, sortField: "contentLength" },
                 { name: "href", text: i18n.t("Details"), sortable: false, hidden: true },
                 {
-                    name: "action_url",
-                    text: i18n.t("Action"),
-                    sortable: false,
-                    hidden: false,
-                    getValue: (row: FileResourcesViewModel) => {
-                        const baseUrl = row.href?.split("/api/")[0];
-                        const fullUrl = baseUrl ? `${baseUrl}${row.action_url}` : row.action_url;
-                        return React.createElement(
-                            "a",
-                            { href: fullUrl, target: "_blank", rel: "noopener noreferrer" },
-                            "View"
-                        );
-                    },
-                },
-                {
                     name: "type",
                     text: i18n.t("Type"),
                     sortable: false,

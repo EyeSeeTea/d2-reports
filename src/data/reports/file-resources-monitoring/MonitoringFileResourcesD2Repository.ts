@@ -18,56 +18,9 @@ import { MonitoringFileResourcesRepository } from "../../../domain/reports/file-
 import { promiseMap } from "../../../utils/promises";
 import { InmemoryCache } from "../../common/cache/InmemoryCache";
 import { isValidUid } from "d2/uid";
-import _ from "lodash";
 
 export const SQL_EVENT_FILERESOURCE_ID = "Rl8JnitnM6X";
 export const SQL_DATASETVALUES_FILERESOURCE_ID = "gMg3im4cTYd";
-export const SQL_DOCUMENT_FILERESOURCE = "QUWYGQeVsUt";
-
-type FileResourceFileRefs = {
-    documents: DocumentFileRef[];
-    eventValues: EventFileRef[];
-    dataValues: DataValueFileRef[];
-    userAvatar: UserAvatarFileRef[];
-    messageAttachments?: MessageAttachmentsFileRef[];
-};
-
-type DocumentFileRef = {
-    kind: "document";
-    documentId: string;
-    fileResourceId: string;
-};
-
-type EventFileRef = {
-    kind: "event";
-    eventId: string;
-    fileResourceId: string;
-};
-
-type DataValueFileRef = {
-    kind: "dataValue";
-    fileResourceId: string;
-    dataElementUid: string;
-    period: string;
-    categoryOptionComboUid: string;
-    organisationUnitUid: string;
-};
-
-type UserAvatarFileRef = {
-    kind: "userAvatar";
-    userId: string;
-    fileResourceId: string;
-};
-
-type MessageAttachmentsFileRef = {
-    kind: "messageAttachment";
-    messageConversationId: string;
-    messageId: string;
-    fileResourceId: string;
-    lastSenderId: string;
-};
-
-type FileRef = DocumentFileRef | EventFileRef | DataValueFileRef | UserAvatarFileRef | MessageAttachmentsFileRef;
 
 export class MonitoringFileResourcesD2Repository implements MonitoringFileResourcesRepository {
     private storageClient: StorageClient;
@@ -93,6 +46,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
                     domain: {
                         in: ["DOCUMENT", "DATA_VALUE", "USER_AVATAR", "MESSAGE_ATTACHMENT"],
                     },
+                    name: { $ilike: `${options.filenameQuery}` },
                 },
             })
             .getData();
@@ -103,17 +57,6 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
             pager: files.pager,
             objects: files.objects.map(item => this.buildFileResource(refs, item as D2FileResource)),
         };
-
-        // const objects = await this.getFileResources();
-
-        // const filteredRows = await this.getFilteredRows(objects, options);
-
-        // const { pager, objects: rowsInPage } = paginate(filteredRows, paging, sorting);
-        // return {
-        //     pager: pager,
-        //     objects: rowsInPage,
-        //     files: objects,
-        // };
     }
 
     private async getDocuments(): Promise<DocumentFileRef[]> {
@@ -135,7 +78,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         });
     }
 
-    private async getFileIdsInEvents(): Promise<EventFileRef[]> {
+    private async getEventsWithFile(): Promise<EventFileRef[]> {
         return this.cache.getOrPromise("events", async () => {
             const response = await new Dhis2SqlViews(this.api)
                 .query<{}, EventSqlField>(SQL_EVENT_FILERESOURCE_ID, undefined, { page: 1, pageSize: 10000 })
@@ -165,7 +108,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         });
     }
 
-    private async getFileIdsDataValues(): Promise<DataValueFileRef[]> {
+    private async getDataValuesWithFile(): Promise<DataValueFileRef[]> {
         return this.cache.getOrPromise("dataValues", async () => {
             const response = await new Dhis2SqlViews(this.api)
                 .query<{}, DataSetSqlField>(SQL_DATASETVALUES_FILERESOURCE_ID, undefined, { page: 1, pageSize: 10000 })
@@ -254,7 +197,6 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
             lastUpdatedBy: file.lastUpdatedBy,
             contentLength: file.contentLength ?? "-",
             href: file.href ?? "-",
-            action_url: "",
             type: getFileResourceType(file.id, refs),
         };
     }
@@ -436,144 +378,11 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         }
     }
 
-    private async getFilteredRows(
-        objects: MonitoringFileResourcesFile[],
-        options: MonitoringFileResourcesOptions
-    ): Promise<MonitoringFileResourcesFile[]> {
-        const { filenameQuery } = options;
-
-        return objects.filter(row => {
-            const isInSearchQuery = _.includes(row.name, filenameQuery);
-
-            return isInSearchQuery;
-        });
-    }
-
-    private async getDocumentAndFileResourcesUIds(): Promise<Record<string, string>> {
-        const response = await new Dhis2SqlViews(this.api)
-            .query<{}, DocumentSqlField>(SQL_DOCUMENT_FILERESOURCE, undefined, {})
-            .getData();
-
-        const documentFileResourceMap = response.rows.reduce<Record<string, string>>((acc, row) => {
-            if (row.fileresourceuid && row.documentuid) {
-                acc[row.fileresourceuid] = row.documentuid;
-            }
-            acc[row.fileresourceuid] = row.documentuid;
-            return acc;
-        }, {});
-
-        return documentFileResourceMap;
-    }
-
-    private async getEventFileResources(): Promise<Record<string, string>> {
-        const response = await new Dhis2SqlViews(this.api)
-            .query<{}, EventSqlField>(SQL_EVENT_FILERESOURCE_ID, undefined, { page: 1, pageSize: 10000 })
-            .getData();
-
-        const eventFileResourceMap = response.rows.reduce<Record<string, string>>((acc, row) => {
-            if (row.fileresourceuid && row.eventuid) {
-                acc[row.fileresourceuid] = row.eventuid;
-            }
-            acc[row.fileresourceuid] = row.eventuid;
-            return acc;
-        }, {});
-        return eventFileResourceMap;
-    }
-
-    private async getDataSetValueFileResources(): Promise<Record<string, DataSetValueFileResource>> {
-        const response = await new Dhis2SqlViews(this.api)
-            .query<{}, DataSetSqlField>(SQL_DATASETVALUES_FILERESOURCE_ID, undefined, { page: 1, pageSize: 10000 })
-            .getData();
-
-        const dataSetValueResourceMap = response.rows.reduce<Record<string, DataSetValueFileResource>>((acc, row) => {
-            acc[row.fileresourceuid] = {
-                dataElementUid: row.dataelementuid,
-                organisationUnitUid: row.organisationunituid,
-                categoryOptionComboUid: row.categoryoptioncombouid,
-                period: row.period,
-            };
-            return acc;
-        }, {});
-
-        return dataSetValueResourceMap;
-    }
-
-    private async getFileResources(): Promise<MonitoringFileResourcesFile[]> {
-        let files: MonitoringFileResourcesFile[] = [];
-        let currentPage = 1;
-        let response;
-        const pageSize = 250;
-        const documentFileResource = await this.getDocumentAndFileResourcesUIds();
-        const eventFileResources = await this.getEventFileResources();
-        const datasetFileresources = await this.getDataSetValueFileResources();
-        try {
-            do {
-                const filter = ["DATA_VALUE", "DOCUMENT"];
-                response = await this.getFileResourcesQuery(response, currentPage, pageSize, filter);
-
-                const responseFiles: MonitoringFileResourcesFile = response.objects.map((file: any) => {
-                    return {
-                        id: file.id,
-                        name: file.name,
-                        created: file.created,
-                        createdBy: file.createdBy,
-                        lastUpdated: file.lastUpdated,
-                        lastUpdatedBy: file.lastUpdatedBy,
-                        contentLength: file.contentLength ?? "-",
-                        href: file.href ?? "-",
-                        action_url: getActionUrl(
-                            file.id,
-                            eventFileResources,
-                            datasetFileresources,
-                            documentFileResource
-                        ),
-                        type: getType(file.id, eventFileResources, datasetFileresources, file.domain),
-                    };
-                });
-                files = files.concat(responseFiles);
-                currentPage++;
-            } while (response.pager.page < Math.ceil(response.pager.total / pageSize));
-            return files;
-        } catch {
-            return [];
-        }
-    }
-
-    private async getFileResourcesQuery(response: any, currentPage: number, pageSize: number, filter: string[]) {
-        response = await this.api.models.fileResources
-            .get({
-                fields: {
-                    id: true,
-                    name: true,
-                    created: true,
-                    lastUpdated: true,
-                    createdBy: {
-                        name: true,
-                    },
-                    lastUpdatedBy: {
-                        name: true,
-                    },
-                    href: true,
-                    contentLength: true,
-                    domain: true,
-                },
-                filter: {
-                    domain: {
-                        in: filter,
-                    },
-                },
-                page: currentPage,
-                pageSize: pageSize,
-            })
-            .getData();
-        return response;
-    }
-
     private async getRefs(): Promise<FileResourceFileRefs> {
         const [docRefs, eventRefs, dataValuesRefs, userRefs, messageAttachments] = await Promise.all([
             this.getDocuments(),
-            this.getFileIdsInEvents(),
-            this.getFileIdsDataValues(),
+            this.getEventsWithFile(),
+            this.getDataValuesWithFile(),
             this.getUsersWithAvatar(),
             this.getMessagesWithAttachments(),
         ]);
@@ -610,7 +419,6 @@ type DataSetValueFileResource = {
     period: string;
 };
 
-type DocumentSqlField = "documentuid" | "fileresourceuid";
 type EventSqlField = "eventuid" | "eventdatavalues" | "fileresourceuid";
 type DataSetSqlField =
     | "fileresourceuid"
@@ -618,39 +426,6 @@ type DataSetSqlField =
     | "period"
     | "categoryoptioncombouid"
     | "organisationunituid";
-
-function getType(
-    id: any,
-    eventIdFileResources: Record<string, string>,
-    datasetFileresources: Record<string, DataSetValueFileResource>,
-    domain: string
-): FileResourceType {
-    if (domain === "DATA_VALUE") {
-        if (id in datasetFileresources) {
-            return "Aggregated";
-        } else if (id in eventIdFileResources) {
-            return "Events";
-        }
-    }
-    if (domain === "DOCUMENT") return "Document";
-    return "Orphan";
-}
-
-function getActionUrl(
-    id: any,
-    eventIdFileResources: Record<string, string>,
-    datasetFileresources: Record<string, DataSetValueFileResource>,
-    documentFileresources: Record<string, string>
-): string {
-    if (id in eventIdFileResources) {
-        return `api/event/${eventIdFileResources[id]}`;
-    } else if (id in datasetFileresources) {
-        return `api/dataValues?de=${datasetFileresources[id]?.dataElementUid}&co=${datasetFileresources[id]?.categoryOptionComboUid}&ou=${datasetFileresources[id]?.organisationUnitUid}&pe=${datasetFileresources[id]?.period}`;
-    } else if (id in documentFileresources) {
-        return `api/document/${documentFileresources[id]}`;
-    }
-    return "-";
-}
 
 const fileResourcesFields = {
     id: true,
@@ -758,3 +533,48 @@ function getRef(id: string, refs: FileResourceFileRefs): FileRef | null {
 
     return parentDoc ?? eventValueDoc ?? dataValueDoc ?? userAvatarDoc ?? messageAttachmentDoc ?? null;
 }
+
+type FileResourceFileRefs = {
+    documents: DocumentFileRef[];
+    eventValues: EventFileRef[];
+    dataValues: DataValueFileRef[];
+    userAvatar: UserAvatarFileRef[];
+    messageAttachments?: MessageAttachmentsFileRef[];
+};
+
+type DocumentFileRef = {
+    kind: "document";
+    documentId: string;
+    fileResourceId: string;
+};
+
+type EventFileRef = {
+    kind: "event";
+    eventId: string;
+    fileResourceId: string;
+};
+
+type DataValueFileRef = {
+    kind: "dataValue";
+    fileResourceId: string;
+    dataElementUid: string;
+    period: string;
+    categoryOptionComboUid: string;
+    organisationUnitUid: string;
+};
+
+type UserAvatarFileRef = {
+    kind: "userAvatar";
+    userId: string;
+    fileResourceId: string;
+};
+
+type MessageAttachmentsFileRef = {
+    kind: "messageAttachment";
+    messageConversationId: string;
+    messageId: string;
+    fileResourceId: string;
+    lastSenderId: string;
+};
+
+type FileRef = DocumentFileRef | EventFileRef | DataValueFileRef | UserAvatarFileRef | MessageAttachmentsFileRef;
