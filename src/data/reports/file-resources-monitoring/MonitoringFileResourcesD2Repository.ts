@@ -121,6 +121,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
                 period: row.period,
                 categoryOptionComboUid: row.categoryoptioncombouid,
                 organisationUnitUid: row.organisationunituid,
+                attributeOptionComboUid: row.attributeoptioncombouid || "",
             }));
 
             return dataValuesFileResource;
@@ -298,11 +299,14 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
 
     private async deleteDataSetFile(dataSetFile: DataSetValueFileResource) {
         try {
-            await this.api.delete("/dataValues", {
-                ou: dataSetFile.organisationUnitUid,
-                pe: dataSetFile.period,
-                de: dataSetFile.dataElementUid,
-            });
+            await this.api
+                .delete("/dataValues", {
+                    ou: dataSetFile.organisationUnitUid,
+                    pe: dataSetFile.period,
+                    de: dataSetFile.dataElementUid,
+                    co: dataSetFile.categoryOptionComboUid,
+                })
+                .getData();
         } catch (error) {
             console.debug(error);
         }
@@ -417,6 +421,7 @@ type DataSetValueFileResource = {
     organisationUnitUid: string;
     categoryOptionComboUid: string;
     period: string;
+    attributeOptionComboUid: string;
 };
 
 type EventSqlField = "eventuid" | "eventdatavalues" | "fileresourceuid";
@@ -425,7 +430,8 @@ type DataSetSqlField =
     | "dataelementuid"
     | "period"
     | "categoryoptioncombouid"
-    | "organisationunituid";
+    | "organisationunituid"
+    | "attributeoptioncombouid";
 
 const fileResourcesFields = {
     id: true,
@@ -475,7 +481,7 @@ function getIdByRef(id: string, refs: FileResourceFileRefs): string {
         case "event":
             return `event|${ref.eventId}|${id}`;
         case "dataValue":
-            return `dataValue|${ref.organisationUnitUid}|${ref.period}|${ref.dataElementUid}|${ref.categoryOptionComboUid}|${id}`;
+            return `dataValue|${ref.attributeOptionComboUid}|${ref.organisationUnitUid}|${ref.period}|${ref.dataElementUid}|${ref.categoryOptionComboUid}|${id}`;
         case "userAvatar":
             return `user|${ref.userId}|${id}`;
         case "messageAttachment":
@@ -499,11 +505,12 @@ function getRefById(id: string): FileRef | null {
         case "dataValue":
             return {
                 kind: "dataValue",
-                dataElementUid: getPart(1),
-                period: getPart(2),
-                categoryOptionComboUid: getPart(3),
-                organisationUnitUid: getPart(4),
-                fileResourceId: getPart(5),
+                attributeOptionComboUid: getPart(1) || "",
+                organisationUnitUid: getPart(2),
+                period: getPart(3),
+                dataElementUid: getPart(4),
+                categoryOptionComboUid: getPart(5),
+                fileResourceId: getPart(6),
             };
         case "user":
             return {
@@ -561,6 +568,7 @@ type DataValueFileRef = {
     period: string;
     categoryOptionComboUid: string;
     organisationUnitUid: string;
+    attributeOptionComboUid: string;
 };
 
 type UserAvatarFileRef = {
