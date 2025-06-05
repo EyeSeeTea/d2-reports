@@ -633,7 +633,7 @@ function getType(
         }
     }
     if (domain === "DOCUMENT") return "Document";
-    return "Unknown";
+    return "Orphan";
 }
 
 function getActionUrl(
@@ -687,7 +687,7 @@ function getFileResourceType(id: string, refs: FileResourceFileRefs): FileResour
         case "messageAttachment":
             return "MessageAttachment";
         default:
-            return "Unknown";
+            return "Orphan";
     }
 }
 
