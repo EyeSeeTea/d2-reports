@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { D2Api, Id, PaginatedObjects } from "../../../types/d2-api";
+import { D2Api, DataValueSetsPostResponse, Id, PaginatedObjects } from "../../../types/d2-api";
 import { promiseMap } from "../../../utils/promises";
 import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
 import { StorageClient } from "../../common/clients/storage/StorageClient";
@@ -491,7 +491,11 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             return this.api.dataValues
                 .postSet({ importStrategy: "DELETE" }, { dataSet: approvalDataSetId, dataValues: emptyDataValues })
                 .getData()
+                .catch(error => console.debug(error))
                 .then(dataValueSetsPostResponse => {
+                    if (!dataValueSetsPostResponse) return;
+
+                    console.debug(dataValueSetsPostResponse);
                     if (dataValueSetsPostResponse.status !== "SUCCESS") {
                         throw new Error("Error when deleting empty data values");
                     }
@@ -587,26 +591,37 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         });
     }
 
-    private async chunkedDataValuePost(apvdDataValues: DataValueType[], chunkSize: number) {
+    private async chunkedDataValuePost(apvdDataValues: DataValueType[], chunkSize: number): Promise<boolean> {
         if (apvdDataValues.length > chunkSize) {
-            const copyResponse = [];
+            const copyResponse: DataValueSetsPostResponse[] = [];
             for (let i = 0; i < apvdDataValues.length; i += chunkSize) {
                 const chunk = apvdDataValues.slice(i, i + chunkSize);
-                const response = await this.api
-                    .post<any>("/dataValueSets.json", {}, { dataValues: _.reject(chunk, _.isEmpty) })
-                    .getData();
 
-                copyResponse.push(response);
+                return await this.api.dataValues
+                    .postSet({}, { dataValues: _.reject(chunk, _.isEmpty) })
+                    .getData()
+                    .catch(error => console.debug(error))
+                    .then(response => {
+                        if (response) {
+                            console.debug(response);
+                            copyResponse.push(response);
+                        }
+                        return false;
+                    });
             }
             return _.every(copyResponse, item => item.status === "SUCCESS");
         } else {
-            const copyResponse = await this.api
-                .post<any>("/dataValueSets.json", {}, { dataValues: _.reject(apvdDataValues, _.isEmpty) })
-                .getData();
-
-            return copyResponse.response
-                ? copyResponse.response.status === "SUCCESS"
-                : copyResponse.status === "SUCCESS";
+            return await this.api.dataValues
+                .postSet({}, { dataValues: _.reject(apvdDataValues, _.isEmpty) })
+                .getData()
+                .catch(error => console.debug(error))
+                .then(copyResponse => {
+                    if (copyResponse) {
+                        console.debug(copyResponse);
+                        return copyResponse.status === "SUCCESS";
+                    }
+                    return false;
+                });
         }
     }
 
