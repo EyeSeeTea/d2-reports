@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2025-01-21T08:14:43.180Z\n"
-"PO-Revision-Date: 2025-01-21T08:14:43.180Z\n"
+"POT-Creation-Date: 2025-06-13T06:11:54.104Z\n"
+"PO-Revision-Date: 2025-06-13T06:11:54.104Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -399,6 +399,15 @@ msgstr ""
 msgid "File resources Monitoring"
 msgstr ""
 
+msgid "Delete confirmation"
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
+msgid "FileResourceId"
+msgstr ""
+
 msgid "Created"
 msgstr ""
 
@@ -417,10 +426,22 @@ msgstr ""
 msgid "Details"
 msgstr ""
 
-msgid "GLASS Admin Maintenance Report"
+msgid "Type"
 msgstr ""
 
-msgid "Delete"
+msgid ""
+"This is an orphan fileResource. A file resource is orphan when it doesn't "
+"have any relation with an owner (document, dataValue, userAvatar, "
+"messageAttachment)"
+msgstr ""
+
+msgid "Search by filename..."
+msgstr ""
+
+msgid "Download CSV"
+msgstr ""
+
+msgid "GLASS Admin Maintenance Report"
 msgstr ""
 
 msgid "File"

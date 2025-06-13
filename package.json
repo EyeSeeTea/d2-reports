@@ -84,6 +84,7 @@
         "build-nhwa-metadata": "npx ts-node -P tsconfig-cli.json src/scripts/build-nhwa-metadata.ts",
         "post-metadata": "npx ts-node -P tsconfig-cli.json src/scripts/post-metadata.ts",
         "build-mal-metadata": "npx ts-node -P tsconfig-cli.json src/scripts/build-mal-metadata.ts",
+        "build-file-metadata": "npx ts-node -P tsconfig-cli.json src/scripts/build-file-metadata.ts",
         "test": "jest --passWithNoTests",
         "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
         "eject": "react-scripts eject",

@@ -1,9 +1,9 @@
 import React from "react";
-import { useFileResources } from "./useFileResources";
 import { FileResourcesViewModel } from "./FileResourcesViewModel";
 import { ConfirmationDialog, ObjectsList } from "@eyeseetea/d2-ui-components";
 import { Filters } from "./Filters";
 import i18n from "../../../../locales";
+import { useFileResources } from "./useFileResources";
 
 export const FileResourcesMonitorList: React.FC = React.memo(() => {
     const {
