@@ -207,7 +207,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         const rows = files.map(file => ({
             id: file.id,
             name: file.name,
-            createdBy: file.createdBy.name,
+            createdBy: file.createdBy?.name ?? "-",
             created: file.created,
             lastUpdatedBy: file.lastUpdatedBy?.name ?? "-",
             lastUpdated: file.lastUpdated,
