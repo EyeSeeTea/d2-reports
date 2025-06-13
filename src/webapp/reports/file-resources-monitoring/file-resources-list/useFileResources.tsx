@@ -25,7 +25,6 @@ export function useFileResources() {
     const { compositionRoot } = useAppContext();
     const [filters, setFilters] = useState(() => getEmptyFilter());
     const [sorting, setSorting] = useState<TableSorting<FileResourcesViewModel>>();
-    const [filenameQuery, setFilenameQuery] = useState<string>("");
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [reloadKey, reload] = useReload();
     const [showConfirmDelete, setShowConfirmDelete] = useState(false);
@@ -146,12 +145,6 @@ export function useFileResources() {
 
     const tableProps = useObjectsTable<FileResourcesViewModel>(baseConfig, getRowsList);
 
-    const filterOptions = useMemo(() => {
-        return {
-            filenameQuery: filenameQuery,
-        };
-    }, [filenameQuery]);
-
     const columnsToShow = useMemo<TableColumn<FileResourcesViewModel>[]>(() => {
         if (!visibleColumns || _.isEmpty(visibleColumns)) return tableProps.columns;
         const indexes = _(visibleColumns)
@@ -183,10 +176,8 @@ export function useFileResources() {
         tableProps,
         columnsToShow,
         saveReorderedColumns,
-        setFilenameQuery,
         setFilters,
         filters,
-        filterOptions,
         downloadCsv,
         showConfirmDelete,
         deleteSelectedFiles,

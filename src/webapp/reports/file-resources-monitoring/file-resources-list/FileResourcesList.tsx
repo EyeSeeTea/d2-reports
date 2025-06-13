@@ -1,7 +1,6 @@
 import React from "react";
 import { FileResourcesViewModel } from "./FileResourcesViewModel";
 import { ConfirmationDialog, ObjectsList } from "@eyeseetea/d2-ui-components";
-import { Filters } from "./Filters";
 import i18n from "../../../../locales";
 import { useFileResources } from "./useFileResources";
 
@@ -10,10 +9,8 @@ export const FileResourcesMonitorList: React.FC = React.memo(() => {
         tableProps,
         columnsToShow,
         saveReorderedColumns,
-        setFilenameQuery,
         setFilters,
         filters,
-        filterOptions,
         downloadCsv,
         showConfirmDelete,
         deleteSelectedFiles,
@@ -27,13 +24,10 @@ export const FileResourcesMonitorList: React.FC = React.memo(() => {
                 columns={columnsToShow}
                 onReorderColumns={saveReorderedColumns}
                 onChangeSearch={value => {
-                    setFilenameQuery(value);
                     setFilters({ ...filters, filenameQuery: value });
                 }}
                 globalActions={[downloadCsv]}
-            >
-                <Filters values={filters} options={filterOptions} onChange={setFilters} />
-            </ObjectsList>
+            ></ObjectsList>
 
             {showConfirmDelete && (
                 <ConfirmationDialog
