@@ -10,11 +10,11 @@ const dataSetApprovalName = "MAL - WMR Form-APVD";
 export class WmrDiffReport {
     constructor(private dataValueRepository: DataValuesRepository, private dataSetRepository: DataSetRepository) {}
 
-    async getDiff(dataSetId: Id, orgUnitId: Id, period: string) {
+    async getDiff(dataSetId: Id, orgUnitId: Id, period: string, children = false): Promise<DataDiffItem[]> {
         const dataElements = await this.getDataElements(dataSetId);
         const dataSetApproval = await this.dataSetRepository.getByNameOrCode(dataSetApprovalName);
-        const approvalDataValues = await this.getDataValues(dataSetApproval.id, orgUnitId, period);
-        const malDataValues = await this.getDataValues(dataSetId, orgUnitId, period);
+        const approvalDataValues = await this.getDataValues(dataSetApproval.id, orgUnitId, period, children);
+        const malDataValues = await this.getDataValues(dataSetId, orgUnitId, period, children);
 
         const dataElementsWithValues = this.filterDataElementsWithDataValue(
             malDataValues,
@@ -28,11 +28,17 @@ export class WmrDiffReport {
         return dataElementsWithValues;
     }
 
-    private async getDataValues(dataSetId: Id, orgUnitId: Id, period: string): Promise<DataValue[]> {
+    private async getDataValues(
+        dataSetId: Id,
+        orgUnitId: Id,
+        period: string,
+        children?: boolean
+    ): Promise<DataValue[]> {
         const dataValues = await this.dataValueRepository.get({
             dataSetIds: [dataSetId],
             periods: [period],
             orgUnitIds: [orgUnitId],
+            children: children,
         });
         return dataValues;
     }
@@ -78,12 +84,16 @@ export class WmrDiffReport {
                         dataValue.categoryOptionCombo === dataElement.categoryOptionCombo
                 );
 
-                if (!malariaDataValue && !approvalDataValue) return undefined;
-                if (malariaDataValue?.value === approvalDataValue?.value) return undefined;
+                if (
+                    (!malariaDataValue && !approvalDataValue) ||
+                    malariaDataValue?.value === approvalDataValue?.value ||
+                    malariaDataValue?.orgUnit !== approvalDataValue?.orgUnit
+                )
+                    return undefined;
 
                 return {
                     dataSetUid: malariaDataSetId,
-                    orgUnitUid: orgUnitId,
+                    orgUnitUid: malariaDataValue?.orgUnit || orgUnitId,
                     period: period,
                     value: approvalDataValue && !malariaDataValue ? "" : malariaDataValue?.value,
                     dataElement: this.buildDataElementNameWithCombination(dataElement),

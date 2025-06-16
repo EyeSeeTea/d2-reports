@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { D2Api } from "../../../types/d2-api";
+import { D2Api, MetadataPick } from "../../../types/d2-api";
 import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
 import { StorageClient } from "../../common/clients/storage/StorageClient";
 import { Instance } from "../../common/entities/Instance";
@@ -72,24 +72,38 @@ export class MalDataSubscriptionDefaultRepository implements MalDataSubscription
         const subscriptionValues =
             (await this.globalStorageClient.getObject<SubscriptionStatus[]>(Namespaces.MAL_SUBSCRIPTION_STATUS)) ?? [];
 
+        const dataElementFields = {
+            id: true,
+            name: true,
+            code: true,
+            dataElementGroups: { id: true, name: true },
+            dataSetElements: {
+                dataSet: {
+                    id: true,
+                    name: true,
+                    sections: {
+                        id: true,
+                        name: true,
+                        dataElements: { fields: { id: true } },
+                    },
+                },
+            },
+        } as const;
+
+        type D2DataElement = MetadataPick<{
+            dataElements: { fields: typeof dataElementFields };
+        }>["dataElements"][number];
+
         const { dataElements } = await this.api
-            .get<{
-                dataElements: {
-                    id: string;
-                    name: string;
-                    code: string;
-                    dataElementGroups: NamedRef[];
-                    dataSetElements: {
-                        dataSet: {
-                            id: string;
-                            name: string;
-                            sections: { id: string; name: string; dataElements: { id: string }[] }[];
-                        };
-                    }[];
-                }[];
-            }>(
-                `/dataElements?filter=name:ilike:apvd&fields=id,name,code,dataElementGroups[id,name],dataSetElements[dataSet[id,name,sections[id,name,dataElements]]]&paging=false`
-            )
+            .get<{ dataElements: D2DataElement[] }>(`/dataElements`, {
+                filters: [
+                    "name:ilike:apvd",
+                    `dataElementGroups.id:in:${dataElementGroupIds.join(",")}`,
+                    `dataSetElements.dataSet.sections.id:in:${sectionIds.join(",")}`,
+                ],
+                fields: "id,name,code,dataElementGroups[id,name],dataSetElements[dataSet[id,name,sections[id,name,dataElements]]]",
+                paging: false,
+            })
             .getData();
 
         const rows = dataElements

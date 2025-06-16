@@ -15,9 +15,9 @@ import { promiseMap } from "../utils/promises";
 import { DataDiffItemIdentifier } from "../domain/reports/mal-data-approval/entities/DataDiffItem";
 import { DuplicateDataValuesUseCase } from "../domain/reports/mal-data-approval/usecases/DuplicateDataValuesUseCase";
 
-const START_YEAR = 2000;
-const END_YEAR = new Date().getFullYear() - 1;
-const globalOU = "WHO-HQ";
+const GLOBAL_OU = "WHO-HQ";
+const DEFAULT_START_YEAR = 2005;
+const DEFAULT_END_YEAR = new Date().getFullYear() - 2;
 
 type ApprovalOptions = {
     baseUrl: string;
@@ -37,7 +37,6 @@ export async function approveMalDataValues(options: ApprovalOptions): Promise<vo
     const dataSetRepository = new DataSetD2Repository(api);
 
     const { dataSet, orgUnit } = await getMalWMRMetadata(api, ouOption);
-
     const malDataApprovalItems = await buildMalApprovalItems(
         dataValueRepository,
         dataSetRepository,
@@ -76,7 +75,7 @@ async function getMalWMRMetadata(api: D2Api, ouOption: string): Promise<{ dataSe
         getMetadataByIdentifiableToken({
             api: api,
             metadataType: "organisationUnits",
-            token: ouOption ?? globalOU,
+            token: ouOption ?? GLOBAL_OU,
         }),
     ]);
 
@@ -90,12 +89,15 @@ async function buildMalApprovalItems(
     orgUnitId: Id,
     yearOption?: string
 ): Promise<DataDiffItemIdentifier[]> {
-    const periods = yearOption ? [yearOption] : _.range(START_YEAR, END_YEAR).map(year => year.toString());
+    const periods = yearOption
+        ? [yearOption]
+        : _.range(DEFAULT_START_YEAR, DEFAULT_END_YEAR + 1).map(year => year.toString());
     const dataValuesToApprove = await promiseMap(periods, async period => {
         const dataElementsWithValues = await new WmrDiffReport(dataValueRepository, dataSetRepository).getDiff(
             dataSetId,
             orgUnitId,
-            period
+            period,
+            true // Include children
         );
 
         return dataElementsWithValues.map(dataElementWithValues => ({
@@ -114,7 +116,7 @@ async function buildMalApprovalItems(
 
 async function main() {
     const parser = new ArgumentParser({
-        description: `Approve all data values in MAL WMR Form from ${START_YEAR} to ${END_YEAR}`,
+        description: `Approve data values in MAL WMR Form`,
     });
 
     parser.add_argument("-u", "--user-auth", {
@@ -132,7 +134,7 @@ async function main() {
     parser.add_argument("-ou", "--org-unit", {
         help: "Organisation unit identifier",
         metavar: "ORG_UNIT",
-        default: globalOU,
+        default: GLOBAL_OU,
     });
 
     parser.add_argument("-y", "--year", {
