@@ -488,8 +488,17 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             .value();
 
         if (!_.isEmpty(emptyDataValues)) {
-             // eslint-disable-next-line 
-            return this.api.dataValues.postSet({ importStrategy: "DELETE" }, { dataSet: approvalDataSetId, dataValues: emptyDataValues }).getData().catch(error => console.dir(error)).then(dataValueSetsPostResponse => {
+            return this.api.dataValues
+                .postSet({ importStrategy: "DELETE" }, { dataSet: approvalDataSetId, dataValues: emptyDataValues })
+                .getData()
+                // eslint-disable-next-line 
+                .catch(error => console.log(
+                    "========================>\n",
+                    "\nerror.request:\n",error.request,
+                    "\nerror.request.data.dataValues:\n",error.request.data.dataValues,
+                    "\n<========================\n"
+                ))
+                .then(dataValueSetsPostResponse => {
                     if (!dataValueSetsPostResponse) return;
 
                     console.debug(dataValueSetsPostResponse);
