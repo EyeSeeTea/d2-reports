@@ -70,41 +70,40 @@ export class WmrDiffReport {
         orgUnitId: Id,
         period: string
     ): DataDiffItem[] {
-        return _(dataElements)
-            .map(dataElement => {
-                const malariaDataValue = _(malariaDataValues).find(
-                    dataValue =>
-                        dataValue.dataElement === dataElement.id &&
-                        dataValue.categoryOptionCombo === dataElement.categoryOptionCombo
-                );
+        return dataElements.flatMap(dataElement => {
+            const matchingMalariaDataValues = malariaDataValues.filter(
+                dataValue =>
+                    dataValue.dataElement === dataElement.id &&
+                    dataValue.categoryOptionCombo === dataElement.categoryOptionCombo
+            );
 
-                const approvalDataValue = _(approvalDataValues).find(
-                    dataValue =>
-                        dataValue.dataElement.toLowerCase() === dataElement.id.toLowerCase() &&
-                        dataValue.categoryOptionCombo === dataElement.categoryOptionCombo
-                );
+            return _(matchingMalariaDataValues)
+                .map(malariaDataValue => {
+                    const approvalDataValue = approvalDataValues.find(
+                        dataValue =>
+                            dataValue.dataElement.toLowerCase() === dataElement.id.toLowerCase() &&
+                            dataValue.categoryOptionCombo === dataElement.categoryOptionCombo &&
+                            dataValue.orgUnit === malariaDataValue.orgUnit
+                    );
 
-                if (
-                    (!malariaDataValue && !approvalDataValue) ||
-                    malariaDataValue?.value === approvalDataValue?.value ||
-                    malariaDataValue?.orgUnit !== approvalDataValue?.orgUnit
-                )
-                    return undefined;
+                    if (!malariaDataValue.value && !approvalDataValue) return undefined;
+                    if (malariaDataValue.value === approvalDataValue?.value) return undefined;
 
-                return {
-                    dataSetUid: malariaDataSetId,
-                    orgUnitUid: malariaDataValue?.orgUnit || orgUnitId,
-                    period: period,
-                    value: approvalDataValue && !malariaDataValue ? "" : malariaDataValue?.value,
-                    dataElement: this.buildDataElementNameWithCombination(dataElement),
-                    comment: malariaDataValue?.comment,
-                    apvdDataElement: approvalDataValue?.dataElement,
-                    apvdValue: approvalDataValue?.value,
-                    apvdComment: approvalDataValue?.comment,
-                };
-            })
-            .compact()
-            .value();
+                    return {
+                        dataSetUid: malariaDataSetId,
+                        orgUnitUid: malariaDataValue?.orgUnit || orgUnitId,
+                        period: period,
+                        value: approvalDataValue && !malariaDataValue ? "" : malariaDataValue?.value,
+                        dataElement: this.buildDataElementNameWithCombination(dataElement),
+                        comment: malariaDataValue?.comment,
+                        apvdDataElement: approvalDataValue?.dataElement,
+                        apvdValue: approvalDataValue?.value,
+                        apvdComment: approvalDataValue?.comment,
+                    };
+                })
+                .compact()
+                .value();
+        });
     }
 
     private buildDataElementNameWithCombination(dataElement: DataElementsWithCombination): string {
