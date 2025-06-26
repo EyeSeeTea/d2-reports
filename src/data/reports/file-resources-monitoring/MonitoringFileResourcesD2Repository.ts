@@ -376,7 +376,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
                     },
                 ],
             };
-            this.api.events.post({}, payload);
+            await this.api.events.post({}, payload).getData();
         } catch (error) {
             console.debug(error);
         }
