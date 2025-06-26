@@ -41,8 +41,8 @@ export function useFileResources() {
     const baseConfig: TableConfig<FileResourcesViewModel> = useMemo(
         () => ({
             columns: [
-                { name: "id", text: i18n.t("Id"), sortable: true },
-                { name: "fileResourceId", text: i18n.t("FileResourceId"), sortable: true, hidden: true },
+                { name: "id", text: i18n.t("Id"), sortable: true, hidden: true },
+                { name: "fileResourceId", text: i18n.t("FileResourceId"), sortable: true },
                 { name: "name", text: i18n.t("Name"), sortable: true },
                 { name: "created", text: i18n.t("Created"), sortable: true, hidden: true },
                 { name: "createdBy", text: i18n.t("CreatedBy"), sortable: true, hidden: true },
