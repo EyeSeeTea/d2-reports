@@ -118,7 +118,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
                 kind: "dataValue",
                 fileResourceId: row.fileresourceuid,
                 dataElementUid: row.dataelementuid,
-                period: row.period,
+                period: this.getPeriod(row) || "",
                 categoryOptionComboUid: row.categoryoptioncombouid,
                 organisationUnitUid: row.organisationunituid,
                 attributeOptionComboUid: row.attributeoptioncombouid || "",
@@ -126,6 +126,53 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
 
             return dataValuesFileResource;
         });
+    }
+
+    private getPeriod(row: Record<string, string | undefined>): string | undefined {
+        const periodType = row.periodtypename?.toLowerCase();
+
+        switch (periodType) {
+            case "daily":
+                return row.daily;
+            case "weekly":
+                return row.weekly;
+            case "weeklywednesday":
+                return row.weeklywednesday;
+            case "weeklythursday":
+                return row.weeklythursday;
+            case "weeklysaturday":
+                return row.weeklysaturday;
+            case "weeklysunday":
+                return row.weeklysunday;
+            case "biweekly":
+                return row.biweekly;
+            case "monthly":
+                return row.monthly;
+            case "bimonthly":
+                return row.bimonthly;
+            case "quarterly":
+                return row.quarterly;
+            case "quarterlynov":
+                return row.quarterlynov;
+            case "sixmonthly":
+                return row.sixmonthly;
+            case "sixmonthlyapril":
+                return row.sixmonthlyapril;
+            case "sixmonthlynov":
+                return row.sixmonthlynov;
+            case "yearly":
+                return row.yearly;
+            case "financialapril":
+                return row.financialapril;
+            case "financialjuly":
+                return row.financialjuly;
+            case "financialoct":
+                return row.financialoct;
+            case "financialnov":
+                return row.financialnov;
+            default:
+                return undefined;
+        }
     }
 
     private async getUsersWithAvatar(): Promise<UserAvatarFileRef[]> {
@@ -253,35 +300,6 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
 
         this.cache.clear();
     }
-
-    // async delete(selectedIds: string[]): Promise<void> {
-    //     const datavalueMap = await this.getDataSetValueFileResources();
-    //     const documentsMap = await this.getDocumentAndFileResourcesUIds();
-    //     const eventMap = await this.getEventFileResources();
-
-    //     const deleteActions = selectedIds.map(id => {
-    //         if (id in datavalueMap) {
-    //             const dataValueInfo = datavalueMap[id];
-    //             if (dataValueInfo !== undefined) {
-    //                 return this.deleteDataSetFile(dataValueInfo);
-    //             }
-    //         } else if (id in documentsMap) {
-    //             const document = documentsMap[id];
-    //             if (document !== undefined) {
-    //                 return this.deleteDocument(id);
-    //             }
-    //         } else if (id in eventMap) {
-    //             const event = eventMap[id];
-    //             if (event !== undefined) {
-    //                 return this.deleteEventFile(event, id);
-    //             }
-    //         }
-    //         console.warn(`ID ${id} not found`);
-    //         return Promise.resolve();
-    //     });
-
-    //     await Promise.all(deleteActions);
-    // }
 
     async getColumns(namespace: string): Promise<string[]> {
         const columns = await this.storageClient.getObject<string[]>(namespace);
@@ -428,10 +446,29 @@ type EventSqlField = "eventuid" | "eventdatavalues" | "fileresourceuid";
 type DataSetSqlField =
     | "fileresourceuid"
     | "dataelementuid"
-    | "period"
     | "categoryoptioncombouid"
     | "organisationunituid"
-    | "attributeoptioncombouid";
+    | "attributeoptioncombouid"
+    | "periodtypename"
+    | "daily"
+    | "weekly"
+    | "weeklywednesday"
+    | "weeklythursday"
+    | "weeklysaturday"
+    | "weeklysunday"
+    | "biweekly"
+    | "monthly"
+    | "bimonthly"
+    | "quarterly"
+    | "quarterlynov"
+    | "sixmonthly"
+    | "sixmonthlyapril"
+    | "sixmonthlynov"
+    | "yearly"
+    | "financialapril"
+    | "financialjuly"
+    | "financialoct"
+    | "financialnov";
 
 const fileResourcesFields = {
     id: true,
