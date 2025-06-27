@@ -18,8 +18,7 @@ import _ from "lodash";
 import React from "react";
 import type { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import i18n from "../../../../locales";
-import { Tooltip } from "@material-ui/core";
-import styled from "styled-components";
+import { showTooltip } from "./Tooltip";
 
 export function useFileResources() {
     const { compositionRoot } = useAppContext();
@@ -54,23 +53,7 @@ export function useFileResources() {
                     name: "type",
                     text: i18n.t("Type"),
                     sortable: false,
-                    getValue: (row: FileResourcesViewModel) => {
-                        const text = row.type; // o el campo que quieras comprobar
-                        if (text === "Orphan") {
-                            return (
-                                <StyledTooltip
-                                    title={i18n.t(
-                                        "This is an orphan fileResource. A file resource is orphan when it doesn't have any relation with an owner (document, dataValue, userAvatar, messageAttachment)"
-                                    )}
-                                    arrow
-                                >
-                                    {<span>{text} *</span>}
-                                </StyledTooltip>
-                            );
-                        } else {
-                            return text;
-                        }
-                    },
+                    getValue: showTooltip,
                 },
             ],
             actions: [
@@ -95,8 +78,8 @@ export function useFileResources() {
                 order: "asc" as const,
             },
             paginationOptions: {
-                pageSizeOptions: [10, 20, 50],
-                pageSizeInitialValue: 10,
+                pageSizeOptions: [50, 100, 200, 500],
+                pageSizeInitialValue: 100,
             },
             searchBoxLabel: i18n.t("Search by filename..."),
         }),
@@ -198,10 +181,3 @@ function getEmptyFilter(): any {
         filenameQuery: "",
     };
 }
-
-const StyledTooltip = styled(({ className, ...props }) => <Tooltip {...props} classes={{ popper: className }} />)`
-    /* Aquí dirigimos los estilos hacia el elemento interno que contiene el texto */
-    & .MuiTooltip-tooltip {
-        font-size: 14px;
-    }
-`;
