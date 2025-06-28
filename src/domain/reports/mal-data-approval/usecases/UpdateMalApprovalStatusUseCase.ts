@@ -67,6 +67,9 @@ export class UpdateMalApprovalStatusUseCase {
                     value: value ?? "",
                     apvdValue: apvdValue ?? "",
                     comment: comment,
+                    attributeOptionCombo: dataElementWithValues.attributeOptionCombo,
+                    categoryOptionCombo: dataElementWithValues.categoryOptionCombo,
+                    dataElementBasicName: dataElementWithValues.dataElementBasicName,
                 };
             })
             .compact()

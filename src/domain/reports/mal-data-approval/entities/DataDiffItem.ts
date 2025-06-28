@@ -8,6 +8,9 @@ export interface DataDiffItem {
     apvdDataElement: string | undefined;
     comment: string | undefined;
     apvdComment: string | undefined;
+    attributeOptionCombo: string | undefined;
+    categoryOptionCombo: string | undefined;
+    dataElementBasicName: string | undefined;
 }
 
 export interface DataDiffItemIdentifier {
@@ -18,6 +21,9 @@ export interface DataDiffItemIdentifier {
     value: string;
     apvdValue: string;
     comment?: string;
+    attributeOptionCombo: string | undefined;
+    categoryOptionCombo: string | undefined;
+    dataElementBasicName: string | undefined;
 }
 
 export function getDataDiffItemId(item: DataDiffItem): string {
@@ -37,5 +43,16 @@ export function parseDataDiffItemId(string: string): DataDiffItemIdentifier | un
 
     if (!dataSet || !period || !orgUnit || !dataElement) return undefined;
 
-    return { dataSet, period, orgUnit, dataElement, value, apvdValue, comment };
+    return {
+        dataSet,
+        period,
+        orgUnit,
+        dataElement,
+        value,
+        apvdValue,
+        comment,
+        attributeOptionCombo: undefined,
+        categoryOptionCombo: undefined,
+        dataElementBasicName: undefined,
+    };
 }

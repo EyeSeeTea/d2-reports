@@ -1,6 +1,12 @@
 import _ from "lodash";
-import { D2Api, DataValueSetsPostResponse, Id, PaginatedObjects } from "../../../types/d2-api";
-import { promiseMap } from "../../../utils/promises";
+import {
+    D2Api,
+    DataValueSetsPostResponse,
+    Id,
+    PaginatedObjects,
+    DataValueSetsPostRequest,
+} from "../../../types/d2-api";
+import { promiseMap, promiseMapConcurrent } from "../../../utils/promises";
 import { DataStoreStorageClient } from "../../common/clients/storage/DataStoreStorageClient";
 import { StorageClient } from "../../common/clients/storage/StorageClient";
 import { CsvData } from "../../common/CsvDataSource";
@@ -28,6 +34,8 @@ import { DataDiffItem, DataDiffItemIdentifier } from "../../../domain/reports/ma
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 import { paginate } from "../../../domain/common/entities/PaginatedObjects";
 import { getMetadataByIdentifiableToken } from "../../common/utils/getMetadataByIdentifiableToken";
+import { Maybe } from "../../../types/utils";
+import { DataValueStats } from "../../../domain/common/entities/DataValueStats";
 
 interface VariableHeaders {
     dataSets: string;
@@ -186,6 +194,9 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                 apvdDataElement: item.apvddataelement,
                 comment: item.comment,
                 apvdComment: item.apvdcomment,
+                attributeOptionCombo: undefined,
+                categoryOptionCombo: undefined,
+                dataElementBasicName: undefined,
             })
         );
 
@@ -376,9 +387,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             const dataValueSets: DataSetsValueType[] = await this.getDataValueSets(dataSets);
 
             const uniqueDataSets = _.uniqBy(dataSets, "dataSet");
-            const DSDataElements: { dataSetElements: DataSetElementsType[] }[] = await this.getDSDataElements(
-                uniqueDataSets
-            );
+            const DSDataElements = await this.getDSDataElements(uniqueDataSets);
 
             const ADSDataElements: DataElementsType[] = await this.getADSDataElements(approvalDataSetId);
 
@@ -399,7 +408,6 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             await this.addTimestampsToDataValuesArray(approvalDataSetId, dataSets, dataValues);
 
             await this.deleteEmptyDataValues(approvalDataSetId, ADSDataElements, dataElementsWithValues);
-
             return this.chunkedDataValuePost(dataValues, 3000);
         } catch (error: any) {
             console.debug(error);
@@ -449,6 +457,155 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         }
     }
 
+    // TODO: All this logic must be in the domain. ApproveMalDataValuesUseCase.ts
+    async replicateDataValuesInApvdDataSet(originalDataValues: DataDiffItemIdentifier[]): Promise<DataValueStats[]> {
+        const approvalDataSetId = await this.getApprovalDataSetId();
+        const approvalDataElements = await this.getADSDataElements(approvalDataSetId);
+        const approvalDeByName = _.keyBy(approvalDataElements, dataElement => dataElement.name.toLowerCase());
+
+        const malApprovalDateDataElement = await getMetadataByIdentifiableToken({
+            api: this.api,
+            metadataType: "dataElements",
+            token: dataElementCodes.MAL_APPROVAL_DATE_APVD,
+        });
+
+        const approvalDataValues = _(originalDataValues)
+            .map((dataValue): Maybe<D2DataValue> => {
+                const dataElementNameLowerCase = dataValue.dataElementBasicName?.toLowerCase();
+                const apvdDataElement = approvalDeByName[`${dataElementNameLowerCase}-apvd`];
+
+                if (!apvdDataElement) {
+                    console.warn(
+                        `Data element ${dataValue.dataElement} not found in approval data elements. Ignoring record.`
+                    );
+                    return undefined;
+                }
+
+                return {
+                    dataElement: apvdDataElement.id,
+                    value: dataValue.value,
+                    orgUnit: dataValue.orgUnit,
+                    period: dataValue.period,
+                    attributeOptionCombo: dataValue.attributeOptionCombo,
+                    categoryOptionCombo: dataValue.categoryOptionCombo,
+                    comment: dataValue.comment,
+                };
+            })
+            .compact()
+            .value();
+
+        const timeStampDataValues = this.generateTimeStampDataValue(
+            approvalDataValues,
+            approvalDataSetId,
+            malApprovalDateDataElement.id
+        );
+
+        await this.deleteEmptyDataValues(approvalDataSetId, approvalDataElements, originalDataValues);
+        return this.saveDataValues(approvalDataValues.concat(timeStampDataValues), approvalDataSetId);
+    }
+
+    private async saveDataValues(dataValues: D2DataValue[], dataSetId: Maybe<Id>): Promise<DataValueStats[]> {
+        const dvByPeriodAndOrgUnit = _(dataValues)
+            .groupBy(item => `${item.orgUnit}-${item.period}`)
+            .value();
+
+        const dataValuesByPeriodOrgUnit = _(dvByPeriodAndOrgUnit)
+            .map((dvOrgUnitPeriod, key) => {
+                const [orgUnit, period] = key.split("-");
+                if (!orgUnit || !period) {
+                    throw new Error(`[saveDataValues]: Invalid orgUnit or period in key: ${key}`);
+                }
+                return { period: period, orgUnit: orgUnit, dataValues: dvOrgUnitPeriod };
+            })
+            .value();
+
+        const dvStats = await promiseMapConcurrent(dataValuesByPeriodOrgUnit, async dataValueToSave => {
+            console.debug(
+                `Saving ${dataValueToSave.dataValues.length} dataValues: [orgunit-period] ${dataValueToSave.orgUnit}-${dataValueToSave.period}`
+            );
+
+            try {
+                const response = await this.api.dataValues
+                    .postSet({ dryRun: false }, { dataSet: dataSetId, dataValues: dataValueToSave.dataValues })
+                    .getData();
+
+                return this.getDataValueStats({
+                    dataSetId: dataSetId,
+                    response: response,
+                    period: dataValueToSave.period,
+                    orgUnitId: dataValueToSave.orgUnit,
+                });
+            } catch (error) {
+                const errorResponse = error as D2DataValueResponse;
+                return this.getDataValueStats({
+                    dataSetId: dataSetId,
+                    response: errorResponse.response?.data?.response,
+                    period: dataValueToSave.period,
+                    orgUnitId: dataValueToSave.orgUnit,
+                });
+            }
+        });
+
+        return _(dvStats).compact().value();
+    }
+
+    private getDataValueStats(options: {
+        dataSetId: Maybe<Id>;
+        response: Maybe<DataValueSetsPostResponse>;
+        period: string;
+        orgUnitId: Id;
+    }): Maybe<DataValueStats> {
+        const { dataSetId, response, period, orgUnitId } = options;
+        if (!response) {
+            console.warn(`Response is undefined or null: ${orgUnitId}-${period}`);
+            return undefined;
+        }
+
+        return new DataValueStats({
+            dataSetId: dataSetId ?? "",
+            deleted: response.importCount.deleted,
+            updated: response.importCount.updated,
+            errorMessages: _(response.conflicts)
+                .map(conflict => {
+                    return { message: conflict.value };
+                })
+                .compact()
+                .value(),
+            ignored: response.importCount.ignored,
+            imported: response.importCount.imported,
+            period: period,
+            orgUnitId: orgUnitId,
+        });
+    }
+
+    private generateTimeStampDataValue(
+        dataValues: D2DataValue[],
+        approvalDataSetId: Id,
+        dataElementId: Id
+    ): D2DataValue[] {
+        const dataValuesByOrgUnitAndPeriod = _(dataValues)
+            .groupBy(item => `${item.orgUnit}-${item.period}`)
+            .value();
+
+        return Object.keys(dataValuesByOrgUnitAndPeriod).flatMap(key => {
+            const [orgUnit, period] = key.split("-");
+            if (!orgUnit || !period) {
+                console.warn(`[generateTimeStampDataValue]: Invalid orgUnit or period in key: ${key}`);
+                return [];
+            }
+
+            return {
+                dataSet: approvalDataSetId,
+                period: period,
+                orgUnit: orgUnit,
+                dataElement: dataElementId,
+                categoryOptionCombo: DEFAULT_COC,
+                attributeOptionCombo: DEFAULT_COC,
+                value: getISODate(),
+            };
+        });
+    }
+
     private async getApprovalDataSetId(): Promise<Id> {
         const { id } = await getMetadataByIdentifiableToken({
             api: this.api,
@@ -472,7 +629,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                 )?.id;
 
                 if (!apvdDataElementId) {
-                    console.warn(`Data element ${dataValue.dataElement} not found`);
+                    console.warn(`deleteEmptyDataValues: Data element ${dataValue.dataElement} not found`);
                     return undefined;
                 }
 
@@ -487,25 +644,31 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             .compact()
             .value();
 
-        if (!_.isEmpty(emptyDataValues)) {
-            return this.api.dataValues
-                .postSet({ importStrategy: "DELETE" }, { dataSet: approvalDataSetId, dataValues: emptyDataValues })
-                .getData()
-                // eslint-disable-next-line 
-                .catch(error => console.log(
-                    "========================>\n",
-                    "\nerror.request:\n",error.request,
-                    "\nerror.request.data.dataValues:\n",error.request.data.dataValues,
-                    "\n<========================\n"
-                ))
-                .then(dataValueSetsPostResponse => {
-                    if (!dataValueSetsPostResponse) return;
+        if (emptyDataValues.length > 0) {
+            return (
+                this.api.dataValues
+                    .postSet({ importStrategy: "DELETE" }, { dataSet: approvalDataSetId, dataValues: emptyDataValues })
+                    .getData()
+                    // eslint-disable-next-line
+                    .catch(error =>
+                        console.debug(
+                            "========================>\n",
+                            "\nerror.request:\n",
+                            error.request,
+                            "\nerror.request.data.dataValues:\n",
+                            error.request.data.dataValues,
+                            "\n<========================\n"
+                        )
+                    )
+                    .then(dataValueSetsPostResponse => {
+                        if (!dataValueSetsPostResponse) return;
 
-                    console.debug(dataValueSetsPostResponse);
-                    if (dataValueSetsPostResponse.status !== "SUCCESS") {
-                        throw new Error("Error when deleting empty data values");
-                    }
-                });
+                        console.debug(dataValueSetsPostResponse);
+                        if (dataValueSetsPostResponse.status !== "SUCCESS") {
+                            throw new Error("Error when deleting empty data values");
+                        }
+                    })
+            );
         }
     }
 
@@ -890,3 +1053,9 @@ const dataElementCodes = {
     MAL_APPROVAL_DATE_APVD: "MAL_APPROVAL_DATE-APVD",
 };
 const DEFAULT_COC = "Xr12mI7VPn3";
+
+type D2DataValue = DataValueSetsPostRequest["dataValues"][number];
+
+type D2DataValueResponse = {
+    response?: { data?: { response?: DataValueSetsPostResponse } };
+};

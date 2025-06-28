@@ -1,5 +1,6 @@
 import { Id } from "../../domain/common/entities/Base";
 import { DataSet } from "../../domain/common/entities/DataSet";
+import { OrgUnit } from "../../domain/common/entities/OrgUnit";
 import { DataSetRepository } from "../../domain/common/repositories/DataSetRepository";
 import { D2Api } from "../../types/d2-api";
 
@@ -10,7 +11,7 @@ export class DataSetD2Repository implements DataSetRepository {
         return this.api.metadata
             .get({
                 dataSets: {
-                    fields: { id: true, name: true },
+                    fields: { id: true, name: true, organisationUnits: { id: true, name: true } },
                     filter: { identifiable: { eq: nameOrCode } },
                 },
             })
@@ -19,7 +20,20 @@ export class DataSetD2Repository implements DataSetRepository {
                 const dataSet = response.dataSets[0];
                 if (!dataSet) throw new Error(`DataSet not found: ${nameOrCode}`);
 
-                return { dataElements: [], id: dataSet.id, name: dataSet.name, organisationUnits: [] };
+                return {
+                    dataElements: [],
+                    id: dataSet.id,
+                    name: dataSet.name,
+                    organisationUnits: dataSet.organisationUnits.map(
+                        (ou): OrgUnit => ({
+                            id: ou.id,
+                            name: ou.name,
+                            path: "",
+                            children: [],
+                            level: 0,
+                        })
+                    ),
+                };
             });
     }
 

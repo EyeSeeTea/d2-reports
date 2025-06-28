@@ -5,7 +5,7 @@ import { DataSetRepository } from "../common/repositories/DataSetRepository";
 import { DataValuesRepository } from "../common/repositories/DataValuesRepository";
 import { DataDiffItem } from "./mal-data-approval/entities/DataDiffItem";
 
-const dataSetApprovalName = "MAL - WMR Form-APVD";
+export const dataSetApprovalName = "MAL - WMR Form-APVD";
 
 export class WmrDiffReport {
     constructor(private dataValueRepository: DataValuesRepository, private dataSetRepository: DataSetRepository) {}
@@ -99,6 +99,9 @@ export class WmrDiffReport {
                         apvdDataElement: approvalDataValue?.dataElement,
                         apvdValue: approvalDataValue?.value,
                         apvdComment: approvalDataValue?.comment,
+                        attributeOptionCombo: malariaDataValue?.attributeOptionCombo,
+                        categoryOptionCombo: malariaDataValue?.categoryOptionCombo,
+                        dataElementBasicName: dataElement.name,
                     };
                 })
                 .compact()

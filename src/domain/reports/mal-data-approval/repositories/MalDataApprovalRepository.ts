@@ -4,6 +4,7 @@ import { PaginatedObjects, Paging, Sorting } from "../../../common/entities/Pagi
 import { DataDiffItem } from "../entities/DataDiffItem";
 import { MalDataApprovalItem, MalDataApprovalItemIdentifier, MonitoringValue } from "../entities/MalDataApprovalItem";
 import { DataDiffItemIdentifier } from "../entities/DataDiffItem";
+import { DataValueStats } from "../../../common/entities/DataValueStats";
 
 export interface MalDataApprovalRepository {
     get(options: MalDataApprovalOptions): Promise<PaginatedObjects<MalDataApprovalItem>>;
@@ -17,6 +18,7 @@ export interface MalDataApprovalRepository {
         dataElementsWithValues: DataDiffItemIdentifier[]
     ): Promise<boolean>;
     duplicateDataValues(dataSets: DataDiffItemIdentifier[]): Promise<boolean>;
+    replicateDataValuesInApvdDataSet(dataSets: DataDiffItemIdentifier[]): Promise<DataValueStats[]>;
     duplicateDataValuesAndRevoke(dataSets: DataDiffItemIdentifier[]): Promise<boolean>;
     incomplete(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean>;
     unapprove(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean>;

@@ -13,7 +13,8 @@ import { CodedRef } from "../domain/common/entities/Ref";
 import { WmrDiffReport } from "../domain/reports/WmrDiffReport";
 import { promiseMap } from "../utils/promises";
 import { DataDiffItemIdentifier } from "../domain/reports/mal-data-approval/entities/DataDiffItem";
-import { DuplicateDataValuesUseCase } from "../domain/reports/mal-data-approval/usecases/DuplicateDataValuesUseCase";
+import { ApproveMalDataValuesUseCase } from "../domain/reports/mal-data-approval/usecases/ApproveMalDataValuesUseCase";
+import { writeFileSync } from "fs";
 
 const GLOBAL_OU = "WHO-HQ";
 const DEFAULT_START_YEAR = 2005;
@@ -50,18 +51,16 @@ export async function approveMalDataValues(options: ApprovalOptions): Promise<vo
         return;
     }
 
-    const duplicateDataValueUseCase = new DuplicateDataValuesUseCase(approvalRepository);
-    await duplicateDataValueUseCase
+    const approveDataValuesUseCase = new ApproveMalDataValuesUseCase(dataSetRepository, approvalRepository);
+    await approveDataValuesUseCase
         .execute(malDataApprovalItems)
         .catch(err => {
             console.error("Error approving data values:", err);
         })
-        .then(response => {
-            if (response) {
-                console.debug(
-                    `Successfully approved ${malDataApprovalItems.length} data values in ${dataSet.name} dataset.`
-                );
-            }
+        .then(stats => {
+            const fileNameStats = "mal-data-approval-stats.json";
+            writeFileSync(fileNameStats, JSON.stringify(stats, null, 2));
+            console.debug(`Finished. Stats saved to ${fileNameStats}`);
         });
 }
 
@@ -108,6 +107,9 @@ async function buildMalApprovalItems(
             value: dataElementWithValues.value ?? "",
             apvdValue: dataElementWithValues.apvdValue ?? "",
             comment: dataElementWithValues.comment,
+            attributeOptionCombo: dataElementWithValues.attributeOptionCombo,
+            categoryOptionCombo: dataElementWithValues.categoryOptionCombo,
+            dataElementBasicName: dataElementWithValues.dataElementBasicName,
         }));
     });
 
