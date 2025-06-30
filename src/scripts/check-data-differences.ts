@@ -9,7 +9,7 @@ import { CodedRef } from "../domain/common/entities/Ref";
 import { Id } from "../domain/common/entities/Base";
 import _ from "lodash";
 import { promiseMap } from "../utils/promises";
-import { WmrDiffReport } from "../domain/reports/WmrDiffReport";
+import { dataSetApprovalName, WmrDiffReport } from "../domain/reports/WmrDiffReport";
 
 const GLOBAL_OU = "WHO-HQ";
 const DEFAULT_START_YEAR = 2005;
@@ -58,6 +58,10 @@ async function buildDataDifferenceItems(options: {
     yearOption?: string;
 }): Promise<DataDiffItem[]> {
     const { dataValueRepository, dataSetRepository, dataSetId, orgUnitId, yearOption } = options;
+    const dataSetAPVD = await dataSetRepository.getByNameOrCode(dataSetApprovalName);
+
+    // If not OU is provided, use the org. units assigned to the APVD data set
+    const assignedOrgUnitIds = dataSetAPVD.organisationUnits.map(ou => ou.id);
 
     const periods = yearOption
         ? [yearOption]
@@ -71,11 +75,13 @@ async function buildDataDifferenceItems(options: {
             true // Include children
         );
 
-        return dataElementsWithValues.map(dataElementWithValues => ({
-            orgUnit: dataElementWithValues.orgUnitUid,
-            period: dataElementWithValues.period,
-            dataElement: dataElementWithValues.dataElement ?? "",
-        }));
+        return dataElementsWithValues
+            .filter(dv => assignedOrgUnitIds.includes(dv.orgUnitUid))
+            .map(dataElementWithValues => ({
+                orgUnit: dataElementWithValues.orgUnitUid,
+                period: dataElementWithValues.period,
+                dataElement: dataElementWithValues.dataElement ?? "",
+            }));
     });
 
     return _(dataValuesToApprove).flatten().value();

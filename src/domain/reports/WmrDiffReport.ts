@@ -16,12 +16,13 @@ export class WmrDiffReport {
         const approvalDataValues = await this.getDataValues(dataSetApproval.id, orgUnitId, period, children);
         const malDataValues = await this.getDataValues(dataSetId, orgUnitId, period, children);
 
+        // TODO: Refactor this method to use a more efficient approach
+        // this class was not created to deal with dataValues from multiple org units (children = true)
         const dataElementsWithValues = this.filterDataElementsWithDataValue(
             malDataValues,
             approvalDataValues,
             dataElements,
             dataSetId,
-            orgUnitId,
             period
         );
 
@@ -67,31 +68,45 @@ export class WmrDiffReport {
         approvalDataValues: DataValue[],
         dataElements: DataElementsWithCombination[],
         malariaDataSetId: Id,
-        orgUnitId: Id,
         period: string
     ): DataDiffItem[] {
-        return dataElements.flatMap(dataElement => {
-            const matchingMalariaDataValues = malariaDataValues.filter(
-                dataValue =>
-                    dataValue.dataElement === dataElement.id &&
-                    dataValue.categoryOptionCombo === dataElement.categoryOptionCombo
-            );
+        const malariaOrgUnits = _(malariaDataValues)
+            .map(dataValue => dataValue.orgUnit)
+            .uniq()
+            .value();
 
-            return _(matchingMalariaDataValues)
-                .map(malariaDataValue => {
-                    const approvalDataValue = approvalDataValues.find(
+        const apvdOrgUnits = _(approvalDataValues)
+            .map(dataValue => dataValue.orgUnit)
+            .uniq()
+            .value();
+
+        const allOrgUnits = _(malariaOrgUnits).concat(apvdOrgUnits).uniq().value();
+
+        return allOrgUnits.flatMap(orgUnitId => {
+            return _(dataElements)
+                .map(dataElement => {
+                    const malariaDataValue = _(malariaDataValues).find(
+                        dataValue =>
+                            dataValue.dataElement === dataElement.id &&
+                            dataValue.categoryOptionCombo === dataElement.categoryOptionCombo &&
+                            dataValue.orgUnit === orgUnitId &&
+                            dataValue.period === period
+                    );
+
+                    const approvalDataValue = _(approvalDataValues).find(
                         dataValue =>
                             dataValue.dataElement.toLowerCase() === dataElement.id.toLowerCase() &&
                             dataValue.categoryOptionCombo === dataElement.categoryOptionCombo &&
-                            dataValue.orgUnit === malariaDataValue.orgUnit
+                            dataValue.orgUnit === orgUnitId &&
+                            dataValue.period === period
                     );
 
-                    if (!malariaDataValue.value && !approvalDataValue) return undefined;
-                    if (malariaDataValue.value === approvalDataValue?.value) return undefined;
+                    if (!malariaDataValue && !approvalDataValue) return undefined;
+                    if (malariaDataValue?.value === approvalDataValue?.value) return undefined;
 
                     return {
                         dataSetUid: malariaDataSetId,
-                        orgUnitUid: malariaDataValue?.orgUnit || orgUnitId,
+                        orgUnitUid: orgUnitId,
                         period: period,
                         value: approvalDataValue && !malariaDataValue ? "" : malariaDataValue?.value,
                         dataElement: this.buildDataElementNameWithCombination(dataElement),
