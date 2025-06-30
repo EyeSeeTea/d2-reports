@@ -5,15 +5,14 @@ import { DataSetRepository } from "../common/repositories/DataSetRepository";
 import { DataValuesRepository } from "../common/repositories/DataValuesRepository";
 import { DataDiffItem } from "./mal-data-approval/entities/DataDiffItem";
 import { DataSet } from "../common/entities/DataSet";
-import { malApprovedDataSetCodes } from "../../data/reports/mal-data-approval/constants/MalDataApprovalConstants";
-import { MalDataSet } from "./mal-data-approval/entities/MalDataApprovalItem";
+import { malApvdDataSets, MalDataSet } from "../../data/reports/mal-data-approval/constants/MalDataApprovalConstants";
 
 export class WmrDiffReport {
     constructor(private dataValueRepository: DataValuesRepository, private dataSetRepository: DataSetRepository) {}
 
     async getDiff(dataSetId: Id, orgUnitId: Id, period: string) {
         const { dataSet, dataElements } = await this.getDataSetWithDataElements(dataSetId);
-        const approvedDataSetCode = malApprovedDataSetCodes[dataSet.name as MalDataSet];
+        const approvedDataSetCode = malApvdDataSets[dataSet.name as MalDataSet];
         const dataSetApproval = await this.dataSetRepository.getByNameOrCode(approvedDataSetCode);
         const approvalDataValues = await this.getDataValues(dataSetApproval.id, orgUnitId, period);
         const malDataValues = await this.getDataValues(dataSetId, orgUnitId, period);

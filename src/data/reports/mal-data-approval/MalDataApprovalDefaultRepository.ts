@@ -26,7 +26,7 @@ import {
 import { DataDiffItem, DataDiffItemIdentifier } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 import { emptyPage, paginate } from "../../../domain/common/entities/PaginatedObjects";
-import { malApprovedDataSetCodes, malariaDataSets, MalDataSet } from "./constants/MalDataApprovalConstants";
+import { malApvdDataSets, malariaDataSets, MalDataSet } from "./constants/MalDataApprovalConstants";
 import { getMetadataByIdentifiableToken } from "../../common/utils/getMetadataByIdentifiableToken";
 import { isValueInUnionType } from "../../../types/utils";
 
@@ -399,8 +399,9 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             metadataType: "dataSets",
             token: dataSetId,
         });
+
         const approvedDataSetCode = isValueInUnionType(dataSetName, malariaDataSets)
-            ? malApprovedDataSetCodes[dataSetName]
+            ? malApvdDataSets[dataSetName]
             : undefined;
         if (!approvedDataSetCode) throw new Error(`Approved data set code not found for data set: ${dataSetName}`);
 
