@@ -481,6 +481,10 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                     return undefined;
                 }
 
+                // Empty dataValues can't be saved, so we skip them.
+                // The method deleteEmptyDataValues will handle the deletion of these records
+                if (!dataValue.value) return undefined;
+
                 return {
                     dataElement: apvdDataElement.id,
                     value: dataValue.value,

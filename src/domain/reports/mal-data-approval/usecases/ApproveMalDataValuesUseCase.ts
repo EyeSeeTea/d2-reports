@@ -33,9 +33,10 @@ export class ApproveMalDataValuesUseCase implements UseCase {
             });
         });
 
-        const dataValuesWithoutNonAssignedOrgUnits = items.filter(item =>
-            nonAssignedOrgUnits.includes(item.orgUnit) ? false : true
-        );
+        const dataValuesWithoutNonAssignedOrgUnits =
+            nonAssignedOrgUnits.length > 0
+                ? items.filter(item => (nonAssignedOrgUnits.includes(item.orgUnit) ? false : true))
+                : items;
 
         const stats = await this.approvalRepository.replicateDataValuesInApvdDataSet(
             dataValuesWithoutNonAssignedOrgUnits
