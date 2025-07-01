@@ -55,6 +55,12 @@ export function useFileResources() {
                     sortable: false,
                     getValue: showTooltip,
                 },
+                {
+                    name: "contentMd5",
+                    text: i18n.t("Content MD5"),
+                    sortable: true,
+                    hidden: true,
+                },
             ],
             actions: [
                 {

@@ -246,6 +246,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
             contentLength: file.contentLength ?? "-",
             href: file.href ?? "-",
             type: getFileResourceType(file.id, refs),
+            contentMd5: file.contentMd5 ?? "-",
         };
     }
 
@@ -261,6 +262,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
             size: formatBytes(file),
             href: file.href,
             type: file.type,
+            contentMd5: file.contentMd5,
         }));
 
         const csvDataSource = new CsvWriterDataSource();
@@ -430,6 +432,7 @@ const csvFields = [
     "size",
     "href",
     "type",
+    "contentMd5",
 ] as const;
 
 type CsvField = typeof csvFields[number];
@@ -486,6 +489,7 @@ const fileResourcesFields = {
     contentLength: true,
     href: true,
     domain: true,
+    contentMd5: true,
 } as const;
 
 type D2FileResource = MetadataPick<{ fileResources: { fields: typeof fileResourcesFields } }>["fileResources"][number];

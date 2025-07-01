@@ -11,6 +11,7 @@ export interface MonitoringFileResourcesFile {
     contentLength: string;
     href: string;
     type: FileResourceType;
+    contentMd5: string;
 }
 
 export function formatBytes(file: MonitoringFileResourcesFile): string {
