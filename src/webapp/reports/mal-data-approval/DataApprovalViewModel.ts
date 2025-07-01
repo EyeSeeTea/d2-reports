@@ -1,11 +1,6 @@
-import _ from "lodash";
-import { MAL_WMR_FORM_CODE } from "../../../data/reports/mal-data-approval/MalDataApprovalDefaultRepository";
-import { Config } from "../../../domain/common/entities/Config";
 import {
     MalDataApprovalItem,
     getDataDuplicationItemId,
-    getDataDuplicationItemMonitoringValue,
-    MonitoringValue,
 } from "../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import { toDate } from "date-fns-tz";
 
@@ -25,43 +20,30 @@ export interface DataApprovalViewModel {
     lastDateOfSubmission: Date | undefined;
     lastDateOfApproval: Date | undefined;
     modificationCount: string | undefined;
-    monitoring: boolean | undefined;
+    monitoring: boolean;
     approved: boolean | undefined;
 }
 
-export function getDataApprovalViews(
-    config: Config,
-    items: MalDataApprovalItem[],
-    monitoring: MonitoringValue
-): DataApprovalViewModel[] {
-    const dataSetName =
-        _(config.dataSets)
-            .values()
-            .find(dataSet => dataSet.code === MAL_WMR_FORM_CODE)?.name ?? "";
-
-    return items.map(item => {
-        return {
-            id: getDataDuplicationItemId(item),
-            dataSetUid: item.dataSetUid,
-            dataSet: item.dataSet,
-            orgUnitUid: item.orgUnitUid,
-            orgUnit: item.orgUnit,
-            period: item.period,
-            attribute: item.attribute ?? "-",
-            approvalWorkflowUid: item.approvalWorkflowUid ?? "-",
-            approvalWorkflow: item.approvalWorkflow ?? "-",
-            completed: item.completed,
-            validated: item.validated,
-            lastUpdatedValue: item.lastUpdatedValue ? toDate(item.lastUpdatedValue, { timeZone: "UTC" }) : undefined,
-            lastDateOfSubmission: item.lastDateOfSubmission
-                ? toDate(item.lastDateOfSubmission, { timeZone: "UTC" })
-                : undefined,
-            lastDateOfApproval: item.lastDateOfApproval
-                ? toDate(item.lastDateOfApproval, { timeZone: "UTC" })
-                : undefined,
-            modificationCount: item.modificationCount,
-            monitoring: getDataDuplicationItemMonitoringValue(item, dataSetName, monitoring),
-            approved: item.approved,
-        };
-    });
+export function getDataApprovalViews(items: MalDataApprovalItem[]): DataApprovalViewModel[] {
+    return items.map(item => ({
+        id: getDataDuplicationItemId(item),
+        dataSetUid: item.dataSetUid,
+        dataSet: item.dataSet,
+        orgUnitUid: item.orgUnitUid,
+        orgUnit: item.orgUnit,
+        period: item.period,
+        attribute: item.attribute ?? "-",
+        approvalWorkflowUid: item.approvalWorkflowUid ?? "-",
+        approvalWorkflow: item.approvalWorkflow ?? "-",
+        completed: item.completed,
+        validated: item.validated,
+        lastUpdatedValue: item.lastUpdatedValue ? toDate(item.lastUpdatedValue, { timeZone: "UTC" }) : undefined,
+        lastDateOfSubmission: item.lastDateOfSubmission
+            ? toDate(item.lastDateOfSubmission, { timeZone: "UTC" })
+            : undefined,
+        lastDateOfApproval: item.lastDateOfApproval ? toDate(item.lastDateOfApproval, { timeZone: "UTC" }) : undefined,
+        modificationCount: item.modificationCount,
+        monitoring: item.monitoring,
+        approved: item.approved,
+    }));
 }
