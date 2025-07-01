@@ -1,10 +1,9 @@
 import _ from "lodash";
-import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
 import { promiseMap } from "../../../../utils/promises";
 import { DataSetRepository } from "../../../common/repositories/DataSetRepository";
 import { DataValuesRepository } from "../../../common/repositories/DataValuesRepository";
 import { WmrDiffReport } from "../../WmrDiffReport";
-import { MalDataApprovalItemIdentifier, MonitoringValue } from "../entities/MalDataApprovalItem";
+import { MalDataApprovalItemIdentifier } from "../entities/MalDataApprovalItem";
 import { MalDataApprovalRepository } from "../repositories/MalDataApprovalRepository";
 import { DataDiffItemIdentifier } from "../entities/DataDiffItem";
 
@@ -15,11 +14,7 @@ export class UpdateMalApprovalStatusUseCase {
         private dataSetRepository: DataSetRepository
     ) {}
 
-    async execute(
-        items: MalDataApprovalItemIdentifier[],
-        action: UpdateAction,
-        monitoring?: MonitoringValue
-    ): Promise<boolean | MonitoringValue | void> {
+    async execute(items: MalDataApprovalItemIdentifier[], action: UpdateAction): Promise<boolean> {
         switch (action) {
             case "complete":
                 return this.approvalRepository.complete(items);
@@ -33,10 +28,6 @@ export class UpdateMalApprovalStatusUseCase {
                 return this.approvalRepository.unapprove(items);
             case "incomplete":
                 return this.approvalRepository.incomplete(items);
-            case "activate":
-                return this.approvalRepository.getMonitoring(Namespaces.MONITORING);
-            case "deactivate":
-                return this.approvalRepository.saveMonitoring(Namespaces.MONITORING, monitoring ?? {});
             default:
                 return false;
         }

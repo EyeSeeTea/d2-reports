@@ -13,7 +13,7 @@ export class GetMalDataDiffUseCase implements UseCase {
     constructor(private dataValueRepository: DataValuesRepository, private dataSetRepository: DataSetRepository) {}
 
     async execute(options: GetDataDiffUseCaseOptions): Promise<PaginatedObjects<DataDiffItem>> {
-        const malariaDataSetId = _(options.dataSetIds).first();
+        const malariaDataSetId = options.dataSetId;
         const orgUnitId = _(options.orgUnitIds).first();
         const period = _(options.periods).first();
         if (!malariaDataSetId) throw Error("No malaria data set ID provided");

@@ -1,8 +1,8 @@
-import _ from "lodash";
+import { MalDataSet } from "../../../../data/reports/mal-data-approval/constants/MalDataApprovalConstants";
 
 export interface MalDataApprovalItem {
     dataSetUid: string;
-    dataSet: string;
+    dataSet: MalDataSet;
     orgUnitUid: string;
     orgUnit: string;
     orgUnitCode: string;
@@ -17,30 +17,16 @@ export interface MalDataApprovalItem {
     lastDateOfSubmission: string | undefined;
     lastDateOfApproval: string | undefined;
     modificationCount: string | undefined;
-    monitoring?: boolean | undefined;
+    monitoring: boolean;
 }
 
 export interface MalDataApprovalItemIdentifier {
     dataSet: string;
     orgUnit: string;
-    orgUnitCode: string | undefined;
+    orgUnitCode: string;
     period: string;
     workflow: string | undefined;
 }
-
-export interface Monitoring {
-    orgUnit: string;
-    period: string;
-    monitoring?: boolean;
-    enable?: boolean;
-}
-
-export interface CountryCode {
-    id: string;
-    code: string;
-}
-
-export type MonitoringValue = Record<string, Record<string, { monitoring: Monitoring[]; userGroups: string[] }[]>>;
 
 export function getDataDuplicationItemId(dataSet: MalDataApprovalItem): string {
     return [
@@ -50,25 +36,6 @@ export function getDataDuplicationItemId(dataSet: MalDataApprovalItem): string {
         dataSet.orgUnitUid,
         dataSet.orgUnitCode,
     ].join("-");
-}
-
-export function getDataDuplicationItemMonitoringValue(
-    dataSet: MalDataApprovalItem,
-    dataSetName: string,
-    monitoring: MonitoringValue | Monitoring[]
-): boolean {
-    if (_.isArray(monitoring)) {
-        return (
-            monitoring.find(
-                monitoringValue =>
-                    monitoringValue.orgUnit === dataSet.orgUnitUid && monitoringValue.period === dataSet.period
-            )?.monitoring ?? false
-        );
-    } else {
-        const monitoringArray = _.first(monitoring["dataSets"]?.[dataSetName])?.monitoring;
-
-        return !!_.find(monitoringArray, { orgUnit: dataSet.orgUnitCode, period: dataSet.period })?.enable;
-    }
 }
 
 export function parseDataDuplicationItemId(string: string): MalDataApprovalItemIdentifier | undefined {

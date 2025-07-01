@@ -24,7 +24,6 @@ import {
 import {
     MalDataApprovalItem,
     MalDataApprovalItemIdentifier,
-    MonitoringValue,
 } from "../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import {
     MalDataApprovalOptions,
@@ -32,10 +31,12 @@ import {
 } from "../../../domain/reports/mal-data-approval/repositories/MalDataApprovalRepository";
 import { DataDiffItem, DataDiffItemIdentifier } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
-import { paginate } from "../../../domain/common/entities/PaginatedObjects";
+import { emptyPage, paginate } from "../../../domain/common/entities/PaginatedObjects";
+import { malApvdDataSets, malariaDataSets, MalDataSet } from "./constants/MalDataApprovalConstants";
 import { getMetadataByIdentifiableToken } from "../../common/utils/getMetadataByIdentifiableToken";
 import { Maybe } from "../../../types/utils";
 import { DataValueStats } from "../../../domain/common/entities/DataValueStats";
+import { isValueInUnionType } from "../../../types/utils";
 
 interface VariableHeaders {
     dataSets: string;
@@ -57,7 +58,7 @@ interface VariablesDiff {
     periods: string;
 }
 
-type SqlFieldHeaders = "datasetuid" | "dataset" | "orgunituid" | "orgunit";
+type SqlFieldHeaders = "datasetuid" | "dataset" | "orgunituid" | "orgunit" | "orgunitcode";
 
 type CompleteDataSetRegistrationsType = {
     completeDataSetRegistrations: [
@@ -155,33 +156,29 @@ const fieldMapping: Record<keyof MalDataApprovalItem, SqlField> = {
 
 export class MalDataApprovalDefaultRepository implements MalDataApprovalRepository {
     private storageClient: StorageClient;
-    private globalStorageClient: StorageClient;
 
     constructor(private api: D2Api) {
         const instance = new Instance({ url: this.api.baseUrl });
         this.storageClient = new DataStoreStorageClient("user", instance);
-        this.globalStorageClient = new DataStoreStorageClient("global", instance);
     }
 
     async getDiff(options: MalDataApprovalOptions): Promise<PaginatedObjects<DataDiffItem>> {
-        const { config } = options; // ?
-        const { dataSetIds, orgUnitIds, periods } = options; // ?
+        const { dataSetId, orgUnitIds, periods } = options;
+        if (!dataSetId) return emptyPage;
 
-        const allDataSetIds = _.values(config.dataSets).map(ds => ds.id); // ?
         const sqlViews = new Dhis2SqlViews(this.api);
-        const paging_to_download = { page: 1, pageSize: 10000 };
-
-        const { rows } = await sqlViews
-            .query<VariablesDiff, SqlFieldDiff>(
-                getSqlViewId(config, SQL_VIEW_MAL_DIFF_NAME),
-                {
-                    orgUnits: sqlViewJoinIds(orgUnitIds),
-                    periods: sqlViewJoinIds(periods),
-                    dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
-                },
-                paging_to_download
-            )
-            .getData();
+        const pagingToDownload = { page: 1, pageSize: 10000 };
+        const sqlVariables = {
+            orgUnits: sqlViewJoinIds(orgUnitIds),
+            periods: sqlViewJoinIds(periods),
+            dataSets: dataSetId,
+        };
+        const rows = await this.getSqlViewRows<VariablesDiff, SqlFieldDiff>(
+            sqlViews,
+            SQL_VIEW_MAL_DIFF_NAME,
+            sqlVariables,
+            pagingToDownload
+        );
 
         const items: Array<DataDiffItem> = rows.map(
             (item): DataDiffItem => ({
@@ -217,61 +214,88 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
     }
 
     async get(options: MalDataApprovalOptions): Promise<PaginatedObjects<MalDataApprovalItem>> {
-        const { config } = options; // ?
-        const { sorting, dataSetIds, orgUnitIds, periods, useOldPeriods } = options; // ?
-        const allDataSetIds = _.values(config.dataSets).map(ds => ds.id); // ?
+        const { approvalStatus, completionStatus, config, dataSetId, orgUnitIds, periods, sorting, useOldPeriods } =
+            options;
+        if (!dataSetId) return emptyPage;
+
         const sqlViews = new Dhis2SqlViews(this.api);
-        const paging_to_download = { page: 1, pageSize: 10000 };
-        const { rows: headerRows } = await sqlViews
-            .query<VariableHeaders, SqlFieldHeaders>(
-                getSqlViewId(config, SQL_VIEW_MAL_METADATA_NAME),
-                {
-                    dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
-                },
-                paging_to_download
-            )
-            .getData();
+        const pagingToDownload = { page: 1, pageSize: 10000 };
+        const sqlViewId = !useOldPeriods ? SQL_VIEW_DATA_DUPLICATION_NAME : SQL_VIEW_OLD_DATA_DUPLICATION_NAME;
+        const sqlVariables = {
+            orgUnitRoot: sqlViewJoinIds(config.currentUser.orgUnits.map(({ id }) => id)),
+            orgUnits: sqlViewJoinIds(orgUnitIds),
+            periods: sqlViewJoinIds(periods),
+            dataSets: dataSetId,
+            completed: completionStatus === undefined ? "-" : completionStatus ? "true" : "-",
+            approved: approvalStatus === undefined ? "-" : approvalStatus.toString(),
+            orderByColumn: fieldMapping[sorting.field],
+            orderByDirection: sorting.direction,
+        };
 
-        const { rows } = await sqlViews
-            .query<Variables, SqlField>(
-                getSqlViewId(
-                    config,
-                    !useOldPeriods ? SQL_VIEW_DATA_DUPLICATION_NAME : SQL_VIEW_OLD_DATA_DUPLICATION_NAME
-                ),
-                {
-                    orgUnitRoot: sqlViewJoinIds(config.currentUser.orgUnits.map(({ id }) => id)),
-                    orgUnits: sqlViewJoinIds(orgUnitIds),
-                    periods: sqlViewJoinIds(periods),
-                    dataSets: sqlViewJoinIds(_.isEmpty(dataSetIds) ? allDataSetIds : dataSetIds),
-                    completed: options.completionStatus === undefined ? "-" : options.completionStatus ? "true" : "-",
-                    approved: options.approvalStatus === undefined ? "-" : options.approvalStatus.toString(),
-                    orderByColumn: fieldMapping[sorting.field],
-                    orderByDirection: sorting.direction,
-                },
-                paging_to_download
-            )
-            .getData();
+        const headerRows = await this.getSqlViewHeaders<SqlFieldHeaders>(sqlViews, options, pagingToDownload);
+        const rows = await this.getSqlViewRows<Variables, SqlField>(
+            sqlViews,
+            getSqlViewId(config, sqlViewId),
+            sqlVariables,
+            pagingToDownload
+        );
 
-        const countryCodes = await this.getCountryCodes();
-
-        const { pager, objects } = mergeHeadersAndData(options, periods, headerRows, rows, countryCodes);
+        const { pager, objects } = mergeHeadersAndData(options, headerRows, rows);
         const objectsInPage = await promiseMap(objects, async item => {
-            const approved = (
-                await this.api
-                    .get<any>("/dataApprovals", { ds: item.dataSetUid, pe: item.period, ou: item.orgUnitUid })
-                    .getData()
-            ).mayUnapprove;
+            const { approved } = await this.getDataApprovalStatus(item);
 
             return {
                 ...item,
-                approved,
+                approved: approved,
             };
         });
 
-        return { pager, objects: objectsInPage };
-
+        return { pager: pager, objects: objectsInPage };
         // A data value is not associated to a specific data set, but we can still map it
         // through the data element (1 data value -> 1 data element -> N data sets).
+    }
+
+    private async getDataApprovalStatus(item: MalDataApprovalItem): Promise<{ approved: boolean }> {
+        const { mayUnapprove } = await this.api
+            .get<{ mayUnapprove: boolean }>("/dataApprovals", {
+                ds: item.dataSetUid,
+                pe: item.period,
+                ou: item.orgUnitUid,
+            })
+            .getData();
+
+        return { approved: mayUnapprove };
+    }
+
+    private async getSqlViewRows<VariablesType extends {}, FieldType extends string>(
+        sqlViews: Dhis2SqlViews,
+        sqlViewId: string,
+        variables: VariablesType,
+        pagingToDownload: { page: number; pageSize: number }
+    ): Promise<Record<FieldType, string>[]> {
+        const { rows } = await sqlViews
+            .query<VariablesType, FieldType>(sqlViewId, variables, pagingToDownload)
+            .getData();
+
+        return rows;
+    }
+
+    private async getSqlViewHeaders<T extends string>(
+        sqlViews: Dhis2SqlViews,
+        options: MalDataApprovalOptions,
+        pagingToDownload: { page: number; pageSize: number }
+    ): Promise<Record<T, string>[]> {
+        const { config, dataSetId } = options;
+
+        const { rows: headerRows } = await sqlViews
+            .query<VariableHeaders, T>(
+                getSqlViewId(config, SQL_VIEW_MAL_METADATA_NAME),
+                { dataSets: dataSetId ?? "" },
+                pagingToDownload
+            )
+            .getData();
+
+        return headerRows;
     }
 
     async save(filename: string, dataSets: MalDataApprovalItem[]): Promise<void> {
@@ -377,12 +401,36 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         }
     }
 
+    async getApprovalDataSetId(dataApprovalItems: { dataSet: Id }[]): Promise<string> {
+        const dataSetId = dataApprovalItems[0]?.dataSet;
+        if (!dataSetId) throw new Error("Data set not found");
+
+        const { name: dataSetName } = await getMetadataByIdentifiableToken({
+            api: this.api,
+            metadataType: "dataSets",
+            token: dataSetId,
+        });
+
+        const approvedDataSetCode = isValueInUnionType(dataSetName, malariaDataSets)
+            ? malApvdDataSets[dataSetName]
+            : undefined;
+        if (!approvedDataSetCode) throw new Error(`Approved data set code not found for data set: ${dataSetName}`);
+
+        const { id: apvdDataSetId } = await getMetadataByIdentifiableToken({
+            api: this.api,
+            metadataType: "dataSets",
+            token: approvedDataSetCode,
+        });
+
+        return process.env.REACT_APP_APPROVE_DATASET_ID ?? apvdDataSetId;
+    }
+
     async duplicateDataSets(
         dataSets: MalDataApprovalItemIdentifier[],
         dataElementsWithValues: DataDiffItemIdentifier[]
     ): Promise<boolean> {
         try {
-            const approvalDataSetId = await this.getApprovalDataSetId();
+            const approvalDataSetId = await this.getApprovalDataSetId(dataSets);
 
             const dataValueSets: DataSetsValueType[] = await this.getDataValueSets(dataSets);
 
@@ -417,7 +465,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
     async duplicateDataValues(dataValues: DataDiffItemIdentifier[]): Promise<boolean> {
         try {
-            const approvalDataSetId = await this.getApprovalDataSetId();
+            const approvalDataSetId = await this.getApprovalDataSetId(dataValues);
             const uniqueDataSets = _.uniqBy(dataValues, "dataSet");
             const uniqueDataElementsNames = _.uniq(_.map(dataValues, "dataElement"));
 
@@ -459,7 +507,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
     // TODO: All this logic must be in the domain. ApproveMalDataValuesUseCase.ts
     async replicateDataValuesInApvdDataSet(originalDataValues: DataDiffItemIdentifier[]): Promise<DataValueStats[]> {
-        const approvalDataSetId = await this.getApprovalDataSetId();
+        const approvalDataSetId = await this.getApprovalDataSetIdentifier();
         const approvalDataElements = await this.getADSDataElements(approvalDataSetId);
         const approvalDeByName = _.keyBy(approvalDataElements, dataElement => dataElement.name.toLowerCase());
 
@@ -610,7 +658,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         });
     }
 
-    private async getApprovalDataSetId(): Promise<Id> {
+    private async getApprovalDataSetIdentifier(): Promise<Id> {
         const { id } = await getMetadataByIdentifiableToken({
             api: this.api,
             metadataType: "dataSets",
@@ -802,13 +850,17 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         try {
             const duplicateResponse = await this.duplicateDataValues(dataValues);
 
-            const revokeData: MalDataApprovalItemIdentifier = {
+            const revokeData: DataDiffItemIdentifier = {
                 dataSet: dataValues[0]?.dataSet ?? "",
                 period: dataValues[0]?.period ?? "",
                 orgUnit: dataValues[0]?.orgUnit ?? "",
-                orgUnitCode: "",
-
-                workflow: "",
+                dataElement: dataValues[0]?.dataElement ?? "",
+                value: dataValues[0]?.value ?? "",
+                apvdValue: dataValues[0]?.apvdValue ?? "",
+                comment: dataValues[0]?.comment,
+                attributeOptionCombo: dataValues[0]?.attributeOptionCombo,
+                categoryOptionCombo: dataValues[0]?.categoryOptionCombo,
+                dataElementBasicName: dataValues[0]?.dataElementBasicName,
             };
 
             const revokeResponse = await this.api
@@ -894,42 +946,19 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         return this.storageClient.saveObject<string[]>(namespace, columns);
     }
 
-    async getCountryCodes() {
-        const { organisationUnits } = await this.api
-            .get<{ organisationUnits: { id: string; code: string }[] }>(
-                "/organisationUnits.json?fields=id,code&filter=level:eq:3&paging=false"
-            )
-            .getData();
-
-        return organisationUnits;
-    }
-
-    async getMonitoring(namespace: string): Promise<MonitoringValue> {
-        const monitoring = (await this.globalStorageClient.getObject<MonitoringValue>(namespace)) ?? {};
-
-        return monitoring;
-    }
-
-    async saveMonitoring(namespace: string, monitoring: MonitoringValue): Promise<void> {
-        return await this.globalStorageClient.saveObject<MonitoringValue>(namespace, monitoring);
-    }
-
     async getSortOrder(): Promise<string[]> {
         const sortOrderArray = await this.storageClient.getObject<string[]>(Namespaces.MAL_DIFF_NAMES_SORT_ORDER);
 
         return sortOrderArray ?? [];
     }
 
-    async generateSortOrder(): Promise<void> {
+    async saveMalDiffNames(dataSetId: string): Promise<void> {
         try {
             const dataSetData: {
                 dataSetElements: DataSetElementsType[];
                 sections: { id: string }[];
             } = await this.api
-                .get<any>(`/dataSets`, {
-                    fields: "sections,dataSetElements[dataElement[id,name]]",
-                    filter: `code:eq:${MAL_WMR_FORM_CODE}`,
-                })
+                .get<any>(`/dataSets/${dataSetId}`, { fields: "sections,dataSetElements[dataElement[id,name]]" })
                 .getData();
 
             if (_.isEmpty(dataSetData.sections) || _.isEmpty(dataSetData.dataSetElements)) {
@@ -938,9 +967,14 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
             const dataSetElements: DataElementsType[] = dataSetData.dataSetElements.map(item => item.dataElement);
 
-            const sectionsDEs = await promiseMap(dataSetData.sections, async sections => {
-                return this.api.get<any>(`/sections/${sections.id}`, { fields: "dataElements" }).getData();
-            });
+            const { sections: sectionsDEs } = await this.api.metadata
+                .get({
+                    sections: {
+                        filter: { id: { in: dataSetData.sections.map(item => item.id) } },
+                        fields: { dataElements: { id: true } },
+                    },
+                })
+                .getData();
 
             const sectionsDEsIds: { id: string }[] = sectionsDEs.flatMap(item => {
                 return item.dataElements.map((dataElementId: { id: string }) => {
@@ -984,13 +1018,10 @@ function sqlViewJoinIds(ids: Id[]): string {
 
 function mergeHeadersAndData(
     options: MalDataApprovalOptions,
-    selectablePeriods: string[],
     headers: SqlViewGetData<SqlFieldHeaders>["rows"],
-    data: SqlViewGetData<SqlField>["rows"],
-    countryCodes: { id: string; code: string }[]
+    data: SqlViewGetData<SqlField>["rows"]
 ) {
     const { sorting, paging, orgUnitIds, periods, approvalStatus, completionStatus } = options; // ?
-    const activePeriods = periods.length > 0 ? periods : selectablePeriods;
     const rows: Array<MalDataApprovalItem> = [];
 
     const mapping = _(data)
@@ -1001,7 +1032,7 @@ function mergeHeadersAndData(
 
     const filterOrgUnitIds = orgUnitIds.length > 0 ? orgUnitIds : undefined;
 
-    for (const period of activePeriods) {
+    for (const period of periods) {
         for (const header of headers) {
             if (filterOrgUnitIds !== undefined && filterOrgUnitIds.indexOf(header.orgunituid) === -1) {
                 continue;
@@ -1010,10 +1041,10 @@ function mergeHeadersAndData(
 
             const row: MalDataApprovalItem = {
                 dataSetUid: header.datasetuid,
-                dataSet: header.dataset,
+                dataSet: header.dataset as MalDataSet,
                 orgUnitUid: header.orgunituid,
                 orgUnit: header.orgunit,
-                orgUnitCode: countryCodes.find(countryCode => header.orgunituid === countryCode.id)?.code ?? "",
+                orgUnitCode: header.orgunitcode,
                 period: period,
                 attribute: datavalue?.attribute,
                 approvalWorkflow: datavalue?.approvalworkflow,
@@ -1024,6 +1055,7 @@ function mergeHeadersAndData(
                 lastDateOfSubmission: datavalue?.lastdateofsubmission,
                 lastDateOfApproval: datavalue?.lastdateofapproval,
                 modificationCount: datavalue?.diff,
+                monitoring: Boolean(datavalue?.monitoring),
             };
             rows.push(row);
         }

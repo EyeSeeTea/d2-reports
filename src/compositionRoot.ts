@@ -25,9 +25,8 @@ import { GetMalDataApprovalColumnsUseCase } from "./domain/reports/mal-data-appr
 import { MalDataApprovalDefaultRepository } from "./data/reports/mal-data-approval/MalDataApprovalDefaultRepository";
 import { MalDataSubscriptionDefaultRepository } from "./data/reports/mal-data-subscription/MalDataSubscriptionDefaultRepository";
 import { GetSortOrderUseCase } from "./domain/reports/mal-data-approval/usecases/GetSortOrderUseCase";
-import { GenerateSortOrderUseCase } from "./domain/reports/mal-data-approval/usecases/GenerateSortOrderUseCase";
+import { SaveMalDiffNamesUseCase } from "./domain/reports/mal-data-approval/usecases/SaveMalDiffNamesUseCase";
 import { GetMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/GetMonitoringUseCase";
-import { SaveMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/SaveMonitoringUseCase";
 import { DuplicateDataValuesUseCase } from "./domain/reports/mal-data-approval/usecases/DuplicateDataValuesUseCase";
 import { GetMalDataElementsSubscriptionUseCase } from "./domain/reports/mal-data-subscription/usecases/GetMalDataElementsSubscriptionUseCase";
 import { SaveMalDataSubscriptionColumnsUseCase } from "./domain/reports/mal-data-subscription/usecases/SaveMalDataSubscriptionColumnsUseCase";
@@ -69,7 +68,6 @@ import { GetSubnationalCorrectUseCase } from "./domain/reports/nhwa-subnational-
 import { DismissSubnationalCorrectValuesUseCase } from "./domain/reports/nhwa-subnational-correct-orgunit/usecases/DismissSubnationalCorrectValuesUseCase";
 import { SubnationalCorrectD2SettingsRepository } from "./data/reports/nhwa-subnational-correct-orgunit/SubnationalCorrectD2SettingsRepository";
 import { GetEARDataSubmissionUseCase } from "./domain/reports/glass-data-submission/usecases/GetEARDataSubmissionUseCase";
-import { GetMalCountryCodesUseCase } from "./domain/reports/mal-data-approval/usecases/GetMalCountryCodesUseCase";
 import { DataQualityDefaultRepository } from "./data/reports/data-quality/DataQualityDefaultRepository";
 import { GetIndicatorsUseCase } from "./domain/reports/data-quality/usecases/GetIndicatorsUseCase";
 import { GetProgramIndicatorsUseCase } from "./domain/reports/data-quality/usecases/GetProgramIndicatorsUseCase";
@@ -105,6 +103,11 @@ import { SaveMonitoringTwoFactorUseCase } from "./domain/reports/twofactor-monit
 import { MonitoringTwoFactorD2Repository } from "./data/reports/twofactor-monitoring/MonitoringTwoFactorD2Repository";
 import { GetOrgUnitsWithChildrenUseCase } from "./domain/reports/glass-data-submission/usecases/GetOrgUnitsWithChildrenUseCase";
 import { GetAllOrgUnitsByLevelUseCase } from "./domain/common/usecases/GetAllOrgUnitsByLevelUseCase";
+import { GetMalDataApprovalOUsWithChildrenUseCase } from "./domain/reports/mal-data-approval/usecases/GetMalDataApprovalOUsWithChildrenUseCase";
+import { OrgUnitWithChildrenD2Repository } from "./data/reports/mal-data-approval/OrgUnitWithChildrenD2Repository";
+import { UpdateMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/UpdateMonitoringUseCase";
+import { UserGroupD2Repository } from "./data/reports/mal-data-approval/UserGroupD2Repository";
+import { MonitoringValueDataStoreRepository } from "./data/reports/mal-data-approval/MonitoringValueDataStoreRepository";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -129,6 +132,9 @@ export function getCompositionRoot(api: D2Api) {
     const subnationalCorrectSettingsRepository = new SubnationalCorrectD2SettingsRepository(api);
     const authoritiesMonitoringRepository = new AuthoritiesMonitoringDefaultRepository(api);
     const monitoringTwoFactorD2Repository = new MonitoringTwoFactorD2Repository(api);
+    const orgUnitsWithChildrenRepository = new OrgUnitWithChildrenD2Repository(api);
+    const userGroupRepository = new UserGroupD2Repository(api);
+    const monitoringValueRepository = new MonitoringValueDataStoreRepository(api);
 
     return {
         admin: getExecute({
@@ -147,14 +153,18 @@ export function getCompositionRoot(api: D2Api) {
             updateStatus: new UpdateStatusUseCase(dataApprovalRepository),
         }),
         malDataApproval: getExecute({
-            get: new GetMalDataSetsUseCase(dataDuplicationRepository, dataValuesRepository, dataSetRepository),
+            get: new GetMalDataSetsUseCase(
+                dataDuplicationRepository,
+                dataValuesRepository,
+                dataSetRepository,
+                monitoringValueRepository
+            ),
             getDiff: new GetMalDataDiffUseCase(dataValuesRepository, dataSetRepository),
-            getCountryCodes: new GetMalCountryCodesUseCase(dataDuplicationRepository),
             save: new SaveMalDataSetsUseCase(dataDuplicationRepository),
             getColumns: new GetMalDataApprovalColumnsUseCase(dataDuplicationRepository),
             saveColumns: new SaveMalDataApprovalColumnsUseCase(dataDuplicationRepository),
-            getMonitoring: new GetMonitoringUseCase(dataDuplicationRepository),
-            saveMonitoring: new SaveMonitoringUseCase(dataDuplicationRepository),
+            getMonitoring: new GetMonitoringUseCase(monitoringValueRepository),
+            updateMonitoring: new UpdateMonitoringUseCase(monitoringValueRepository, userGroupRepository),
             updateStatus: new UpdateMalApprovalStatusUseCase(
                 dataDuplicationRepository,
                 dataValuesRepository,
@@ -162,7 +172,8 @@ export function getCompositionRoot(api: D2Api) {
             ),
             duplicateValue: new DuplicateDataValuesUseCase(dataDuplicationRepository),
             getSortOrder: new GetSortOrderUseCase(dataDuplicationRepository),
-            generateSortOrder: new GenerateSortOrderUseCase(dataDuplicationRepository),
+            saveMalDiffNames: new SaveMalDiffNamesUseCase(dataDuplicationRepository),
+            getOrgUnitsWithChildren: new GetMalDataApprovalOUsWithChildrenUseCase(orgUnitsWithChildrenRepository),
         }),
         malDataSubscription: getExecute({
             get: new GetMalDataElementsSubscriptionUseCase(dataSubscriptionRepository),

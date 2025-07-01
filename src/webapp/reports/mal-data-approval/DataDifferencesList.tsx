@@ -19,24 +19,20 @@ import { DataDiffViewModel, getDataDiffViews } from "./DataDiffViewModel";
 import { ThumbUp } from "@material-ui/icons";
 import { parseDataDuplicationItemId } from "../../../domain/reports/mal-data-approval/entities/MalDataApprovalItem";
 import { emptyPage, Sorting } from "../../../domain/common/entities/PaginatedObjects";
+import { useDataApprovalPermissions } from "./data-approval-list/hooks/useDataApprovalPermissions";
 
 interface DataDifferencesListProps {
     selectedIds: string[];
     revoke: boolean;
-    isMalAdmin: boolean;
     isUpdated: () => void;
 }
 
-export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({
-    selectedIds,
-    revoke,
-    isMalAdmin,
-    isUpdated,
-}) => {
+export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ selectedIds, revoke, isUpdated }) => {
     const { compositionRoot, config } = useAppContext();
     const loading = useLoading();
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const snackbar = useSnackbar();
+    const { isMalAdmin } = useDataApprovalPermissions();
 
     const baseConfig: TableConfig<DataDiffViewModel> = useMemo(
         () => ({
@@ -90,7 +86,7 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({
                 sorting: getSortingFromTableSorting(sorting),
                 periods: items.map(item => item.period),
                 orgUnitIds: items.map(item => item.orgUnit),
-                dataSetIds: items.map(item => item.dataSet),
+                dataSetId: items[0]?.dataSet,
             });
 
             if (!pager && !objects) {

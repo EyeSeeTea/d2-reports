@@ -2,14 +2,14 @@ import { Id } from "../../../common/entities/Base";
 import { Config } from "../../../common/entities/Config";
 import { PaginatedObjects, Paging, Sorting } from "../../../common/entities/PaginatedObjects";
 import { DataDiffItem } from "../entities/DataDiffItem";
-import { MalDataApprovalItem, MalDataApprovalItemIdentifier, MonitoringValue } from "../entities/MalDataApprovalItem";
+import { MalDataApprovalItem, MalDataApprovalItemIdentifier } from "../entities/MalDataApprovalItem";
 import { DataDiffItemIdentifier } from "../entities/DataDiffItem";
 import { DataValueStats } from "../../../common/entities/DataValueStats";
+import { Maybe } from "../../../../types/utils";
 
 export interface MalDataApprovalRepository {
     get(options: MalDataApprovalOptions): Promise<PaginatedObjects<MalDataApprovalItem>>;
     getDiff(options: MalDataApprovalOptions): Promise<PaginatedObjects<DataDiffItem>>;
-    getCountryCodes(): Promise<{ id: string; code: string }[]>;
     save(filename: string, dataSets: MalDataApprovalItem[]): Promise<void>;
     complete(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean>;
     approve(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean>;
@@ -24,10 +24,8 @@ export interface MalDataApprovalRepository {
     unapprove(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean>;
     getColumns(namespace: string): Promise<string[]>;
     saveColumns(namespace: string, columns: string[]): Promise<void>;
-    getMonitoring(namespace: string): Promise<MonitoringValue>;
-    saveMonitoring(namespace: string, monitoring: MonitoringValue): Promise<void>;
     getSortOrder(): Promise<string[]>;
-    generateSortOrder(): Promise<void>;
+    saveMalDiffNames(dataSetId: string): Promise<void>;
 }
 
 export interface MalDataApprovalOptions {
@@ -37,7 +35,7 @@ export interface MalDataApprovalOptions {
     periods: string[];
     useOldPeriods?: boolean;
     orgUnitIds: Id[];
-    dataSetIds: Id[];
+    dataSetId: Maybe<Id>;
     approvalStatus?: boolean;
     completionStatus?: boolean;
 }
