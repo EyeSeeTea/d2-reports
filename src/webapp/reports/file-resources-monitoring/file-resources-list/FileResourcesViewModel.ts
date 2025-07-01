@@ -17,6 +17,7 @@ export interface FileResourcesViewModel {
     href: string;
     type: FileResourceType;
     contentMd5: string;
+    ownerUrl?: string;
 }
 
 export function getFileResourcesMonitoringViews(items: MonitoringFileResourcesFile[]): FileResourcesViewModel[] {
@@ -34,6 +35,7 @@ export function getFileResourcesMonitoringViews(items: MonitoringFileResourcesFi
             href: item.href,
             type: item.type,
             contentMd5: item.contentMd5,
+            ownerUrl: item.ownerUrl,
         };
     });
 }

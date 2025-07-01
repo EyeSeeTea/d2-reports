@@ -234,6 +234,10 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
 
     private buildFileResource(refs: FileResourceFileRefs, file: D2FileResource): MonitoringFileResourcesFile {
         const id = getIdByRef(file.id, refs);
+        const ref = getRef(file.id, refs);
+
+        // given https://dev.eyeseetea.com/who-dev-41/api/fileResources/BC082FnM2Fx for example get until /api/
+        const baseAddress = file.href?.substring(0, file.href.indexOf("/api/") + 4);
 
         return {
             id: id,
@@ -247,6 +251,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
             href: file.href ?? "-",
             type: getFileResourceType(file.id, refs),
             contentMd5: file.contentMd5 ?? "-",
+            ownerUrl: ref ? getOwnerUrl(baseAddress, ref) : undefined,
         };
     }
 
@@ -510,6 +515,23 @@ function getFileResourceType(id: string, refs: FileResourceFileRefs): FileResour
             return "MessageAttachment";
         default:
             return "Orphan";
+    }
+}
+
+function getOwnerUrl(baseAddress: string, ref: FileRef): string | undefined {
+    switch (ref?.kind) {
+        case "document":
+            return `${baseAddress}/documents/${ref.documentId}`;
+        case "event":
+            return `${baseAddress}/events/${ref.eventId}`;
+        case "dataValue":
+            return `${baseAddress}/dataValues?de=${ref.dataElementUid}&pe=${ref.period}&ou=${ref.organisationUnitUid}&co=${ref.categoryOptionComboUid}`;
+        case "userAvatar":
+            return `${baseAddress}/users/${ref.userId}`;
+        case "messageAttachment":
+            return `${baseAddress}/messageConversations/${ref.messageConversationId}`;
+        default:
+            return undefined;
     }
 }
 

@@ -14,6 +14,7 @@ import {
 import { MonitoringFileResourcesFile } from "../../../../domain/reports/file-resources-monitoring/entities/MonitoringFileResourcesFile";
 import StorageIcon from "@material-ui/icons/Storage";
 import DeleteIcon from "@material-ui/icons/Delete";
+import OpenInBrowser from "@material-ui/icons/OpenInBrowser";
 import _ from "lodash";
 import React from "react";
 import type { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
@@ -28,6 +29,8 @@ export function useFileResources() {
     const [reloadKey, reload] = useReload();
     const [showConfirmDelete, setShowConfirmDelete] = useState(false);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [openOwnerUrls, setOpenOwnerUrls] = useState(false);
+    const [openFileResourceUrls, setOpenFileResourceUrls] = useState(false);
 
     useEffect(() => {
         compositionRoot.fileResourcesMonitoring
@@ -61,6 +64,12 @@ export function useFileResources() {
                     sortable: true,
                     hidden: true,
                 },
+                {
+                    name: "ownerUrl",
+                    text: i18n.t("Owner Url"),
+                    sortable: true,
+                    hidden: true,
+                },
             ],
             actions: [
                 {
@@ -76,6 +85,34 @@ export function useFileResources() {
                     },
                     isActive: (rows: FileResourcesViewModel[]) => {
                         return rows.filter(row => row.type === "Orphan").length === 0;
+                    },
+                },
+                {
+                    name: "openFileResource",
+                    text: i18n.t("Open File Resource"),
+                    icon: React.createElement(OpenInBrowser),
+                    multiple: false,
+                    onClick: async (selectedIds: string[]) => {
+                        if (!selectedIds.length) return;
+
+                        setSelectedIds(selectedIds);
+                        setOpenFileResourceUrls(true);
+                    },
+                    isActive: () => true,
+                },
+                {
+                    name: "openOwner",
+                    text: i18n.t("Open Owner"),
+                    icon: React.createElement(OpenInBrowser),
+                    multiple: false,
+                    onClick: async (selectedIds: string[]) => {
+                        if (!selectedIds.length) return;
+
+                        setSelectedIds(selectedIds);
+                        setOpenOwnerUrls(true);
+                    },
+                    isActive: (rows: FileResourcesViewModel[]) => {
+                        return rows.filter(row => row.ownerUrl === undefined).length === 0;
                     },
                 },
             ],
@@ -170,6 +207,9 @@ export function useFileResources() {
         showConfirmDelete,
         deleteSelectedFiles,
         cancelConfirmDelete,
+        openOwnerUrls,
+        openFileResourceUrls,
+        selectedIds,
     };
 }
 
