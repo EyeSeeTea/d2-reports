@@ -102,6 +102,7 @@ export class WmrDiffReport {
                     );
 
                     if (!malariaDataValue && !approvalDataValue) return undefined;
+                    if (!malariaDataValue?.value && !approvalDataValue?.value) return undefined;
                     if (malariaDataValue?.value === approvalDataValue?.value) return undefined;
 
                     return {
@@ -114,8 +115,10 @@ export class WmrDiffReport {
                         apvdDataElement: approvalDataValue?.dataElement,
                         apvdValue: approvalDataValue?.value,
                         apvdComment: approvalDataValue?.comment,
-                        attributeOptionCombo: malariaDataValue?.attributeOptionCombo,
-                        categoryOptionCombo: malariaDataValue?.categoryOptionCombo,
+                        attributeOptionCombo:
+                            malariaDataValue?.attributeOptionCombo ?? approvalDataValue?.attributeOptionCombo,
+                        categoryOptionCombo:
+                            malariaDataValue?.categoryOptionCombo ?? approvalDataValue?.categoryOptionCombo,
                         dataElementBasicName: dataElement.name,
                     };
                 })

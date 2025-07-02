@@ -28,8 +28,9 @@ export class ApproveMalDataValuesUseCase implements UseCase {
                 orgUnitId: orgUnitId,
                 dataSetId: approvalDataSet.id,
                 errorMessages: [
-                    { message: `Org unit ${orgUnitId} is not assigned to the approval data set ${approvalDataSet.id}` },
+                    { message: `Org unit ${orgUnitId} is not assigned to the approval dataSet ${approvalDataSet.id}` },
                 ],
+                strategy: "SAVE",
             });
         });
 

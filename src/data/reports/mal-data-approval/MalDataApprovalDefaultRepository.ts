@@ -552,11 +552,25 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             malApprovalDateDataElement.id
         );
 
-        await this.deleteEmptyDataValues(approvalDataSetId, approvalDataElements, originalDataValues);
-        return this.saveDataValues(approvalDataValues.concat(timeStampDataValues), approvalDataSetId);
+        const deleteStats = await this.deleteEmptyDataValues(
+            approvalDataSetId,
+            approvalDataElements,
+            originalDataValues
+        );
+
+        const saveStats = await this.saveDataValues(
+            approvalDataValues.concat(timeStampDataValues),
+            approvalDataSetId,
+            "CREATE_AND_UPDATE"
+        );
+        return [...deleteStats, ...saveStats];
     }
 
-    private async saveDataValues(dataValues: D2DataValue[], dataSetId: Maybe<Id>): Promise<DataValueStats[]> {
+    private async saveDataValues(
+        dataValues: D2DataValue[],
+        dataSetId: Maybe<Id>,
+        strategy: "DELETE" | "CREATE_AND_UPDATE"
+    ): Promise<DataValueStats[]> {
         const dvByPeriodAndOrgUnit = _(dataValues)
             .groupBy(item => `${item.orgUnit}-${item.period}`)
             .value();
@@ -573,12 +587,15 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
         const dvStats = await promiseMapConcurrent(dataValuesByPeriodOrgUnit, async dataValueToSave => {
             console.debug(
-                `Saving ${dataValueToSave.dataValues.length} dataValues: [orgunit-period] ${dataValueToSave.orgUnit}-${dataValueToSave.period}`
+                `${strategy}: ${dataValueToSave.dataValues.length} dataValues: [orgunit-period] ${dataValueToSave.orgUnit}-${dataValueToSave.period}`
             );
 
             try {
                 const response = await this.api.dataValues
-                    .postSet({ dryRun: false }, { dataSet: dataSetId, dataValues: dataValueToSave.dataValues })
+                    .postSet(
+                        { dryRun: false, importStrategy: strategy },
+                        { dataSet: dataSetId, dataValues: dataValueToSave.dataValues }
+                    )
                     .getData();
 
                 return this.getDataValueStats({
@@ -586,6 +603,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                     response: response,
                     period: dataValueToSave.period,
                     orgUnitId: dataValueToSave.orgUnit,
+                    strategy: strategy === "DELETE" ? "DELETE" : "SAVE",
                 });
             } catch (error) {
                 const errorResponse = error as D2DataValueResponse;
@@ -594,6 +612,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                     response: errorResponse.response?.data?.response,
                     period: dataValueToSave.period,
                     orgUnitId: dataValueToSave.orgUnit,
+                    strategy: strategy === "DELETE" ? "DELETE" : "SAVE",
                 });
             }
         });
@@ -606,8 +625,9 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         response: Maybe<DataValueSetsPostResponse>;
         period: string;
         orgUnitId: Id;
+        strategy: DataValueStats["strategy"];
     }): Maybe<DataValueStats> {
-        const { dataSetId, response, period, orgUnitId } = options;
+        const { dataSetId, response, period, orgUnitId, strategy } = options;
         if (!response) {
             console.warn(`Response is undefined or null: ${orgUnitId}-${period}`);
             return undefined;
@@ -627,6 +647,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             imported: response.importCount.imported,
             period: period,
             orgUnitId: orgUnitId,
+            strategy: strategy,
         });
     }
 
@@ -672,12 +693,12 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         approvalDataSetId: string,
         approvedDataElements: DataElementsType[],
         dataValues: DataDiffItemIdentifier[]
-    ): Promise<void> {
+    ): Promise<DataValueStats[]> {
         const emptyDataValues = _(dataValues)
             .filter(dataValue => !dataValue.value && dataValue.apvdValue !== undefined)
-            .map(dataValue => {
+            .map((dataValue): Maybe<D2DataValue> => {
                 const apvdDataElementId = approvedDataElements.find(
-                    dataElement => `${dataValue.dataElement}-APVD` === dataElement.name
+                    dataElement => `${dataValue.dataElementBasicName}-APVD` === dataElement.name
                 )?.id;
 
                 if (!apvdDataElementId) {
@@ -686,41 +707,22 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                 }
 
                 return {
-                    coc: DEFAULT_COC,
                     dataElement: apvdDataElementId,
+                    value: dataValue.apvdValue,
                     orgUnit: dataValue.orgUnit,
                     period: dataValue.period,
-                    value: dataValue.value,
+                    attributeOptionCombo: dataValue.attributeOptionCombo,
+                    categoryOptionCombo: dataValue.categoryOptionCombo,
+                    comment: dataValue.comment,
                 };
             })
             .compact()
             .value();
 
         if (emptyDataValues.length > 0) {
-            return (
-                this.api.dataValues
-                    .postSet({ importStrategy: "DELETE" }, { dataSet: approvalDataSetId, dataValues: emptyDataValues })
-                    .getData()
-                    // eslint-disable-next-line
-                    .catch(error =>
-                        console.debug(
-                            "========================>\n",
-                            "\nerror.request:\n",
-                            error.request,
-                            "\nerror.request.data.dataValues:\n",
-                            error.request.data.dataValues,
-                            "\n<========================\n"
-                        )
-                    )
-                    .then(dataValueSetsPostResponse => {
-                        if (!dataValueSetsPostResponse) return;
-
-                        console.debug(dataValueSetsPostResponse);
-                        if (dataValueSetsPostResponse.status !== "SUCCESS") {
-                            throw new Error("Error when deleting empty data values");
-                        }
-                    })
-            );
+            return this.saveDataValues(emptyDataValues, approvalDataSetId, "DELETE");
+        } else {
+            return [];
         }
     }
 

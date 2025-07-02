@@ -92,6 +92,7 @@ async function buildMalApprovalItems(
         ? [yearOption]
         : _.range(DEFAULT_START_YEAR, DEFAULT_END_YEAR + 1).map(year => year.toString());
     const dataValuesToApprove = await promiseMap(periods, async period => {
+        console.debug(`Fetching dataValues for period ${period}...`);
         const dataElementsWithValues = await new WmrDiffReport(dataValueRepository, dataSetRepository).getDiff(
             dataSetId,
             orgUnitId,

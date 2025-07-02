@@ -7,6 +7,7 @@ type DataValueStatsAttrs = {
     orgUnitId: string;
     dataSetId: string;
     errorMessages: { message: string }[];
+    strategy: "SAVE" | "DELETE";
 };
 
 export class DataValueStats {
@@ -18,6 +19,7 @@ export class DataValueStats {
     public readonly period: string;
     public readonly orgUnitId: string;
     public readonly dataSetId: string;
+    public readonly strategy: "SAVE" | "DELETE";
 
     constructor(attrs: DataValueStatsAttrs) {
         this.imported = attrs.imported;
@@ -30,5 +32,6 @@ export class DataValueStats {
         this.errorMessages = (attrs.errorMessages || []).map(error => ({
             message: error.message,
         }));
+        this.strategy = attrs.strategy;
     }
 }
