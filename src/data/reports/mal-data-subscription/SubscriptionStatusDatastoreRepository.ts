@@ -8,8 +8,9 @@ import { Namespaces } from "../../common/clients/storage/Namespaces";
 
 export class SubscriptionStatusDatastoreRepository implements SubscriptionStatusRepository {
     private globalStorageClient: StorageClient;
+    private namespace: string = Namespaces.MAL_SUBSCRIPTION_STATUS;
 
-    constructor(private api: D2Api, private namespace: string = Namespaces.MAL_SUBSCRIPTION_STATUS) {
+    constructor(private api: D2Api) {
         const instance = new Instance({ url: this.api.baseUrl });
         this.globalStorageClient = new DataStoreStorageClient("global", instance);
     }

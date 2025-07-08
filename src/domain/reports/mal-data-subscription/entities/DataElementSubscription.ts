@@ -27,11 +27,11 @@ export type SubscriptionFilterOptions = {
 };
 
 export type SubscriptionItemIdentifier = {
-    dataElementId: string;
-    sectionId: Maybe<string>;
+    dataElementId: Id;
+    sectionId: Maybe<Id>;
 };
 
-export type SubscriptionWithChildrenItemIdentifier = { dashboardId: string; dataElementIds: string[] };
+export type SubscriptionWithChildrenItemIdentifier = { dashboardId: Id; dataElementIds: Id[] };
 
 export function getSubscriptionItemId(report: DataElementSubscriptionReport): string {
     return [report.dataElementId, report.section?.id].join("-");

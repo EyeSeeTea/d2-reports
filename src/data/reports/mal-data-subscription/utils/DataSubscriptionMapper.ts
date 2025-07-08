@@ -8,51 +8,44 @@ import {
 } from "../../../../domain/reports/mal-data-subscription/entities/DashboardSubscription";
 import { D2Visualization } from "../VisualizationSubscriptionD2Repository";
 
-export function getDataElementsInParent(options: {
+export function getDataElementsInDashboard(options: {
     type: "dashboards";
     entity: D2Dashboard;
     dataElements: D2DataElement[];
-}): DashboardSubscription;
+}): DashboardSubscription {
+    const { type, entity, dataElements } = options;
 
-export function getDataElementsInParent(options: {
+    const dataDimensionItems = _(entity.dashboardItems)
+        .map(item => item.visualization.dataDimensionItems as D2DataDimensionItem[])
+        .flattenDeep()
+        .compact()
+        .value();
+    const dataElementsWithGroups = extractChildDataElements(dataDimensionItems, dataElements);
+
+    return {
+        type: type,
+        id: entity.id,
+        name: entity.name,
+        children: mapD2DataElementsToSubscription(dataElementsWithGroups),
+    };
+}
+
+export function getDataElementsInVisualization(options: {
     type: "visualizations";
     entity: D2Visualization;
     dataElements: D2DataElement[];
-}): VisualizationSubscription;
-
-export function getDataElementsInParent(
-    options: DataElementSubscriptionParent
-): DashboardSubscription | VisualizationSubscription {
+}): VisualizationSubscription {
     const { type, entity, dataElements } = options;
 
-    switch (type) {
-        case "dashboards": {
-            const dataDimensionItems = _(entity.dashboardItems)
-                .map(item => item.visualization.dataDimensionItems as D2DataDimensionItem[])
-                .flattenDeep()
-                .compact()
-                .value();
-            const dataElementsWithGroups = extractChildDataElements(dataDimensionItems, dataElements);
+    const dataDimensionItems = entity.dataDimensionItems as D2DataDimensionItem[];
+    const dataElementsWithGroups = extractChildDataElements(dataDimensionItems, dataElements);
 
-            return {
-                type: type,
-                id: entity.id,
-                name: entity.name,
-                children: mapD2DataElementsToSubscription(dataElementsWithGroups),
-            };
-        }
-        case "visualizations": {
-            const dataDimensionItems = entity.dataDimensionItems as D2DataDimensionItem[];
-            const dataElementsWithGroups = extractChildDataElements(dataDimensionItems, dataElements);
-
-            return {
-                type: type,
-                id: entity.id,
-                name: entity.name,
-                children: mapD2DataElementsToSubscription(dataElementsWithGroups),
-            };
-        }
-    }
+    return {
+        type: type,
+        id: entity.id,
+        name: entity.name,
+        children: mapD2DataElementsToSubscription(dataElementsWithGroups),
+    };
 }
 
 function mapD2DataElementsToSubscription(dataElements: D2DataElement[]): DataElementSubscription[] {
@@ -92,15 +85,3 @@ function extractChildDataElements(
 
     return _.filter(dataElements, dataElement => dataElementIds.includes(dataElement.id));
 }
-
-type DataElementSubscriptionParent =
-    | {
-          type: "dashboards";
-          entity: D2Dashboard;
-          dataElements: D2DataElement[];
-      }
-    | {
-          type: "visualizations";
-          entity: D2Visualization;
-          dataElements: D2DataElement[];
-      };

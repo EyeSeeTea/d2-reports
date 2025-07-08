@@ -1,7 +1,8 @@
 import _ from "lodash";
-import { DashboardSubscriptionItemIdentifier, MonitoringValue } from "../entities/MalDataSubscriptionItem";
+import { DashboardSubscriptionItemIdentifier } from "../entities/MalDataSubscriptionItem";
 import { DataElementSubscriptionRepository } from "../repositories/DataElementSubscriptionRepository";
 import { MonitoringRepository } from "../repositories/MonitoringRepository";
+import { Monitoring } from "../entities/Monitoring";
 
 export class UpdateMonitoringUseCase {
     constructor(
@@ -9,11 +10,12 @@ export class UpdateMonitoringUseCase {
         private monitoringRepository: MonitoringRepository
     ) {}
 
-    async execute(
-        items: DashboardSubscriptionItemIdentifier[],
-        subscriptionEnabled: boolean,
-        userIds: string[]
-    ): Promise<void> {
+    async execute(options: {
+        items: DashboardSubscriptionItemIdentifier[];
+        subscriptionEnabled: boolean;
+        userIds: string[];
+    }): Promise<void> {
+        const { items, subscriptionEnabled, userIds } = options;
         const dataElementSubscriptionItems = await this.dataElementSubscriptionRepository.getAll();
         const monitoring = await this.monitoringRepository.get();
 
@@ -50,7 +52,7 @@ const getMonitoringJson = (
     newValues: { dataSet: string; dataElements: string[] }[],
     enabled: boolean,
     users: string[]
-): MonitoringValue => {
+): Monitoring => {
     const { dataElements: initialDataElements } = initialMonitoringValue;
     const dataElements = _.chain(newValues)
         .groupBy("dataSet")

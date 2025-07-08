@@ -1,6 +1,6 @@
-import { MonitoringValue } from "../entities/MalDataSubscriptionItem";
+import { Monitoring } from "../entities/Monitoring";
 
 export interface MonitoringRepository {
-    get(): Promise<MonitoringValue>;
-    save(monitoring: MonitoringValue): Promise<void>;
+    get(): Promise<Monitoring>;
+    save(monitoring: Monitoring): Promise<void>;
 }

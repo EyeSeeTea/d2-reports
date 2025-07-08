@@ -1,22 +1,18 @@
 import { paginate, PaginatedObjects } from "../../../common/entities/PaginatedObjects";
 import { DataElementSubscription } from "../entities/DataElementSubscription";
 import {
-    DashboardSubscriptionOptions,
     DashboardSubscriptionRepository,
+    SubscriptionWithChildrenOptions,
 } from "../repositories/DashboardSubscriptionRepository";
 import {
     DataElementSubscriptionOptions,
     DataElementSubscriptionRepository,
 } from "../repositories/DataElementSubscriptionRepository";
 import { SubscriptionStatusRepository } from "../repositories/SubscriptionStatusRepository";
-import { SubscriptionStatus } from "../entities/SubscriptionStatus";
+import { SubscriptionStatus, SubscriptionValue } from "../entities/SubscriptionStatus";
 import { Id } from "../../../common/entities/Base";
-import {
-    VisualizationSubscriptionOptions,
-    VisualizationSubscriptionRepository,
-} from "../repositories/VisualizationSubscriptionRepository";
+import { VisualizationSubscriptionRepository } from "../repositories/VisualizationSubscriptionRepository";
 import _ from "lodash";
-import { SubscriptionValue } from "../entities/MalDataSubscriptionItem";
 
 export class GetSubscriptionReportUseCase {
     constructor(
@@ -42,7 +38,7 @@ export class GetSubscriptionReportUseCase {
                     subscriptionStatusList
                 );
 
-                return paginate(dataElementSubscriptionReport, options.paging, options.sorting);
+                return { type: type, data: paginate(dataElementSubscriptionReport, options.paging, options.sorting) };
             }
             case "dashboards":
             case "visualizations": {
@@ -51,7 +47,7 @@ export class GetSubscriptionReportUseCase {
                     subscriptionStatusList
                 );
 
-                return paginate(subscriptionWithChildrenReport, options.paging, options.sorting);
+                return { type: type, data: paginate(subscriptionWithChildrenReport, options.paging, options.sorting) };
             }
         }
     }
@@ -120,16 +116,12 @@ export class GetSubscriptionReportUseCase {
         subscriptionItem: { id: Id },
         subscriptionStatus: SubscriptionStatus[],
         dataElements: DataElementSubscriptionReport[]
-    ): {
-        lastDateOfSubscription: string;
-        subscribedElements: number;
-        subscription: SubscriptionValue;
-    } {
+    ): SubscriptionStatusInfo {
         const lastDateOfSubscription =
             subscriptionStatus.find(subscription => subscription.dashboardId === subscriptionItem.id)
                 ?.lastDateOfSubscription || "";
 
-        const subscribedElements = _.intersection(
+        const numberOfSubscribedElements = _.intersection(
             subscriptionStatus
                 .filter(subscription => subscription.subscribed)
                 .map(subscription => subscription.dataElementId),
@@ -137,15 +129,15 @@ export class GetSubscriptionReportUseCase {
         ).length;
 
         const subscription =
-            subscribedElements !== 0 && subscribedElements !== dataElements.length
-                ? "Subscribed to some elements"
-                : subscribedElements !== 0 && subscribedElements === dataElements.length
-                ? "Subscribed"
-                : "Not Subscribed";
+            numberOfSubscribedElements !== 0 && numberOfSubscribedElements !== dataElements.length
+                ? SubscriptionValue.subscribedToSomeElements
+                : numberOfSubscribedElements !== 0 && numberOfSubscribedElements === dataElements.length
+                ? SubscriptionValue.subscribed
+                : SubscriptionValue.notSubscribed;
 
         return {
             lastDateOfSubscription: lastDateOfSubscription,
-            subscribedElements: subscribedElements,
+            subscribedElements: numberOfSubscribedElements,
             subscription: subscription,
         };
     }
@@ -158,11 +150,13 @@ export class GetSubscriptionReportUseCase {
             const subscriptionValue = subscriptionStatusFromDatastore.find(
                 subscription => subscription.dataElementId === deSubscription.dataElementId
             );
-            const subscription = !!subscriptionValue?.subscribed;
+            const subscription = subscriptionValue?.subscribed
+                ? SubscriptionValue.subscribed
+                : SubscriptionValue.notSubscribed;
 
             return {
                 ...deSubscription,
-                subscription: subscription ? "Subscribed" : "Not Subscribed",
+                subscription: subscription,
                 lastDateOfSubscription: subscriptionValue?.lastDateOfSubscription,
                 type: "dataElements" as const,
             };
@@ -176,12 +170,8 @@ type SubscriptionReportOptions =
           options: DataElementSubscriptionOptions;
       }
     | {
-          type: "dashboards";
-          options: DashboardSubscriptionOptions;
-      }
-    | {
-          type: "visualizations";
-          options: VisualizationSubscriptionOptions;
+          type: "dashboards" | "visualizations";
+          options: SubscriptionWithChildrenOptions;
       };
 
 export type DataElementSubscriptionReport = DataElementSubscription & {
@@ -200,4 +190,18 @@ export type SubscriptionWithChildrenReport = {
     children: DataElementSubscriptionReport[];
 };
 
-export type SubscriptionReport = PaginatedObjects<DataElementSubscriptionReport | SubscriptionWithChildrenReport>;
+export type SubscriptionReport =
+    | {
+          type: "dataElements";
+          data: PaginatedObjects<DataElementSubscriptionReport>;
+      }
+    | {
+          type: "dashboards" | "visualizations";
+          data: PaginatedObjects<SubscriptionWithChildrenReport>;
+      };
+
+type SubscriptionStatusInfo = {
+    lastDateOfSubscription: string;
+    subscribedElements: number;
+    subscription: SubscriptionValue;
+};

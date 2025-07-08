@@ -6,7 +6,9 @@ export interface DashboardSubscriptionRepository {
     get(options: DashboardSubscriptionOptions): Promise<DashboardSubscription[]>;
 }
 
-export type DashboardSubscriptionOptions = {
+export type SubscriptionWithChildrenOptions = {
     paging: Paging;
     sorting: Sorting<SubscriptionWithChildrenReport>;
 };
+
+export type DashboardSubscriptionOptions = SubscriptionWithChildrenOptions;

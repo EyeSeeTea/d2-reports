@@ -17,7 +17,7 @@ export class DataElementSubscriptionD2Repository implements DataElementSubscript
     }
 
     private getDataElementFilter(options: DataElementSubscriptionOptions): Filter {
-        const { dataElementGroups, sections } = options;
+        const { dataElementGroups, sections } = options.filterOptions;
 
         return {
             name: {

@@ -1,12 +1,8 @@
-import { Paging, Sorting } from "../../../common/entities/PaginatedObjects";
 import { VisualizationSubscription } from "../entities/DashboardSubscription";
-import { SubscriptionWithChildrenReport } from "../usecases/GetSubscriptionReportUseCase";
+import { SubscriptionWithChildrenOptions } from "./DashboardSubscriptionRepository";
 
 export interface VisualizationSubscriptionRepository {
     get(options: VisualizationSubscriptionOptions): Promise<VisualizationSubscription[]>;
 }
 
-export type VisualizationSubscriptionOptions = {
-    paging: Paging;
-    sorting: Sorting<SubscriptionWithChildrenReport>;
-};
+export type VisualizationSubscriptionOptions = SubscriptionWithChildrenOptions;

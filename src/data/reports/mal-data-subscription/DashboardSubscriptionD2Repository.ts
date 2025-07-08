@@ -5,7 +5,7 @@ import {
     DashboardSubscriptionRepository,
 } from "../../../domain/reports/mal-data-subscription/repositories/DashboardSubscriptionRepository";
 import { D2DataElement, dataElementFields } from "./DataElementSubscriptionD2Repository";
-import { getDataElementsInParent } from "./utils/DataSubscriptionMapper";
+import { getDataElementsInDashboard } from "./utils/DataSubscriptionMapper";
 import { visualizationFields } from "./VisualizationSubscriptionD2Repository";
 
 export class DashboardSubscriptionD2Repository implements DashboardSubscriptionRepository {
@@ -16,7 +16,7 @@ export class DashboardSubscriptionD2Repository implements DashboardSubscriptionR
         const dataElements = await this.getD2DataElements(options);
 
         return dashboards.map(dashboard =>
-            getDataElementsInParent({ type: "dashboards", entity: dashboard, dataElements: dataElements })
+            getDataElementsInDashboard({ type: "dashboards", entity: dashboard, dataElements: dataElements })
         );
     }
 

@@ -6,7 +6,7 @@ import {
 } from "../../../domain/reports/mal-data-subscription/repositories/VisualizationSubscriptionRepository";
 import { VisualizationSubscription } from "../../../domain/reports/mal-data-subscription/entities/DashboardSubscription";
 import { D2DataElement, dataElementFields } from "./DataElementSubscriptionD2Repository";
-import { getDataElementsInParent } from "./utils/DataSubscriptionMapper";
+import { getDataElementsInVisualization } from "./utils/DataSubscriptionMapper";
 
 export class VisualizationD2SubscriptionRepository implements VisualizationSubscriptionRepository {
     constructor(private api: D2Api) {}
@@ -16,7 +16,11 @@ export class VisualizationD2SubscriptionRepository implements VisualizationSubsc
         const dataElements = await this.getD2DataElements(options);
 
         return visualizations.map(visualization =>
-            getDataElementsInParent({ type: "visualizations", entity: visualization, dataElements: dataElements })
+            getDataElementsInVisualization({
+                type: "visualizations",
+                entity: visualization,
+                dataElements: dataElements,
+            })
         );
     }
 

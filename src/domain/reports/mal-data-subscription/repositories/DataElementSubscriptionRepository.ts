@@ -1,5 +1,5 @@
 import { Paging, Sorting } from "../../../common/entities/PaginatedObjects";
-import { DataElementSubscription } from "../entities/DataElementSubscription";
+import { DataElementSubscription, SubscriptionFilterOptions } from "../entities/DataElementSubscription";
 import { DataElementSubscriptionReport } from "../usecases/GetSubscriptionReportUseCase";
 
 export interface DataElementSubscriptionRepository {
@@ -8,8 +8,7 @@ export interface DataElementSubscriptionRepository {
 }
 
 export type DataElementSubscriptionOptions = {
-    dataElementGroups: string[];
-    sections: string[];
+    filterOptions: SubscriptionFilterOptions;
     paging: Paging;
     sorting: Sorting<DataElementSubscriptionReport>;
 };
