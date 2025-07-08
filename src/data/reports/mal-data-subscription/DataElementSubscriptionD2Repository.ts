@@ -1,24 +1,19 @@
-import { D2Api, MetadataPick } from "@eyeseetea/d2-api/2.36";
+import { D2Api, MetadataPick } from "../../../types/d2-api";
 import { DataElementSubscription } from "../../../domain/reports/mal-data-subscription/entities/DataElementSubscription";
 import {
     DataElementSubscriptionOptions,
     DataElementSubscriptionRepository,
 } from "../../../domain/reports/mal-data-subscription/repositories/DataElementSubscriptionRepository";
-import { paginate, PaginatedObjects } from "../../../domain/common/entities/PaginatedObjects";
 import _ from "lodash";
 
 export class DataElementSubscriptionD2Repository implements DataElementSubscriptionRepository {
     constructor(private api: D2Api) {}
 
-    async get(options: DataElementSubscriptionOptions): Promise<PaginatedObjects<DataElementSubscription>> {
-        const { sorting, paging } = options;
-
+    async get(options: DataElementSubscriptionOptions): Promise<DataElementSubscription[]> {
         const filter = this.getDataElementFilter(options);
         const d2DataElements = await this.getD2DataElements(options, filter);
-        const rows = this.mapD2DataElementsToSubscription(d2DataElements);
-        const { objects, pager } = paginate(rows, paging, sorting);
 
-        return { objects: objects, pager: pager };
+        return this.mapD2DataElementsToSubscription(d2DataElements);
     }
 
     private getDataElementFilter(options: DataElementSubscriptionOptions): Filter {
@@ -55,9 +50,12 @@ export class DataElementSubscriptionD2Repository implements DataElementSubscript
                 .find(section => _.some(section.dataElements, { id: dataElement.id }));
 
             return {
-                dataElement: dataElement,
-                section: section,
+                dataElementId: dataElement.id,
+                dataElementName: dataElement.name,
+                dataElementCode: dataElement.code,
+                dataSetName: dataElement.dataSetElements[0]?.dataSet.name ?? "",
                 dataElementGroups: dataElement.dataElementGroups,
+                section: section,
             };
         });
     }

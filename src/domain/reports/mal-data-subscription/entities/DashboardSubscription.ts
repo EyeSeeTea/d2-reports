@@ -1,4 +1,8 @@
 import { NamedRef } from "../../../common/entities/Ref";
 import { DataElementSubscription } from "./DataElementSubscription";
 
-export type DashboardSubscription = { dashboard: NamedRef; children: DataElementSubscription[] };
+type BaseSubscription = NamedRef & { children: DataElementSubscription[] };
+
+export type DashboardSubscription = BaseSubscription & { type: "dashboards" };
+
+export type VisualizationSubscription = BaseSubscription & { type: "visualizations" };

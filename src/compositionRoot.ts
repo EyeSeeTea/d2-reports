@@ -105,8 +105,20 @@ import { SaveMonitoringTwoFactorUseCase } from "./domain/reports/twofactor-monit
 import { MonitoringTwoFactorD2Repository } from "./data/reports/twofactor-monitoring/MonitoringTwoFactorD2Repository";
 import { GetOrgUnitsWithChildrenUseCase } from "./domain/reports/glass-data-submission/usecases/GetOrgUnitsWithChildrenUseCase";
 import { GetAllOrgUnitsByLevelUseCase } from "./domain/common/usecases/GetAllOrgUnitsByLevelUseCase";
+import { GetSubscriptionReportUseCase } from "./domain/reports/mal-data-subscription/usecases/GetSubscriptionReportUseCase";
+import { DashboardSubscriptionD2Repository } from "./data/reports/mal-data-subscription/DashboardSubscriptionD2Repository";
+import { DataElementSubscriptionD2Repository } from "./data/reports/mal-data-subscription/DataElementSubscriptionD2Repository";
+import { SubscriptionStatusDatastoreRepository } from "./data/reports/mal-data-subscription/SubscriptionStatusDatastoreRepository";
+import { VisualizationD2SubscriptionRepository } from "./data/reports/mal-data-subscription/VisualizationSubscriptionD2Repository";
+import { GetSubscriptionFilterOptionsUseCase } from "./domain/reports/mal-data-subscription/usecases/GetSubscriptionFilterOptionsUseCase";
+import { GetTableSettingsUseCase } from "./domain/common/usecases/GetTableSettingsUseCase";
+import { SaveTableSettingsUseCase } from "./domain/common/usecases/SaveTableSettingsUseCase";
+import { TableSettingsDataStoreRepository } from "./data/common/TableSettingsDataStoreRepository";
+import { UpdateMonitoringUseCase } from "./domain/reports/mal-data-subscription/usecases/UpdateMonitoringUseCase";
+import { MonitoringDataStoreRepository } from "./data/reports/mal-data-subscription/MonitoringDataStoreRepository";
 
 export function getCompositionRoot(api: D2Api) {
+    const tableSettingsRepository = new TableSettingsDataStoreRepository(api);
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
     const csyAuditEmergencyRepository = new CSYAuditEmergencyD2Repository(api);
     const csyAuditTraumaRepository = new CSYAuditTraumaD2Repository(api);
@@ -130,7 +142,17 @@ export function getCompositionRoot(api: D2Api) {
     const authoritiesMonitoringRepository = new AuthoritiesMonitoringDefaultRepository(api);
     const monitoringTwoFactorD2Repository = new MonitoringTwoFactorD2Repository(api);
 
+    const dashboardSubscriptionRepository = new DashboardSubscriptionD2Repository(api);
+    const dataElementSubscriptionRepository = new DataElementSubscriptionD2Repository(api);
+    const subscriptionStatusRepository = new SubscriptionStatusDatastoreRepository(api);
+    const visualizationSubscriptionRepository = new VisualizationD2SubscriptionRepository(api);
+    const monitoringRepository = new MonitoringDataStoreRepository(api);
+
     return {
+        tableSettings: getExecute({
+            get: new GetTableSettingsUseCase(tableSettingsRepository),
+            save: new SaveTableSettingsUseCase(tableSettingsRepository),
+        }),
         admin: getExecute({
             get: new GetWIDPAdminDefaultUseCase(widpAdminDefaultRepository),
             save: new SaveWIDPAdminDefaultCsvUseCase(widpAdminDefaultRepository),
@@ -168,12 +190,21 @@ export function getCompositionRoot(api: D2Api) {
             get: new GetMalDataElementsSubscriptionUseCase(dataSubscriptionRepository),
             getDashboardDataElements: new GetMalDashboardsSubscriptionUseCase(dataSubscriptionRepository),
             getMonitoringDetails: new GetMonitoringDetailsUseCase(dataSubscriptionRepository),
+            getMonitoring: new GetSubscriptionMonitoringUseCase(dataSubscriptionRepository),
+            saveMonitoring: new SaveSubscriptionMonitoringUseCase(dataSubscriptionRepository),
             getColumns: new GetMalDataSubscriptionColumnsUseCase(dataSubscriptionRepository),
             saveColumns: new SaveMalDataSubscriptionColumnsUseCase(dataSubscriptionRepository),
             getSubscription: new GetSubscriptionUseCase(dataSubscriptionRepository),
             saveSubscription: new SaveSubscriptionUseCase(dataSubscriptionRepository),
-            getMonitoring: new GetSubscriptionMonitoringUseCase(dataSubscriptionRepository),
-            saveMonitoring: new SaveSubscriptionMonitoringUseCase(dataSubscriptionRepository),
+
+            getSubscriptionReport: new GetSubscriptionReportUseCase({
+                dashboardSubscriptionRepository: dashboardSubscriptionRepository,
+                dataElementSubscriptionRepository: dataElementSubscriptionRepository,
+                subscriptionStatusRepository: subscriptionStatusRepository,
+                visualizationSubscriptionRepository: visualizationSubscriptionRepository,
+            }),
+            getSubscriptionFilterOptions: new GetSubscriptionFilterOptionsUseCase(dataElementSubscriptionRepository),
+            updateMonitoring: new UpdateMonitoringUseCase(dataElementSubscriptionRepository, monitoringRepository),
         }),
         auditEmergency: getExecute({
             get: new GetAuditEmergencyUseCase(csyAuditEmergencyRepository),
