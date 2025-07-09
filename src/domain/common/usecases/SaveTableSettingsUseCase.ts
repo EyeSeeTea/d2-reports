@@ -4,7 +4,7 @@ import { TableSettingsRepository } from "../repositories/TableSettingsRepository
 export class SaveTableSettingsUseCase {
     constructor(private tableSettingsRepository: TableSettingsRepository) {}
 
-    execute(tableSettings: TableSettings): Promise<void> {
+    execute<T>(tableSettings: TableSettings<T>): Promise<void> {
         return this.tableSettingsRepository.save(tableSettings);
     }
 }

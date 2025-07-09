@@ -1,4 +1,4 @@
-export type TableSettings = {
+export type TableSettings<T> = {
     name: string;
-    visibleColumns: string[];
+    visibleColumns: Array<keyof T>;
 };

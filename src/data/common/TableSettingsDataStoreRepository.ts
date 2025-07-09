@@ -9,12 +9,12 @@ export class TableSettingsDataStoreRepository implements TableSettingsRepository
     private storageClient: StorageClient;
 
     constructor(private api: D2Api) {
-        const instance = new Instance({ url: this.api.baseUrl });
+        const instance = Instance.fromInstance(api);
         this.storageClient = new DataStoreStorageClient("user", instance);
     }
 
-    async get(name: string): Promise<TableSettings> {
-        const visibleColumns = (await this.storageClient.getObject<string[]>(name)) ?? [];
+    async get<T>(name: string): Promise<TableSettings<T>> {
+        const visibleColumns = (await this.storageClient.getObject<Array<keyof T>>(name)) ?? [];
 
         return {
             visibleColumns: visibleColumns,
@@ -22,9 +22,9 @@ export class TableSettingsDataStoreRepository implements TableSettingsRepository
         };
     }
 
-    async save(settings: TableSettings): Promise<void> {
+    async save<T>(settings: TableSettings<T>): Promise<void> {
         const { name, visibleColumns } = settings;
 
-        return this.storageClient.saveObject<string[]>(name, visibleColumns);
+        return this.storageClient.saveObject<Array<keyof T>>(name, visibleColumns);
     }
 }

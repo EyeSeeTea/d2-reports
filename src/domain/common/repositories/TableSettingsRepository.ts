@@ -1,6 +1,6 @@
 import { TableSettings } from "../entities/TableSettings";
 
 export interface TableSettingsRepository {
-    get(name: string): Promise<TableSettings>;
-    save(settings: TableSettings): Promise<void>;
+    get<T>(name: string): Promise<TableSettings<T>>;
+    save<T>(settings: TableSettings<T>): Promise<void>;
 }
