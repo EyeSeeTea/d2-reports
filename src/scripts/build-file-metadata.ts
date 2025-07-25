@@ -21,6 +21,7 @@ export async function buildMetadata(): Promise<void> {
         "src/data/reports/file-resources-monitoring/sql-views/file-resources-monitoring-tracker.sql",
         "utf8"
     );
+    const tracker_sql_description ="\n This view retrieves all tracked entity attributes that are of type FILE_RESOURCE or IMAGE and is Required due Dhis2 restrictions, this view only returns a list of uids no protected data.\n CREATE OR REPLACE VIEW public.valid_tracker_fileresources AS\n SELECT te.uid AS trackeruid, teav.value AS fileresourceuid FROM trackedentityattributevalue teav JOIN trackedentity te ON te.trackedentityid = teav.trackedentityid WHERE teav.trackedentityattributeid IN ( SELECT trackedentityattributeid FROM trackedentityattribute WHERE valuetype IN ('FILE_RESOURCE', 'IMAGE') )";
 
     const sqlViews: Partial<D2SqlView>[] = [
         {
@@ -42,6 +43,7 @@ export async function buildMetadata(): Promise<void> {
         {
             id: "ah62hzAEyJF",
             name: "file-resources-monitoring-tracker",
+            description: tracker_sql_description,
             cacheStrategy: "RESPECT_SYSTEM_SETTING",
             type: "QUERY",
             sqlQuery: sqlTracker,
