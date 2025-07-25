@@ -32,4 +32,4 @@ export function formatBytes(file: MonitoringFileResourcesFile): string {
     return `${value} ${sizes[i]}`;
 }
 
-export type FileResourceType = "Document" | "Aggregated" | "Events" | "UserAvatar" | "MessageAttachment" | "Orphan";
+export type FileResourceType = "Document" | "Aggregated" | "Events" | "UserAvatar" | "MessageAttachment" | "Orphan" | "Tracker";

@@ -21,6 +21,7 @@ import { isValidUid } from "d2/uid";
 
 export const SQL_EVENT_FILERESOURCE_ID = "Rl8JnitnM6X";
 export const SQL_DATASETVALUES_FILERESOURCE_ID = "gMg3im4cTYd";
+export const SQL_TRACKER_FILERESOURCE_ID = "ah62hzAEyJF";
 
 export class MonitoringFileResourcesD2Repository implements MonitoringFileResourcesRepository {
     private storageClient: StorageClient;
@@ -78,6 +79,23 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         });
     }
 
+    private async getTrackerWithFile(): Promise<TrackerFileRef[]> {
+        return this.cache.getOrPromise("tracker", async () => {
+            const response = await new Dhis2SqlViews(this.api)
+                .query<{}, TrackerSqlField>(SQL_TRACKER_FILERESOURCE_ID, undefined, { page: 1, pageSize: 10000 })
+                .getData();
+
+            const trackerFileResource = response.rows.map<TrackerFileRef>(row => ({
+                kind: "tracker",
+                fileResourceId: row.fileresourceuid,
+                trackerId: row.trackeruid
+            }));
+
+            return trackerFileResource;
+        });
+    }
+
+    
     private async getEventsWithFile(): Promise<EventFileRef[]> {
         return this.cache.getOrPromise("events", async () => {
             const response = await new Dhis2SqlViews(this.api)
@@ -408,9 +426,10 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
     }
 
     private async getRefs(): Promise<FileResourceFileRefs> {
-        const [docRefs, eventRefs, dataValuesRefs, userRefs, messageAttachments] = await Promise.all([
+        const [docRefs, eventRefs, trackerRefs, dataValuesRefs, userRefs, messageAttachments] = await Promise.all([
             this.getDocuments(),
             this.getEventsWithFile(),
+            this.getTrackerWithFile(),
             this.getDataValuesWithFile(),
             this.getUsersWithAvatar(),
             this.getMessagesWithAttachments(),
@@ -419,6 +438,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
         const refs: FileResourceFileRefs = {
             documents: docRefs,
             eventValues: eventRefs,
+            tracker: trackerRefs,
             dataValues: dataValuesRefs,
             userAvatar: userRefs,
             messageAttachments: messageAttachments,
@@ -450,6 +470,7 @@ type DataSetValueFileResource = {
     attributeOptionComboUid: string;
 };
 
+type TrackerSqlField = "trackeruid" | "fileresourceuid";
 type EventSqlField = "eventuid" | "eventdatavalues" | "fileresourceuid";
 type DataSetSqlField =
     | "fileresourceuid"
@@ -507,6 +528,8 @@ function getFileResourceType(id: string, refs: FileResourceFileRefs): FileResour
             return "Document";
         case "event":
             return "Events";
+        case "tracker":
+            return "Tracker";
         case "dataValue":
             return "Aggregated";
         case "userAvatar":
@@ -524,6 +547,8 @@ function getOwnerUrl(baseAddress: string, ref: FileRef): string | undefined {
             return `${baseAddress}/documents/${ref.documentId}`;
         case "event":
             return `${baseAddress}/events/${ref.eventId}`;
+        case "tracker":
+            return `${baseAddress}/trackedEntityInstances/${ref.trackerId}`;
         case "dataValue":
             return `${baseAddress}/dataValues?de=${ref.dataElementUid}&pe=${ref.period}&ou=${ref.organisationUnitUid}&co=${ref.categoryOptionComboUid}`;
         case "userAvatar":
@@ -543,6 +568,8 @@ function getIdByRef(id: string, refs: FileResourceFileRefs): string {
             return `document|${ref.documentId}`;
         case "event":
             return `event|${ref.eventId}|${id}`;
+        case "tracker":
+            return `tracker|${ref.trackerId}|${id}`;
         case "dataValue":
             return `dataValue|${ref.attributeOptionComboUid}|${ref.organisationUnitUid}|${ref.period}|${ref.dataElementUid}|${ref.categoryOptionComboUid}|${id}`;
         case "userAvatar":
@@ -565,6 +592,8 @@ function getRefById(id: string): FileRef | null {
             return { kind: "document", documentId: getPart(1), fileResourceId: getPart(2) };
         case "event":
             return { kind: "event", eventId: getPart(1), fileResourceId: getPart(2) };
+        case "tracker":
+            return { kind: "tracker", trackerId: getPart(1), fileResourceId: getPart(2) };
         case "dataValue":
             return {
                 kind: "dataValue",
@@ -597,17 +626,19 @@ function getRefById(id: string): FileRef | null {
 function getRef(id: string, refs: FileResourceFileRefs): FileRef | null {
     const parentDoc = refs.documents.find(doc => doc.fileResourceId === id);
     const eventValueDoc = refs.eventValues.find(event => event.fileResourceId === id);
+    const trackerValueDoc = refs.tracker.find(tracker => tracker.fileResourceId === id);
     const dataValueDoc = refs.dataValues.find(data => data.fileResourceId === id);
     const userAvatarDoc = refs.userAvatar.find(user => user.fileResourceId === id);
     const messageAttachmentDoc = refs.messageAttachments?.find(message => message.fileResourceId === id);
 
-    return parentDoc ?? eventValueDoc ?? dataValueDoc ?? userAvatarDoc ?? messageAttachmentDoc ?? null;
+    return parentDoc ?? eventValueDoc ?? dataValueDoc ?? trackerValueDoc ?? userAvatarDoc ?? messageAttachmentDoc ?? null;
 }
 
 type FileResourceFileRefs = {
     documents: DocumentFileRef[];
     eventValues: EventFileRef[];
     dataValues: DataValueFileRef[];
+    tracker: TrackerFileRef[]; 
     userAvatar: UserAvatarFileRef[];
     messageAttachments?: MessageAttachmentsFileRef[];
 };
@@ -621,6 +652,12 @@ type DocumentFileRef = {
 type EventFileRef = {
     kind: "event";
     eventId: string;
+    fileResourceId: string;
+};
+
+type TrackerFileRef = {
+    kind: "tracker";
+    trackerId: string;
     fileResourceId: string;
 };
 
@@ -648,4 +685,4 @@ type MessageAttachmentsFileRef = {
     lastSenderId: string;
 };
 
-type FileRef = DocumentFileRef | EventFileRef | DataValueFileRef | UserAvatarFileRef | MessageAttachmentsFileRef;
+type FileRef = DocumentFileRef | EventFileRef | DataValueFileRef | TrackerFileRef | UserAvatarFileRef | MessageAttachmentsFileRef;

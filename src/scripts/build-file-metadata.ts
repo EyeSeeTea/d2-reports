@@ -17,6 +17,10 @@ export async function buildMetadata(): Promise<void> {
         "src/data/reports/file-resources-monitoring/sql-views/file-resources-monitoring-events.sql",
         "utf8"
     );
+    const sqlTracker = fs.readFileSync(
+        "src/data/reports/file-resources-monitoring/sql-views/file-resources-monitoring-tracker.sql",
+        "utf8"
+    );
 
     const sqlViews: Partial<D2SqlView>[] = [
         {
@@ -33,6 +37,14 @@ export async function buildMetadata(): Promise<void> {
             cacheStrategy: "RESPECT_SYSTEM_SETTING",
             type: "QUERY",
             sqlQuery: sqlEvents,
+            publicAccess: "--------",
+        },
+        {
+            id: "ah62hzAEyJF",
+            name: "file-resources-monitoring-tracker",
+            cacheStrategy: "RESPECT_SYSTEM_SETTING",
+            type: "QUERY",
+            sqlQuery: sqlTracker,
             publicAccess: "--------",
         },
     ];
