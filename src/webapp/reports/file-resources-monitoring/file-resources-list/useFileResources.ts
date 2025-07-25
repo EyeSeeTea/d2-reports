@@ -84,35 +84,7 @@ export function useFileResources() {
                         setShowConfirmDelete(true);
                     },
                     isActive: (rows: FileResourcesViewModel[]) => {
-                        return rows.filter(row => row.type === "Orphan").length === 0;
-                    },
-                },
-                {
-                    name: "openFileResource",
-                    text: i18n.t("Open File Resource"),
-                    icon: React.createElement(OpenInBrowser),
-                    multiple: false,
-                    onClick: async (selectedIds: string[]) => {
-                        if (!selectedIds.length) return;
-
-                        setSelectedIds(selectedIds);
-                        setOpenFileResourceUrls(true);
-                    },
-                    isActive: () => true,
-                },
-                {
-                    name: "openOwner",
-                    text: i18n.t("Open Owner"),
-                    icon: React.createElement(OpenInBrowser),
-                    multiple: false,
-                    onClick: async (selectedIds: string[]) => {
-                        if (!selectedIds.length) return;
-
-                        setSelectedIds(selectedIds);
-                        setOpenOwnerUrls(true);
-                    },
-                    isActive: (rows: FileResourcesViewModel[]) => {
-                        return rows.filter(row => row.ownerUrl === undefined).length === 0;
+                        return rows.filter(row => row.type === "Orphan" || row.type === "Tracker").length === 0;
                     },
                 },
             ],
