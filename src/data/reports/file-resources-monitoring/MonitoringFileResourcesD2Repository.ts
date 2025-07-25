@@ -276,7 +276,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
     async save(filename: string, files: MonitoringFileResourcesFile[]): Promise<void> {
         const headers = csvFields.map(field => ({ id: field, text: field }));
         const rows = files.map(file => ({
-            id: file.id,
+            fileResourceUid: file.fileResourceId,
             name: file.name,
             createdBy: file.createdBy?.name ?? "-",
             created: file.created,
@@ -286,6 +286,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
             href: file.href,
             type: file.type,
             contentMd5: file.contentMd5,
+            ownerUrl: file.ownerUrl ?? "-",
         }));
 
         const csvDataSource = new CsvWriterDataSource();
@@ -448,7 +449,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
 }
 
 const csvFields = [
-    "id",
+    "fileResourceUid",
     "name",
     "createdBy",
     "created",
@@ -458,6 +459,7 @@ const csvFields = [
     "href",
     "type",
     "contentMd5",
+    "ownerUrl"
 ] as const;
 
 type CsvField = typeof csvFields[number];
