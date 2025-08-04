@@ -102,18 +102,7 @@ export class MonitoringFileResourcesD2Repository implements MonitoringFileResour
                 .query<{}, EventSqlField>(SQL_EVENT_FILERESOURCE_ID, undefined, { page: 1, pageSize: 10000 })
                 .getData();
 
-            const eventFileResources = response.rows
-                .map(row => {
-                    const values = Object.values(JSON.parse(row.eventdatavalues)) as { value: string }[];
-
-                    const fileResourceValue = values.find(value => isValidUid(value.value));
-
-                    return {
-                        eventuid: row.eventuid,
-                        fileresourceuid: fileResourceValue?.value,
-                    };
-                })
-                .map<EventFileRef>(row => {
+            const eventFileResources = response.rows.map<EventFileRef>(row => {
                     return {
                         kind: "event",
                         eventId: row.eventuid,
@@ -473,7 +462,7 @@ type DataSetValueFileResource = {
 };
 
 type TrackerSqlField = "trackeruid" | "fileresourceuid";
-type EventSqlField = "eventuid" | "eventdatavalues" | "fileresourceuid";
+type EventSqlField = "eventuid" | "fileresourceuid";
 type DataSetSqlField =
     | "fileresourceuid"
     | "dataelementuid"
