@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { FileResourcesViewModel } from "./FileResourcesViewModel";
 import { ConfirmationDialog, ObjectsList } from "@eyeseetea/d2-ui-components";
 import i18n from "../../../../locales";
@@ -15,32 +15,8 @@ export const FileResourcesMonitorList: React.FC = React.memo(() => {
         showConfirmDelete,
         deleteSelectedFiles,
         cancelConfirmDelete,
-        openOwnerUrls,
-        openFileResourceUrls,
-        selectedIds,
     } = useFileResources();
 
-    useEffect(() => {
-        if (openOwnerUrls) {
-            const ownerUrls = tableProps.rows.filter(row => selectedIds.includes(row.id)).map(row => row.ownerUrl);
-            ownerUrls.forEach(ownerUrl => {
-                if (ownerUrl) {
-                    window.open(ownerUrl, "_blank");
-                }
-            });
-        }
-    }, [openOwnerUrls, selectedIds, tableProps.rows]);
-
-    useEffect(() => {
-        if (openFileResourceUrls) {
-            const fileResourceUrls = tableProps.rows.filter(row => selectedIds.includes(row.id)).map(row => row.href);
-            fileResourceUrls.forEach(fileResourceUrl => {
-                if (fileResourceUrl) {
-                    window.open(fileResourceUrl, "_blank");
-                }
-            });
-        }
-    }, [openFileResourceUrls, selectedIds, tableProps.rows]);
 
     return (
         <>

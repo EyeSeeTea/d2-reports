@@ -4,14 +4,13 @@ import { FileResourcesViewModel } from "./FileResourcesViewModel";
 import i18n from "../../../../locales";
 
 const StyledTooltip = styled(({ className, ...props }) => <Tooltip {...props} classes={{ popper: className }} />)`
-    /* Aquí dirigimos los estilos hacia el elemento interno que contiene el texto */
     & .MuiTooltip-tooltip {
         font-size: 14px;
     }
 `;
 
 export function showTooltip(row: FileResourcesViewModel) {
-    const text = row.type; // o el campo que quieras comprobar
+    const text = row.type;
     if (text === "Orphan") {
         return (
             <StyledTooltip

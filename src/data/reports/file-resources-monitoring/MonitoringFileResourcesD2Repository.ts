@@ -17,7 +17,6 @@ import { MonitoringFileResourcesRepository } from "../../../domain/reports/file-
 
 import { promiseMap } from "../../../utils/promises";
 import { InmemoryCache } from "../../common/cache/InmemoryCache";
-import { isValidUid } from "d2/uid";
 
 export const SQL_EVENT_FILERESOURCE_ID = "Rl8JnitnM6X";
 export const SQL_DATASETVALUES_FILERESOURCE_ID = "gMg3im4cTYd";
