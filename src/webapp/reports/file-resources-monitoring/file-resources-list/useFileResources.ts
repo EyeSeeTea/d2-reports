@@ -14,12 +14,12 @@ import {
 import { MonitoringFileResourcesFile } from "../../../../domain/reports/file-resources-monitoring/entities/MonitoringFileResourcesFile";
 import StorageIcon from "@material-ui/icons/Storage";
 import DeleteIcon from "@material-ui/icons/Delete";
-import OpenInBrowser from "@material-ui/icons/OpenInBrowser";
 import _ from "lodash";
 import React from "react";
 import type { Sorting } from "../../../../domain/common/entities/PaginatedObjects";
 import i18n from "../../../../locales";
 import { showTooltip } from "./Tooltip";
+import { showURLCell } from "./UrlCell";
 
 export function useFileResources() {
     const { compositionRoot } = useAppContext();
@@ -29,8 +29,6 @@ export function useFileResources() {
     const [reloadKey, reload] = useReload();
     const [showConfirmDelete, setShowConfirmDelete] = useState(false);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [openOwnerUrls, setOpenOwnerUrls] = useState(false);
-    const [openFileResourceUrls, setOpenFileResourceUrls] = useState(false);
 
     useEffect(() => {
         compositionRoot.fileResourcesMonitoring
@@ -69,6 +67,7 @@ export function useFileResources() {
                     text: i18n.t("Owner Url"),
                     sortable: true,
                     hidden: true,
+                    getValue: showURLCell,
                 },
             ],
             actions: [
@@ -179,8 +178,6 @@ export function useFileResources() {
         showConfirmDelete,
         deleteSelectedFiles,
         cancelConfirmDelete,
-        openOwnerUrls,
-        openFileResourceUrls,
         selectedIds,
     };
 }
