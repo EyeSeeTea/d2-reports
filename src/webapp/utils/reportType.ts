@@ -26,6 +26,8 @@ export function getReportType(): ReportType {
             return "data-quality";
         case report === "two-factor-monitoring":
             return "twoFactorUserMonitoring";
+        case report === "file-resources-monitoring":
+            return "fileResourcesMonitoring";
         default:
             return "nhwa";
     }

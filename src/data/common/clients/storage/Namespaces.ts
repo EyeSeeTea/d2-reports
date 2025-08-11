@@ -32,6 +32,8 @@ export const Namespaces = {
     AUTH_MONITORING_USER_COLUMNS: "auth-monitoring-user-columns",
     USER_2FA: "user-monitoring",
     USER_2FA_USER_COLUMNS: "user-2fa-user-columns",
+    FILE_RESOURCES: "file-resources-monitoring",
+    FILE_RESOURCES_MONITORING_COLUMNS: "file-resources-monitoring-columns",
 };
 
 export const NamespaceProperties: Record<Namespace, string[]> = {
@@ -57,4 +59,6 @@ export const NamespaceProperties: Record<Namespace, string[]> = {
     [Namespaces.AUTH_MONITORING_USER_COLUMNS]: [],
     [Namespaces.USER_2FA]: [],
     [Namespaces.USER_2FA_USER_COLUMNS]: [],
+    [Namespaces.FILE_RESOURCES]: [],
+    [Namespaces.FILE_RESOURCES_MONITORING_COLUMNS]: [],
 };
