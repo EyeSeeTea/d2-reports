@@ -24,6 +24,7 @@ type DataApprovalFilterState = {
         periods: DropdownHandler;
         completionStatus: SingleDropdownHandler;
         approvalStatus: SingleDropdownHandler;
+        approvedStatus: SingleDropdownHandler;
     };
 };
 
@@ -99,6 +100,11 @@ export function useDataApprovalFilters(filterProps: DataApprovalFilterProps): Da
         [setFilterValues]
     );
 
+    const setApprovedStatus = useCallback<SingleDropdownHandler>(
+        approvedStatus => setFilterValues(prev => ({ ...prev, isApproved: toBool(approvedStatus) })),
+        [setFilterValues]
+    );
+
     const applyFilters = useCallback(() => {
         onChange(filterValues);
     }, [filterValues, onChange]);
@@ -120,6 +126,7 @@ export function useDataApprovalFilters(filterProps: DataApprovalFilterProps): Da
             periods: setPeriods,
             completionStatus: setCompletionStatus,
             approvalStatus: setApprovalStatus,
+            approvedStatus: setApprovedStatus,
         },
     };
 }
@@ -127,9 +134,11 @@ export function useDataApprovalFilters(filterProps: DataApprovalFilterProps): Da
 const countryLevel = 3;
 
 export const emptyApprovalFilter: DataSetsFilter = {
-    dataSetId: undefined,
-    orgUnitPaths: [],
-    periods: [],
+    dataSetId: "uc8uSqVVt4n",
+    orgUnitPaths: ["/H8RixfF8ugH/seHJdofSPcM/mNa42CHbkO7", "/H8RixfF8ugH/seHJdofSPcM/hmZE3mVAZFf"],
+    // dataSetId: "CWuqJ3dtQC4",
+    // orgUnitPaths: ["/H8RixfF8ugH/seHJdofSPcM/Xz7rnovuiOx"],
+    periods: ["2024"],
     completionStatus: undefined,
     approvalStatus: undefined,
 };

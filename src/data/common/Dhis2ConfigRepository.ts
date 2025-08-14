@@ -2,10 +2,12 @@ import _ from "lodash";
 import { keyById, NamedRef } from "../../domain/common/entities/Base";
 import { Config } from "../../domain/common/entities/Config";
 import { ReportType } from "../../domain/common/entities/ReportType";
-import { User } from "../../domain/common/entities/User";
+import { User, UserDataSetAction } from "../../domain/common/entities/User";
 import { ConfigRepository } from "../../domain/common/repositories/ConfigRepository";
 import { D2Api, Id } from "../../types/d2-api";
+import { Maybe } from "../../types/utils";
 import { getReportType } from "../../webapp/utils/reportType";
+import { approvalReportAccess } from "../ApprovalReportData";
 import { malDataSetCodes } from "../reports/mal-data-approval/constants/MalDataApprovalConstants";
 
 export const SQL_VIEW_DATA_COMMENTS_NAME = "NHWA Data Comments";
@@ -112,50 +114,73 @@ export class Dhis2ConfigRepository implements ConfigRepository {
     constructor(private api: D2Api, private type: ReportType) {}
 
     async get(): Promise<Config> {
-        const { dataSets, constants, sqlViews: existedSqlViews, dataApprovalWorkflows } = await this.getMetadata();
+        const { dataSets, sqlViews: existedSqlViews, dataApprovalWorkflows } = await this.getMetadata();
+        const currentUser = await this.getCurrentUser();
+        const userGroups = currentUser.userGroups.map(group => group.name);
+        const dataSetsToShow = _(dataSets)
+            .map(d2DataSet => {
+                const dataSetAccess = approvalReportAccess.dataSets[d2DataSet.code];
+                if (!dataSetAccess) return undefined;
+
+                if (currentUser.isAdmin) return d2DataSet;
+
+                return _(dataSetAccess.read.userGroups).intersection(userGroups).value().length > 0
+                    ? d2DataSet
+                    : undefined;
+            })
+            .compact()
+            .value();
+
         const filteredDataSets = getFilteredDataSets(dataSets);
 
         const sqlViews = existedSqlViews.reduce((acc, sqlView) => {
             return { ...acc, [sqlView.name]: sqlView };
         }, {});
 
-        const currentUser = await this.getCurrentUser();
         const pairedDataElements = getPairedMapping(filteredDataSets);
         const orgUnitList = getPairedOrgunitsMapping(filteredDataSets);
         const currentYear = new Date().getFullYear();
-        if (base[this.type].constantCode !== "") {
-            const constant = getNth(constants, 0, `Missing constant: ${base[this.type].constantCode}`);
-            const constantData = JSON.parse(constant.description || "{}") as Constant;
-            const { sections, sectionsByDataSet } = getSectionsInfo(constantData);
-
-            return {
-                dataSets: keyById(filteredDataSets),
-                currentUser,
-                sqlViews,
-                pairedDataElementsByDataSet: pairedDataElements,
-                orgUnits: orgUnitList,
-                sections: keyById(sections),
-                sectionsByDataSet,
-                years: _.range(currentYear - 10, currentYear + 1).map(n => n.toString()),
-                approvalWorkflow: dataApprovalWorkflows,
-            };
-        } else {
-            return {
-                dataSets: keyById(filteredDataSets),
-                currentUser,
-                sqlViews,
-                pairedDataElementsByDataSet: pairedDataElements,
-                orgUnits: orgUnitList,
-                sections: undefined,
-                sectionsByDataSet: undefined,
-                years: _.range(currentYear - 10, currentYear + 1).map(n => n.toString()),
-                approvalWorkflow: dataApprovalWorkflows,
-            };
-        }
+        return {
+            dataSets: keyById(dataSetsToShow),
+            currentUser: {
+                ...currentUser,
+                dataSets: _(dataSetsToShow)
+                    .map((dataSet): Maybe<D2UserDataSetAccess> => {
+                        const accessDataSet = approvalReportAccess.dataSets[dataSet.code];
+                        if (!accessDataSet) return undefined;
+                        return [
+                            dataSet.id,
+                            {
+                                complete:
+                                    _(accessDataSet.complete.userGroups).intersection(userGroups).value().length > 0,
+                                incomplete:
+                                    _(accessDataSet.incomplete.userGroups).intersection(userGroups).value().length > 0,
+                                monitoring:
+                                    _(accessDataSet.monitoring.userGroups).intersection(userGroups).value().length > 0,
+                                read: _(accessDataSet.read.userGroups).intersection(userGroups).value().length > 0,
+                                revoke: _(accessDataSet.revoke.userGroups).intersection(userGroups).value().length > 0,
+                                submit: _(accessDataSet.submit.userGroups).intersection(userGroups).value().length > 0,
+                                approve:
+                                    _(accessDataSet.approve.userGroups).intersection(userGroups).value().length > 0,
+                            },
+                        ];
+                    })
+                    .compact()
+                    .fromPairs()
+                    .value(),
+            },
+            sqlViews,
+            pairedDataElementsByDataSet: pairedDataElements,
+            orgUnits: orgUnitList,
+            sections: undefined,
+            sectionsByDataSet: undefined,
+            years: _.range(currentYear - 10, currentYear + 1).map(n => n.toString()),
+            approvalWorkflow: dataApprovalWorkflows,
+        };
     }
 
     getMetadata() {
-        const { dataSets, constantCode, sqlViewNames, approvalWorkflows } = base[this.type];
+        const { dataSets, constantCode, sqlViewNames, approvalWorkflows } = base.mal;
 
         const metadata$ = this.api.metadata.get({
             dataSets: {
@@ -204,7 +229,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                     },
                     userCredentials: {
                         username: true,
-                        userRoles: { id: true, name: true },
+                        userRoles: { id: true, name: true, authorities: true },
                     },
                     userGroups: { id: true, name: true },
                 },
@@ -217,6 +242,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             orgUnits: d2User.dataViewOrganisationUnits.map(ou => ({ ...ou, children: [] })),
             userGroups: d2User.userGroups,
             ...d2User.userCredentials,
+            isAdmin: d2User.userCredentials.userRoles.some(role => role.authorities.includes("ALL")),
         };
     }
 }
@@ -226,11 +252,6 @@ interface DataSet {
     dataSetElements: Array<{ dataElement: NamedRef }>;
     organisationUnits: Array<{ id: Id }>;
 }
-
-type Constant = Partial<{
-    sections?: Record<Id, string>;
-    sectionNames?: Record<string, string>;
-}>;
 
 function getNameOfDataElementWithValue(name: string): string {
     const s = "NHWA_" + name.replace(/NHWA_Comment of /, "");
@@ -289,41 +310,6 @@ function getMappingForDataSet(dataSet: DataSet, dataElementsByName: Record<strin
         .value();
 }
 
-function getNth<T>(objs: T[], n: number, msg: string): T {
-    const obj = objs[n];
-    if (!obj) throw new Error(msg);
-    return obj;
-}
-
-function getSectionsInfo(constantData: Constant) {
-    const sectionNames = constantData.sectionNames || {};
-    const jsonSections = constantData.sections || {};
-
-    const sections = _(jsonSections)
-        .values()
-        .uniq()
-        .sortBy()
-        .map(sectionId => ({ id: sectionId, name: sectionNames[sectionId] || "" }))
-        .value();
-
-    const sectionsByDataSet = _(jsonSections)
-        .toPairs()
-        .map(([entryId, sectionId]) => {
-            const [dataSetId] = entryId.split(".");
-            return { dataSetId, sectionId };
-        })
-        .groupBy(obj => obj.dataSetId)
-        .mapValues(objs =>
-            _(objs)
-                .map(obj => ({ id: obj.sectionId, name: sectionNames[obj.sectionId] || "" }))
-                .uniqBy(obj => obj.id)
-                .value()
-        )
-        .value();
-
-    return { sections, sectionsByDataSet };
-}
-
 function getFilteredDataSets<DataSet extends NamedRef>(dataSets: DataSet[]): DataSet[] {
     const type = getReportType();
     const { namePrefix, nameExcluded } = base[type].dataSets;
@@ -333,3 +319,5 @@ function getFilteredDataSets<DataSet extends NamedRef>(dataSets: DataSet[]): Dat
 }
 
 const toName = { $fn: { name: "rename", to: "name" } } as const;
+
+type D2UserDataSetAccess = [string, UserDataSetAction];

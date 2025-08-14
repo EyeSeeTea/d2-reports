@@ -3,7 +3,7 @@ import { DataValue, DataValuesSelector, DataValueToPost } from "../../domain/com
 import { Stats } from "../../domain/common/entities/Stats";
 import { DataValuesRepository } from "../../domain/common/repositories/DataValuesRepository";
 import { D2Api } from "../../types/d2-api";
-import { promiseMap } from "../../utils/promises";
+import { getInChunks, promiseMap } from "../../utils/promises";
 
 const emptyImportResult = { deleted: 0, ignored: 0, imported: 0, updated: 0, errorMessages: [] };
 
@@ -22,9 +22,32 @@ export class DataValuesD2Repository implements DataValuesRepository {
 
         const res = await res$.getData();
 
-        // console.dir(res.dataValues);
-        // console.dir(options);
-        return res.dataValues;
+        const dataElementIds = res.dataValues.map(dataValue => dataValue.dataElement);
+
+        const dataElements = await getInChunks(dataElementIds, async deIds => {
+            const responseDes = await this.api.models.dataElements
+                .get({
+                    fields: { id: true, name: true },
+                    filter: { id: { in: deIds } },
+                    pageSize: 500,
+                })
+                .getData();
+
+            return _(responseDes.objects)
+                .map(d2DataElement => {
+                    return [d2DataElement.id, d2DataElement.name];
+                })
+                .value();
+        });
+
+        const dataElementsById = _(dataElements).fromPairs().value();
+
+        return res.dataValues.map(dataValue => {
+            return {
+                ...dataValue,
+                dataElementName: dataElementsById[dataValue.dataElement] || "",
+            };
+        });
     }
 
     async saveAll(dataValues: DataValueToPost[]): Promise<Stats> {

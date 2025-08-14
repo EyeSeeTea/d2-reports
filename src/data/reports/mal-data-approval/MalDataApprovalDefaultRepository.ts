@@ -15,12 +15,7 @@ import { Dhis2SqlViews, SqlViewGetData } from "../../common/Dhis2SqlViews";
 import { Instance } from "../../common/entities/Instance";
 import { downloadFile } from "../../common/utils/download-file";
 import { getSqlViewId } from "../../../domain/common/entities/Config";
-import {
-    SQL_VIEW_DATA_DUPLICATION_NAME,
-    SQL_VIEW_MAL_DIFF_NAME,
-    SQL_VIEW_MAL_METADATA_NAME,
-    SQL_VIEW_OLD_DATA_DUPLICATION_NAME,
-} from "../../common/Dhis2ConfigRepository";
+import { SQL_VIEW_MAL_DIFF_NAME, SQL_VIEW_MAL_METADATA_NAME } from "../../common/Dhis2ConfigRepository";
 import {
     MalDataApprovalItem,
     MalDataApprovalItemIdentifier,
@@ -32,11 +27,12 @@ import {
 import { DataDiffItem, DataDiffItemIdentifier } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 import { emptyPage, paginate } from "../../../domain/common/entities/PaginatedObjects";
-import { malApvdDataSets, malariaDataSets, MalDataSet } from "./constants/MalDataApprovalConstants";
+import { MalDataSet } from "./constants/MalDataApprovalConstants";
 import { getMetadataByIdentifiableToken } from "../../common/utils/getMetadataByIdentifiableToken";
 import { Maybe } from "../../../types/utils";
 import { DataValueStats } from "../../../domain/common/entities/DataValueStats";
-import { isValueInUnionType } from "../../../types/utils";
+import { approvalReportSettings } from "../../ApprovalReportData";
+import { DATA_ELEMENT_SUFFIX } from "../../../domain/common/entities/AppSettings";
 
 interface VariableHeaders {
     dataSets: string;
@@ -214,13 +210,30 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
     }
 
     async get(options: MalDataApprovalOptions): Promise<PaginatedObjects<MalDataApprovalItem>> {
-        const { approvalStatus, completionStatus, config, dataSetId, orgUnitIds, periods, sorting, useOldPeriods } =
-            options;
+        const {
+            isApproved,
+            approvalStatus,
+            completionStatus,
+            config,
+            dataSetId,
+            orgUnitIds,
+            periods,
+            sorting,
+            useOldPeriods,
+        } = options;
         if (!dataSetId) return emptyPage;
+        const dataSetResponse = await this.api.models.dataSets
+            .get({ fields: { id: true, code: true }, filter: { id: { eq: dataSetId } } })
+            .getData();
+
+        const dataSet = dataSetResponse.objects[0];
+        if (!dataSet) throw new Error(`Data set not found for ID: ${dataSetId}`);
 
         const sqlViews = new Dhis2SqlViews(this.api);
         const pagingToDownload = { page: 1, pageSize: 10000 };
-        const sqlViewId = !useOldPeriods ? SQL_VIEW_DATA_DUPLICATION_NAME : SQL_VIEW_OLD_DATA_DUPLICATION_NAME;
+        const dataSetSettings = approvalReportSettings.dataSets[dataSet.code];
+        if (!dataSetSettings) throw new Error(`Data set settings not found for ID: ${dataSetId}`);
+
         const sqlVariables = {
             orgUnitRoot: sqlViewJoinIds(config.currentUser.orgUnits.map(({ id }) => id)),
             orgUnits: sqlViewJoinIds(orgUnitIds),
@@ -230,18 +243,25 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             approved: approvalStatus === undefined ? "-" : approvalStatus.toString(),
             orderByColumn: fieldMapping[sorting.field],
             orderByDirection: sorting.direction,
+            filterApproval: isApproved ? "true" : undefined,
         };
 
         const headerRows = await this.getSqlViewHeaders<SqlFieldHeaders>(sqlViews, options, pagingToDownload);
         const rows = await this.getSqlViewRows<Variables, SqlField>(
             sqlViews,
-            getSqlViewId(config, sqlViewId),
+            useOldPeriods ? dataSetSettings.oldDataSourceId : dataSetSettings.dataSourceId,
             sqlVariables,
             pagingToDownload
         );
 
         const { pager, objects } = mergeHeadersAndData(options, headerRows, rows);
-        const objectsInPage = await promiseMap(objects, async item => {
+        const objectsNoApproval =
+            isApproved === undefined
+                ? objects
+                : isApproved
+                ? objects.filter(item => item.lastDateOfApproval)
+                : objects.filter(item => item.lastDateOfApproval === "");
+        const objectsInPage = await promiseMap(objectsNoApproval, async item => {
             const { approved } = await this.getDataApprovalStatus(item);
 
             return {
@@ -339,20 +359,34 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
     async approve(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean> {
         try {
-            const malSubmissionDateDataElement = await getMetadataByIdentifiableToken({
-                api: this.api,
-                metadataType: "dataElements",
-                token: dataElementCodes.MAL_SUBMISSION_DATE,
+            const dataSetIds = dataSets.map(dataSet => dataSet.dataSet);
+            const dataSetSettings = await this.getSettingByDataSet(dataSetIds);
+
+            const submissionSettings = await promiseMap(dataSetSettings, async settings => {
+                const dataElement = await getMetadataByIdentifiableToken({
+                    api: this.api,
+                    metadataType: "dataElements",
+                    token: settings.dataElements.submissionDate,
+                });
+
+                return { dataSetId: settings.dataSetId, dataElement };
             });
 
-            const dataValues = dataSets.map(ds => ({
-                dataSet: ds.dataSet,
-                period: ds.period,
-                orgUnit: ds.orgUnit,
-                dataElement: malSubmissionDateDataElement.id,
-                categoryOptionCombo: DEFAULT_COC,
-                value: getISODate(),
-            }));
+            const currentDate = getISODate();
+
+            const dataValues = dataSets.map(ds => {
+                const submissionSetting = submissionSettings.find(de => de.dataSetId === ds.dataSet);
+                if (!submissionSetting) throw new Error(`Submission DataElement not found for dataSet: ${ds.dataSet}`);
+
+                return {
+                    dataSet: ds.dataSet,
+                    period: ds.period,
+                    orgUnit: ds.orgUnit,
+                    dataElement: submissionSetting.dataElement.id,
+                    categoryOptionCombo: DEFAULT_COC,
+                    value: currentDate,
+                };
+            });
 
             const dateResponse = await this.api.post<any>("/dataValueSets.json", {}, { dataValues }).getData();
             if (dateResponse.response.status !== "SUCCESS") throw new Error("Error when posting Submission date");
@@ -401,7 +435,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         }
     }
 
-    async getApprovalDataSetId(dataApprovalItems: { dataSet: Id }[]): Promise<string> {
+    async getApprovalDataSetId(dataApprovalItems: { dataSet: Id }[]) {
         const dataSetId = dataApprovalItems[0]?.dataSet;
         if (!dataSetId) throw new Error("Data set not found");
 
@@ -411,9 +445,10 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             token: dataSetId,
         });
 
-        const approvedDataSetCode = isValueInUnionType(dataSetName, malariaDataSets)
-            ? malApvdDataSets[dataSetName]
-            : undefined;
+        const settings = await this.getSettingByDataSet([dataSetId]);
+        const dataSetSettings = settings.find(setting => setting.dataSetId === dataSetId);
+
+        const approvedDataSetCode = dataSetSettings?.approvalDataSetCode;
         if (!approvedDataSetCode) throw new Error(`Approved data set code not found for data set: ${dataSetName}`);
 
         const { id: apvdDataSetId } = await getMetadataByIdentifiableToken({
@@ -422,7 +457,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             token: approvedDataSetCode,
         });
 
-        return process.env.REACT_APP_APPROVE_DATASET_ID ?? apvdDataSetId;
+        return { approvalDataSetId: apvdDataSetId, dataSetId };
     }
 
     async duplicateDataSets(
@@ -430,7 +465,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         dataElementsWithValues: DataDiffItemIdentifier[]
     ): Promise<boolean> {
         try {
-            const approvalDataSetId = await this.getApprovalDataSetId(dataSets);
+            const { approvalDataSetId, dataSetId } = await this.getApprovalDataSetId(dataSets);
 
             const dataValueSets: DataSetsValueType[] = await this.getDataValueSets(dataSets);
 
@@ -442,7 +477,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             const dataElementsMatchedArray = DSDataElements.flatMap(DSDataElement => {
                 return DSDataElement.dataSetElements.map(element => {
                     const dataElement = element.dataElement;
-                    const othername = dataElement.name + "-APVD";
+                    const othername = dataElement.name + DATA_ELEMENT_SUFFIX;
                     const ADSDataElement = ADSDataElements.find(DataElement => String(DataElement.name) === othername);
                     return {
                         origId: dataElement.id,
@@ -453,7 +488,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
             const dataValues = this.makeDataValuesArray(approvalDataSetId, dataValueSets, dataElementsMatchedArray);
 
-            await this.addTimestampsToDataValuesArray(approvalDataSetId, dataSets, dataValues);
+            await this.addTimestampsToDataValuesArray(approvalDataSetId, dataSets, dataValues, dataSetId);
 
             await this.deleteEmptyDataValues(approvalDataSetId, ADSDataElements, dataElementsWithValues);
             return this.chunkedDataValuePost(dataValues, 3000);
@@ -465,7 +500,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
     async duplicateDataValues(dataValues: DataDiffItemIdentifier[]): Promise<boolean> {
         try {
-            const approvalDataSetId = await this.getApprovalDataSetId(dataValues);
+            const { approvalDataSetId, dataSetId } = await this.getApprovalDataSetId(dataValues);
             const uniqueDataSets = _.uniqBy(dataValues, "dataSet");
             const uniqueDataElementsNames = _.uniq(_.map(dataValues, "dataElement"));
 
@@ -479,7 +514,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                 return DSDataElement.dataSetElements.flatMap(element => {
                     const dataElement = element.dataElement;
                     if (uniqueDataElementsNames.includes(dataElement.name)) {
-                        const othername = dataElement.name + "-APVD";
+                        const othername = dataElement.name + DATA_ELEMENT_SUFFIX;
                         const ADSDataElement = ADSDataElements.find(DataElement => DataElement.name === othername);
                         return {
                             origId: dataElement.id,
@@ -494,7 +529,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
             const apvdDataValues = this.makeDataValuesArray(approvalDataSetId, dataValueSets, dataElementsMatchedArray);
 
-            await this.addTimestampsToDataValuesArray(approvalDataSetId, dataValues, apvdDataValues);
+            await this.addTimestampsToDataValuesArray(approvalDataSetId, dataValues, apvdDataValues, dataSetId);
 
             await this.deleteEmptyDataValues(approvalDataSetId, ADSDataElements, dataValues);
 
@@ -698,7 +733,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             .filter(dataValue => !dataValue.value && dataValue.apvdValue !== undefined)
             .map((dataValue): Maybe<D2DataValue> => {
                 const apvdDataElementId = approvedDataElements.find(
-                    dataElement => `${dataValue.dataElementBasicName}-APVD` === dataElement.name
+                    dataElement => `${dataValue.dataElementBasicName}${DATA_ELEMENT_SUFFIX}` === dataElement.name
                 )?.id;
 
                 if (!apvdDataElementId) {
@@ -763,12 +798,16 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
     private async addTimestampsToDataValuesArray(
         approvalDataSetId: string,
         actionItems: MalDataApprovalItemIdentifier[] | DataDiffItemIdentifier[],
-        dataValues: DataValueType[]
+        dataValues: DataValueType[],
+        originalDataSetId: string
     ) {
+        const settings = await this.getSettingByDataSet([originalDataSetId]);
+        const dataSetSettings = settings.find(setting => setting.dataSetId === originalDataSetId);
+        if (!dataSetSettings) throw new Error(`Data set settings not found: ${originalDataSetId}`);
         const malApprovalDateDataElement = await getMetadataByIdentifiableToken({
             api: this.api,
             metadataType: "dataElements",
-            token: dataElementCodes.MAL_APPROVAL_DATE_APVD,
+            token: dataSetSettings.dataElements.approvalDate,
         });
 
         actionItems.forEach(actionItem => {
@@ -998,6 +1037,21 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             console.debug(error);
         }
     }
+
+    private async getSettingByDataSet(dataSetIds: Id[]) {
+        const response = await this.api.models.dataSets
+            .get({
+                fields: { id: true, code: true },
+                filter: { id: { in: dataSetIds } },
+            })
+            .getData();
+
+        return response.objects.map(dataSet => {
+            const settings = approvalReportSettings.dataSets[dataSet.code];
+            if (!settings) throw new Error(`No settings found for dataSet: ${dataSet.code}`);
+            return { ...settings, dataSetId: dataSet.id };
+        });
+    }
 }
 
 const csvFields = ["dataSet", "orgUnit", "period", "completed"] as const;
@@ -1051,8 +1105,8 @@ function mergeHeadersAndData(
                 attribute: datavalue?.attribute,
                 approvalWorkflow: datavalue?.approvalworkflow,
                 approvalWorkflowUid: datavalue?.approvalworkflowuid,
-                completed: Boolean(datavalue?.completed),
-                validated: Boolean(datavalue?.validated),
+                completed: datavalue?.completed === "true",
+                validated: datavalue?.validated === "true",
                 lastUpdatedValue: datavalue?.lastupdatedvalue,
                 lastDateOfSubmission: datavalue?.lastdateofsubmission,
                 lastDateOfApproval: datavalue?.lastdateofapproval,

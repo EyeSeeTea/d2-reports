@@ -8,7 +8,7 @@ const MalDataApprovalStatusReport: React.FC = () => {
     return (
         <div className={classes.wrapper}>
             <Typography variant="h5" gutterBottom>
-                {i18n.t("Malaria Data Approval Report")}
+                {i18n.t("Data Approval Report")}
             </Typography>
 
             <DataApprovalList />

@@ -108,6 +108,7 @@ import { OrgUnitWithChildrenD2Repository } from "./data/reports/mal-data-approva
 import { UpdateMonitoringUseCase } from "./domain/reports/mal-data-approval/usecases/UpdateMonitoringUseCase";
 import { UserGroupD2Repository } from "./data/reports/mal-data-approval/UserGroupD2Repository";
 import { MonitoringValueDataStoreRepository } from "./data/reports/mal-data-approval/MonitoringValueDataStoreRepository";
+import { AppSettingsD2Repository } from "./data/AppSettingsD2Repository";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -135,6 +136,7 @@ export function getCompositionRoot(api: D2Api) {
     const orgUnitsWithChildrenRepository = new OrgUnitWithChildrenD2Repository(api);
     const userGroupRepository = new UserGroupD2Repository(api);
     const monitoringValueRepository = new MonitoringValueDataStoreRepository(api);
+    const appSettingsRepository = new AppSettingsD2Repository();
 
     return {
         admin: getExecute({
@@ -157,9 +159,10 @@ export function getCompositionRoot(api: D2Api) {
                 dataDuplicationRepository,
                 dataValuesRepository,
                 dataSetRepository,
-                monitoringValueRepository
+                monitoringValueRepository,
+                appSettingsRepository
             ),
-            getDiff: new GetMalDataDiffUseCase(dataValuesRepository, dataSetRepository),
+            getDiff: new GetMalDataDiffUseCase(dataValuesRepository, dataSetRepository, appSettingsRepository),
             save: new SaveMalDataSetsUseCase(dataDuplicationRepository),
             getColumns: new GetMalDataApprovalColumnsUseCase(dataDuplicationRepository),
             saveColumns: new SaveMalDataApprovalColumnsUseCase(dataDuplicationRepository),
@@ -168,7 +171,8 @@ export function getCompositionRoot(api: D2Api) {
             updateStatus: new UpdateMalApprovalStatusUseCase(
                 dataDuplicationRepository,
                 dataValuesRepository,
-                dataSetRepository
+                dataSetRepository,
+                appSettingsRepository
             ),
             duplicateValue: new DuplicateDataValuesUseCase(dataDuplicationRepository),
             getSortOrder: new GetSortOrderUseCase(dataDuplicationRepository),

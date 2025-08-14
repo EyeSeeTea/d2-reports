@@ -1,8 +1,9 @@
-import { Id } from "./Base";
+import { Code, Id } from "./Base";
 import { OrgUnit } from "./OrgUnit";
 
 export type DataSet = {
     id: Id;
+    code: Code;
     name: string;
     organisationUnits: OrgUnit[];
     dataElements: DataElement[];

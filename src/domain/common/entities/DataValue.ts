@@ -2,6 +2,7 @@ import { Id } from "./Base";
 
 export interface DataValue {
     dataElement: Id;
+    dataElementName: string;
     period: string;
     orgUnit: Id;
     categoryOptionCombo: Id;
@@ -23,5 +24,5 @@ export interface DataValuesSelector {
 
 export type DataValueToPost = Omit<
     DataValue & { dataSet?: string },
-    "storedBy" | "created" | "lastUpdated" | "followup" | "deleted" | "attributeOptionCombo"
+    "storedBy" | "created" | "lastUpdated" | "followup" | "deleted" | "attributeOptionCombo" | "dataElementName"
 >;

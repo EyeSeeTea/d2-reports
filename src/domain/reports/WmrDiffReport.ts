@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { AppSettings, isValidApprovalDataElement } from "../common/entities/AppSettings";
 import { Id } from "../common/entities/Base";
 import { DataValue } from "../common/entities/DataValue";
 import { DataSetRepository } from "../common/repositories/DataSetRepository";
@@ -8,11 +9,21 @@ import { DataDiffItem } from "./mal-data-approval/entities/DataDiffItem";
 export const dataSetApprovalName = "MAL - WMR Form-APVD";
 
 export class WmrDiffReport {
-    constructor(private dataValueRepository: DataValuesRepository, private dataSetRepository: DataSetRepository) {}
+    constructor(
+        private dataValueRepository: DataValuesRepository,
+        private dataSetRepository: DataSetRepository,
+        private settings: AppSettings
+    ) {}
 
     async getDiff(dataSetId: Id, orgUnitId: Id, period: string, children = false): Promise<DataDiffItem[]> {
         const dataElements = await this.getDataElements(dataSetId);
-        const dataSetApproval = await this.dataSetRepository.getByNameOrCode(dataSetApprovalName);
+        const dataSet = await this.dataSetRepository.getById(dataSetId);
+        const originalDataSet = dataSet[0];
+        if (!originalDataSet) throw Error(`No data set found: ${dataSetId}`);
+        const settings = this.settings.dataSets[originalDataSet.code];
+        if (!settings) throw Error(`No settings found for data set: ${originalDataSet.code}`);
+
+        const dataSetApproval = await this.dataSetRepository.getByNameOrCode(settings.approvalDataSetCode);
         const approvalDataValues = await this.getDataValues(dataSetApproval.id, orgUnitId, period, children);
         const malDataValues = await this.getDataValues(dataSetId, orgUnitId, period, children);
 
@@ -95,7 +106,7 @@ export class WmrDiffReport {
 
                     const approvalDataValue = _(approvalDataValues).find(
                         dataValue =>
-                            dataValue.dataElement.toLowerCase() === dataElement.id.toLowerCase() &&
+                            isValidApprovalDataElement(dataElement.name, dataValue.dataElementName) &&
                             dataValue.categoryOptionCombo === dataElement.categoryOptionCombo &&
                             dataValue.orgUnit === orgUnitId &&
                             dataValue.period === period

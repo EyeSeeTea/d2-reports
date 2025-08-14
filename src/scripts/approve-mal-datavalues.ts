@@ -15,6 +15,7 @@ import { promiseMap } from "../utils/promises";
 import { DataDiffItemIdentifier } from "../domain/reports/mal-data-approval/entities/DataDiffItem";
 import { ApproveMalDataValuesUseCase } from "../domain/reports/mal-data-approval/usecases/ApproveMalDataValuesUseCase";
 import { writeFileSync } from "fs";
+import { AppSettingsD2Repository } from "../data/AppSettingsD2Repository";
 
 const GLOBAL_OU = "WHO-HQ";
 const DEFAULT_START_YEAR = 2005;
@@ -88,12 +89,17 @@ async function buildMalApprovalItems(
     orgUnitId: Id,
     yearOption?: string
 ): Promise<DataDiffItemIdentifier[]> {
+    const appSettings = await new AppSettingsD2Repository().get();
     const periods = yearOption
         ? [yearOption]
         : _.range(DEFAULT_START_YEAR, DEFAULT_END_YEAR + 1).map(year => year.toString());
     const dataValuesToApprove = await promiseMap(periods, async period => {
         console.debug(`Fetching dataValues for period ${period}...`);
-        const dataElementsWithValues = await new WmrDiffReport(dataValueRepository, dataSetRepository).getDiff(
+        const dataElementsWithValues = await new WmrDiffReport(
+            dataValueRepository,
+            dataSetRepository,
+            appSettings
+        ).getDiff(
             dataSetId,
             orgUnitId,
             period,

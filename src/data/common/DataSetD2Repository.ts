@@ -11,7 +11,7 @@ export class DataSetD2Repository implements DataSetRepository {
         return this.api.metadata
             .get({
                 dataSets: {
-                    fields: { id: true, name: true, organisationUnits: { id: true, name: true } },
+                    fields: { id: true, code: true, name: true, organisationUnits: { id: true, name: true } },
                     filter: { identifiable: { eq: nameOrCode } },
                 },
             })
@@ -22,6 +22,7 @@ export class DataSetD2Repository implements DataSetRepository {
 
                 return {
                     dataElements: [],
+                    code: dataSet.code,
                     id: dataSet.id,
                     name: dataSet.name,
                     organisationUnits: dataSet.organisationUnits.map(
@@ -51,6 +52,7 @@ export class DataSetD2Repository implements DataSetRepository {
                     return {
                         id: d2DataSet.id,
                         name: d2DataSet.name,
+                        code: d2DataSet.code,
                         dataElements: d2DataSet.dataSetElements.map(d2DataElement => {
                             return {
                                 id: d2DataElement.dataElement.id,
@@ -78,6 +80,7 @@ export class DataSetD2Repository implements DataSetRepository {
 const dataSetFields = {
     id: true,
     name: true,
+    code: true,
     dataSetElements: {
         dataElement: {
             id: true,

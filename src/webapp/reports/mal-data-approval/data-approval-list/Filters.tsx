@@ -22,6 +22,7 @@ export interface DataSetsFilter {
     periods: string[];
     completionStatus?: boolean;
     approvalStatus?: boolean;
+    isApproved?: boolean;
 }
 
 interface FilterOptions {
@@ -35,7 +36,6 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
 
     const { filterValues, rootIds, selectableIds, setFilterValues, applyFilters, clearFilters } =
         useDataApprovalFilters(props);
-    useDataApprovalFilters(props);
 
     const dataSetItems = useMemoOptionsFromNamedRef(filterOptions.dataSets);
     const periodItems = useMemoOptionsFromStrings(filterOptions.periods);
@@ -51,6 +51,13 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         return [
             { value: "true", text: i18n.t("Submitted") },
             { value: "false", text: i18n.t("Ready for submission") },
+        ];
+    }, []);
+
+    const approvedFilterItems = useMemo(() => {
+        return [
+            { value: "true", text: i18n.t("Approved") },
+            { value: "false", text: i18n.t("Not Approved") },
         ];
     }, []);
 
@@ -87,6 +94,13 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                     value={fromBool(filterValues.completionStatus)}
                     onChange={setFilterValues.completionStatus}
                     label={i18n.t("Completion status")}
+                />
+
+                <SingleDropdownStyled
+                    items={approvedFilterItems}
+                    value={fromBool(filterValues.isApproved)}
+                    onChange={setFilterValues.approvedStatus}
+                    label={i18n.t("Approval status")}
                 />
 
                 <SingleDropdownStyled

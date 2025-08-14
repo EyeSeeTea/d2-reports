@@ -42,7 +42,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const [__, setDiffState] = useState<string>("");
     const [oldPeriods, setOldPeriods] = useState(false);
 
-    const activeActions = useActiveDataApprovalActions();
+    const activeActions = useActiveDataApprovalActions(filters.dataSetId ?? "");
     const {
         globalMessage,
         modalActions: { closeDataDifferencesDialog, isDialogOpen, revoke },
@@ -254,6 +254,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
             >
                 <DataDifferencesList
                     selectedIds={selectedIds}
+                    dataSetId={filters.dataSetId ?? ""}
                     revoke={revoke}
                     isUpdated={() => setDiffState(`${new Date().getTime()}`)}
                     key={new Date().getTime()}

@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2025-01-21T08:14:43.180Z\n"
-"PO-Revision-Date: 2025-01-21T08:14:43.180Z\n"
+"POT-Creation-Date: 2025-08-11T23:29:45.758Z\n"
+"PO-Revision-Date: 2025-08-11T23:29:45.758Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -620,52 +620,16 @@ msgstr ""
 msgid "Malaria Data Approval Report"
 msgstr ""
 
-msgid "Data set"
-msgstr ""
-
-msgid "Attribute"
-msgstr ""
-
-msgid "Completion status"
-msgstr ""
-
-msgid "Submission status"
-msgstr ""
-
-msgid "Modification Count"
-msgstr ""
-
-msgid "Last modification date"
-msgstr ""
-
-msgid "Last date of submission"
-msgstr ""
-
-msgid "Last date of approval"
-msgstr ""
-
 msgid "Complete"
-msgstr ""
-
-msgid "Error when trying to complete data set"
 msgstr ""
 
 msgid "Incomplete"
 msgstr ""
 
-msgid "Error when trying to incomplete data set"
-msgstr ""
-
 msgid "Submit"
 msgstr ""
 
-msgid "Error when trying to submit data set"
-msgstr ""
-
 msgid "Revoke"
-msgstr ""
-
-msgid "Error when trying to unsubmit data set"
 msgstr ""
 
 msgid "Activate monitoring"
@@ -690,6 +654,39 @@ msgid "Data sets"
 msgstr ""
 
 msgid "Periods"
+msgstr ""
+
+msgid "Completion status"
+msgstr ""
+
+msgid "Submission status"
+msgstr ""
+
+msgid "Error when trying to approve data set"
+msgstr ""
+
+msgid "Error when trying to unsubmit data set"
+msgstr ""
+
+msgid "Error when trying to submit data set"
+msgstr ""
+
+msgid "Data set"
+msgstr ""
+
+msgid "Attribute"
+msgstr ""
+
+msgid "Modification Count"
+msgstr ""
+
+msgid "Last modification date"
+msgstr ""
+
+msgid "Last date of submission"
+msgstr ""
+
+msgid "Last date of approval"
 msgstr ""
 
 msgid "Malaria Data Subscription Report"
@@ -755,10 +752,13 @@ msgstr ""
 msgid "Last updated value"
 msgstr ""
 
-msgid "Approving data sets..."
+msgid "Error when trying to complete data set"
 msgstr ""
 
-msgid "Error when trying to approve data set"
+msgid "Error when trying to incomplete data set"
+msgstr ""
+
+msgid "Approving data sets..."
 msgstr ""
 
 msgid "Unapprove"

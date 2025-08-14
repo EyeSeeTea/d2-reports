@@ -4,7 +4,7 @@ import { Namespaces } from "../../../../../data/common/clients/storage/Namespace
 import { useAppContext } from "../../../../contexts/app-context";
 import _ from "lodash";
 import { MonitoringValue } from "../../../../../domain/reports/mal-data-approval/entities/MonitoringValue";
-import { malariaDataSets } from "../../../../../data/reports/mal-data-approval/constants/MalDataApprovalConstants";
+import { MalDataSet } from "../../../../../data/reports/mal-data-approval/constants/MalDataApprovalConstants";
 
 export function useDataApprovalMonitoring() {
     const { compositionRoot, config } = useAppContext();
@@ -19,16 +19,15 @@ export function useDataApprovalMonitoring() {
             const dataSetName = _.values(config.dataSets).find(dataSet =>
                 items.map(item => item.dataSet).includes(dataSet.id)
             )?.name;
-            const dataSetApprovalName = malariaDataSets.find(dataSet => dataSet === dataSetName);
 
             if (!monitoringValue) return;
-            if (!dataSetApprovalName) throw new Error("Data set not found");
+            if (!dataSetName) throw new Error("Data set not found");
 
             return await compositionRoot.malDataApproval.updateMonitoring({
                 namespace: Namespaces.MONITORING,
                 monitoringValue: monitoringValue,
                 dataApprovalItems: items,
-                dataSetName: dataSetApprovalName,
+                dataSetName: dataSetName as MalDataSet,
                 enableMonitoring: enableMonitoring,
             });
         },

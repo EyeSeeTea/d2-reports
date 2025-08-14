@@ -38,4 +38,5 @@ export interface MalDataApprovalOptions {
     dataSetId: Maybe<Id>;
     approvalStatus?: boolean;
     completionStatus?: boolean;
+    isApproved?: boolean;
 }

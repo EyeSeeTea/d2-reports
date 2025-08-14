@@ -48,7 +48,7 @@ function buildMonitoringValue(
         ...monitoringValue,
         dataSets: {
             ...monitoringValue.dataSets,
-            [dataSetName]: monitoringValue.dataSets[dataSetName].map(dataSet => {
+            [dataSetName]: monitoringValue.dataSets[dataSetName]?.map(dataSet => {
                 return dataApprovalItems.map(dataApprovalItem => {
                     const matchingMonitoringItem = dataSet.monitoring.find(
                         monitoringItem =>
@@ -85,4 +85,4 @@ function buildMonitoringValue(
     return updatedMonitoringValue;
 }
 
-const malDataNotificationsUserGroup = "MAL_Data_Notifications";
+const malDataNotificationsUserGroup = "NHWA administrators";

@@ -10,6 +10,7 @@ import { Id } from "../domain/common/entities/Base";
 import _ from "lodash";
 import { promiseMap } from "../utils/promises";
 import { dataSetApprovalName, WmrDiffReport } from "../domain/reports/WmrDiffReport";
+import { AppSettingsD2Repository } from "../data/AppSettingsD2Repository";
 
 const GLOBAL_OU = "WHO-HQ";
 const DEFAULT_START_YEAR = 2005;
@@ -59,6 +60,7 @@ async function buildDataDifferenceItems(options: {
 }): Promise<DataDiffItem[]> {
     const { dataValueRepository, dataSetRepository, dataSetId, orgUnitId, yearOption } = options;
     const dataSetAPVD = await dataSetRepository.getByNameOrCode(dataSetApprovalName);
+    const appSettings = await new AppSettingsD2Repository().get();
 
     // If not OU is provided, use the org. units assigned to the APVD data set
     const assignedOrgUnitIds = dataSetAPVD.organisationUnits.map(ou => ou.id);
@@ -68,7 +70,11 @@ async function buildDataDifferenceItems(options: {
         : _.range(DEFAULT_START_YEAR, DEFAULT_END_YEAR + 1).map(year => year.toString());
 
     const dataValuesToApprove = await promiseMap(periods, async period => {
-        const dataElementsWithValues = await new WmrDiffReport(dataValueRepository, dataSetRepository).getDiff(
+        const dataElementsWithValues = await new WmrDiffReport(
+            dataValueRepository,
+            dataSetRepository,
+            appSettings
+        ).getDiff(
             dataSetId,
             orgUnitId,
             period,

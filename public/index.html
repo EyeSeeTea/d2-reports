@@ -4,16 +4,9 @@
         <meta charset="utf-8" />
         <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico" />
 
-        <link
-            type="text/css"
-            rel="stylesheet"
-            href="%PUBLIC_URL%/includes/material-design-icons/material-icons.css"
-        />
+        <link type="text/css" rel="stylesheet" href="%PUBLIC_URL%/includes/material-design-icons/material-icons.css" />
         <link type="text/css" rel="stylesheet" href="%PUBLIC_URL%/includes/roboto-font.css" />
-        <link
-            href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css"
-            rel="stylesheet"
-        />
+        <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />
 
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
         <meta name="theme-color" content="#000000" />
@@ -26,20 +19,10 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <% if (process.env.REACT_APP_REPORT_VARIANT==='mal-approval-status' ) { %>
-        <title>DHIS2 MAL Approval Report</title>
-    <% } else if (process.env.REACT_APP_REPORT_VARIANT==='glass-submission' ) { %>
-        <title>DHIS2 GLASS Submission Report</title>
-    <% } else if (process.env.REACT_APP_REPORT_VARIANT==='glass-admin' ) { %>
-        <title>DHIS2 GLASS Admin Maintenance Report</title>
-    <% } else { %>
-        <title>DHIS2 Reports</title>
-    <% } %>
+        <title>Approval Report</title>
     </head>
     <body>
-        <noscript>
-            You need to enable JavaScript to run this app.
-        </noscript>
+        <noscript> You need to enable JavaScript to run this app. </noscript>
         <div id="root"></div>
         <!--
       This HTML file is a template.

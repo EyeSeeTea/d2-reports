@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { useAppContext } from "../../../../contexts/app-context";
 
 type DataApprovalUserPermissionsState = {
@@ -11,17 +10,5 @@ export function useDataApprovalPermissions(): DataApprovalUserPermissionsState {
         config: { currentUser },
     } = useAppContext();
 
-    const isMalCountryApprover = useMemo(
-        () => currentUser.userGroups.map(userGroup => userGroup.name).includes("MAL_Country Approver"),
-        [currentUser.userGroups]
-    );
-    const isMalAdmin = useMemo(
-        () => currentUser.userGroups.map(userGroup => userGroup.name).includes("MAL_Malaria admin"),
-        [currentUser.userGroups]
-    );
-
-    return {
-        isMalAdmin: isMalAdmin,
-        isMalCountryApprover: isMalCountryApprover,
-    };
+    return { isMalAdmin: currentUser.isAdmin, isMalCountryApprover: currentUser.isAdmin };
 }

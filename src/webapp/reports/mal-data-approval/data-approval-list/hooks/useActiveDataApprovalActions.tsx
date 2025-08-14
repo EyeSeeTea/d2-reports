@@ -2,6 +2,8 @@ import { useCallback } from "react";
 import _ from "lodash";
 import { DataApprovalViewModel } from "../../DataApprovalViewModel";
 import { useDataApprovalPermissions } from "./useDataApprovalPermissions";
+import { Id } from "../../../../../domain/common/entities/Base";
+import { useAppContext } from "../../../../contexts/app-context";
 
 type ActiveDataApprovalActionsState = {
     isActivateMonitoringActionVisible: (rows: DataApprovalViewModel[]) => boolean;
@@ -15,56 +17,63 @@ type ActiveDataApprovalActionsState = {
     isSubmitActionVisible: (rows: DataApprovalViewModel[]) => boolean;
 };
 
-export function useActiveDataApprovalActions(): ActiveDataApprovalActionsState {
-    const { isMalAdmin, isMalCountryApprover } = useDataApprovalPermissions();
+export function useActiveDataApprovalActions(dataSetId: Id): ActiveDataApprovalActionsState {
+    const { config } = useAppContext();
+    const { isMalAdmin } = useDataApprovalPermissions();
+
+    const access = config.currentUser.dataSets ? config.currentUser.dataSets[dataSetId] : undefined;
 
     const isActivateMonitoringActionVisible = useCallback(
-        (rows: DataApprovalViewModel[]) => _.every(rows, row => !row.monitoring) && isMalAdmin,
-        [isMalAdmin]
+        (rows: DataApprovalViewModel[]) =>
+            _.every(rows, row => !row.monitoring) && Boolean(isMalAdmin || access?.monitoring),
+        [isMalAdmin, access]
     );
 
     const isApproveActionVisible = useCallback(
-        (rows: DataApprovalViewModel[]) => _.every(rows, row => row.lastUpdatedValue) && isMalAdmin,
-        [isMalAdmin]
+        (rows: DataApprovalViewModel[]) =>
+            _.every(rows, row => row.lastUpdatedValue) && Boolean(isMalAdmin || access?.approve),
+        [isMalAdmin, access]
     );
 
     const isCompleteActionVisible = useCallback(
         (rows: DataApprovalViewModel[]) =>
-            _.every(rows, row => !row.completed && row.lastUpdatedValue) && (isMalCountryApprover || isMalAdmin),
-        [isMalAdmin, isMalCountryApprover]
+            _.every(rows, row => !row.completed && row.lastUpdatedValue) && Boolean(isMalAdmin || access?.complete),
+        [isMalAdmin, access]
     );
 
     const isDeactivateMonitoringActionVisible = useCallback(
-        (rows: DataApprovalViewModel[]) => _.every(rows, row => row.monitoring) && isMalAdmin,
-        [isMalAdmin]
+        (rows: DataApprovalViewModel[]) =>
+            _.every(rows, row => row.monitoring) && Boolean(isMalAdmin || access?.monitoring),
+        [isMalAdmin, access]
     );
 
     const isGetDifferenceActionVisible = useCallback(
         (rows: DataApprovalViewModel[]) =>
-            _.every(rows, row => row.lastUpdatedValue && !row.validated) && (isMalCountryApprover || isMalAdmin),
-        [isMalAdmin, isMalCountryApprover]
+            _.every(rows, row => row.lastUpdatedValue && !row.validated) && Boolean(access?.read || isMalAdmin),
+        [isMalAdmin, access]
     );
 
     const isGetDifferenceAndRevokeActionVisible = useCallback(
         (rows: DataApprovalViewModel[]) =>
-            _.every(rows, row => row.lastUpdatedValue && row.validated) && (isMalCountryApprover || isMalAdmin),
-        [isMalAdmin, isMalCountryApprover]
+            _.every(rows, row => row.lastUpdatedValue && row.validated) && Boolean(access?.read || isMalAdmin),
+        [isMalAdmin, access]
     );
 
     const isIncompleteActionVisible = useCallback(
-        (rows: DataApprovalViewModel[]) => _.every(rows, row => row.completed && !row.validated),
-        []
+        (rows: DataApprovalViewModel[]) =>
+            _.every(rows, row => row.completed && !row.validated) && Boolean(isMalAdmin || access?.incomplete),
+        [isMalAdmin, access]
     );
 
     const isSubmitActionVisible = useCallback(
         (rows: DataApprovalViewModel[]) =>
-            _.every(rows, row => !row.approved && row.lastUpdatedValue) && (isMalCountryApprover || isMalAdmin),
-        [isMalAdmin, isMalCountryApprover]
+            _.every(rows, row => !row.approved && row.lastUpdatedValue) && Boolean(access?.submit || isMalAdmin),
+        [isMalAdmin, access]
     );
 
     const isRevokeActionVisible = useCallback(
-        (rows: DataApprovalViewModel[]) => _.every(rows, row => row.approved),
-        []
+        (rows: DataApprovalViewModel[]) => _.every(rows, row => row.approved) && Boolean(isMalAdmin || access?.revoke),
+        [isMalAdmin, access]
     );
 
     return {

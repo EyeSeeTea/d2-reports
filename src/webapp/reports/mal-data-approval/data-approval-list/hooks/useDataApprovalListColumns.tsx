@@ -35,6 +35,12 @@ export function useDataApprovalListColumns() {
                 sortable: true,
                 getValue: row => getColumnValues(row).validated,
             },
+            {
+                name: "approved",
+                text: i18n.t("Approval status"),
+                sortable: true,
+                getValue: row => (row.lastDateOfApproval ? i18n.t("Approved") : i18n.t("Not approved")),
+            },
             { name: "modificationCount", text: i18n.t("Modification Count"), sortable: true },
             {
                 name: "lastUpdatedValue",

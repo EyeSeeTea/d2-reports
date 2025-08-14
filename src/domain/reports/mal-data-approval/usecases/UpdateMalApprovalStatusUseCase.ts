@@ -6,12 +6,14 @@ import { WmrDiffReport } from "../../WmrDiffReport";
 import { MalDataApprovalItemIdentifier } from "../entities/MalDataApprovalItem";
 import { MalDataApprovalRepository } from "../repositories/MalDataApprovalRepository";
 import { DataDiffItemIdentifier } from "../entities/DataDiffItem";
+import { AppSettingsRepository } from "../../../common/repositories/AppSettingsRepository";
 
 export class UpdateMalApprovalStatusUseCase {
     constructor(
         private approvalRepository: MalDataApprovalRepository,
         private dataValueRepository: DataValuesRepository,
-        private dataSetRepository: DataSetRepository
+        private dataSetRepository: DataSetRepository,
+        private appSettingsRepository: AppSettingsRepository
     ) {}
 
     async execute(items: MalDataApprovalItemIdentifier[], action: UpdateAction): Promise<boolean> {
@@ -19,8 +21,10 @@ export class UpdateMalApprovalStatusUseCase {
             case "complete":
                 return this.approvalRepository.complete(items);
             case "approve":
+                // "Submit" in UI
                 return this.approvalRepository.approve(items);
             case "duplicate": {
+                // "Approve" in UI
                 const dataElementsWithValues = await this.getDataElementsToDuplicate(items);
                 return this.approvalRepository.duplicateDataSets(items, dataElementsWithValues);
             }
@@ -36,8 +40,9 @@ export class UpdateMalApprovalStatusUseCase {
     private async getDataElementsToDuplicate(
         items: MalDataApprovalItemIdentifier[]
     ): Promise<DataDiffItemIdentifier[]> {
+        const settings = await this.appSettingsRepository.get();
         const dataElementsWithValues = await promiseMap(items, async item => {
-            return await new WmrDiffReport(this.dataValueRepository, this.dataSetRepository).getDiff(
+            return await new WmrDiffReport(this.dataValueRepository, this.dataSetRepository, settings).getDiff(
                 item.dataSet,
                 item.orgUnit,
                 item.period
