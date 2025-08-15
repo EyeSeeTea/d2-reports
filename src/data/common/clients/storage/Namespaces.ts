@@ -7,9 +7,9 @@ export type Namespace = typeof Namespaces[keyof typeof Namespaces];
 
 export const Namespaces = {
     NHWA_APPROVAL_STATUS_USER_COLUMNS: "nhwa-approval-status-user-columns",
-    MAL_APPROVAL_STATUS_USER_COLUMNS: "mal-approval-status-user-columns",
+    MAL_APPROVAL_STATUS_USER_COLUMNS: "nhwa-data-approval-status-user-columns",
     MAL_DIFF_STATUS_USER_COLUMNS: "mal-diff-status-user-columns",
-    MAL_DIFF_NAMES_SORT_ORDER: "mal-diff-names-sort-order",
+    MAL_DIFF_NAMES_SORT_ORDER: "nhwa-data-approval-diff-names-sort-order",
     MONITORING: "monitoring",
     MAL_SUBSCRIPTION_STATUS_USER_COLUMNS: "mal-subscription-status-user-columns",
     MAL_DASHBOARD_SUBSCRIPTION_USER_COLUMNS: "mal-dashboard-subscription-user-columns",

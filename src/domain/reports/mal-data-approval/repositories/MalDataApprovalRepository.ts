@@ -9,7 +9,6 @@ import { Maybe } from "../../../../types/utils";
 
 export interface MalDataApprovalRepository {
     get(options: MalDataApprovalOptions): Promise<PaginatedObjects<MalDataApprovalItem>>;
-    getDiff(options: MalDataApprovalOptions): Promise<PaginatedObjects<DataDiffItem>>;
     save(filename: string, dataSets: MalDataApprovalItem[]): Promise<void>;
     complete(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean>;
     approve(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean>;

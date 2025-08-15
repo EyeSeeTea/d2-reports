@@ -15,7 +15,7 @@ import { Dhis2SqlViews, SqlViewGetData } from "../../common/Dhis2SqlViews";
 import { Instance } from "../../common/entities/Instance";
 import { downloadFile } from "../../common/utils/download-file";
 import { getSqlViewId } from "../../../domain/common/entities/Config";
-import { SQL_VIEW_MAL_DIFF_NAME, SQL_VIEW_MAL_METADATA_NAME } from "../../common/Dhis2ConfigRepository";
+import { SQL_VIEW_MAL_METADATA_NAME } from "../../common/Dhis2ConfigRepository";
 import {
     MalDataApprovalItem,
     MalDataApprovalItemIdentifier,
@@ -24,7 +24,7 @@ import {
     MalDataApprovalOptions,
     MalDataApprovalRepository,
 } from "../../../domain/reports/mal-data-approval/repositories/MalDataApprovalRepository";
-import { DataDiffItem, DataDiffItemIdentifier } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
+import { DataDiffItemIdentifier } from "../../../domain/reports/mal-data-approval/entities/DataDiffItem";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 import { emptyPage, paginate } from "../../../domain/common/entities/PaginatedObjects";
 import { MalDataSet } from "./constants/MalDataApprovalConstants";
@@ -46,12 +46,6 @@ interface Variables {
     approved: string;
     orderByColumn: SqlField;
     orderByDirection: "asc" | "desc";
-}
-
-interface VariablesDiff {
-    dataSets: string;
-    orgUnits: string;
-    periods: string;
 }
 
 type SqlFieldHeaders = "datasetuid" | "dataset" | "orgunituid" | "orgunit" | "orgunitcode";
@@ -97,19 +91,6 @@ type DataElementMapping = {
     destId: string;
     name?: string;
 };
-
-type SqlFieldDiff =
-    | "datasetuid"
-    | "dataset"
-    | "orgunituid"
-    | "orgunit"
-    | "period"
-    | "value"
-    | "apvdvalue"
-    | "dataelement"
-    | "apvddataelement"
-    | "comment"
-    | "apvdcomment";
 
 type SqlField =
     | "datasetuid"
@@ -158,57 +139,6 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         this.storageClient = new DataStoreStorageClient("user", instance);
     }
 
-    async getDiff(options: MalDataApprovalOptions): Promise<PaginatedObjects<DataDiffItem>> {
-        const { dataSetId, orgUnitIds, periods } = options;
-        if (!dataSetId) return emptyPage;
-
-        const sqlViews = new Dhis2SqlViews(this.api);
-        const pagingToDownload = { page: 1, pageSize: 10000 };
-        const sqlVariables = {
-            orgUnits: sqlViewJoinIds(orgUnitIds),
-            periods: sqlViewJoinIds(periods),
-            dataSets: dataSetId,
-        };
-        const rows = await this.getSqlViewRows<VariablesDiff, SqlFieldDiff>(
-            sqlViews,
-            SQL_VIEW_MAL_DIFF_NAME,
-            sqlVariables,
-            pagingToDownload
-        );
-
-        const items: Array<DataDiffItem> = rows.map(
-            (item): DataDiffItem => ({
-                dataSetUid: item.datasetuid,
-                orgUnitUid: item.orgunituid,
-                period: item.period,
-                value: item.value,
-                apvdValue: item.apvdvalue,
-                dataElement: item.dataelement,
-                apvdDataElement: item.apvddataelement,
-                comment: item.comment,
-                apvdComment: item.apvdcomment,
-                attributeOptionCombo: undefined,
-                categoryOptionCombo: undefined,
-                dataElementBasicName: undefined,
-            })
-        );
-
-        const dataElementOrderArray = await this.getSortOrder();
-
-        if (!_.isEmpty(dataElementOrderArray)) {
-            const sortedItems = items.sort((a, b) => {
-                if (a.dataElement && b.dataElement) {
-                    return dataElementOrderArray.indexOf(a.dataElement) - dataElementOrderArray.indexOf(b.dataElement);
-                } else {
-                    return 0;
-                }
-            });
-            return paginate(sortedItems, options.paging);
-        } else {
-            return paginate(items, options.paging);
-        }
-    }
-
     async get(options: MalDataApprovalOptions): Promise<PaginatedObjects<MalDataApprovalItem>> {
         const {
             isApproved,
@@ -231,7 +161,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
         const sqlViews = new Dhis2SqlViews(this.api);
         const pagingToDownload = { page: 1, pageSize: 10000 };
-        const dataSetSettings = approvalReportSettings.dataSets[dataSet.code];
+        const dataSetSettings = config.appSettings.dataSets[dataSet.code];
         if (!dataSetSettings) throw new Error(`Data set settings not found for ID: ${dataSetId}`);
 
         const sqlVariables = {
@@ -244,6 +174,8 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             orderByColumn: fieldMapping[sorting.field],
             orderByDirection: sorting.direction,
             filterApproval: isApproved ? "true" : undefined,
+            submissionDE: dataSetSettings.dataElements.submissionDate,
+            approvalDE: dataSetSettings.dataElements.approvalDate,
         };
 
         const headerRows = await this.getSqlViewHeaders<SqlFieldHeaders>(sqlViews, options, pagingToDownload);
@@ -255,19 +187,18 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         );
 
         const { pager, objects } = mergeHeadersAndData(options, headerRows, rows);
-        const objectsNoApproval =
+
+        const objectsWithApprovalFilter =
             isApproved === undefined
                 ? objects
                 : isApproved
-                ? objects.filter(item => item.lastDateOfApproval)
-                : objects.filter(item => item.lastDateOfApproval === "");
-        const objectsInPage = await promiseMap(objectsNoApproval, async item => {
+                ? objects.filter(item => Boolean(item.lastDateOfApproval))
+                : objects.filter(item => !item.lastDateOfApproval);
+
+        const objectsInPage = await promiseMap(objectsWithApprovalFilter, async item => {
             const { approved } = await this.getDataApprovalStatus(item);
 
-            return {
-                ...item,
-                approved: approved,
-            };
+            return { ...item, approved: approved };
         });
 
         return { pager: pager, objects: objectsInPage };

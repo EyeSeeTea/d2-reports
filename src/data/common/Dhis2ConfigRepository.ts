@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { AppSettings } from "../../domain/common/entities/AppSettings";
 import { keyById, NamedRef } from "../../domain/common/entities/Base";
 import { Config } from "../../domain/common/entities/Config";
 import { ReportType } from "../../domain/common/entities/ReportType";
@@ -8,6 +9,7 @@ import { D2Api, Id } from "../../types/d2-api";
 import { Maybe } from "../../types/utils";
 import { getReportType } from "../../webapp/utils/reportType";
 import { approvalReportAccess } from "../ApprovalReportData";
+import { D2ApprovalReport } from "../D2ApprovalReport";
 import { malDataSetCodes } from "../reports/mal-data-approval/constants/MalDataApprovalConstants";
 
 export const SQL_VIEW_DATA_COMMENTS_NAME = "NHWA Data Comments";
@@ -111,10 +113,15 @@ const base: Record<ReportType, BaseConfigType> = {
 };
 
 export class Dhis2ConfigRepository implements ConfigRepository {
-    constructor(private api: D2Api, private type: ReportType) {}
+    private d2ApprovalReport: D2ApprovalReport;
+
+    constructor(private api: D2Api, private type: ReportType) {
+        this.d2ApprovalReport = new D2ApprovalReport();
+    }
 
     async get(): Promise<Config> {
-        const { dataSets, sqlViews: existedSqlViews, dataApprovalWorkflows } = await this.getMetadata();
+        const appSettings = this.d2ApprovalReport.get();
+        const { dataSets, sqlViews: existedSqlViews, dataApprovalWorkflows } = await this.getMetadata(appSettings);
         const currentUser = await this.getCurrentUser();
         const userGroups = currentUser.userGroups.map(group => group.name);
         const dataSetsToShow = _(dataSets)
@@ -176,11 +183,50 @@ export class Dhis2ConfigRepository implements ConfigRepository {
             sectionsByDataSet: undefined,
             years: _.range(currentYear - 10, currentYear + 1).map(n => n.toString()),
             approvalWorkflow: dataApprovalWorkflows,
+            appSettings: appSettings,
         };
     }
 
-    getMetadata() {
-        const { dataSets, constantCode, sqlViewNames, approvalWorkflows } = base.mal;
+    private async getDataSetsConfigured(): Promise<AppSettings["dataSets"]> {
+        const appSettings = this.d2ApprovalReport.get();
+
+        const dataSetsCodes = Object(appSettings.dataSets).keys();
+
+        if (dataSetsCodes.length === 0) throw new Error("No data sets configured");
+
+        const response = await this.api.models.dataSets
+            .get({
+                fields: {
+                    id: true,
+                    code: true,
+                    displayName: toName,
+                    dataSetElements: { dataElement: { id: true, name: true } },
+                    organisationUnits: { id: true },
+                },
+                filter: { code: { in: dataSetsCodes } },
+            })
+            .getData();
+
+        return _(response.objects)
+            .map(d2DataSet => {
+                const currentDataSet = appSettings.dataSets[d2DataSet.code];
+                if (!currentDataSet) {
+                    console.warn(`No dataSet config. found with code: ${d2DataSet.code}`);
+                    return undefined;
+                }
+
+                return [d2DataSet.code, currentDataSet];
+            })
+            .compact()
+            .fromPairs()
+            .value();
+    }
+
+    getMetadata(appSettings: AppSettings) {
+        const dataSetCodes = Object.keys(appSettings.dataSets);
+        if (dataSetCodes.length === 0) throw new Error("No data sets configured");
+
+        const { constantCode, sqlViewNames, approvalWorkflows } = base.mal;
 
         const metadata$ = this.api.metadata.get({
             dataSets: {
@@ -193,10 +239,7 @@ export class Dhis2ConfigRepository implements ConfigRepository {
                     },
                     organisationUnits: { id: true },
                 },
-                filter: {
-                    name: dataSets.namePrefix ? { $ilike: dataSets.namePrefix } : undefined,
-                    code: dataSets.codes ? { in: dataSets.codes } : undefined,
-                },
+                filter: { code: { in: dataSetCodes } },
             },
             constants: {
                 fields: { description: true },

@@ -109,6 +109,7 @@ import { UpdateMonitoringUseCase } from "./domain/reports/mal-data-approval/usec
 import { UserGroupD2Repository } from "./data/reports/mal-data-approval/UserGroupD2Repository";
 import { MonitoringValueDataStoreRepository } from "./data/reports/mal-data-approval/MonitoringValueDataStoreRepository";
 import { AppSettingsD2Repository } from "./data/AppSettingsD2Repository";
+import { GetAppSettingsUseCase } from "./domain/usecases/GetAppSettingsUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -139,6 +140,9 @@ export function getCompositionRoot(api: D2Api) {
     const appSettingsRepository = new AppSettingsD2Repository();
 
     return {
+        appSettings: {
+            get: new GetAppSettingsUseCase(appSettingsRepository),
+        },
         admin: getExecute({
             get: new GetWIDPAdminDefaultUseCase(widpAdminDefaultRepository),
             save: new SaveWIDPAdminDefaultCsvUseCase(widpAdminDefaultRepository),

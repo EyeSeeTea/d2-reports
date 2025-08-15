@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { AppSettings } from "./AppSettings";
 import { Id, NamedRef } from "./Base";
 import { getPath } from "./OrgUnit";
 import { User } from "./User";
@@ -19,6 +20,7 @@ export interface Config {
         | undefined;
     years: string[];
     approvalWorkflow: NamedRef[];
+    appSettings: AppSettings;
 }
 
 export function getMainUserPaths(config: Config) {

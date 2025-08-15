@@ -40,12 +40,12 @@ export const approvalReportSettings: AppSettings = {
             },
         },
         "NHWA-M2-2023": {
-            dataSourceId: "hvvqvHV6jIq",
-            oldDataSourceId: "hvvqvHV6jIq",
+            dataSourceId: "h8TOj5HtMM8",
+            oldDataSourceId: "h8TOj5HtMM8",
             approvalDataSetCode: "NHWA-M2-2023-APVD",
             dataElements: {
-                approvalDate: "NHWA_APPROVAL_DATE_MODULE1-APVD",
-                submissionDate: "NHWA_SUBMISSION_DATE_MODULE1-APVD",
+                approvalDate: "NHWA_APPROVAL_DATE_MODULE2-APVD",
+                submissionDate: "NHWA_SUBMISSION_DATE_MODULE2-APVD",
             },
         },
     },
