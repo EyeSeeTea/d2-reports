@@ -134,11 +134,9 @@ export function useDataApprovalFilters(filterProps: DataApprovalFilterProps): Da
 const countryLevel = 3;
 
 export const emptyApprovalFilter: DataSetsFilter = {
-    dataSetId: "uc8uSqVVt4n",
-    orgUnitPaths: ["/H8RixfF8ugH/seHJdofSPcM/mNa42CHbkO7", "/H8RixfF8ugH/seHJdofSPcM/hmZE3mVAZFf"],
-    // dataSetId: "CWuqJ3dtQC4",
-    // orgUnitPaths: ["/H8RixfF8ugH/seHJdofSPcM/Xz7rnovuiOx"],
-    periods: ["2024"],
+    dataSetId: undefined,
+    orgUnitPaths: [],
+    periods: [],
     completionStatus: undefined,
     approvalStatus: undefined,
 };

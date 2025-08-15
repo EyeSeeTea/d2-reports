@@ -28,8 +28,11 @@ export class UpdateMalApprovalStatusUseCase {
                 const dataElementsWithValues = await this.getDataElementsToDuplicate(items);
                 return this.approvalRepository.duplicateDataSets(items, dataElementsWithValues);
             }
-            case "revoke":
-                return this.approvalRepository.unapprove(items);
+            case "revoke": {
+                const revokeResult = await this.approvalRepository.unapprove(items);
+                const incompleteResult = await this.approvalRepository.incomplete(items);
+                return revokeResult && incompleteResult;
+            }
             case "incomplete":
                 return this.approvalRepository.incomplete(items);
             default:
