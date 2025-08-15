@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2025-08-11T23:29:45.758Z\n"
-"PO-Revision-Date: 2025-08-11T23:29:45.758Z\n"
+"POT-Creation-Date: 2025-08-15T02:58:09.404Z\n"
+"PO-Revision-Date: 2025-08-15T02:58:09.404Z\n"
 
 msgid "<No value>"
 msgstr ""
@@ -56,16 +56,6 @@ msgid "This will take a long time."
 msgstr ""
 
 msgid "Are you sure?"
-msgstr ""
-
-msgid ""
-"Module 1 totals with missing sum or sum that does not match the "
-"auto-calculated"
-msgstr ""
-
-msgid ""
-"Module 1 (Subnational single entry) totals with missing sum or sum that "
-"does not match the auto-calculated"
 msgstr ""
 
 msgid "Metadata Admin Report"
@@ -617,7 +607,7 @@ msgstr ""
 msgid "Error when trying to check difference in data values"
 msgstr ""
 
-msgid "Malaria Data Approval Report"
+msgid "Data Approval Report"
 msgstr ""
 
 msgid "Complete"
@@ -650,6 +640,9 @@ msgstr ""
 msgid "Ready for submission"
 msgstr ""
 
+msgid "Not Approved"
+msgstr ""
+
 msgid "Data sets"
 msgstr ""
 
@@ -657,6 +650,9 @@ msgid "Periods"
 msgstr ""
 
 msgid "Completion status"
+msgstr ""
+
+msgid "Approval status"
 msgstr ""
 
 msgid "Submission status"
@@ -675,6 +671,9 @@ msgid "Data set"
 msgstr ""
 
 msgid "Attribute"
+msgstr ""
+
+msgid "Not approved"
 msgstr ""
 
 msgid "Modification Count"
@@ -744,9 +743,6 @@ msgid "Data Element Groups"
 msgstr ""
 
 msgid "NHWA Data Approval Status Report"
-msgstr ""
-
-msgid "Approval status"
 msgstr ""
 
 msgid "Last updated value"
