@@ -13,7 +13,7 @@ export function useDataApprovalListColumns() {
                 ? format(row.lastDateOfSubmission, dateFormat)
                 : "Never submitted",
             lastUpdatedValue: row.lastUpdatedValue ? format(row.lastUpdatedValue, dateFormat) : "No data",
-            validated: row.validated ? "Submitted" : row.completed ? "Ready for submission" : "Not completed",
+            validated: row.validated ? "Submitted" : row.completed ? "Ready for submission" : "Not submitted",
         };
     }, []);
 

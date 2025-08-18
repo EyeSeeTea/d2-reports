@@ -30,8 +30,12 @@ export function useActiveDataApprovalActions(dataSetId: Id): ActiveDataApprovalA
     );
 
     const isApproveActionVisible = useCallback(
-        (rows: DataApprovalViewModel[]) =>
-            _.every(rows, row => row.lastUpdatedValue) && Boolean(isMalAdmin || access?.approve),
+        (rows: DataApprovalViewModel[]) => {
+            return (
+                _.every(rows, row => row.lastUpdatedValue && Number(row.modificationCount) > 0) &&
+                Boolean(isMalAdmin || access?.approve)
+            );
+        },
         [isMalAdmin, access]
     );
 
