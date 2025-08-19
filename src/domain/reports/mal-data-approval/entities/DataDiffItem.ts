@@ -35,11 +35,25 @@ export function getDataDiffItemId(item: DataDiffItem): string {
         item.value,
         item.apvdValue,
         item.comment,
+        item.attributeOptionCombo,
+        item.categoryOptionCombo,
+        item.dataElementBasicName,
     ].join("|||");
 }
 
 export function parseDataDiffItemId(string: string): DataDiffItemIdentifier | undefined {
-    const [dataSet, period, orgUnit, dataElement, value = "", apvdValue = "", comment] = string.split("|||");
+    const [
+        dataSet,
+        period,
+        orgUnit,
+        dataElement,
+        value = "",
+        apvdValue = "",
+        comment,
+        attributeOptionCombo,
+        categoryOptionCombo,
+        dataElementBasicName,
+    ] = string.split("|||");
 
     if (!dataSet || !period || !orgUnit || !dataElement) return undefined;
 
@@ -51,8 +65,8 @@ export function parseDataDiffItemId(string: string): DataDiffItemIdentifier | un
         value,
         apvdValue,
         comment,
-        attributeOptionCombo: undefined,
-        categoryOptionCombo: undefined,
-        dataElementBasicName: undefined,
+        attributeOptionCombo: attributeOptionCombo,
+        categoryOptionCombo: categoryOptionCombo,
+        dataElementBasicName: dataElementBasicName,
     };
 }

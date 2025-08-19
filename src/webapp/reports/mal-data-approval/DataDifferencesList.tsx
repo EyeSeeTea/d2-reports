@@ -27,12 +27,7 @@ interface DataDifferencesListProps {
     dataSetId: string;
 }
 
-export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({
-    dataSetId,
-    selectedIds,
-    revoke,
-    isUpdated,
-}) => {
+export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ dataSetId, selectedIds, isUpdated }) => {
     const { compositionRoot, config } = useAppContext();
     const { currentUser } = config;
     const loading = useLoading();
@@ -60,9 +55,13 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({
                         const items = _.compact(selectedIds.map(item => parseDataDiffItemId(item)));
                         if (items.length === 0) return;
 
-                        const result = await compositionRoot.malDataApproval.duplicateValue(items, revoke);
-                        loading.hide();
-                        if (!result) snackbar.error(i18n.t("Error when trying to approve data values"));
+                        try {
+                            const result = await compositionRoot.malDataApproval.duplicateValue(items);
+                            loading.hide();
+                            if (!result) snackbar.error(i18n.t("Error when trying to approve data values"));
+                        } catch (error: any) {
+                            snackbar.error(error.message);
+                        }
 
                         isUpdated();
                     },
@@ -79,7 +78,7 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot.malDataApproval, access, isUpdated, revoke, snackbar, loading]
+        [compositionRoot.malDataApproval, access, isUpdated, snackbar, loading]
     );
 
     const getRows = useMemo(

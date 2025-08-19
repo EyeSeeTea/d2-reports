@@ -26,7 +26,8 @@ export class UpdateMalApprovalStatusUseCase {
             case "duplicate": {
                 // "Approve" in UI
                 const dataElementsWithValues = await this.getDataElementsToDuplicate(items);
-                return this.approvalRepository.duplicateDataSets(items, dataElementsWithValues);
+                const stats = await this.approvalRepository.replicateDataValuesInApvdDataSet(dataElementsWithValues);
+                return stats.filter(stats => stats.errorMessages.length > 0).length === 0;
             }
             case "revoke": {
                 const revokeResult = await this.approvalRepository.unapprove(items);

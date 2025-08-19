@@ -150,6 +150,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             periods,
             sorting,
             useOldPeriods,
+            modificationCount,
         } = options;
         if (!dataSetId) return emptyPage;
         const dataSetResponse = await this.api.models.dataSets
@@ -176,6 +177,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             filterApproval: isApproved ? "true" : undefined,
             submissionDE: dataSetSettings.dataElements.submissionDate,
             approvalDE: dataSetSettings.dataElements.approvalDate,
+            modificationCount: modificationCount === undefined ? undefined : modificationCount,
         };
 
         const headerRows = await this.getSqlViewHeaders<SqlFieldHeaders>(sqlViews, options, pagingToDownload);
@@ -433,7 +435,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         try {
             const { approvalDataSetId, dataSetId } = await this.getApprovalDataSetId(dataValues);
             const uniqueDataSets = _.uniqBy(dataValues, "dataSet");
-            const uniqueDataElementsNames = _.uniq(_.map(dataValues, "dataElement"));
+            const uniqueDataElementsNames = _.uniq(_.map(dataValues, x => x.dataElement));
 
             const DSDataElements = await this.getDSDataElements(uniqueDataSets);
 
@@ -473,20 +475,25 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
     // TODO: All this logic must be in the domain. ApproveMalDataValuesUseCase.ts
     async replicateDataValuesInApvdDataSet(originalDataValues: DataDiffItemIdentifier[]): Promise<DataValueStats[]> {
-        const approvalDataSetId = await this.getApprovalDataSetIdentifier();
+        const { approvalDataSetId, dataSetId } = await this.getApprovalDataSetId(originalDataValues);
+        const settings = await this.getSettingByDataSet([dataSetId]);
+        const dataSetSettings = settings.find(setting => setting.dataSetId === dataSetId);
+        if (!dataSetSettings) throw new Error(`Data set settings not found: ${dataSetId}`);
+
         const approvalDataElements = await this.getADSDataElements(approvalDataSetId);
         const approvalDeByName = _.keyBy(approvalDataElements, dataElement => dataElement.name.toLowerCase());
 
-        const malApprovalDateDataElement = await getMetadataByIdentifiableToken({
+        const approvalDateDataElement = await getMetadataByIdentifiableToken({
             api: this.api,
             metadataType: "dataElements",
-            token: dataElementCodes.MAL_APPROVAL_DATE_APVD,
+            token: dataSetSettings.dataElements.approvalDate,
         });
 
         const approvalDataValues = _(originalDataValues)
             .map((dataValue): Maybe<D2DataValue> => {
                 const dataElementNameLowerCase = dataValue.dataElementBasicName?.toLowerCase();
-                const apvdDataElement = approvalDeByName[`${dataElementNameLowerCase}-apvd`];
+                const dataElementKey = `${dataElementNameLowerCase}${DATA_ELEMENT_SUFFIX}`.toLowerCase();
+                const apvdDataElement = approvalDeByName[dataElementKey];
 
                 if (!apvdDataElement) {
                     console.warn(
@@ -515,7 +522,7 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
         const timeStampDataValues = this.generateTimeStampDataValue(
             approvalDataValues,
             approvalDataSetId,
-            malApprovalDateDataElement.id
+            approvalDateDataElement.id
         );
 
         const deleteStats = await this.deleteEmptyDataValues(
@@ -1071,10 +1078,6 @@ function mergeHeadersAndData(
 
 export const MAL_WMR_FORM_CODE = "0MAL_5";
 const MAL_WMR_FORM_APVD_NAME = "MAL - WMR Form-APVD";
-const dataElementCodes = {
-    MAL_SUBMISSION_DATE: "MAL_SUBMISSION_DATE",
-    MAL_APPROVAL_DATE_APVD: "MAL_APPROVAL_DATE-APVD",
-};
 const DEFAULT_COC = "Xr12mI7VPn3";
 
 type D2DataValue = DataValueSetsPostRequest["dataValues"][number];

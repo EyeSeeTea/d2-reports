@@ -23,6 +23,7 @@ export interface DataSetsFilter {
     completionStatus?: boolean;
     approvalStatus?: boolean;
     isApproved?: boolean;
+    modificationCount?: string | undefined;
 }
 
 interface FilterOptions {
@@ -58,6 +59,13 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
         return [
             { value: "true", text: i18n.t("Approved") },
             { value: "false", text: i18n.t("Not Approved") },
+        ];
+    }, []);
+
+    const countItems = useMemo(() => {
+        return [
+            { value: "0", text: i18n.t("0") },
+            { value: "1", text: i18n.t("Greater than 0") },
         ];
     }, []);
 
@@ -97,6 +105,13 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 />
 
                 <SingleDropdownStyled
+                    items={approvalStatusItems}
+                    value={fromBool(filterValues.approvalStatus)}
+                    onChange={setFilterValues.approvalStatus}
+                    label={i18n.t("Submission status")}
+                />
+
+                <SingleDropdownStyled
                     items={approvedFilterItems}
                     value={fromBool(filterValues.isApproved)}
                     onChange={setFilterValues.approvedStatus}
@@ -104,10 +119,10 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 />
 
                 <SingleDropdownStyled
-                    items={approvalStatusItems}
-                    value={fromBool(filterValues.approvalStatus)}
-                    onChange={setFilterValues.approvalStatus}
-                    label={i18n.t("Submission status")}
+                    items={countItems}
+                    value={filterValues.modificationCount}
+                    onChange={setFilterValues.updateModificationCount}
+                    label={i18n.t("Modification Count")}
                 />
             </Container>
 

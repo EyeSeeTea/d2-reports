@@ -53,7 +53,8 @@ export function useActiveDataApprovalActions(dataSetId: Id): ActiveDataApprovalA
 
     const isGetDifferenceActionVisible = useCallback(
         (rows: DataApprovalViewModel[]) =>
-            _.every(rows, row => row.lastUpdatedValue && !row.validated) && Boolean(access?.read || isMalAdmin),
+            _.every(rows, row => row.lastUpdatedValue && !row.validated && Number(row.modificationCount) > 0) &&
+            Boolean(access?.read || isMalAdmin),
         [isMalAdmin, access]
     );
 

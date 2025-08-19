@@ -135,13 +135,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     onClick: onTableActionClick.getDifferenceAction,
                     isActive: activeActions.isGetDifferenceActionVisible,
                 },
-                {
-                    name: "getDiffAndRevoke",
-                    text: i18n.t("Check Difference"),
-                    icon: <PlaylistAddCheck />,
-                    onClick: onTableActionClick.getDifferenceAndRevokeAction,
-                    isActive: activeActions.isGetDifferenceAndRevokeActionVisible,
-                },
             ],
             initialSorting: {
                 field: "orgUnit" as const,
@@ -162,7 +155,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
             onTableActionClick.activateMonitoringAction,
             onTableActionClick.deactivateMonitoringAction,
             onTableActionClick.getDifferenceAction,
-            onTableActionClick.getDifferenceAndRevokeAction,
             activeActions.isCompleteActionVisible,
             activeActions.isIncompleteActionVisible,
             activeActions.isSubmitActionVisible,
@@ -171,7 +163,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
             activeActions.isActivateMonitoringActionVisible,
             activeActions.isDeactivateMonitoringActionVisible,
             activeActions.isGetDifferenceActionVisible,
-            activeActions.isGetDifferenceAndRevokeActionVisible,
         ]
     );
 
@@ -185,7 +176,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 ...getUseCaseOptions(filters, selectablePeriods),
             });
 
-            console.debug("Reloading", reloadKey);
+            console.debug("Reloading", reloadKey, objects);
             return { pager, objects: getDataApprovalViews(objects) };
         },
         [compositionRoot.malDataApproval, config, oldPeriods, filters, selectablePeriods, reloadKey]

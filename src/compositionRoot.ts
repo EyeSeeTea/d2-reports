@@ -110,6 +110,8 @@ import { UserGroupD2Repository } from "./data/reports/mal-data-approval/UserGrou
 import { MonitoringValueDataStoreRepository } from "./data/reports/mal-data-approval/MonitoringValueDataStoreRepository";
 import { AppSettingsD2Repository } from "./data/AppSettingsD2Repository";
 import { GetAppSettingsUseCase } from "./domain/usecases/GetAppSettingsUseCase";
+import { DataSetStatusD2Repository } from "./data/DataSetStatusD2Repository";
+import { GetDataSetStatusUseCase } from "./domain/usecases/GetDataSetStatusUseCase";
 
 export function getCompositionRoot(api: D2Api) {
     const configRepository = new Dhis2ConfigRepository(api, getReportType());
@@ -138,8 +140,12 @@ export function getCompositionRoot(api: D2Api) {
     const userGroupRepository = new UserGroupD2Repository(api);
     const monitoringValueRepository = new MonitoringValueDataStoreRepository(api);
     const appSettingsRepository = new AppSettingsD2Repository();
+    const dataSetStatusRepository = new DataSetStatusD2Repository(api);
 
     return {
+        dataSetStatus: {
+            get: new GetDataSetStatusUseCase(dataSetStatusRepository),
+        },
         appSettings: {
             get: new GetAppSettingsUseCase(appSettingsRepository),
         },
@@ -178,7 +184,7 @@ export function getCompositionRoot(api: D2Api) {
                 dataSetRepository,
                 appSettingsRepository
             ),
-            duplicateValue: new DuplicateDataValuesUseCase(dataDuplicationRepository),
+            duplicateValue: new DuplicateDataValuesUseCase(dataDuplicationRepository, dataSetStatusRepository),
             getSortOrder: new GetSortOrderUseCase(dataDuplicationRepository),
             saveMalDiffNames: new SaveMalDiffNamesUseCase(dataDuplicationRepository),
             getOrgUnitsWithChildren: new GetMalDataApprovalOUsWithChildrenUseCase(orgUnitsWithChildrenRepository),
