@@ -141,9 +141,9 @@ export function useDataApprovalFilters(filterProps: DataApprovalFilterProps): Da
 const countryLevel = 3;
 
 export const emptyApprovalFilter: DataSetsFilter = {
-    dataSetId: "uc8uSqVVt4n",
-    orgUnitPaths: ["/H8RixfF8ugH/svSQSBLTVz6/eyvitcZL4ex"],
-    periods: ["2023", "2024"],
+    dataSetId: undefined,
+    orgUnitPaths: [],
+    periods: [],
     completionStatus: undefined,
     approvalStatus: undefined,
 };
