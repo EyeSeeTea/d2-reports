@@ -142,8 +142,8 @@ const countryLevel = 3;
 
 export const emptyApprovalFilter: DataSetsFilter = {
     dataSetId: "uc8uSqVVt4n",
-    orgUnitPaths: ["/H8RixfF8ugH/svSQSBLTVz6/Ri2tb7LBVtP"],
-    periods: ["2024"],
+    orgUnitPaths: ["/H8RixfF8ugH/svSQSBLTVz6/eyvitcZL4ex"],
+    periods: ["2023", "2024"],
     completionStatus: undefined,
     approvalStatus: undefined,
 };

@@ -174,10 +174,6 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
             approved: approvalStatus === undefined ? "-" : approvalStatus.toString(),
             orderByColumn: fieldMapping[sorting.field],
             orderByDirection: sorting.direction,
-            filterApproval: isApproved ? "true" : undefined,
-            submissionDE: dataSetSettings.dataElements.submissionDate,
-            approvalDE: dataSetSettings.dataElements.approvalDate,
-            modificationCount: modificationCount === undefined ? undefined : modificationCount,
         };
 
         const headerRows = await this.getSqlViewHeaders<SqlFieldHeaders>(sqlViews, options, pagingToDownload);
@@ -197,7 +193,14 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
                 ? objects.filter(item => Boolean(item.lastDateOfApproval))
                 : objects.filter(item => !item.lastDateOfApproval);
 
-        const objectsInPage = await promiseMap(objectsWithApprovalFilter, async item => {
+        const modificationCountObjects =
+            modificationCount === undefined
+                ? objectsWithApprovalFilter
+                : modificationCount === "0"
+                ? objectsWithApprovalFilter.filter(item => !item.modificationCount)
+                : objectsWithApprovalFilter.filter(item => Boolean(item.modificationCount));
+
+        const objectsInPage = await promiseMap(modificationCountObjects, async item => {
             const { approved } = await this.getDataApprovalStatus(item);
 
             return { ...item, approved: approved };
@@ -292,30 +295,28 @@ export class MalDataApprovalDefaultRepository implements MalDataApprovalReposito
 
     async approve(dataSets: MalDataApprovalItemIdentifier[]): Promise<boolean> {
         try {
-            const dataSetIds = dataSets.map(dataSet => dataSet.dataSet);
-            const dataSetSettings = await this.getSettingByDataSet(dataSetIds);
+            const originalDataSetId = dataSets[0]?.dataSet;
+            if (!originalDataSetId) throw Error("No data set ID found");
 
-            const submissionSettings = await promiseMap(dataSetSettings, async settings => {
-                const dataElement = await getMetadataByIdentifiableToken({
-                    api: this.api,
-                    metadataType: "dataElements",
-                    token: settings.dataElements.submissionDate,
-                });
+            const { dataSetId } = await this.getApprovalDataSetId([{ dataSet: originalDataSetId }]);
+            const settings = await this.getSettingByDataSet([dataSetId]);
+            const dataSetSettings = settings.find(setting => setting.dataSetId === dataSetId);
+            if (!dataSetSettings) throw new Error(`Data set settings not found: ${dataSetId}`);
 
-                return { dataSetId: settings.dataSetId, dataElement };
+            const dataElement = await getMetadataByIdentifiableToken({
+                api: this.api,
+                metadataType: "dataElements",
+                token: dataSetSettings.dataElements.submissionDate,
             });
 
             const currentDate = getISODate();
 
             const dataValues = dataSets.map(ds => {
-                const submissionSetting = submissionSettings.find(de => de.dataSetId === ds.dataSet);
-                if (!submissionSetting) throw new Error(`Submission DataElement not found for dataSet: ${ds.dataSet}`);
-
                 return {
                     dataSet: ds.dataSet,
                     period: ds.period,
                     orgUnit: ds.orgUnit,
-                    dataElement: submissionSetting.dataElement.id,
+                    dataElement: dataElement.id,
                     categoryOptionCombo: DEFAULT_COC,
                     value: currentDate,
                 };
