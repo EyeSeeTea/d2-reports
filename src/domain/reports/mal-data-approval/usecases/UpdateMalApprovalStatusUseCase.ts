@@ -17,28 +17,46 @@ export class UpdateMalApprovalStatusUseCase {
     ) {}
 
     async execute(items: MalDataApprovalItemIdentifier[], action: UpdateAction): Promise<boolean> {
-        switch (action) {
-            case "complete":
-                return this.approvalRepository.complete(items);
-            case "approve":
-                // "Submit" in UI
-                return this.approvalRepository.approve(items);
-            case "duplicate": {
-                // "Approve" in UI
-                const dataElementsWithValues = await this.getDataElementsToDuplicate(items);
-                const stats = await this.approvalRepository.replicateDataValuesInApvdDataSet(dataElementsWithValues);
-                return stats.filter(stats => stats.errorMessages.length > 0).length === 0;
+        const itemsByDataSet = _(items)
+            .groupBy(item => item.dataSet)
+            .value();
+
+        const dataSetIds = _(items)
+            .map(item => item.dataSet)
+            .uniq()
+            .value();
+
+        const result = await promiseMap(dataSetIds, async dataSetId => {
+            const itemsToUpdate = itemsByDataSet[dataSetId];
+            if (!itemsToUpdate) return true;
+
+            switch (action) {
+                case "complete":
+                    return this.approvalRepository.complete(itemsToUpdate);
+                case "approve":
+                    // "Submit" in UI
+                    return this.approvalRepository.approve(itemsToUpdate);
+                case "duplicate": {
+                    // "Approve" in UI
+                    const dataElementsWithValues = await this.getDataElementsToDuplicate(itemsToUpdate);
+                    const stats = await this.approvalRepository.replicateDataValuesInApvdDataSet(
+                        dataElementsWithValues
+                    );
+                    return stats.filter(stats => stats.errorMessages.length > 0).length === 0;
+                }
+                case "revoke": {
+                    const revokeResult = await this.approvalRepository.unapprove(itemsToUpdate);
+                    const incompleteResult = await this.approvalRepository.incomplete(itemsToUpdate);
+                    return revokeResult && incompleteResult;
+                }
+                case "incomplete":
+                    return this.approvalRepository.incomplete(itemsToUpdate);
+                default:
+                    return false;
             }
-            case "revoke": {
-                const revokeResult = await this.approvalRepository.unapprove(items);
-                const incompleteResult = await this.approvalRepository.incomplete(items);
-                return revokeResult && incompleteResult;
-            }
-            case "incomplete":
-                return this.approvalRepository.incomplete(items);
-            default:
-                return false;
-        }
+        });
+
+        return _(result).every(res => res === true);
     }
 
     private async getDataElementsToDuplicate(

@@ -19,7 +19,7 @@ type DataApprovalFilterState = {
     applyFilters: () => void;
     clearFilters: () => void;
     setFilterValues: {
-        dataSetId: SingleDropdownHandler;
+        dataSetId: DropdownHandler;
         orgUnitPaths: OrgUnitsFilterButtonProps["setSelected"];
         periods: DropdownHandler;
         completionStatus: SingleDropdownHandler;
@@ -31,10 +31,11 @@ type DataApprovalFilterState = {
 
 export function useDataApprovalFilters(filterProps: DataApprovalFilterProps): DataApprovalFilterState {
     const { config, compositionRoot } = useAppContext();
+    const initialDataSetIds = Object.keys(config.dataSets);
     const { values: filter, onChange } = filterProps;
     const { orgUnitPaths } = filter;
 
-    const [filterValues, setFilterValues] = useState(emptyApprovalFilter);
+    const [filterValues, setFilterValues] = useState({ ...emptyApprovalFilter, dataSetIds: initialDataSetIds });
     const [orgUnits, setOrgUnits] = useState<OrgUnitWithChildren[]>([]);
 
     useEffect(() => {
@@ -81,8 +82,8 @@ export function useDataApprovalFilters(filterProps: DataApprovalFilterProps): Da
         [orgUnitPaths, orgUnitsByPath]
     );
 
-    const setDataSetId = useCallback<SingleDropdownHandler>(
-        dataSetId => setFilterValues(prev => ({ ...prev, dataSetId: dataSetId })),
+    const setDataSetId = useCallback<DropdownHandler>(
+        dataSetId => setFilterValues(prev => ({ ...prev, dataSetIds: dataSetId })),
         [setFilterValues]
     );
 
@@ -141,9 +142,9 @@ export function useDataApprovalFilters(filterProps: DataApprovalFilterProps): Da
 const countryLevel = 3;
 
 export const emptyApprovalFilter: DataSetsFilter = {
-    dataSetId: "uc8uSqVVt4n",
-    orgUnitPaths: ["/H8RixfF8ugH/svSQSBLTVz6/hmZE3mVAZFf"],
-    periods: ["2024"],
+    dataSetIds: [],
+    orgUnitPaths: [],
+    periods: [],
     completionStatus: undefined,
     approvalStatus: undefined,
 };

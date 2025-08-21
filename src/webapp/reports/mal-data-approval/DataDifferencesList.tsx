@@ -27,13 +27,13 @@ interface DataDifferencesListProps {
     dataSetId: string;
 }
 
-export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ dataSetId, selectedIds, isUpdated }) => {
+export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ selectedIds, isUpdated }) => {
     const { compositionRoot, config } = useAppContext();
     const { currentUser } = config;
     const loading = useLoading();
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const snackbar = useSnackbar();
-    const access = currentUser.dataSets ? currentUser.dataSets[dataSetId] : undefined;
+    const dataSetId = React.useMemo(() => _(selectedIds[0]).split("-").first() ?? "", [selectedIds]);
 
     const baseConfig: TableConfig<DataDiffViewModel> = useMemo(
         () => ({
@@ -65,8 +65,10 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ dataSe
 
                         isUpdated();
                     },
-                    isActive: items =>
-                        Boolean(access?.approve) && items.filter(item => item.value !== undefined).length > 0,
+                    isActive: items => {
+                        const access = currentUser.dataSets ? currentUser.dataSets[dataSetId] : undefined;
+                        return Boolean(access?.approve) && items.filter(item => item.value !== undefined).length > 0;
+                    },
                 },
             ],
             initialSorting: {
@@ -78,7 +80,7 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ dataSe
                 pageSizeInitialValue: 10,
             },
         }),
-        [compositionRoot.malDataApproval, access, isUpdated, snackbar, loading]
+        [compositionRoot.malDataApproval, isUpdated, currentUser, snackbar, loading, dataSetId]
     );
 
     const getRows = useMemo(
@@ -92,7 +94,7 @@ export const DataDifferencesList: React.FC<DataDifferencesListProps> = ({ dataSe
                 sorting: getSortingFromTableSorting(sorting),
                 periods: items.map(item => item.period),
                 orgUnitIds: items.map(item => item.orgUnit),
-                dataSetId: items[0]?.dataSet,
+                dataSetId: items[0]?.dataSet ?? "",
             });
 
             if (!pager && !objects) {

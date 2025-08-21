@@ -41,9 +41,9 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [__, setDiffState] = useState<string>("");
     const [oldPeriods, setOldPeriods] = useState(false);
-    const [isLoading, setIsLoading] = React.useState(false);
+    const [_isLoading, setIsLoading] = React.useState(false);
 
-    const activeActions = useActiveDataApprovalActions(filters.dataSetId ?? "");
+    const activeActions = useActiveDataApprovalActions();
     const {
         globalMessage,
         modalActions: { closeDataDifferencesDialog, isDialogOpen, revoke },
@@ -65,9 +65,9 @@ export const DataApprovalList: React.FC = React.memo(() => {
         });
     }, [compositionRoot]);
 
-    useEffect(() => {
-        if (filters.dataSetId) compositionRoot.malDataApproval.saveMalDiffNames(filters.dataSetId);
-    }, [compositionRoot, filters.dataSetId]);
+    // useEffect(() => {
+    //     if (filters.dataSetId) compositionRoot.malDataApproval.saveMalDiffNames(filters.dataSetId);
+    // }, [compositionRoot, filters.dataSetId]);
 
     const baseConfig: TableConfig<DataApprovalViewModel> = useMemo(
         () => ({
@@ -210,7 +210,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 columns={columnsToShow}
                 onChangeSearch={undefined}
                 onReorderColumns={saveReorderedColumns}
-                rows={isLoading ? [] : tableProps.rows}
+                // rows={isLoading ? [] : tableProps.rows}
             >
                 <Filters
                     hideDataSets={false} // perhaps show datasets based on user permissions?
@@ -229,7 +229,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
             >
                 <DataDifferencesList
                     selectedIds={selectedIds}
-                    dataSetId={filters.dataSetId ?? ""}
+                    dataSetId={filters.dataSetIds[0] ?? ""}
                     revoke={revoke}
                     isUpdated={() => setDiffState(`${new Date().getTime()}`)}
                     key={new Date().getTime()}

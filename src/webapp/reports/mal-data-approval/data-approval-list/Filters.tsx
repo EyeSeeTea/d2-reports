@@ -17,7 +17,7 @@ type DataSetsFiltersProps = {
 };
 
 export interface DataSetsFilter {
-    dataSetId: Id | undefined;
+    dataSetIds: Id[];
     orgUnitPaths: Id[];
     periods: string[];
     completionStatus?: boolean;
@@ -75,9 +75,10 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
                 {!hideDataSets && (
                     <DataSetDropdown
                         items={dataSetItems}
-                        value={filterValues.dataSetId}
+                        values={filterValues.dataSetIds}
                         onChange={setFilterValues.dataSetId}
                         label={i18n.t("Data sets")}
+                        hideEmpty
                     />
                 )}
 
@@ -127,7 +128,7 @@ export const Filters: React.FC<DataSetsFiltersProps> = React.memo(props => {
             </Container>
 
             <FilterButtonContainer>
-                <Button disabled={!filterValues.dataSetId} onClick={applyFilters} variant="contained" color="primary">
+                <Button onClick={applyFilters} variant="contained" color="primary">
                     {i18n.t("Apply filters")}
                 </Button>
 
@@ -166,7 +167,7 @@ const SingleDropdownStyled = styled(Dropdown)`
     width: 180px;
 `;
 
-const DataSetDropdown = styled(Dropdown)`
+const DataSetDropdown = styled(MultipleDropdown)`
     margin-left: -10px;
     width: 260px;
 `;

@@ -4,6 +4,7 @@ import { DataApprovalViewModel } from "../../DataApprovalViewModel";
 import { useDataApprovalPermissions } from "./useDataApprovalPermissions";
 import { Id } from "../../../../../domain/common/entities/Base";
 import { useAppContext } from "../../../../contexts/app-context";
+import { Config } from "../../../../../domain/common/entities/Config";
 
 type ActiveDataApprovalActionsState = {
     isActivateMonitoringActionVisible: (rows: DataApprovalViewModel[]) => boolean;
@@ -17,68 +18,103 @@ type ActiveDataApprovalActionsState = {
     isSubmitActionVisible: (rows: DataApprovalViewModel[]) => boolean;
 };
 
-export function useActiveDataApprovalActions(dataSetId: Id): ActiveDataApprovalActionsState {
+function getDataSetAccess(config: Config, dataSetId: Id) {
+    const access = config.currentUser.dataSets ? config.currentUser.dataSets[dataSetId] : undefined;
+    return access;
+}
+
+export function useActiveDataApprovalActions(): ActiveDataApprovalActionsState {
     const { config } = useAppContext();
     const { isMalAdmin } = useDataApprovalPermissions();
 
-    const access = config.currentUser.dataSets ? config.currentUser.dataSets[dataSetId] : undefined;
-
     const isActivateMonitoringActionVisible = useCallback(
-        (rows: DataApprovalViewModel[]) =>
-            _.every(rows, row => !row.monitoring) && Boolean(isMalAdmin || access?.monitoring),
-        [isMalAdmin, access]
+        (rows: DataApprovalViewModel[]) => {
+            return _(rows).every(row => {
+                const access = getDataSetAccess(config, row.dataSetUid);
+                return !row.monitoring && Boolean(isMalAdmin || access?.monitoring);
+            });
+        },
+        [isMalAdmin, config]
     );
 
     const isApproveActionVisible = useCallback(
         (rows: DataApprovalViewModel[]) => {
-            return (
-                _.every(rows, row => row.lastUpdatedValue && Number(row.modificationCount) > 0) &&
-                Boolean(isMalAdmin || access?.approve)
-            );
+            return _.every(rows, row => {
+                const access = getDataSetAccess(config, row.dataSetUid);
+                return (
+                    row.lastUpdatedValue && Number(row.modificationCount) > 0 && Boolean(isMalAdmin || access?.approve)
+                );
+            });
         },
-        [isMalAdmin, access]
+        [isMalAdmin, config]
     );
 
     const isCompleteActionVisible = useCallback(
         (rows: DataApprovalViewModel[]) =>
-            _.every(rows, row => !row.completed && row.lastUpdatedValue) && Boolean(isMalAdmin || access?.complete),
-        [isMalAdmin, access]
+            _.every(rows, row => {
+                const access = getDataSetAccess(config, row.dataSetUid);
+                return !row.completed && row.lastUpdatedValue && Boolean(isMalAdmin || access?.complete);
+            }),
+        [isMalAdmin, config]
     );
 
     const isDeactivateMonitoringActionVisible = useCallback(
         (rows: DataApprovalViewModel[]) =>
-            _.every(rows, row => row.monitoring) && Boolean(isMalAdmin || access?.monitoring),
-        [isMalAdmin, access]
+            _.every(rows, row => {
+                const access = getDataSetAccess(config, row.dataSetUid);
+                return row.monitoring && Boolean(isMalAdmin || access?.monitoring);
+            }),
+        [isMalAdmin, config]
     );
 
     const isGetDifferenceActionVisible = useCallback(
         (rows: DataApprovalViewModel[]) =>
-            _.every(rows, row => row.lastUpdatedValue && !row.validated && Number(row.modificationCount) > 0) &&
-            Boolean(access?.read || isMalAdmin),
-        [isMalAdmin, access]
+            _.every(rows, row => {
+                const access = getDataSetAccess(config, row.dataSetUid);
+                return (
+                    row.lastUpdatedValue &&
+                    !row.validated &&
+                    Number(row.modificationCount) > 0 &&
+                    Boolean(access?.read || isMalAdmin)
+                );
+            }),
+        [isMalAdmin, config]
     );
 
     const isGetDifferenceAndRevokeActionVisible = useCallback(
         (rows: DataApprovalViewModel[]) =>
-            _.every(rows, row => row.lastUpdatedValue && row.validated) && Boolean(access?.read || isMalAdmin),
-        [isMalAdmin, access]
+            _.every(rows, row => {
+                const access = getDataSetAccess(config, row.dataSetUid);
+                return row.lastUpdatedValue && row.validated && Boolean(access?.read || isMalAdmin);
+            }),
+        [isMalAdmin, config]
     );
 
     const isIncompleteActionVisible = useCallback(
         (rows: DataApprovalViewModel[]) =>
-            _.every(rows, row => row.completed && !row.validated) && Boolean(isMalAdmin || access?.incomplete),
-        [isMalAdmin, access]
+            _.every(rows, row => {
+                const access = getDataSetAccess(config, row.dataSetUid);
+                return row.completed && !row.validated && Boolean(isMalAdmin || access?.incomplete);
+            }),
+        [isMalAdmin, config]
     );
 
     const isSubmitActionVisible = useCallback(
         (rows: DataApprovalViewModel[]) =>
-            _.every(rows, row => !row.approved && row.lastUpdatedValue) && Boolean(access?.submit || isMalAdmin),
-        [isMalAdmin, access]
+            _.every(rows, row => {
+                const access = getDataSetAccess(config, row.dataSetUid);
+                return !row.approved && row.lastUpdatedValue && Boolean(access?.submit || isMalAdmin);
+            }),
+        [isMalAdmin, config]
     );
 
     const isRevokeActionVisible = useCallback(
-        (rows: DataApprovalViewModel[]) => _.every(rows, row => row.approved) && Boolean(isMalAdmin || access?.revoke),
-        [isMalAdmin, access]
+        (rows: DataApprovalViewModel[]) =>
+            _.every(rows, row => {
+                const access = getDataSetAccess(config, row.dataSetUid);
+                return row.approved && Boolean(isMalAdmin || access?.revoke);
+            }),
+        [isMalAdmin, config]
     );
 
     return {

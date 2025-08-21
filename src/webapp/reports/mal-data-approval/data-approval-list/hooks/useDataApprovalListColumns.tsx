@@ -19,9 +19,9 @@ export function useDataApprovalListColumns() {
 
     const columns: TableColumn<DataApprovalViewModel>[] = useMemo(() => {
         return [
+            { name: "dataSet", text: i18n.t("Data set"), sortable: true, hidden: false },
             { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
             { name: "period", text: i18n.t("Period"), sortable: true },
-            { name: "dataSet", text: i18n.t("Data set"), sortable: true, hidden: true },
             { name: "attribute", text: i18n.t("Attribute"), sortable: true, hidden: true },
             {
                 name: "completed",
