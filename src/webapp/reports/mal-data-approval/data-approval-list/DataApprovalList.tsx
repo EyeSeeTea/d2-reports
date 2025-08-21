@@ -26,7 +26,7 @@ import { ConfirmationDialog } from "@eyeseetea/d2-ui-components";
 import { DataApprovalViewModel, getDataApprovalViews } from "../DataApprovalViewModel";
 import { DataSetsFilter, Filters } from "./Filters";
 import { DataDifferencesList } from "../DataDifferencesList";
-import { Notifications, NotificationsOff, PlaylistAddCheck, ThumbUp } from "@material-ui/icons";
+import { PlaylistAddCheck, ThumbUp } from "@material-ui/icons";
 import { Namespaces } from "../../../../data/common/clients/storage/Namespaces";
 import { emptyApprovalFilter } from "./hooks/useDataApprovalFilters";
 import { useDataApprovalListColumns } from "./hooks/useDataApprovalListColumns";
@@ -113,22 +113,6 @@ export const DataApprovalList: React.FC = React.memo(() => {
                     isActive: activeActions.isApproveActionVisible,
                 },
                 {
-                    name: "activate",
-                    text: i18n.t("Activate monitoring"),
-                    icon: <Notifications />,
-                    multiple: true,
-                    onClick: onTableActionClick.activateMonitoringAction,
-                    isActive: activeActions.isActivateMonitoringActionVisible,
-                },
-                {
-                    name: "deactivate",
-                    text: i18n.t("Deactivate monitoring"),
-                    icon: <NotificationsOff />,
-                    multiple: true,
-                    onClick: onTableActionClick.deactivateMonitoringAction,
-                    isActive: activeActions.isDeactivateMonitoringActionVisible,
-                },
-                {
                     name: "getDiff",
                     text: i18n.t("Check Difference"),
                     icon: <PlaylistAddCheck />,
@@ -152,16 +136,12 @@ export const DataApprovalList: React.FC = React.memo(() => {
             onTableActionClick.submitAction,
             onTableActionClick.revokeAction,
             onTableActionClick.approveAction,
-            onTableActionClick.activateMonitoringAction,
-            onTableActionClick.deactivateMonitoringAction,
             onTableActionClick.getDifferenceAction,
             activeActions.isCompleteActionVisible,
             activeActions.isIncompleteActionVisible,
             activeActions.isSubmitActionVisible,
             activeActions.isRevokeActionVisible,
             activeActions.isApproveActionVisible,
-            activeActions.isActivateMonitoringActionVisible,
-            activeActions.isDeactivateMonitoringActionVisible,
             activeActions.isGetDifferenceActionVisible,
         ]
     );

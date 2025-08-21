@@ -1,17 +1,17 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: i18next-conv\n"
-"POT-Creation-Date: 2025-08-15T02:56:54.037Z\n"
+"POT-Creation-Date: 2025-08-21T17:39:05.618Z\n"
 "PO-Revision-Date: 2018-10-25T09:02:35.143Z\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
 
-msgid "<No value>"
+msgid "0"
 msgstr ""
 
-msgid "- All -"
+msgid "<No value>"
 msgstr ""
 
 msgid "LOG OUT"
@@ -623,12 +623,6 @@ msgstr ""
 msgid "Revoke"
 msgstr ""
 
-msgid "Activate monitoring"
-msgstr ""
-
-msgid "Deactivate monitoring"
-msgstr ""
-
 msgid "Check Difference"
 msgstr ""
 
@@ -644,6 +638,9 @@ msgstr ""
 msgid "Not Approved"
 msgstr ""
 
+msgid "Greater than 0"
+msgstr ""
+
 msgid "Data sets"
 msgstr ""
 
@@ -653,16 +650,31 @@ msgstr ""
 msgid "Completion status"
 msgstr ""
 
+msgid "Submission status"
+msgstr ""
+
 msgid "Approval status"
 msgstr ""
 
-msgid "Submission status"
+msgid "Modification Count"
 msgstr ""
 
 msgid "Error when trying to approve data set"
 msgstr ""
 
+msgid "Completing dataset"
+msgstr ""
+
+msgid "Updating status to incomplete"
+msgstr ""
+
+msgid "Revoking dataset"
+msgstr ""
+
 msgid "Error when trying to unsubmit data set"
+msgstr ""
+
+msgid "Submitting dataset"
 msgstr ""
 
 msgid "Error when trying to submit data set"
@@ -675,9 +687,6 @@ msgid "Attribute"
 msgstr ""
 
 msgid "Not approved"
-msgstr ""
-
-msgid "Modification Count"
 msgstr ""
 
 msgid "Last modification date"

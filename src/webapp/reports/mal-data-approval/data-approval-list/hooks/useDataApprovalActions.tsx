@@ -66,7 +66,7 @@ export function useDataApprovalActions(): DataApprovalActionsState {
             const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
             if (items.length === 0) return;
 
-            loading.show();
+            loading.show(true, "Approving dataset");
             const result = await compositionRoot.malDataApproval.updateStatus(items, "duplicate");
             if (!result) setGlobalMessage({ type: "error", message: i18n.t("Error when trying to approve data set") });
 
@@ -78,10 +78,10 @@ export function useDataApprovalActions(): DataApprovalActionsState {
     );
 
     const updateCompletionStatus = useCallback(
-        async (selectedIds: string[], status: CompletionStatus) => {
+        async (selectedIds: string[], status: CompletionStatus, loadingText: string) => {
             const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
             if (items.length === 0) return;
-            loading.show();
+            loading.show(true, loadingText);
             const result = await compositionRoot.malDataApproval.updateStatus(items, status);
             if (!result)
                 setGlobalMessage({ type: "error", message: i18n.t(`Error when trying to ${status} data set`) });
@@ -93,7 +93,7 @@ export function useDataApprovalActions(): DataApprovalActionsState {
     );
 
     const completeAction = useCallback(
-        async (selectedIds: string[]) => updateCompletionStatus(selectedIds, "complete"),
+        async (selectedIds: string[]) => updateCompletionStatus(selectedIds, "complete", i18n.t("Completing dataset")),
         [updateCompletionStatus]
     );
 
@@ -127,7 +127,8 @@ export function useDataApprovalActions(): DataApprovalActionsState {
     );
 
     const incompleteAction = useCallback(
-        async (selectedIds: string[]) => updateCompletionStatus(selectedIds, "incomplete"),
+        async (selectedIds: string[]) =>
+            updateCompletionStatus(selectedIds, "incomplete", i18n.t("Updating status to incomplete")),
         [updateCompletionStatus]
     );
 
@@ -135,7 +136,7 @@ export function useDataApprovalActions(): DataApprovalActionsState {
         async (selectedIds: string[]) => {
             const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
             if (items.length === 0) return;
-            loading.show();
+            loading.show(true, i18n.t("Revoking dataset"));
             const result = await compositionRoot.malDataApproval.updateStatus(items, "revoke");
             if (!result) setGlobalMessage({ type: "error", message: i18n.t("Error when trying to unsubmit data set") });
 
@@ -149,7 +150,7 @@ export function useDataApprovalActions(): DataApprovalActionsState {
         async (selectedIds: string[]) => {
             const items = _.compact(selectedIds.map(item => parseDataDuplicationItemId(item)));
             if (items.length === 0) return;
-            loading.show();
+            loading.show(true, i18n.t("Submitting dataset"));
             const result = await compositionRoot.malDataApproval.updateStatus(items, "approve");
             if (!result) setGlobalMessage({ type: "error", message: i18n.t("Error when trying to submit data set") });
 
