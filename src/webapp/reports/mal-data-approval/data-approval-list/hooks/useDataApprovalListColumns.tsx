@@ -19,45 +19,45 @@ export function useDataApprovalListColumns() {
 
     const columns: TableColumn<DataApprovalViewModel>[] = useMemo(() => {
         return [
-            { name: "dataSet", text: i18n.t("Data set"), sortable: true, hidden: false },
-            { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: true },
-            { name: "period", text: i18n.t("Period"), sortable: true },
-            { name: "attribute", text: i18n.t("Attribute"), sortable: true, hidden: true },
+            { name: "dataSet", text: i18n.t("Data set"), sortable: false, hidden: false },
+            { name: "orgUnit", text: i18n.t("Organisation unit"), sortable: false },
+            { name: "period", text: i18n.t("Period"), sortable: false },
+            { name: "attribute", text: i18n.t("Attribute"), sortable: false, hidden: true },
             {
                 name: "completed",
                 text: i18n.t("Completion status"),
-                sortable: true,
+                sortable: false,
                 getValue: row => getColumnValues(row).completed,
             },
             {
                 name: "validated",
                 text: i18n.t("Submission status"),
-                sortable: true,
+                sortable: false,
                 getValue: row => getColumnValues(row).validated,
             },
             {
                 name: "approved",
                 text: i18n.t("Approval status"),
-                sortable: true,
+                sortable: false,
                 getValue: row => (row.lastDateOfApproval ? i18n.t("Approved") : i18n.t("Not approved")),
             },
-            { name: "modificationCount", text: i18n.t("Modification Count"), sortable: true },
+            { name: "modificationCount", text: i18n.t("Modification Count"), sortable: false },
             {
                 name: "lastUpdatedValue",
                 text: i18n.t("Last modification date"),
-                sortable: true,
+                sortable: false,
                 getValue: row => getColumnValues(row).lastUpdatedValue,
             },
             {
                 name: "lastDateOfSubmission",
                 text: i18n.t("Last date of submission"),
-                sortable: true,
+                sortable: false,
                 getValue: row => getColumnValues(row).lastDateOfSubmission,
             },
             {
                 name: "lastDateOfApproval",
                 text: i18n.t("Last date of approval"),
-                sortable: true,
+                sortable: false,
                 getValue: row => getColumnValues(row).lastDateOfApproval,
             },
         ];

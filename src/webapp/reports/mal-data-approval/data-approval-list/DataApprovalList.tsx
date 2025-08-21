@@ -3,9 +3,7 @@ import {
     TableColumn,
     TableConfig,
     TableGlobalAction,
-    TablePagination,
     TableSorting,
-    useObjectsTable,
     useSnackbar,
 } from "@eyeseetea/d2-ui-components";
 import ClearAllIcon from "@material-ui/icons/ClearAll";
@@ -34,6 +32,11 @@ import { useActiveDataApprovalActions } from "./hooks/useActiveDataApprovalActio
 import { useDataApprovalActions } from "./hooks/useDataApprovalActions";
 import { useSelectablePeriods } from "./hooks/useSelectablePeriods";
 
+const defaultSorting: TableSorting<DataApprovalViewModel> = {
+    field: "dataSet",
+    order: "asc",
+};
+
 export const DataApprovalList: React.FC = React.memo(() => {
     const { compositionRoot, config } = useAppContext();
     const snackbar = useSnackbar();
@@ -41,7 +44,10 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [__, setDiffState] = useState<string>("");
     const [oldPeriods, setOldPeriods] = useState(false);
-    const [_isLoading, setIsLoading] = React.useState(false);
+    const [isLoading, setIsLoading] = React.useState(false);
+    const [page] = React.useState(1);
+    const [pageSize] = React.useState(50);
+    const [rows, setRows] = React.useState<DataApprovalViewModel[]>([]);
 
     const activeActions = useActiveDataApprovalActions();
     const {
@@ -122,7 +128,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 },
             ],
             initialSorting: {
-                field: "orgUnit" as const,
+                field: "dataSet" as const,
                 order: "asc" as const,
             },
             paginationOptions: {
@@ -147,23 +153,37 @@ export const DataApprovalList: React.FC = React.memo(() => {
         ]
     );
 
-    const getRows = useCallback(
-        async (_search: string, paging: TablePagination, sorting: TableSorting<DataApprovalViewModel>) => {
+    React.useEffect(() => {
+        let isCancelled = false;
+        async function getData() {
             setIsLoading(true);
-            const { pager, objects } = await compositionRoot.malDataApproval.get(Namespaces.MONITORING, {
-                config: config,
-                paging: { page: paging.page, pageSize: paging.pageSize },
-                sorting: getSortingFromTableSorting(sorting),
-                useOldPeriods: oldPeriods,
-                ...getUseCaseOptions(filters, selectablePeriods),
-            });
+            try {
+                const { objects } = await compositionRoot.malDataApproval.get(Namespaces.MONITORING, {
+                    config: config,
+                    paging: { page: 1, pageSize: 1000 },
+                    sorting: getSortingFromTableSorting(defaultSorting),
+                    useOldPeriods: oldPeriods,
+                    ...getUseCaseOptions(filters, selectablePeriods),
+                });
 
-            console.debug("Reloading", reloadKey);
-            setIsLoading(false);
-            return { pager, objects: getDataApprovalViews(objects) };
-        },
-        [compositionRoot.malDataApproval, config, oldPeriods, filters, selectablePeriods, reloadKey]
-    );
+                if (isCancelled) return;
+
+                console.debug("Reloading", reloadKey);
+                setRows(getDataApprovalViews(objects));
+                setIsLoading(false);
+            } finally {
+                if (!isCancelled) {
+                    setIsLoading(false);
+                }
+            }
+        }
+
+        getData();
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [compositionRoot.malDataApproval, config, oldPeriods, filters, selectablePeriods, reloadKey]);
 
     const saveReorderedColumns = useCallback(
         async (columnKeys: Array<keyof DataApprovalViewModel>) => {
@@ -174,21 +194,19 @@ export const DataApprovalList: React.FC = React.memo(() => {
         [compositionRoot, visibleColumns]
     );
 
-    const tableProps = useObjectsTable(baseConfig, getRows);
-
     const columnsToShow = useMemo<TableColumn<DataApprovalViewModel>[]>(() => {
-        if (!visibleColumns || _.isEmpty(visibleColumns)) return tableProps.columns;
+        if (!visibleColumns || _.isEmpty(visibleColumns)) return baseConfig.columns;
 
         const indexes = _(visibleColumns)
             .map((columnName, idx) => [columnName, idx] as [string, number])
             .fromPairs()
             .value();
 
-        return _(tableProps.columns)
+        return _(baseConfig.columns)
             .map(column => ({ ...column, hidden: !visibleColumns.includes(column.name) }))
             .sortBy(column => indexes[column.name] || 0)
             .value();
-    }, [tableProps.columns, visibleColumns]);
+    }, [baseConfig.columns, visibleColumns]);
 
     const filterOptions = useMemo(() => getFilterOptions(config, selectablePeriods), [config, selectablePeriods]);
 
@@ -205,12 +223,17 @@ export const DataApprovalList: React.FC = React.memo(() => {
     return (
         <React.Fragment>
             <ObjectsList<DataApprovalViewModel>
-                {...tableProps}
+                {...baseConfig}
                 globalActions={[periodsToggle]}
                 columns={columnsToShow}
                 onChangeSearch={undefined}
                 onReorderColumns={saveReorderedColumns}
-                // rows={isLoading ? [] : tableProps.rows}
+                reload={console.debug}
+                isLoading={isLoading}
+                onChange={console.debug}
+                pagination={{ page: page, pageSize: pageSize, total: rows.length }}
+                searchBoxLabel=""
+                rows={isLoading ? [] : rows}
             >
                 <Filters
                     hideDataSets={false} // perhaps show datasets based on user permissions?

@@ -57,6 +57,6 @@ export class GetMalDataSetsUseCase implements UseCase {
         const pagination = allRecords[0]?.pager;
         if (!pagination) throw new Error("No pagination information found");
 
-        return { objects: allObjects, pager: pagination };
+        return { objects: allObjects, pager: { ...pagination, total: allObjects.length } };
     }
 }
