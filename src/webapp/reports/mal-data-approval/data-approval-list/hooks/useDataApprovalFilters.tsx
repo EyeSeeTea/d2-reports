@@ -112,7 +112,7 @@ export function useDataApprovalFilters(filterProps: DataApprovalFilterProps): Da
     );
 
     const applyFilters = useCallback(() => {
-        onChange(filterValues);
+        onChange({ ...filterValues });
     }, [filterValues, onChange]);
 
     const clearFilters = useCallback(() => {
@@ -141,9 +141,9 @@ export function useDataApprovalFilters(filterProps: DataApprovalFilterProps): Da
 const countryLevel = 3;
 
 export const emptyApprovalFilter: DataSetsFilter = {
-    dataSetId: undefined,
-    orgUnitPaths: [],
-    periods: [],
+    dataSetId: "uc8uSqVVt4n",
+    orgUnitPaths: ["/H8RixfF8ugH/svSQSBLTVz6/hmZE3mVAZFf"],
+    periods: ["2024"],
     completionStatus: undefined,
     approvalStatus: undefined,
 };

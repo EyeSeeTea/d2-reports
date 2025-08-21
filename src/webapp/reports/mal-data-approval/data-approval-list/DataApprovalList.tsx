@@ -41,6 +41,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
     const [visibleColumns, setVisibleColumns] = useState<string[]>();
     const [__, setDiffState] = useState<string>("");
     const [oldPeriods, setOldPeriods] = useState(false);
+    const [isLoading, setIsLoading] = React.useState(false);
 
     const activeActions = useActiveDataApprovalActions(filters.dataSetId ?? "");
     const {
@@ -148,6 +149,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
 
     const getRows = useCallback(
         async (_search: string, paging: TablePagination, sorting: TableSorting<DataApprovalViewModel>) => {
+            setIsLoading(true);
             const { pager, objects } = await compositionRoot.malDataApproval.get(Namespaces.MONITORING, {
                 config: config,
                 paging: { page: paging.page, pageSize: paging.pageSize },
@@ -157,6 +159,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
             });
 
             console.debug("Reloading", reloadKey);
+            setIsLoading(false);
             return { pager, objects: getDataApprovalViews(objects) };
         },
         [compositionRoot.malDataApproval, config, oldPeriods, filters, selectablePeriods, reloadKey]
@@ -207,6 +210,7 @@ export const DataApprovalList: React.FC = React.memo(() => {
                 columns={columnsToShow}
                 onChangeSearch={undefined}
                 onReorderColumns={saveReorderedColumns}
+                rows={isLoading ? [] : tableProps.rows}
             >
                 <Filters
                     hideDataSets={false} // perhaps show datasets based on user permissions?
