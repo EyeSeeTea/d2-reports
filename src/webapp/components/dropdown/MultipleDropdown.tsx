@@ -36,7 +36,7 @@ const MultipleDropdown: React.FC<MultipleDropdownProps> = props => {
                 onChange={notifyChange}
                 MenuProps={menuPropsBottomLeft}
             >
-                {!hideEmpty && <MenuItem value={""}>{i18n.t("")}</MenuItem>}
+                {!hideEmpty && <MenuItem value={""}>{i18n.t("- No Value -")}</MenuItem>}
                 {items.map(item => (
                     <MenuItem key={item.value} value={item.value}>
                         {item.text}
