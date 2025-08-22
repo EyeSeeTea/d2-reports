@@ -184,7 +184,7 @@ export function getCompositionRoot(api: D2Api) {
                 dataSetRepository,
                 appSettingsRepository
             ),
-            duplicateValue: new DuplicateDataValuesUseCase(dataDuplicationRepository, dataSetStatusRepository),
+            duplicateValue: new DuplicateDataValuesUseCase(dataDuplicationRepository),
             getSortOrder: new GetSortOrderUseCase(dataDuplicationRepository),
             saveMalDiffNames: new SaveMalDiffNamesUseCase(dataDuplicationRepository),
             getOrgUnitsWithChildren: new GetMalDataApprovalOUsWithChildrenUseCase(orgUnitsWithChildrenRepository),
