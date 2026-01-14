@@ -227,38 +227,36 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         const chunks: Id[][] = _.chunk(uniqueIds, DEFAULT_CHUNK_SIZE);
 
-        const uploadsNested = await Promise.all(
-            chunks.map(async idsChunk => {
-                const inValues = idsChunk.join(";");
+        const uploads: GLASSDataSubmissionItemUpload[] = [];
 
-                const moduleIdFilter = `${uploadsDHIS2Ids.moduleId}:eq:${selectedModuleId}`;
-                const dataSubmissionIdsFilter = `${uploadsDHIS2Ids.dataSubmissionId}:in:${inValues}`;
-                const response = await this.api.tracker.events
-                    .get({
-                        program: AMR_GLASS_PROE_UPLOADS_PROGRAM_ID,
-                        skipPaging: true,
-                        fields: uploadsEventFields,
-                        filter: [moduleIdFilter, dataSubmissionIdsFilter].join(","),
-                    })
-                    .getData();
+        const moduleIdFilter = `${uploadsDHIS2Ids.moduleId}:eq:${selectedModuleId}`;
 
-                const events: D2UploadTrackerEvent[] = response.instances ?? [];
+        for (const idsChunk of chunks) {
+            const inValues = idsChunk.join(";");
 
-                return events
-                    .map(event => {
-                        const dataSubmissionId = getValueById(event.dataValues, uploadsDHIS2Ids.dataSubmissionId) || "";
-                        const status =
-                            (getValueById(event.dataValues, uploadsDHIS2Ids.status) as UploadStatus) || "UPLOADED";
+            const dataSubmissionIdsFilter = `${uploadsDHIS2Ids.dataSubmissionId}:in:${inValues}`;
 
-                        if (!dataSubmissionId || !status) return null;
+            const response = await this.api.tracker.events
+                .get({
+                    program: AMR_GLASS_PROE_UPLOADS_PROGRAM_ID,
+                    skipPaging: true,
+                    fields: uploadsEventFields,
+                    filter: [moduleIdFilter, dataSubmissionIdsFilter].join(","),
+                })
+                .getData();
 
-                        return { dataSubmissionId: dataSubmissionId, status: status };
-                    })
-                    .filter((x): x is GLASSDataSubmissionItemUpload => Boolean(x));
-            })
-        );
+            const events: D2UploadTrackerEvent[] = response.instances ?? [];
 
-        return uploadsNested.flat();
+            for (const event of events) {
+                const dataSubmissionId = getValueById(event.dataValues, uploadsDHIS2Ids.dataSubmissionId) || "";
+                const status = (getValueById(event.dataValues, uploadsDHIS2Ids.status) as UploadStatus) || "UPLOADED";
+
+                if (!dataSubmissionId) continue;
+                uploads.push({ dataSubmissionId, status });
+            }
+        }
+
+        return uploads;
     }
 
     private async getEnrolledCountries(): Promise<string[]> {
