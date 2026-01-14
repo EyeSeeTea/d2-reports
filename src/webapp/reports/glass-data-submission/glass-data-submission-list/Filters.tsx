@@ -8,7 +8,6 @@ import MultipleDropdown from "../../../components/dropdown/MultipleDropdown";
 import { Dropdown, DatePicker } from "@eyeseetea/d2-ui-components";
 import {
     DataSubmissionPeriod,
-    Module,
     Status,
 } from "../../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 import { useDataSubmissionList } from "./useDataSubmissionList";
@@ -25,7 +24,7 @@ export interface DataSubmissionFilterProps {
 }
 
 export interface Filter {
-    module: Module | undefined;
+    module: Id | undefined;
     orgUnitPaths: Id[];
     periods: string[];
     quarters: string[];

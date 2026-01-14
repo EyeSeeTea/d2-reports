@@ -1,9 +1,10 @@
+import { Id } from "../../../domain/common/entities/Base";
 import { Config } from "../../../domain/common/entities/Config";
 import {
     EARDataSubmissionItem,
     GLASSDataSubmissionItem,
-    Module,
     Status,
+    UploadStatus,
     getDataSubmissionItemId,
     getEARSubmissionItemId,
 } from "../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
@@ -23,12 +24,28 @@ export interface DataSubmissionViewModel {
 export interface EARDataSubmissionViewModel {
     creationDate: string;
     id: string;
-    module: Module;
+    module: Id;
     orgUnitId: string;
     orgUnitName: string;
     levelOfConfidentiality: "CONFIDENTIAL" | "NON-CONFIDENTIAL";
     submissionStatus: string;
     status: Status;
+}
+
+function getDatasetsUploadedFromStatus(uploadStatus: UploadStatus[]): string {
+    const completed = uploadStatus.filter(s => s === "COMPLETED").length;
+    const validated = uploadStatus.filter(s => s === "VALIDATED").length;
+    const imported = uploadStatus.filter(s => s === "IMPORTED").length;
+    const uploaded = uploadStatus.filter(s => s === "UPLOADED").length;
+
+    const parts = [
+        completed > 0 ? `${completed} completed` : null,
+        validated > 0 ? `${validated} validated` : null,
+        imported > 0 ? `${imported} imported` : null,
+        uploaded > 0 ? `${uploaded} uploaded` : null,
+    ].filter((x): x is string => x !== null);
+
+    return parts.length ? parts.join(", ") : "No datasets";
 }
 
 export function getDataSubmissionViews(_config: Config, items: GLASSDataSubmissionItem[]): DataSubmissionViewModel[] {
@@ -41,7 +58,7 @@ export function getDataSubmissionViews(_config: Config, items: GLASSDataSubmissi
             status: item.status,
             module: item.module,
             questionnaireCompleted: item.questionnaireCompleted,
-            dataSetsUploaded: item.dataSetsUploaded,
+            dataSetsUploaded: getDatasetsUploadedFromStatus(item.uploadStatuses),
             submissionStatus: item.submissionStatus,
             dataSubmissionPeriod: item.dataSubmissionPeriod,
         };

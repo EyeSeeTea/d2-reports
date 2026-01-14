@@ -6,6 +6,7 @@ export type UpdateAction = "approve" | "reject" | "reopen" | "accept" | "unapvdD
 
 export type DataSubmissionPeriod = "YEARLY" | "QUARTERLY";
 
+export type UploadStatus = "UPLOADED" | "IMPORTED" | "VALIDATED" | "COMPLETED" | "DELETED";
 export interface GLASSDataSubmissionItem {
     id: Id;
     module: string;
@@ -15,7 +16,7 @@ export interface GLASSDataSubmissionItem {
     dataSubmissionPeriod: DataSubmissionPeriod;
     status: Status;
     questionnaireCompleted: boolean;
-    dataSetsUploaded: string;
+    uploadStatuses: UploadStatus[];
     submissionStatus: string;
     from: Date | null;
     to: Date | null;
@@ -30,7 +31,7 @@ export interface GLASSDataSubmissionItem {
 export interface EARDataSubmissionItem {
     creationDate: string;
     id: Id;
-    module: Module;
+    module: Id;
     orgUnitId: string;
     orgUnitName: string;
     orgUnit: NamedRef;
@@ -75,7 +76,7 @@ export type Status =
     | "PENDING_UPDATE_APPROVAL"
     | "DRAFT";
 
-export type Module = "AMR" | "AMR - Individual" | "AMR - Fungal" | "AMC" | "EGASP" | "EAR";
+type Module = "AMR" | "AMR - Individual" | "AMR - Fungal" | "AMC" | "EGASP" | "EAR";
 
 export interface GLASSDataSubmissionModule {
     id: Id;
