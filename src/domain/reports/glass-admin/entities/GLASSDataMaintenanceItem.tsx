@@ -3,21 +3,21 @@ import { PaginatedObjects } from "../../../../types/d2-api";
 import { Id, NamedRef } from "../../../common/entities/Base";
 import { User } from "../../../common/entities/User";
 
-export type Status = "UPLOADED" | "VALIDATED" | "COMPLETED" | "DELETED";
-
-export type Module = "AMR" | "AMR - Individual" | "AMR - Fungal" | "AMC" | "EGASP" | "EAR";
+export type Status = "UPLOADED" | "IMPORTED" | "VALIDATED" | "COMPLETED" | "DELETED";
 
 export interface GLASSDataMaintenanceItem {
     id: Id;
+    orgUnit: Id;
+    orgUnitName: string;
+    fileType: string;
     fileId: Id;
     fileName: string;
-    fileType: string;
-    module: Module;
-    orgUnit: string;
-    orgUnitName: string;
     period: string;
     status: Status;
+    module: Id;
 }
+
+type Module = "AMR" | "AMR - Individual" | "AMR - Fungal" | "AMC" | "EGASP" | "EAR";
 
 export interface GLASSModule extends NamedRef {
     name: Module;
@@ -27,7 +27,7 @@ export interface GLASSModule extends NamedRef {
 }
 
 export interface GLASSMaintenancePaginatedObjects<T> extends PaginatedObjects<T> {
-    rowIds: string[];
+    itemIdsNotDeletedStatus: Id[];
 }
 
 export interface ATCPaginatedObjects<T> extends PaginatedObjects<T> {

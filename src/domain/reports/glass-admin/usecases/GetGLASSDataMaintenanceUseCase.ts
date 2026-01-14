@@ -7,10 +7,7 @@ import {
 export class GetGLASSDataMaintenanceUseCase {
     constructor(private maintenanceRepository: GLASSDataMaintenanceRepository) {}
 
-    execute(
-        options: GLASSDataMaintenanceOptions,
-        namespace: string
-    ): Promise<GLASSMaintenancePaginatedObjects<GLASSDataMaintenanceItem>> {
-        return this.maintenanceRepository.get(options, namespace);
+    execute(options: GLASSDataMaintenanceOptions): Promise<GLASSMaintenancePaginatedObjects<GLASSDataMaintenanceItem>> {
+        return this.maintenanceRepository.get(options);
     }
 }
