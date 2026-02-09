@@ -90,7 +90,12 @@ export function useGetDataSubmissions(compositionRoot: CompositionRoot, config: 
 
 function getSortingFromTableSorting(sorting: TableSorting<DataSubmissionViewModel>): Sorting<GLASSDataSubmissionItem> {
     return {
-        field: sorting.field === "id" ? "orgUnitName" : sorting.field,
+        field:
+            sorting.field === "id"
+                ? "orgUnitName"
+                : sorting.field === "dataSetsUploaded"
+                ? "uploadStatuses"
+                : sorting.field,
         direction: sorting.order,
     };
 }
