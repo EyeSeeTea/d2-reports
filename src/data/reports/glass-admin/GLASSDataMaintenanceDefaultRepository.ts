@@ -8,7 +8,7 @@ import { StorageClient } from "../../common/clients/storage/StorageClient";
 import { Instance } from "../../common/entities/Instance";
 import { Namespaces } from "../../common/clients/storage/Namespaces";
 import { NamedRef, Ref } from "../../../domain/common/entities/Ref";
-import { D2Api } from "../../../types/d2-api";
+import { D2Api, SelectedPick } from "../../../types/d2-api";
 import {
     AMCRecalculation,
     ATCItem,
@@ -17,8 +17,6 @@ import {
     GLASSDataMaintenanceItem,
     GLASSMaintenancePaginatedObjects,
     GLASSModule,
-    Module,
-    Status,
     getUserModules,
 } from "../../../domain/reports/glass-admin/entities/GLASSDataMaintenanceItem";
 import _ from "lodash";
@@ -26,8 +24,19 @@ import { Config } from "../../../domain/common/entities/Config";
 import { Id } from "../../../domain/common/entities/Base";
 import { paginate } from "../../../domain/common/entities/PaginatedObjects";
 import { GlassAtcVersionData } from "../../../domain/reports/glass-admin/entities/GlassAtcVersionData";
+import {
+    AMR_GLASS_PROE_UPLOADS_PROGRAM_ID,
+    getValueById,
+    GlassUploads,
+    GlassUploadsStatus,
+    NOT_COMPLETED_STATUSES,
+    uploadsDHIS2Ids,
+} from "../../common/entities/GlassUploads";
+import { D2TrackerEventSchema, D2TrackerEventToPost, TrackerEventsResponse } from "@eyeseetea/d2-api/api/trackerEvents";
 
 const START_YEAR_PERIOD = 2016;
+const DEFAULT_PAGE_SIZE = 250;
+const DEFAULT_CHUNK_SIZE = 100;
 
 export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenanceRepository {
     private storageClient: StorageClient;
@@ -40,21 +49,70 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
     }
 
     async get(
-        options: GLASSDataMaintenanceOptions,
-        namespace: string
+        options: GLASSDataMaintenanceOptions
     ): Promise<GLASSMaintenancePaginatedObjects<GLASSDataMaintenanceItem>> {
         const { paging, sorting, module } = options;
         if (!module) return emptyPage;
 
-        const uploads = await this.getUploads(namespace);
-        const countries = await this.getCountries();
+        const notCompleteUploads = await this.getUploadsByModuleAndNotCompleted(module);
+        const countries: NamedRef[] = await this.getCountries();
 
-        const filteredFiles = this.getFilteredFiles(uploads, countries, module);
+        const filteredFiles = this.getFilteredFiles(notCompleteUploads, countries);
 
-        const rowIds = this.getRowIds(filteredFiles);
+        const itemIdsNotDeletedStatus = this.getItemIdsNotDeleted(filteredFiles);
         const { objects, pager } = paginate(filteredFiles, paging, sorting);
 
-        return { objects: objects, pager: pager, rowIds: rowIds };
+        return { objects: objects, pager: pager, itemIdsNotDeletedStatus: itemIdsNotDeletedStatus };
+    }
+
+    private async getUploadsByModuleAndNotCompleted(moduleId: Id): Promise<GlassUploads[]> {
+        const d2TrackerEvents: D2UploadTrackerEvent[] = [];
+
+        const moduleIdFilter = `${uploadsDHIS2Ids.moduleId}:eq:${moduleId}`;
+        const statusFilter = `${uploadsDHIS2Ids.status}:in:${NOT_COMPLETED_STATUSES.join(";")}`;
+
+        let page = 1;
+        let response: TrackerEventsResponse<typeof uploadsEventFields>;
+        do {
+            response = await this.api.tracker.events
+                .get({
+                    program: AMR_GLASS_PROE_UPLOADS_PROGRAM_ID,
+                    fields: uploadsEventFields,
+                    filter: [moduleIdFilter, statusFilter].join(","),
+                    totalPages: true,
+                    page: page,
+                    pageSize: DEFAULT_PAGE_SIZE,
+                })
+                .getData();
+            d2TrackerEvents.push(...response.instances);
+            page++;
+        } while (response.page < Math.ceil((response.total as number) / DEFAULT_PAGE_SIZE));
+
+        return d2TrackerEvents
+            .map(event => {
+                const status =
+                    (getValueById(event.dataValues, uploadsDHIS2Ids.status) as GlassUploadsStatus) || "UPLOADED";
+                const period = getValueById(event.dataValues, uploadsDHIS2Ids.period) || "";
+                const fileId = getValueById(event.dataValues, uploadsDHIS2Ids.documentId) || "";
+                const fileName = getValueById(event.dataValues, uploadsDHIS2Ids.documentName) || "";
+                const fileType = getValueById(event.dataValues, uploadsDHIS2Ids.documentFileType) || "";
+
+                if (!status || !period || !fileId) return null;
+
+                const upload: GlassUploads = {
+                    id: event.event,
+                    fileId: fileId,
+                    fileName: fileName,
+                    fileType: fileType,
+                    status: status,
+                    period: period,
+                    module: moduleId,
+                    orgUnit: event.orgUnit,
+                };
+
+                return upload;
+            })
+            .filter((upload): upload is GlassUploads => Boolean(upload));
     }
 
     async getATCs(options: ATCOptions, namespace: string): Promise<ATCPaginatedObjects<ATCItem>> {
@@ -80,12 +138,51 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
         return getUserModules(modules, config.currentUser);
     }
 
-    async delete(namespace: string, items: Id[]): Promise<void> {
-        await this.deleteFileResources(items);
+    async delete(itemIds: Id[]): Promise<void> {
+        await this.deleteFileResources(itemIds);
 
-        const uploads = await this.getUploads(namespace);
-        const updatedUploads = this.updateStatusById(items, uploads, "DELETED");
-        return await this.globalStorageClient.saveObject<GLASSDataMaintenanceItem[]>(namespace, updatedUploads);
+        await this.setDeletedStatusToUploadsByFileIds(itemIds);
+    }
+
+    private async setDeletedStatusToUploadsByFileIds(fileIds: Id[]): Promise<void> {
+        const uniqueIds = _(fileIds).compact().uniq().value();
+        if (uniqueIds.length === 0) return;
+
+        const chunks: Id[][] = _.chunk(uniqueIds, DEFAULT_CHUNK_SIZE);
+
+        for (const idsChunk of chunks) {
+            const inValues = idsChunk.join(";");
+
+            const response = await this.api.tracker.events
+                .get({
+                    program: AMR_GLASS_PROE_UPLOADS_PROGRAM_ID,
+                    skipPaging: true,
+                    fields: uploadsEventFields,
+                    filter: `${uploadsDHIS2Ids.documentId}:in:${inValues}`,
+                })
+                .getData();
+
+            const events: D2UploadTrackerEvent[] = response.instances ?? [];
+            if (events.length === 0) continue;
+
+            const eventsWithDeletedStatus: D2TrackerEventToPost[] = events.map(event => {
+                const updatedDataValues = event.dataValues.map(dataValue =>
+                    dataValue.dataElement === uploadsDHIS2Ids.status
+                        ? {
+                              ...dataValue,
+                              value: "DELETED" as GlassUploadsStatus,
+                          }
+                        : dataValue
+                );
+
+                return {
+                    ...event,
+                    dataValues: updatedDataValues,
+                };
+            });
+
+            await this.api.tracker.post({ importStrategy: "UPDATE" }, { events: eventsWithDeletedStatus }).getData();
+        }
     }
 
     async getColumns(namespace: string): Promise<string[]> {
@@ -405,55 +502,39 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
             .value();
     }
 
-    private async getUploads(namespace: string): Promise<GLASSDataMaintenanceItem[]> {
-        const uploads = (await this.globalStorageClient.getObject<GLASSDataMaintenanceItem[]>(namespace)) ?? [];
+    private async getUploads(): Promise<GlassUploads[]> {
+        const uploads = (await this.globalStorageClient.getObject<GlassUploads[]>("uploads")) ?? [];
 
         return uploads;
     }
 
-    private async deleteFileResources(items: Id[]): Promise<void> {
-        _.forEach(items, async item => {
+    private async deleteFileResources(fileIds: Id[]): Promise<void> {
+        _.forEach(fileIds, async fileId => {
             try {
-                await this.api.delete(`/documents/${item}`).getData();
+                await this.api.delete(`/documents/${fileId}`).getData();
             } catch (error) {
                 console.debug("File does not exist");
             }
         });
     }
 
-    private getFilteredFiles(files: GLASSDataMaintenanceItem[], orgUnits: NamedRef[], module: Module) {
+    private getFilteredFiles(notCompleteUploads: GlassUploads[], countries: NamedRef[]): GLASSDataMaintenanceItem[] {
         const lastDataSubmissionYear = new Date().getFullYear() - 1; // last submission year is the previous year
 
-        return _(files)
-            .map(file => ({
-                ...file,
-                id: file.fileId,
-                orgUnitName: orgUnits.find(ou => ou.id === file.orgUnit)?.name ?? "",
+        return _(notCompleteUploads)
+            .map(upload => ({
+                ...upload,
+                id: upload.fileId,
+                orgUnitName: countries.find(country => country.id === upload.orgUnit)?.name ?? "",
             }))
             .filter(upload => {
-                const isIncomplete = upload.status !== "COMPLETED";
                 const isBeforeSubmissionYear = parseInt(upload.period, 10) < lastDataSubmissionYear;
-                const isInModule = upload.module === module;
-
-                return isIncomplete && isBeforeSubmissionYear && isInModule;
+                return isBeforeSubmissionYear;
             })
             .value();
     }
 
-    private updateStatusById(
-        ids: string[],
-        uploads: GLASSDataMaintenanceItem[],
-        status: Status
-    ): GLASSDataMaintenanceItem[] {
-        return _.map(uploads, upload => {
-            if (_.includes(ids, upload.fileId)) {
-                return _.assign({ ...upload, status: status });
-            }
-            return upload;
-        });
-    }
-
-    private getRowIds(rows: GLASSDataMaintenanceItem[]): string[] {
+    private getItemIdsNotDeleted(rows: GLASSDataMaintenanceItem[]): string[] {
         return _(rows)
             .filter(row => row.status !== "DELETED")
             .map(row => row.id)
@@ -464,7 +545,7 @@ export class GLASSDataMaintenanceDefaultRepository implements GLASSDataMaintenan
 const emptyPage: GLASSMaintenancePaginatedObjects<GLASSDataMaintenanceItem> = {
     pager: { page: 1, pageCount: 1, pageSize: 10, total: 1 },
     objects: [],
-    rowIds: [],
+    itemIdsNotDeletedStatus: [],
 };
 
 const earModule = "EAR";
@@ -477,3 +558,14 @@ type OrgUnitNode = {
     id: string;
     children?: OrgUnitNode[];
 };
+
+const uploadsEventFields = {
+    event: true,
+    program: true,
+    programStage: true,
+    orgUnit: true,
+    dataValues: true,
+    occurredAt: true,
+} as const;
+
+type D2UploadTrackerEvent = SelectedPick<D2TrackerEventSchema, typeof uploadsEventFields>;

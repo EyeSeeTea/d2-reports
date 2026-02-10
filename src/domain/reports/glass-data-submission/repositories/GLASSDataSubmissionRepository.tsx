@@ -8,7 +8,6 @@ import {
     GLASSDataSubmissionItem,
     GLASSDataSubmissionItemIdentifier,
     GLASSDataSubmissionModule,
-    Module,
     Status,
 } from "../entities/GLASSDataSubmissionItem";
 import { OrgUnitWithChildren } from "../entities/OrgUnit";
@@ -44,7 +43,7 @@ export interface GLASSDataSubmissionOptions {
     sorting: Sorting<GLASSDataSubmissionItem>;
     periods: string[];
     quarters: string[];
-    module: Module | undefined;
+    module: Id | undefined;
     orgUnitIds: Id[];
     dataSubmissionPeriod: DataSubmissionPeriod;
     completionStatus?: boolean;
@@ -55,7 +54,7 @@ export interface EARDataSubmissionOptions {
     config: Config;
     paging: Paging;
     sorting: Sorting<EARDataSubmissionItem>;
-    module: Module | undefined;
+    module: Id | undefined;
     orgUnitIds: Id[];
     from: Date | undefined;
     to: Date | undefined;

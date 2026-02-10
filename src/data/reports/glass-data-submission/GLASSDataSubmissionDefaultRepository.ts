@@ -9,7 +9,6 @@ import {
     EARSubmissionItemIdentifier,
     getUserModules,
     Status,
-    Module,
 } from "../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 import {
     EARDataSubmissionOptions,
@@ -31,11 +30,13 @@ import { Config } from "../../../domain/common/entities/Config";
 import { generateUid } from "../../../utils/uid";
 import { OrgUnitWithChildren } from "../../../domain/reports/glass-data-submission/entities/OrgUnit";
 import { D2TrackerEventSchema, TrackerEventsResponse } from "@eyeseetea/d2-api/api/trackerEvents";
+import { AMR_GLASS_PROE_UPLOADS_PROGRAM_ID, getValueById, uploadsDHIS2Ids } from "../../common/entities/GlassUploads";
 import {
     D2TrackedEntityInstanceToPost,
     D2TrackerTrackedEntitySchema,
     TrackedEntitiesGetResponse,
 } from "@eyeseetea/d2-api/api/trackerTrackedEntities";
+import { getUploadStatusSortKey } from "./getUploadStatusSortKey";
 
 interface CompleteDataSetRegistrationsResponse {
     completeDataSetRegistrations: Registration[] | undefined;
@@ -51,10 +52,8 @@ interface Registration {
     completed: boolean;
 }
 
-interface GLASSDataSubmissionItemUpload extends GLASSDataSubmissionItemIdentifier {
-    dataSubmission: string;
-    status: "UPLOADED" | "IMPORTED" | "VALIDATED" | "COMPLETED";
-}
+type UploadStatus = "UPLOADED" | "IMPORTED" | "VALIDATED" | "COMPLETED" | "DELETED";
+type GLASSDataSubmissionItemUpload = { dataSubmissionId: Id; status: UploadStatus };
 
 interface MessageConversations {
     messageConversations: {
@@ -79,6 +78,8 @@ type DataValueSetsType = {
     dataValues: DataValueType[];
 };
 
+const DEFAULT_CHUNK_SIZE = 100;
+
 export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmissionRepository {
     private storageClient: StorageClient;
     private globalStorageClient: StorageClient;
@@ -93,29 +94,36 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
         options: GLASSDataSubmissionOptions,
         namespace: string
     ): Promise<PaginatedObjects<GLASSDataSubmissionItem>> {
-        const { paging, sorting, module: selectedModule, periods } = options;
-        if (!selectedModule) return emptyPage;
+        const { paging, sorting, module: selectedModuleId, periods } = options;
+        if (!selectedModuleId) return emptyPage;
 
         const modules = await this.getModules();
-        const objects = await this.getDataSubmissionObjects(namespace);
-        const uploads = await this.getUploads();
+        const dataSubmissionsDatastore = await this.getDataSubmissionObjects(namespace);
 
-        const dataSubmissions = await this.getDataSubmissions(objects, modules, uploads, selectedModule, periods);
+        const dataSubmissions = await this.getDataSubmissions(
+            dataSubmissionsDatastore,
+            modules,
+            selectedModuleId,
+            periods
+        );
         const filteredRows = this.getFilteredRows(dataSubmissions, options);
-        const { pager, objects: rowsInPage } = paginate(filteredRows, paging, sorting);
 
+        if (sorting?.field === "uploadStatuses") {
+            const sortedRows = _.orderBy(
+                filteredRows,
+                [row => getUploadStatusSortKey(row.uploadStatuses ?? [])],
+                [sorting.direction]
+            );
+
+            const { pager, objects: rowsInPage } = paginate(sortedRows, paging);
+            return { pager, objects: rowsInPage };
+        }
+
+        const { pager, objects: rowsInPage } = paginate(filteredRows, paging, sorting);
         return {
             pager,
             objects: rowsInPage,
         };
-    }
-
-    private async getUploads() {
-        return (
-            (await this.globalStorageClient.getObject<GLASSDataSubmissionItemUpload[]>(
-                Namespaces.DATA_SUBMISSSIONS_UPLOADS
-            )) ?? []
-        );
     }
 
     private async getDataSubmissionObjects(namespace: string) {
@@ -123,15 +131,14 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
     }
 
     private async getDataSubmissions(
-        objects: GLASSDataSubmissionItem[],
+        dataSubmissionsDatastore: GLASSDataSubmissionItem[],
         modules: GLASSDataSubmissionModule[],
-        uploads: GLASSDataSubmissionItemUpload[],
-        selectedModule: Module,
+        selectedModuleId: Id,
         periods: string[]
     ): Promise<GLASSDataSubmissionItem[]> {
         const enrolledCountries = await this.getEnrolledCountries();
         const amrFocalPointProgramId = await this.getAMRFocalPointProgramId();
-        const dataSubmissionItems = await this.getDataSubmissionIdentifiers(
+        const dataSubmissionIdentifiers = await this.getDataSubmissionIdentifiers(
             amrFocalPointProgramId,
             enrolledCountries.join(";"),
             modules,
@@ -140,51 +147,116 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
 
         const moduleQuestionnaires =
             modules
-                .find(module => module.id === selectedModule)
+                .find(module => module.id === selectedModuleId)
                 ?.questionnaires.map(questionnaire => questionnaire.id) ?? [];
 
-        const registrations = await this.getRegistrations(dataSubmissionItems, moduleQuestionnaires);
+        const registrations = await this.getRegistrations(dataSubmissionIdentifiers, moduleQuestionnaires);
 
-        const dataSubmissions: GLASSDataSubmissionItem[] = dataSubmissionItems.map(dataSubmissionItem => {
-            const dataSubmission = objects.find(
-                object =>
-                    object.period === dataSubmissionItem.period &&
-                    object.orgUnit === dataSubmissionItem.orgUnit &&
-                    object.module === dataSubmissionItem.module
+        const allDataSubmissionIds: Id[] = _(dataSubmissionsDatastore)
+            .map(ds => ds.id)
+            .compact()
+            .uniq()
+            .value();
+
+        const uploads = await this.getUploadsBySubmissionIdsAndModuleChunked(allDataSubmissionIds, selectedModuleId);
+        const uploadStatusesByDataSubmissionId = this.buildUploadStatusesByDataSubmissionId(uploads);
+
+        const dataSubmissions: GLASSDataSubmissionItem[] = dataSubmissionIdentifiers.map(dataSubmissionIdentifier => {
+            const dataSubmissionDatastore = dataSubmissionsDatastore.find(
+                dataSubmissionObject =>
+                    dataSubmissionObject.period === dataSubmissionIdentifier.period &&
+                    dataSubmissionObject.orgUnit === dataSubmissionIdentifier.orgUnit &&
+                    dataSubmissionObject.module === dataSubmissionIdentifier.module
             );
 
             const key = getRegistrationKey({
-                orgUnitId: dataSubmissionItem.orgUnit,
-                period: dataSubmissionItem.period,
+                orgUnitId: dataSubmissionIdentifier.orgUnit,
+                period: dataSubmissionIdentifier.period,
             });
             const match = registrations[key];
 
             const submissionStatus =
-                statusItems.find(item => item.value === dataSubmission?.status)?.text ?? "Not completed";
+                statusItems.find(item => item.value === dataSubmissionDatastore?.status)?.text ?? "Not completed";
             const dataSubmissionPeriod =
-                modules.find(module => dataSubmissionItem.module === module.id)?.dataSubmissionPeriod ?? "YEARLY";
-            const dataSetsUploaded = getDatasetsUploaded(uploads, dataSubmission);
+                modules.find(module => dataSubmissionIdentifier.module === module.id)?.dataSubmissionPeriod ?? "YEARLY";
 
-            return {
-                ...dataSubmissionItem,
+            const uploadStatuses = dataSubmissionDatastore?.id
+                ? uploadStatusesByDataSubmissionId.get(dataSubmissionDatastore?.id) ?? []
+                : [];
+
+            const dataSubmissionItem: GLASSDataSubmissionItem = {
+                ...dataSubmissionIdentifier,
                 ...match,
-                ...dataSubmission,
+                ...dataSubmissionDatastore,
                 submissionStatus,
-                dataSetsUploaded,
+                uploadStatuses: uploadStatuses,
                 dataSubmissionPeriod,
-                id: dataSubmission?.id ?? generateUid(),
-                period: dataSubmissionItem.period.slice(0, 4),
+                id: dataSubmissionDatastore?.id ?? generateUid(),
+                period: dataSubmissionIdentifier.period.slice(0, 4),
                 orgUnitName: match?.orgUnitName ?? "",
                 questionnaireCompleted: match?.questionnaireCompleted ?? false,
-                status: dataSubmission?.status ?? "NOT_COMPLETED",
-                statusHistory: dataSubmission?.statusHistory ?? [],
-                from: dataSubmission?.from ?? null,
-                to: dataSubmission?.to ?? null,
-                creationDate: dataSubmission?.creationDate ?? new Date().toISOString(),
+                status: dataSubmissionDatastore?.status ?? "NOT_COMPLETED",
+                statusHistory: dataSubmissionDatastore?.statusHistory ?? [],
+                from: dataSubmissionDatastore?.from ?? null,
+                to: dataSubmissionDatastore?.to ?? null,
+                creationDate: dataSubmissionDatastore?.creationDate ?? new Date().toISOString(),
             };
+
+            return dataSubmissionItem;
         });
 
         return dataSubmissions;
+    }
+
+    private buildUploadStatusesByDataSubmissionId(uploads: GLASSDataSubmissionItemUpload[]): Map<Id, UploadStatus[]> {
+        const map = new Map<Id, UploadStatus[]>();
+        for (const r of uploads) {
+            const arr = map.get(r.dataSubmissionId) ?? [];
+            arr.push(r.status);
+            map.set(r.dataSubmissionId, arr);
+        }
+        return map;
+    }
+
+    private async getUploadsBySubmissionIdsAndModuleChunked(
+        dataSubmissionIds: Id[],
+        selectedModuleId: Id
+    ): Promise<GLASSDataSubmissionItemUpload[]> {
+        const uniqueIds = _(dataSubmissionIds).compact().uniq().value();
+        if (uniqueIds.length === 0) return [];
+
+        const chunks: Id[][] = _.chunk(uniqueIds, DEFAULT_CHUNK_SIZE);
+
+        const uploads: GLASSDataSubmissionItemUpload[] = [];
+
+        const moduleIdFilter = `${uploadsDHIS2Ids.moduleId}:eq:${selectedModuleId}`;
+
+        for (const idsChunk of chunks) {
+            const inValues = idsChunk.join(";");
+
+            const dataSubmissionIdsFilter = `${uploadsDHIS2Ids.dataSubmissionId}:in:${inValues}`;
+
+            const response = await this.api.tracker.events
+                .get({
+                    program: AMR_GLASS_PROE_UPLOADS_PROGRAM_ID,
+                    skipPaging: true,
+                    fields: uploadsEventFields,
+                    filter: [moduleIdFilter, dataSubmissionIdsFilter].join(","),
+                })
+                .getData();
+
+            const events: D2UploadTrackerEvent[] = response.instances ?? [];
+
+            for (const event of events) {
+                const dataSubmissionId = getValueById(event.dataValues, uploadsDHIS2Ids.dataSubmissionId) || "";
+                const status = (getValueById(event.dataValues, uploadsDHIS2Ids.status) as UploadStatus) || "UPLOADED";
+
+                if (!dataSubmissionId) continue;
+                uploads.push({ dataSubmissionId, status });
+            }
+        }
+
+        return uploads;
     }
 
     private async getEnrolledCountries(): Promise<string[]> {
@@ -364,6 +436,7 @@ export class GLASSDataSubmissionDefaultRepository implements GLASSDataSubmission
             .value();
 
         const objects = (await this.globalStorageClient.getObject<EARDataSubmissionItem[]>(namespace)) ?? [];
+
         const rows = objects.filter(object => orgUnitsWithChildren.includes(object.orgUnit.id));
 
         const filteredRows = rows
@@ -1316,40 +1389,6 @@ type RegistrationItemBase = Pick<
     "orgUnitName" | "orgUnit" | "period" | "questionnaireCompleted"
 >;
 
-function getDatasetsUploaded(
-    uploads: GLASSDataSubmissionItemUpload[],
-    object: GLASSDataSubmissionItem | undefined
-): string {
-    const uploadStatus = uploads.filter(upload => upload.dataSubmission === object?.id).map(item => item.status);
-    const completedDatasets = uploadStatus.filter(item => item === "COMPLETED").length;
-    const validatedDatasets = uploadStatus.filter(item => item === "VALIDATED").length;
-    const importedDatasets = uploadStatus.filter(item => item === "IMPORTED").length;
-    const uploadedDatasets = uploadStatus.filter(item => item === "UPLOADED").length;
-
-    let dataSetsUploaded = "";
-    if (completedDatasets > 0) {
-        dataSetsUploaded += `${completedDatasets} completed, `;
-    }
-    if (validatedDatasets > 0) {
-        dataSetsUploaded += `${validatedDatasets} validated, `;
-    }
-    if (importedDatasets > 0) {
-        dataSetsUploaded += `${importedDatasets} imported, `;
-    }
-    if (uploadedDatasets > 0) {
-        dataSetsUploaded += `${uploadedDatasets} uploaded, `;
-    }
-
-    // Remove trailing comma and space if any
-    dataSetsUploaded = dataSetsUploaded.replace(/,\s*$/, "");
-
-    // Show "No datasets" if all variables are 0
-    if (dataSetsUploaded === "" || !dataSetsUploaded) {
-        dataSetsUploaded = "No datasets";
-    }
-    return dataSetsUploaded;
-}
-
 function getRegistrationKey(options: { orgUnitId: Id; period: string }): RegistrationKey {
     return [options.orgUnitId, options.period].join(".");
 }
@@ -1410,3 +1449,10 @@ const trackedEntitiesFields = {
 } as const;
 
 type D2TrackerEntity = SelectedPick<D2TrackerTrackedEntitySchema, typeof trackedEntitiesFields>;
+
+const uploadsEventFields = {
+    event: true,
+    dataValues: true,
+} as const;
+
+type D2UploadTrackerEvent = SelectedPick<D2TrackerEventSchema, typeof uploadsEventFields>;

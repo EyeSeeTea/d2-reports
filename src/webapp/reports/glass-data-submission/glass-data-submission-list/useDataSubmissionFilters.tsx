@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { DataSubmissionFilterProps, emptySubmissionFilter } from "./Filters";
 import { DatePickerProps, DropdownProps, MultipleDropdownProps } from "@eyeseetea/d2-ui-components";
 import { OrgUnitsFilterButtonProps } from "../../../components/org-units-filter/OrgUnitsFilterButton";
-import { Module, Status } from "../../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
+import { Status } from "../../../../domain/reports/glass-data-submission/entities/GLASSDataSubmissionItem";
 import _ from "lodash";
 import { getRootIds } from "../../../../domain/common/entities/OrgUnit";
 import { useAppContext } from "../../../contexts/app-context";
@@ -24,7 +24,7 @@ export default function useDataSubmissionFilters(filterProps: DataSubmissionFilt
     const rootIds = useMemo(() => getRootIds(config.currentUser.orgUnits), [config]);
 
     const setModule = useCallback<SingleDropdownHandler>(module => {
-        setFilterValues(filter => ({ ...filter, module: module as Module }));
+        setFilterValues(filter => ({ ...filter, module: module }));
     }, []);
 
     const setOrgUnitPaths = useCallback<OrgUnitsFilterButtonProps["setSelected"]>(

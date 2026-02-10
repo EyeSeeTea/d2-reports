@@ -18,6 +18,7 @@ import AuthoritiesMonitoringReport from "./authorities-monitoring/AuthoritiesMon
 import GLASSAdminReport from "./glass-admin/GLASSAdminReport";
 import { TwoFactorMonitoringReport } from "./two-factor-monitor/TwoFactorMonitoringReport";
 import i18n from "../../locales";
+import { FileResourcesMonitoringReport } from "./file-resources-monitoring/FileResourceMonitoringReport";
 
 const widget = process.env.REACT_APP_REPORT_VARIANT || "";
 
@@ -93,6 +94,9 @@ const Component: React.FC = () => {
         }
         case "two-factor-monitoring": {
             return <TwoFactorMonitoringReport />;
+        }
+        case "file-resources-monitoring": {
+            return <FileResourcesMonitoringReport />;
         }
         default: {
             return <p>{`Please provide a valid REACT_APP_REPORT_VARIANT`}</p>;

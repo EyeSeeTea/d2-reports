@@ -1,9 +1,8 @@
 import React, { useCallback, useMemo } from "react";
-import { Module } from "../../../../../domain/reports/glass-admin/entities/GLASSDataMaintenanceItem";
 import styled from "styled-components";
 import { Dropdown, DropdownProps } from "@eyeseetea/d2-ui-components";
 import i18n from "../../../../../locales";
-import { NamedRef } from "../../../../../domain/common/entities/Base";
+import { Id, NamedRef } from "../../../../../domain/common/entities/Base";
 import { useAppContext } from "../../../../contexts/app-context";
 import { useGetModules } from "./useGetModules";
 
@@ -13,7 +12,7 @@ export interface FiltersProps {
 }
 
 export interface Filter {
-    module: Module | undefined;
+    module: Id | undefined;
 }
 
 export const Filters: React.FC<FiltersProps> = React.memo(props => {
@@ -27,7 +26,7 @@ export const Filters: React.FC<FiltersProps> = React.memo(props => {
 
     const setModule = useCallback<SingleDropdownHandler>(
         module => {
-            onChange(filter => ({ ...filter, module: module as Module }));
+            onChange(filter => ({ ...filter, module: module }));
         },
         [onChange]
     );

@@ -1,0 +1,1 @@
+SELECT * FROM valid_tracker_fileresources

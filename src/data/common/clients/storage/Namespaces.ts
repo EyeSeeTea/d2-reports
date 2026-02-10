@@ -15,7 +15,6 @@ export const Namespaces = {
     MAL_DASHBOARD_SUBSCRIPTION_USER_COLUMNS: "mal-dashboard-subscription-user-columns",
     MAL_SUBSCRIPTION_STATUS: "mal-subscription-status",
     DATA_SUBMISSSIONS: "data-submissions",
-    FILE_UPLOADS: "uploads",
     FILE_UPLOADS_USER_COLUMNS: "uploads-user-columns",
     DATA_SUBMISSSIONS_USER_COLUMNS: "data-submissions-user-columns",
     ATCS: "ATCs",
@@ -24,7 +23,6 @@ export const Namespaces = {
     SIGNALS: "signals",
     SIGNALS_USER_COLUMNS: "signals-user-columns",
     DATA_SUBMISSSIONS_MODULES: "modules",
-    DATA_SUBMISSSIONS_UPLOADS: "uploads",
     DATA_QUALITY: "data-quality",
     INDICATOR_STATUS_USER_COLUMNS: "indicator-status-user-columns",
     PROGRAM_INDICATOR_STATUS_USER_COLUMNS: "program-indicator-status-user-columns",
@@ -32,6 +30,8 @@ export const Namespaces = {
     AUTH_MONITORING_USER_COLUMNS: "auth-monitoring-user-columns",
     USER_2FA: "user-monitoring",
     USER_2FA_USER_COLUMNS: "user-2fa-user-columns",
+    FILE_RESOURCES: "file-resources-monitoring",
+    FILE_RESOURCES_MONITORING_COLUMNS: "file-resources-monitoring-columns",
 };
 
 export const NamespaceProperties: Record<Namespace, string[]> = {
@@ -49,7 +49,6 @@ export const NamespaceProperties: Record<Namespace, string[]> = {
     [Namespaces.SIGNALS]: [],
     [Namespaces.SIGNALS_USER_COLUMNS]: [],
     [Namespaces.DATA_SUBMISSSIONS_MODULES]: [],
-    [Namespaces.DATA_SUBMISSSIONS_UPLOADS]: [],
     [Namespaces.DATA_QUALITY]: [],
     [Namespaces.INDICATOR_STATUS_USER_COLUMNS]: [],
     [Namespaces.PROGRAM_INDICATOR_STATUS_USER_COLUMNS]: [],
@@ -57,4 +56,6 @@ export const NamespaceProperties: Record<Namespace, string[]> = {
     [Namespaces.AUTH_MONITORING_USER_COLUMNS]: [],
     [Namespaces.USER_2FA]: [],
     [Namespaces.USER_2FA_USER_COLUMNS]: [],
+    [Namespaces.FILE_RESOURCES]: [],
+    [Namespaces.FILE_RESOURCES_MONITORING_COLUMNS]: [],
 };

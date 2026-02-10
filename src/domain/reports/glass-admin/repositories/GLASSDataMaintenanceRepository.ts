@@ -9,14 +9,13 @@ import {
     GLASSDataMaintenanceItem,
     GLASSMaintenancePaginatedObjects,
     GLASSModule,
-    Module,
 } from "../entities/GLASSDataMaintenanceItem";
 import { GlassAtcVersionData } from "../entities/GlassAtcVersionData";
 
 export interface GLASSDataMaintenanceOptions {
     paging: Paging;
     sorting: Sorting<GLASSDataMaintenanceItem>;
-    module: Module | undefined;
+    module: Id | undefined;
 }
 
 export interface ATCOptions {
@@ -25,16 +24,13 @@ export interface ATCOptions {
 }
 
 export interface GLASSDataMaintenanceRepository {
-    get(
-        options: GLASSDataMaintenanceOptions,
-        namespace: string
-    ): Promise<GLASSMaintenancePaginatedObjects<GLASSDataMaintenanceItem>>;
+    get(options: GLASSDataMaintenanceOptions): Promise<GLASSMaintenancePaginatedObjects<GLASSDataMaintenanceItem>>;
     getATCs(options: ATCOptions, namespace: string): Promise<ATCPaginatedObjects<ATCItem>>;
     getLoggerProgramName(programId: string): Promise<string>;
     getRecalculationLogic(namespace: string): Promise<AMCRecalculation | undefined>;
     cancelRecalculation(namespace: string): Promise<void>;
     getUserModules(config: Config): Promise<GLASSModule[]>;
-    delete(namespace: string, items: Id[]): Promise<void>;
+    delete(itemIds: Id[]): Promise<void>;
     uploadATC(
         namespace: string,
         glassAtcVersionData: GlassAtcVersionData,
