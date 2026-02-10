@@ -13,11 +13,12 @@ import { CodedRef } from "../domain/common/entities/Ref";
 import { WmrDiffReport } from "../domain/reports/WmrDiffReport";
 import { promiseMap } from "../utils/promises";
 import { DataDiffItemIdentifier } from "../domain/reports/mal-data-approval/entities/DataDiffItem";
-import { DuplicateDataValuesUseCase } from "../domain/reports/mal-data-approval/usecases/DuplicateDataValuesUseCase";
+import { ApproveMalDataValuesUseCase } from "../domain/reports/mal-data-approval/usecases/ApproveMalDataValuesUseCase";
+import { writeFileSync } from "fs";
 
-const START_YEAR = 2000;
-const END_YEAR = new Date().getFullYear() - 1;
-const globalOU = "WHO-HQ";
+const GLOBAL_OU = "WHO-HQ";
+const DEFAULT_START_YEAR = 2005;
+const DEFAULT_END_YEAR = new Date().getFullYear() - 2;
 
 type ApprovalOptions = {
     baseUrl: string;
@@ -37,7 +38,6 @@ export async function approveMalDataValues(options: ApprovalOptions): Promise<vo
     const dataSetRepository = new DataSetD2Repository(api);
 
     const { dataSet, orgUnit } = await getMalWMRMetadata(api, ouOption);
-
     const malDataApprovalItems = await buildMalApprovalItems(
         dataValueRepository,
         dataSetRepository,
@@ -51,18 +51,16 @@ export async function approveMalDataValues(options: ApprovalOptions): Promise<vo
         return;
     }
 
-    const duplicateDataValueUseCase = new DuplicateDataValuesUseCase(approvalRepository);
-    await duplicateDataValueUseCase
+    const approveDataValuesUseCase = new ApproveMalDataValuesUseCase(dataSetRepository, approvalRepository);
+    await approveDataValuesUseCase
         .execute(malDataApprovalItems)
         .catch(err => {
             console.error("Error approving data values:", err);
         })
-        .then(response => {
-            if (response) {
-                console.debug(
-                    `Successfully approved ${malDataApprovalItems.length} data values in ${dataSet.name} dataset.`
-                );
-            }
+        .then(stats => {
+            const fileNameStats = "mal-data-approval-stats.json";
+            writeFileSync(fileNameStats, JSON.stringify(stats, null, 2));
+            console.debug(`Finished. Stats saved to ${fileNameStats}`);
         });
 }
 
@@ -76,7 +74,7 @@ async function getMalWMRMetadata(api: D2Api, ouOption: string): Promise<{ dataSe
         getMetadataByIdentifiableToken({
             api: api,
             metadataType: "organisationUnits",
-            token: ouOption ?? globalOU,
+            token: ouOption ?? GLOBAL_OU,
         }),
     ]);
 
@@ -90,12 +88,16 @@ async function buildMalApprovalItems(
     orgUnitId: Id,
     yearOption?: string
 ): Promise<DataDiffItemIdentifier[]> {
-    const periods = yearOption ? [yearOption] : _.range(START_YEAR, END_YEAR).map(year => year.toString());
+    const periods = yearOption
+        ? [yearOption]
+        : _.range(DEFAULT_START_YEAR, DEFAULT_END_YEAR + 1).map(year => year.toString());
     const dataValuesToApprove = await promiseMap(periods, async period => {
+        console.debug(`Fetching dataValues for period ${period}...`);
         const dataElementsWithValues = await new WmrDiffReport(dataValueRepository, dataSetRepository).getDiff(
             dataSetId,
             orgUnitId,
-            period
+            period,
+            true // Include children
         );
 
         return dataElementsWithValues.map(dataElementWithValues => ({
@@ -106,6 +108,9 @@ async function buildMalApprovalItems(
             value: dataElementWithValues.value ?? "",
             apvdValue: dataElementWithValues.apvdValue ?? "",
             comment: dataElementWithValues.comment,
+            attributeOptionCombo: dataElementWithValues.attributeOptionCombo,
+            categoryOptionCombo: dataElementWithValues.categoryOptionCombo,
+            dataElementBasicName: dataElementWithValues.dataElementBasicName,
         }));
     });
 
@@ -114,7 +119,7 @@ async function buildMalApprovalItems(
 
 async function main() {
     const parser = new ArgumentParser({
-        description: `Approve all data values in MAL WMR Form from ${START_YEAR} to ${END_YEAR}`,
+        description: `Approve data values in MAL WMR Form`,
     });
 
     parser.add_argument("-u", "--user-auth", {
@@ -132,7 +137,7 @@ async function main() {
     parser.add_argument("-ou", "--org-unit", {
         help: "Organisation unit identifier",
         metavar: "ORG_UNIT",
-        default: globalOU,
+        default: GLOBAL_OU,
     });
 
     parser.add_argument("-y", "--year", {

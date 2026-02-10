@@ -21,6 +21,9 @@ export class DataValuesD2Repository implements DataValuesRepository {
         });
 
         const res = await res$.getData();
+
+        // console.dir(res.dataValues);
+        // console.dir(options);
         return res.dataValues;
     }
 

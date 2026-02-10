@@ -6,10 +6,14 @@ import { DataValuesD2Repository } from "../data/common/DataValuesD2Repository";
 import { DataSetD2Repository } from "../data/common/DataSetD2Repository";
 import { getMetadataByIdentifiableToken } from "../data/common/utils/getMetadataByIdentifiableToken";
 import { CodedRef } from "../domain/common/entities/Ref";
-import { WmrDiffReport } from "../domain/reports/WmrDiffReport";
+import { Id } from "../domain/common/entities/Base";
+import _ from "lodash";
+import { promiseMap } from "../utils/promises";
+import { dataSetApprovalName, WmrDiffReport } from "../domain/reports/WmrDiffReport";
 
-const ANGOLA_ORG_UNIT_NAME = "Republic of Angola";
-const YEAR = "2024";
+const GLOBAL_OU = "WHO-HQ";
+const DEFAULT_START_YEAR = 2005;
+const DEFAULT_END_YEAR = new Date().getFullYear() - 2;
 
 type DataDifferencesOptions = {
     baseUrl: string;
@@ -34,25 +38,53 @@ export async function checkMalDataValuesDiff(options: DataDifferencesOptions): P
     const dataSetRepository = new DataSetD2Repository(api);
 
     const { dataSet, orgUnit } = await getMalWMRMetadata(api, ouOption);
-    const period = yearOption ?? YEAR;
-    const dataElementsWithValues = await new WmrDiffReport(dataValueRepository, dataSetRepository).getDiff(
-        dataSet.id,
-        orgUnit.id,
-        period
-    );
+    const dataElementsWithValues = await buildDataDifferenceItems({
+        dataValueRepository: dataValueRepository,
+        dataSetRepository: dataSetRepository,
+        dataSetId: dataSet.id,
+        orgUnitId: orgUnit.id,
+        yearOption: yearOption,
+    });
 
-    const result = dataElementsWithValues.map(dataElementWithValues => ({
-        dataElement: dataElementWithValues.dataElement,
-        orgUnit: dataElementWithValues.orgUnitUid,
-        period: dataElementWithValues.period,
-    }));
+    if (dataElementsWithValues.length === 0) console.debug("No differences found");
+    else console.debug(formatDataDiffLog(dataElementsWithValues, dataSet.name, orgUnit.name, yearOption));
+}
 
-    if (result.length === 0) console.debug("No differences found");
-    else
-        console.debug(
-            `${result.length} differences found in ${dataSet.name} for period ${period} in ${orgUnit.name} organisation unit: \n`,
-            formatDataDiffLog(result)
+async function buildDataDifferenceItems(options: {
+    dataValueRepository: DataValuesD2Repository;
+    dataSetRepository: DataSetD2Repository;
+    dataSetId: Id;
+    orgUnitId: Id;
+    yearOption?: string;
+}): Promise<DataDiffItem[]> {
+    const { dataValueRepository, dataSetRepository, dataSetId, orgUnitId, yearOption } = options;
+    const dataSetAPVD = await dataSetRepository.getByNameOrCode(dataSetApprovalName);
+
+    // If not OU is provided, use the org. units assigned to the APVD data set
+    const assignedOrgUnitIds = dataSetAPVD.organisationUnits.map(ou => ou.id);
+
+    const periods = yearOption
+        ? [yearOption]
+        : _.range(DEFAULT_START_YEAR, DEFAULT_END_YEAR + 1).map(year => year.toString());
+
+    const dataValuesToApprove = await promiseMap(periods, async period => {
+        const dataElementsWithValues = await new WmrDiffReport(dataValueRepository, dataSetRepository).getDiff(
+            dataSetId,
+            orgUnitId,
+            period,
+            true // Include children
         );
+
+        return dataElementsWithValues
+            .filter(dv => assignedOrgUnitIds.includes(dv.orgUnitUid))
+            .map(dataElementWithValues => ({
+                orgUnit: dataElementWithValues.orgUnitUid,
+                period: dataElementWithValues.period,
+                dataElement: dataElementWithValues.dataElement ?? "",
+            }));
+    });
+
+    return _(dataValuesToApprove).flatten().value();
 }
 
 async function getMalWMRMetadata(api: D2Api, ouOption?: string): Promise<{ dataSet: CodedRef; orgUnit: CodedRef }> {
@@ -65,7 +97,7 @@ async function getMalWMRMetadata(api: D2Api, ouOption?: string): Promise<{ dataS
         getMetadataByIdentifiableToken({
             api: api,
             metadataType: "organisationUnits",
-            token: ouOption ?? ANGOLA_ORG_UNIT_NAME,
+            token: ouOption ?? GLOBAL_OU,
         }),
     ]);
 
@@ -92,13 +124,12 @@ async function main() {
     parser.add_argument("-ou", "--org-unit", {
         help: "Organisation unit identifier",
         metavar: "ORG_UNIT",
-        default: ANGOLA_ORG_UNIT_NAME,
+        default: GLOBAL_OU,
     });
 
     parser.add_argument("-y", "--year", {
         help: "Year to check differences for",
         metavar: "YEAR",
-        default: YEAR,
     });
 
     try {
@@ -115,13 +146,23 @@ async function main() {
     }
 }
 
-function formatDataDiffLog(dataDiffItems: DataDiffItem[]): string {
-    return dataDiffItems
+function formatDataDiffLog(
+    dataDiffItems: DataDiffItem[],
+    dataSetName: string,
+    orgUnitName: string,
+    yearOption?: string
+): string {
+    const logTitle = `${dataDiffItems.length} differences found in ${dataSetName} for ${
+        yearOption ? `period ${yearOption}` : `periods ${DEFAULT_START_YEAR} to ${DEFAULT_END_YEAR}`
+    } in ${orgUnitName} organisation unit: \n`;
+    const dataDiffList = dataDiffItems
         .map(
             (item, index) =>
                 `${index + 1}. Data element: ${item.dataElement}, Org Unit: ${item.orgUnit}, Period: ${item.period}`
         )
         .join("\n");
+
+    return logTitle + dataDiffList;
 }
 
 main();

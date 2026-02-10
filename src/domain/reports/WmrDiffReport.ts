@@ -4,48 +4,51 @@ import { DataValue } from "../common/entities/DataValue";
 import { DataSetRepository } from "../common/repositories/DataSetRepository";
 import { DataValuesRepository } from "../common/repositories/DataValuesRepository";
 import { DataDiffItem } from "./mal-data-approval/entities/DataDiffItem";
-import { DataSet } from "../common/entities/DataSet";
-import { malApvdDataSets, MalDataSet } from "../../data/reports/mal-data-approval/constants/MalDataApprovalConstants";
+
+export const dataSetApprovalName = "MAL - WMR Form-APVD";
 
 export class WmrDiffReport {
     constructor(private dataValueRepository: DataValuesRepository, private dataSetRepository: DataSetRepository) {}
 
-    async getDiff(dataSetId: Id, orgUnitId: Id, period: string) {
-        const { dataSet, dataElements } = await this.getDataSetWithDataElements(dataSetId);
-        const approvedDataSetCode = malApvdDataSets[dataSet.name as MalDataSet];
-        const dataSetApproval = await this.dataSetRepository.getByNameOrCode(approvedDataSetCode);
-        const approvalDataValues = await this.getDataValues(dataSetApproval.id, orgUnitId, period);
-        const malDataValues = await this.getDataValues(dataSetId, orgUnitId, period);
+    async getDiff(dataSetId: Id, orgUnitId: Id, period: string, children = false): Promise<DataDiffItem[]> {
+        const dataElements = await this.getDataElements(dataSetId);
+        const dataSetApproval = await this.dataSetRepository.getByNameOrCode(dataSetApprovalName);
+        const approvalDataValues = await this.getDataValues(dataSetApproval.id, orgUnitId, period, children);
+        const malDataValues = await this.getDataValues(dataSetId, orgUnitId, period, children);
 
+        // TODO: Refactor this method to use a more efficient approach
+        // this class was not created to deal with dataValues from multiple org units (children = true)
         const dataElementsWithValues = this.filterDataElementsWithDataValue(
             malDataValues,
             approvalDataValues,
             dataElements,
             dataSetId,
-            orgUnitId,
             period
         );
 
         return dataElementsWithValues;
     }
 
-    private async getDataValues(dataSetId: Id, orgUnitId: Id, period: string): Promise<DataValue[]> {
+    private async getDataValues(
+        dataSetId: Id,
+        orgUnitId: Id,
+        period: string,
+        children?: boolean
+    ): Promise<DataValue[]> {
         const dataValues = await this.dataValueRepository.get({
             dataSetIds: [dataSetId],
             periods: [period],
             orgUnitIds: [orgUnitId],
+            children: children,
         });
         return dataValues;
     }
 
-    private async getDataSetWithDataElements(
-        dataSetId: Id
-    ): Promise<{ dataElements: DataElementsWithCombination[]; dataSet: DataSet }> {
+    private async getDataElements(dataSetId: Id): Promise<DataElementsWithCombination[]> {
         const dataSets = await this.dataSetRepository.getById(dataSetId);
         const dataSet = _(dataSets).first();
         if (!dataSet) throw Error("No data set found");
-
-        const dataElementsWithCombination = dataSet.dataElements.flatMap(dataElement => {
+        return dataSet.dataElements.flatMap(dataElement => {
             const combinations = dataElement.categoryCombo?.categoryOptionCombos || [];
 
             return combinations.map((combination): DataElementsWithCombination => {
@@ -58,8 +61,6 @@ export class WmrDiffReport {
                 };
             });
         });
-
-        return { dataElements: dataElementsWithCombination, dataSet: dataSet };
     }
 
     private filterDataElementsWithDataValue(
@@ -67,40 +68,63 @@ export class WmrDiffReport {
         approvalDataValues: DataValue[],
         dataElements: DataElementsWithCombination[],
         malariaDataSetId: Id,
-        orgUnitId: Id,
         period: string
     ): DataDiffItem[] {
-        return _(dataElements)
-            .map(dataElement => {
-                const malariaDataValue = _(malariaDataValues).find(
-                    dataValue =>
-                        dataValue.dataElement === dataElement.id &&
-                        dataValue.categoryOptionCombo === dataElement.categoryOptionCombo
-                );
-
-                const approvalDataValue = _(approvalDataValues).find(
-                    dataValue =>
-                        dataValue.dataElement.toLowerCase() === dataElement.id.toLowerCase() &&
-                        dataValue.categoryOptionCombo === dataElement.categoryOptionCombo
-                );
-
-                if (!malariaDataValue && !approvalDataValue) return undefined;
-                if (malariaDataValue?.value === approvalDataValue?.value) return undefined;
-
-                return {
-                    dataSetUid: malariaDataSetId,
-                    orgUnitUid: orgUnitId,
-                    period: period,
-                    value: approvalDataValue && !malariaDataValue ? "" : malariaDataValue?.value,
-                    dataElement: this.buildDataElementNameWithCombination(dataElement),
-                    comment: malariaDataValue?.comment,
-                    apvdDataElement: approvalDataValue?.dataElement,
-                    apvdValue: approvalDataValue?.value,
-                    apvdComment: approvalDataValue?.comment,
-                };
-            })
-            .compact()
+        const malariaOrgUnits = _(malariaDataValues)
+            .map(dataValue => dataValue.orgUnit)
+            .uniq()
             .value();
+
+        const apvdOrgUnits = _(approvalDataValues)
+            .map(dataValue => dataValue.orgUnit)
+            .uniq()
+            .value();
+
+        const allOrgUnits = _(malariaOrgUnits).concat(apvdOrgUnits).uniq().value();
+
+        return allOrgUnits.flatMap(orgUnitId => {
+            return _(dataElements)
+                .map(dataElement => {
+                    const malariaDataValue = _(malariaDataValues).find(
+                        dataValue =>
+                            dataValue.dataElement === dataElement.id &&
+                            dataValue.categoryOptionCombo === dataElement.categoryOptionCombo &&
+                            dataValue.orgUnit === orgUnitId &&
+                            dataValue.period === period
+                    );
+
+                    const approvalDataValue = _(approvalDataValues).find(
+                        dataValue =>
+                            dataValue.dataElement.toLowerCase() === dataElement.id.toLowerCase() &&
+                            dataValue.categoryOptionCombo === dataElement.categoryOptionCombo &&
+                            dataValue.orgUnit === orgUnitId &&
+                            dataValue.period === period
+                    );
+
+                    if (!malariaDataValue && !approvalDataValue) return undefined;
+                    if (!malariaDataValue?.value && !approvalDataValue?.value) return undefined;
+                    if (malariaDataValue?.value === approvalDataValue?.value) return undefined;
+
+                    return {
+                        dataSetUid: malariaDataSetId,
+                        orgUnitUid: orgUnitId,
+                        period: period,
+                        value: approvalDataValue && !malariaDataValue ? "" : malariaDataValue?.value,
+                        dataElement: this.buildDataElementNameWithCombination(dataElement),
+                        comment: malariaDataValue?.comment,
+                        apvdDataElement: approvalDataValue?.dataElement,
+                        apvdValue: approvalDataValue?.value,
+                        apvdComment: approvalDataValue?.comment,
+                        attributeOptionCombo:
+                            malariaDataValue?.attributeOptionCombo ?? approvalDataValue?.attributeOptionCombo,
+                        categoryOptionCombo:
+                            malariaDataValue?.categoryOptionCombo ?? approvalDataValue?.categoryOptionCombo,
+                        dataElementBasicName: dataElement.name,
+                    };
+                })
+                .compact()
+                .value();
+        });
     }
 
     private buildDataElementNameWithCombination(dataElement: DataElementsWithCombination): string {
