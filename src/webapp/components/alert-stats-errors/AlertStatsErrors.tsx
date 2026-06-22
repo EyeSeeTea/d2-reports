@@ -2,31 +2,31 @@ import _ from "lodash";
 import React from "react";
 import styled from "styled-components";
 import { Button } from "@material-ui/core";
+import { NamedRef } from "../../../domain/common/entities/Base";
 import { OrgUnit } from "../../../domain/common/entities/OrgUnit";
 import { Stats } from "../../../domain/common/entities/Stats";
 import { Alert } from "../alert/Alert";
 
-type AlertStatsErrorsProps = { errors?: Stats["errorMessages"]; onCleanError: () => void; orgUnits: OrgUnit[] };
+type AlertStatsErrorsProps = {
+    errors?: Stats["errorMessages"];
+    onCleanError: () => void;
+    orgUnits: OrgUnit[];
+    dataSets?: NamedRef[];
+};
 
-function replaceOrgUnitIdByName(message: string, orgUnits: OrgUnit[]): string {
-    if (orgUnits.length === 0) return message;
-    const regex = /organisation unit:\s*`([^`]+)`/;
-    const match = message.match(regex);
-    if (match) {
-        const orgUnitId = _(match).nth(1);
-        if (!orgUnitId) return message;
-        const orgUnit = orgUnits.find(orgUnit => orgUnit.id === orgUnitId);
-        if (!orgUnit) return message;
-        return message.replace(orgUnitId, orgUnit.name);
-    } else {
-        return message;
-    }
+// DHIS2 import conflict messages reference metadata by UID (e.g. ``data set: `Tu81BTLUuCT` ...
+// org unit: `e9IoKRAkYLO```). Replace every backtick-wrapped UID we know about with its name,
+// regardless of the surrounding label wording (which varies between DHIS2 versions).
+function replaceIdsByNames(message: string, items: Array<{ id: string; name: string }>): string {
+    return _(items).reduce((acc, item) => acc.split(`\`${item.id}\``).join(`\`${item.name}\``), message);
 }
 
 export const AlertStatsErrors: React.FC<AlertStatsErrorsProps> = props => {
-    const { errors, onCleanError, orgUnits } = props;
+    const { errors, onCleanError, orgUnits, dataSets = [] } = props;
 
     if (!errors) return null;
+
+    const namedRefs = [...orgUnits, ...dataSets];
 
     return (
         <>
@@ -35,7 +35,7 @@ export const AlertStatsErrors: React.FC<AlertStatsErrorsProps> = props => {
             </Button>
             <AlertContainer>
                 {errors.map((error, index) => {
-                    return <Alert key={index} message={replaceOrgUnitIdByName(error.message, orgUnits)} />;
+                    return <Alert key={index} message={replaceIdsByNames(error.message, namedRefs)} />;
                 })}
             </AlertContainer>
         </>
