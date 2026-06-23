@@ -181,7 +181,12 @@ export const NHWAAutoCompleteCompute: React.FC<NHWAAutoCompleteComputeProps> = p
                 {title}
             </Typography>
 
-            <AlertStatsErrors errors={errors} onCleanError={() => setErrors(undefined)} orgUnits={orgUnits} />
+            <AlertStatsErrors
+                errors={errors}
+                onCleanError={() => setErrors(undefined)}
+                orgUnits={orgUnits}
+                dataSets={_.values(config.dataSets)}
+            />
 
             <ObjectsList<AutoCompleteComputeViewModel> {...tableProps} onChangeSearch={undefined}>
                 <Filters

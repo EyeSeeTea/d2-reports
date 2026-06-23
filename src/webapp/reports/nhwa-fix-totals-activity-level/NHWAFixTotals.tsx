@@ -266,7 +266,12 @@ export const NHWAFixTotals: React.FC = () => {
                 {i18n.t("Module 1 totals by Activity Label with missing value that does not match the auto-calculated")}
             </Typography>
 
-            <AlertStatsErrors errors={errors} onCleanError={() => setErrors(undefined)} orgUnits={orgUnits} />
+            <AlertStatsErrors
+                errors={errors}
+                onCleanError={() => setErrors(undefined)}
+                orgUnits={orgUnits}
+                dataSets={_.values(config.dataSets)}
+            />
 
             <ObjectsList<FixTotalsViewModel>
                 {...tableProps}
