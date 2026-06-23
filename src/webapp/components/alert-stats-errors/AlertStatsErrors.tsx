@@ -17,7 +17,7 @@ type AlertStatsErrorsProps = {
 // DHIS2 import conflict messages reference metadata by UID (e.g. ``data set: `Tu81BTLUuCT` ...
 // org unit: `e9IoKRAkYLO```). Replace every backtick-wrapped UID we know about with its name,
 // regardless of the surrounding label wording (which varies between DHIS2 versions).
-function replaceIdsByNames(message: string, items: Array<{ id: string; name: string }>): string {
+function replaceIdsByNames(message: string, items: NamedRef[]): string {
     return _(items).reduce((acc, item) => acc.split(`\`${item.id}\``).join(`\`${item.name}\``), message);
 }
 
